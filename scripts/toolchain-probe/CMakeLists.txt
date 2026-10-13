@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.28)
+project(BRepGPUToolchainProbe LANGUAGES CXX CUDA)
+find_package(CUDAToolkit REQUIRED)
+add_executable(fp64_probe fp64-probe.cu)
+set_target_properties(fp64_probe PROPERTIES CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON CUDA_RUNTIME_LIBRARY Shared)
+target_link_libraries(fp64_probe PRIVATE CUDA::cudart)

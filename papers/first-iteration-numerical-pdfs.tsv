@@ -1,0 +1,2 @@
+artifact	source_url	bytes	sha256	read_scope
+papers/pdfs/bao-liu-zou-2023-gpu-inverse-evaluation.pdf	https://www.jcad.cn/cn/article/pdf/preview/10.3724/SP.J.1089.2023.2023-00003.pdf	1058207	5ec551e6f5a35697f85a4c9dfc8c6b8f8ec080725af6d70214be714403821ed0	Matrix representation, adaptive subdivision, Gauss-Newton refinement, experiments and limitations

@@ -33,3 +33,17 @@ Starting literature:
 
 The existing CPU benchmark is a starting measurement and fixture collection,
 not a substitute for numerical and topological contracts in the owned kernel.
+
+## First-iteration source study and design review
+
+| Unit | Source study | Adversarial review |
+| --- | --- | --- |
+| Numerical evaluator and direct fixtures | [Pinned source study](2026-10-13-first-iteration-numerical-study.md) · [Sources](first-iteration-numerical-sources.tsv) · [Restoration](first-iteration-numerical-restoration.md) · [BibTeX](first-iteration-numerical.bib) | [Numerical review](2026-10-13-iteration-1-numerical-review.md) |
+| Runtime, ownership and hardware | [Runtime study](2026-10-13-first-iteration-runtime-study.md) · [Actual CUDA setup](../docs/CUDA_TOOLCHAIN.md) | [Runtime review](2026-10-13-iteration-1-runtime-review.md) |
+| Task value, reference integration and topology | [Roadmap source study](2026-10-13-acceleration-roadmap-study.md) · [Sources](acceleration-roadmap-sources.tsv) · [Restoration](acceleration-roadmap-reference-restoration.md) | [Topology/roadmap review](2026-10-13-iteration-1-topology-roadmap-review.md) |
+
+The integrated [roadmap](../docs/ACCELERATION_ROADMAP.md),
+[first design](../docs/ITERATION_1_DESIGN.md) and
+[topology architecture](../docs/TOPOLOGY.md) resolve the source findings and
+reviewed contracts. The reviews retain their initial findings and subsequent
+dispositions. These are designs and source studies, not implemented CAD kernels.

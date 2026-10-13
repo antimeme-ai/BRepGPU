@@ -3,6 +3,7 @@ context/
 .venv/
 wheels/
 build/
+toolchains/
 __pycache__/
 *.pyc
 *.pdf

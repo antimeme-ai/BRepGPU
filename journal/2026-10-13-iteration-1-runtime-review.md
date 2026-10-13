@@ -1,0 +1,7 @@
+# Iteration 1 runtime review, 2026-10-13
+
+Adversarially reviewed the first evaluator design's complete host/device ownership, status, concurrency and measurement contract, with its roadmap and topology identity model. Reported resident output-allocation ambiguity, operation-specific download failure state and per-host-thread device selection to the design owner immediately.
+
+Saved the review covering those findings plus close-admission/lock-order races, Python private snapshot ownership, ABI/plugin compatibility, handle namespace, zero/invalid buffer boundaries and fatal CUDA state. Retained the immutable query-to-patch lineage and entity/slot/runtime-handle distinctions. No product code or Git mutation occurred. Revised design review remains to be performed after the owner integrates the findings.
+
+Re-read the integrated design/roadmap after fixes. Closed R1–R6 at design level and appended a no-remaining-runtime-architecture-blocker disposition. Flagged the derived implementation order that result publication follows stream completion and device restoration, preserving zero output handle on any batch failure. Copied the exact measured owned probe/CMake source into public setup tooling, confirmed source hashes match the execution-host originals, and updated public checkout-relative commands. Built artifacts remain ignored; no source behavior changed or redundant execution repeated.

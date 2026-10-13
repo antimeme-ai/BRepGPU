@@ -1,7 +1,7 @@
 # Reference source restoration
 
 Reference implementations are study material in ignored `quarantine/`.
-The [35-entry catalog](papers/reference-catalog.tsv) records upstream repositories,
+The [39-entry catalog](papers/reference-catalog.tsv) records upstream repositories,
 exact revisions, archive filenames and SHA-256 digests, clean destinations,
 archive roots, retained file counts and omissions. The matching
 [source bibliography](papers/reference-snapshots.bib) is public.
@@ -42,3 +42,13 @@ Archived `AGENTS.md`, skills and other instructions are historical reference,
 not current project instructions. References retain their own licenses. No
 reference code is shipped in this repository or selected as a production
 dependency by this acquisition.
+
+The first-design study additionally acquired pinned OCCT, SISL, openNURBS and
+LTCSBezier under `quarantine/new-iteration/`, with intact archives and clean
+extractions. Their primary source/hashes are in the
+[numerical catalog](papers/first-iteration-numerical-sources.tsv) and
+[acceleration catalog](papers/acceleration-roadmap-sources.tsv).
+[OCCT restoration](papers/acceleration-roadmap-reference-restoration.md) and
+the numerical catalog's codeload URLs restore those sources with the same owned
+importer. GPU-NURBS remains public-browser/paper study only, without a source
+archive or adopted code.

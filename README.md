@@ -16,6 +16,15 @@ are the next steps. The CPU measurements below exercise NVIDIA's newly released
 [USD BRep / SMLib](https://github.com/NVIDIA-Omniverse/usd-brep), which is the
 reference experiment here. They do not measure a BRepGPU kernel.
 
+[Acceleration roadmap](docs/ACCELERATION_ROADMAP.md) ·
+[First-iteration design](docs/ITERATION_1_DESIGN.md) ·
+[Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
+[Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
+
+CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
+Both 16 GB P100s passed a C++17 native `sm_60` FP64 setup probe and memory/leak
+checking. That establishes the toolchain; GPU CAD product code is the next step.
+
 ## What is already measured
 
 **16 of 19 workloads met their declared geometry checks** with USD BRep 1.0.0.
