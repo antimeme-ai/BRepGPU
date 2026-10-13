@@ -21,7 +21,8 @@ The reports converge on a narrow first unit: positive-weight rational Bézier
 patches through bidegree (3,3), returning position and first/second derivatives.
 Analytic polynomial and exact rational cylinder fixtures qualify the output.
 The later NURBS front end needs knot-span extraction and explicit one-sided
-derivative semantics. This is a proposal awaiting design and plan review.
+derivative semantics. The first unit has passed design, plan and implementation review and has
+[qualified product measurements](../results/iteration1-2026-10-13/REPORT.md).
 
 Starting literature:
 
@@ -46,4 +47,17 @@ The integrated [roadmap](../docs/ACCELERATION_ROADMAP.md),
 [first design](../docs/ITERATION_1_DESIGN.md) and
 [topology architecture](../docs/TOPOLOGY.md) resolve the source findings and
 reviewed contracts. The reviews retain their initial findings and subsequent
-dispositions. These are designs and source studies, not implemented CAD kernels.
+dispositions. The first numerical unit is implemented; the broader kernel roadmap remains
+research and design.
+
+## Implementation review
+
+[Runtime and Python code review](2026-10-13-iteration-1-runtime-code-review.md) ·
+[Independent caller and numerical code review](2026-10-13-iteration-1-caller-code-review.md) ·
+[Runtime plan review](2026-10-13-iteration-1-plan-runtime-review.md) ·
+[Numerical plan review](2026-10-13-iteration-1-plan-numerical-review.md) ·
+[Caller plan review](2026-10-13-iteration-1-plan-caller-review.md)
+
+The code reviews retain findings and corrected dispositions. Exact arithmetic
+qualification, actual device memory checks and modeled native failure checks
+provide distinct evidence; successful CPU/GPU parity alone is insufficient.
