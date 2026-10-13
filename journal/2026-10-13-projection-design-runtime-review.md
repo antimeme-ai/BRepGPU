@@ -1,0 +1,7 @@
+# Projection design runtime review, 2026-10-13
+
+Read the proposed iteration-2 design and companion runtime/numerical studies, comparing their ownership/loading contracts with the existing core, plugin and ctypes implementation. Saved the adversarial review in `papers/2026-10-13-projection-design-runtime-review.md`.
+
+One high-severity correction: optional v2 capability refusal must be separated from an invoked factory's runtime/fatal diagnostics, with a pure static-table factory and common poison handling; cache only genuine unsupported capability. Two implementation/accounting constraints preserve ABI-2 descriptors versus ABI-1 diagnostics and distinguish prepared native buffers, Python materialization, synthetic caller exports and later source-CAD extraction costs. The rest of the single-registry/context/token ownership unit is coherent. No code, dependency, Git or environment mutation occurred.
+
+Re-read integrated `docs/ITERATION_2_DESIGN.md`: R-P1 is closed by pure factory semantics, safe capability refusal versus propagated runtime/fatal diagnostics and restricted caching; R-P2 by explicit ABI2 descriptor validation preserving ABI1 helpers/diagnostics; R-P3 by prepared-native/Python allocation/provenance and caller export/source absence accounting. Appended dispositions and found no remaining runtime design blocker. Plan review remains required before product implementation.
