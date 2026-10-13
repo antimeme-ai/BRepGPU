@@ -1,0 +1,4 @@
+artifact	source_url	bytes	sha256	read_scope
+papers/pdfs/hu-wallner-2005-second-order-projection.pdf	https://www.geometrie.tugraz.at/wallner/sproj.pdf	144739	086f3813931141509168ad03cc4fd7efd55b19d716c6c483c0f8948d3b48c600	Surface regularity, first/second-order geometric iteration, initial estimates and experiments
+papers/pdfs/boyd-vandenberghe-2004-convex-optimization.pdf	https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf	6881335	40d976c83c18cce1900eff8c41bd5ad408c102b813af39d05ff85678ccf8d76e	Section5.5 KKT conditions and distinction between convex sufficiency and nonconvex cases
+papers/pdfs/botbol-buse-chardin-yildirim-2019-rational-projection.pdf	https://arxiv.org/pdf/1903.08107	1067879	4f6d5401b81c5901e9b54cc404eb512be6882c43c6ff6a4788ba5fa670615704	Normal congruence finite fibers, genericity and algebraic projection scope
