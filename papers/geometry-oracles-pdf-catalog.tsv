@@ -1,0 +1,7 @@
+path	source_url	bytes	sha256
+pdfs/shewchuk-1997-robust-predicates.pdf	https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf	556447	5f047fd41666e53f6015497f68e42152e3a9d8d04556ab27f8b6fc92c74117d7
+pdfs/koch-2019-abc.pdf	https://openaccess.thecvf.com/content_CVPR_2019/papers/Koch_ABC_A_Big_CAD_Model_Dataset_for_Geometric_Deep_Learning_CVPR_2019_paper.pdf	3541170	8081e5d4eeb7243c1317b6d53a6b2ba06f50a2ff18f758ff9340afae702c3804
+pdfs/zhou-jacobson-2016-thingi10k.pdf	https://arxiv.org/pdf/1605.04797	32650265	1330122e968ef7537940c4dcfea7a97d2e8f6500981773578271390d2b39a345
+pdfs/levy-2024-exact-mesh-csg.pdf	https://arxiv.org/pdf/2405.12949	21523907	f5a571dc59acfa9847719dd507d8215623e6cec06c73172fbecb29dba1c5f235
+pdfs/nvidia-cuda-12.5.1-best-practices.pdf	https://docs.nvidia.com/cuda/archive/12.5.1/pdf/CUDA_C_Best_Practices_Guide.pdf	2317644	e6f2fa0caa097e207c67fb3a452011b9d28d0e2983aa6fda2f0e11b7fcda805c
+pdfs/gleicher-kass-1992-interval-refinement-ssi.pdf	https://graphicsinterface.org/wp-content/uploads/gi1992-28.pdf	7663309	346b6cf49e97ebbed9175d4584a59b4b6ea2a7f619fe4c9998aef131b53ec50a

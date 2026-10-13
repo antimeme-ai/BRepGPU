@@ -1,0 +1,11 @@
+artifact	source_url	status	bytes	sha256	notes
+papers/pdfs/wozny-chudy-2023-bezier-derivatives.pdf	https://arxiv.org/pdf/2305.18874	acquired	609297	7030d195045d0fd3479d45f90af1b4ce0c05d00ff2d0a286ec7647e3b9db5847	arXiv revision 2, 27 February 2024
+papers/pdfs/wozny-2025-fast-subdivision.pdf	https://arxiv.org/pdf/2509.15691	acquired	331221	ecbd32873057b7f8a1096226266ab6a0cfa5542ed052158bdf0baae2ae2a3864	arXiv revision 2, 30 April 2026
+papers/pdfs/2026-texture-bezier.pdf	https://arxiv.org/pdf/2603.15447	acquired	2878013	0084e3c351c7ab9d0dcff94b5dcfcac94870b30ccfb22b9647d10476e30898e5	Read limitations and performance; manuscript placeholders retained
+papers/pdfs/sloup-havran-2021-trimmed-nurbs.pdf	https://dcgi.fel.cvut.cz/~havran/ARTICLES/slouphavran2021pg.pdf	acquired	14034729	5ec92c0ed181eb32f049180863f2f9d6252d70338341fa08bd75c2d96438e129	Main paper
+papers/pdfs/sloup-havran-2021-supplement.pdf	https://dcgi.fel.cvut.cz/~havran/ARTICLES/supplementaryPG21SloupHavran/supplementaryPG21SloupHavran.pdf	acquired	19663136	316d2e601ace0d294ab359599caf543057213d0215f5c58dead8513f8c5157e7	Supplement
+papers/pdfs/nvidia-gp100-whitepaper.pdf	https://images.nvidia.com/content/pdf/tesla/whitepaper/pascal-architecture-whitepaper-v1.2.pdf	acquired	2626321	3d4aac32bce0a662cd216f88f4026feeecac2903ff1c897fb01d735fdfd98f8b	GP100 whitepaper version 1.2
+papers/pdfs/ye-2026-gmidsurf.pdf	https://min-tang.github.io/gMidSurf/files/gMidSurf_CAD.pdf	acquired	5768042	29a3e769c811bed83ac46124d0cb005f456b88a8d3c8f426f24d6f29e573e03b	Author manuscript
+	https://diglib.eg.org/items/2c25cee8-21db-4cc1-98a8-91325ddc4cc1	not_acquired			PDF content endpoint returned HTTP 401; publisher HTML read at https://onlinelibrary.wiley.com/doi/10.1111/cgf.70403
+	https://escholarship.org/uc/item/59n1g12w	not_acquired			Parallel GPU Algorithms for Mechanical CAD thesis; PDF endpoint returned empty content then HTTP 403; full text not read
+	https://doi.org/10.1007/978-3-642-59223-2	not_acquired			The NURBS Book, second edition; full text not read

@@ -76,9 +76,11 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
 | Solid assembly and features | Closed solids, then sweeps, fillets and offsets | A progressively broader GPU modeling kernel |
 
-The first prototype will be deliberately small: bicubic patch evaluation and
-derivatives on a P100, checked against analytic cases and an independent CPU
-reference. Both resident-data and transfer-inclusive timings matter. Tiny loops,
+The proposed first prototype is deliberately small: positive-weight rational
+Bézier patches through bidegree (3,3), with FP64 positions and first/second
+derivatives on a P100. Analytic polynomial and exact rational cylinder fixtures
+qualify the results, alongside an independent CPU reference. Both resident-data
+and transfer-inclusive timings matter. Tiny loops,
 tangent contacts, periodic seams and coincident surfaces enter the design early.
 
 This is the research direction. The implementation scope and numerical contracts
@@ -103,9 +105,10 @@ baseline includes such failures deliberately.
 
 ## Research and contributions
 
-Frumentarii are studying GPU numerical geometry, intersection/topology machinery,
-and geometric correctness oracles. [Research index](papers/README.md) tracks the
-reports and literature. [Open work](ISSUES.md) identifies the concrete next steps.
+The first three frumentarii reports cover GPU numerical geometry,
+intersection/topology machinery and geometric correctness oracles.
+[Research and bibliographies](papers/README.md) ·
+[Projects to inspect](papers/PROJECTS.md) · [Open work](ISSUES.md).
 
 Useful contributions include small analytic fixtures, difficult intersection
 cases, relevant papers, and independently reproducible findings. State what the

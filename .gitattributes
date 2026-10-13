@@ -1,4 +1,5 @@
 # Preserve generated evidence exactly, including CSV line endings and model spacing.
-results/**/*.tsv -whitespace
+# TSV records may end in empty fields, represented by trailing tabs.
+*.tsv -whitespace
 results/**/*.smb -whitespace -diff
 results/**/*.usda -whitespace

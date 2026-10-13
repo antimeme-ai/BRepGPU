@@ -1,0 +1,17 @@
+# Literature still to acquire
+
+These sources need fuller inspection before their assumptions can enter the
+implementation design. Abstracts, metadata and slides are labeled in the reports.
+
+| Source | Gap | Primary link |
+| --- | --- | --- |
+| Valasek/Horváth 2026, register-efficient Bernstein evaluation | Publisher full text read; standalone PDF not acquired | [DOI](https://doi.org/10.1111/cgf.70403) |
+| Krishnamurthy 2010 GPU NURBS dissertation | PDF acquisition blocked | [University repository](https://escholarship.org/uc/item/59n1g12w) |
+| Hu et al. 1997, robust interval surface intersections | Publisher abstract read; full text needed | [DOI](https://doi.org/10.1016/S0010-4485(96)00099-1) |
+| Huang/Hu/Martin 2005, degree elevation and knot insertion | Free PDF inspected via browser; direct acquisition timed out | [Author archive PDF](https://archive.ymsc.tsinghua.edu.cn/pacm_download/12/444-cagd_2005_degree.pdf) |
+| Piegl/Tiller, The NURBS Book | Book access needed | [Publisher](https://doi.org/10.1007/978-3-642-59223-2) |
+
+The [topology acquisition list](gpu-topology-shopping-list.md) adds seven
+surface-intersection, Boolean, overlap and watertightness articles. The
+[numerical manifest](gpu-numerics-acquisitions.tsv) records acquired PDFs and
+attempts separately. No access requests have been sent.
