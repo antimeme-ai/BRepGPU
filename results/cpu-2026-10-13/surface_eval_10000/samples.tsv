@@ -1,0 +1,7 @@
+sample	warmup	status	phase	wall_ms	cpu_ms	validation_ms	worker_max_rss_mib	detail
+0	1	pass	validation 0	29.158318	29.129851	34.628257	109.125	calls=10000; analytic bicubic Bernstein points
+1	0	pass	validation 1	27.044385	27.010701	34.433471	109.125	calls=10000; analytic bicubic Bernstein points
+2	0	pass	validation 2	25.414825	25.341999	34.938879	109.125	calls=10000; analytic bicubic Bernstein points
+3	0	pass	validation 3	25.098883	25.094426	34.522065	109.125	calls=10000; analytic bicubic Bernstein points
+4	0	pass	validation 4	22.820818	22.831418	33.89961	109.125	calls=10000; analytic bicubic Bernstein points
+5	0	pass	validation 5	24.570988	24.554855	34.820649	109.125	calls=10000; analytic bicubic Bernstein points

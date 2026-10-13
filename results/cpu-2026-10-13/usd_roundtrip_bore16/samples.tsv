@@ -1,0 +1,7 @@
+sample	warmup	status	phase	wall_ms	cpu_ms	validation_ms	worker_max_rss_mib	detail
+0	1	pass	validation 0	32.81984	32.821478	399.047285	109.125	volume=23897.41601; faces=22; edges=60; vertices=40; nonplanar_faces=16; file_bytes=25717
+1	0	pass	validation 1	4.767146	4.771043	319.285159	109.125	volume=23897.41601; faces=22; edges=60; vertices=40; nonplanar_faces=16; file_bytes=25717
+2	0	pass	validation 2	4.616938	4.620644	318.843533	109.125	volume=23897.41601; faces=22; edges=60; vertices=40; nonplanar_faces=16; file_bytes=25717
+3	0	pass	validation 3	4.735674	4.739202	324.088128	109.125	volume=23897.41601; faces=22; edges=60; vertices=40; nonplanar_faces=16; file_bytes=25717
+4	0	pass	validation 4	4.931114	4.935004	325.162882	109.125	volume=23897.41601; faces=22; edges=60; vertices=40; nonplanar_faces=16; file_bytes=25717
+5	0	pass	validation 5	5.479591	5.477852	319.116902	109.125	volume=23897.41601; faces=22; edges=60; vertices=40; nonplanar_faces=16; file_bytes=25717

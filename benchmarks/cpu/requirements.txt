@@ -1,0 +1,2 @@
+# Authorized standalone benchmark runtime; no optional dependencies.
+usd-brep==1.0.0 --hash=sha256:691e9f8186878c3a68aabd1bded27c92b7dd2fd9b03ace2f729b459053711d0e

@@ -1,0 +1,7 @@
+sample	warmup	status	phase	wall_ms	cpu_ms	validation_ms	worker_max_rss_mib	detail
+0	1	pass	validation 0	5.215318	5.219817	3.943521	109.125	volume=5974.24777961; faces=7; edges=15; vertices=10
+1	0	pass	validation 1	4.512832	4.516937	3.959472	109.125	volume=5974.24777961; faces=7; edges=15; vertices=10
+2	0	pass	validation 2	4.781169	4.785099	3.792832	109.125	volume=5974.24777961; faces=7; edges=15; vertices=10
+3	0	pass	validation 3	4.495036	4.498963	3.882075	109.125	volume=5974.24777961; faces=7; edges=15; vertices=10
+4	0	pass	validation 4	4.486849	4.49064	3.978448	109.125	volume=5974.24777961; faces=7; edges=15; vertices=10
+5	0	pass	validation 5	4.682735	4.686831	3.896755	109.125	volume=5974.24777961; faces=7; edges=15; vertices=10

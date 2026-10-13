@@ -1,0 +1,22 @@
+key	value
+started_utc	2026-10-13T20:52:03.393859+00:00
+host	withheld
+platform	Linux-6.8.0-146-generic-x86_64-with-glibc2.39
+python	3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]
+usd_brep	1.0.0
+cpu_affinity	22
+load_start	(3.232421875, 3.0322265625, 2.23681640625)
+repeats	5
+warmups	1
+timeout_seconds	180.0
+cuda_visible_devices	empty
+thread_settings	OMP/OPENBLAS/MKL=1; affinity controls all native threads
+cpu_model	Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+driver_sha256	564f1b0e5176a624a2918e834be726dfcffc78f21f6ec16814a7240255b25620
+wheel_file	usd_brep-1.0.0-cp312-cp312-manylinux_2_34_x86_64.whl
+wheel_sha256	691e9f8186878c3a68aabd1bded27c92b7dd2fd9b03ace2f729b459053711d0e
+wheel_source	https://pypi.org/project/usd-brep/1.0.0/
+empty_wall_clock_median_ns	67.0
+thread_siblings_list	22,46
+core_id	13
+physical_package_id	0

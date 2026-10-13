@@ -1,0 +1,7 @@
+sample	warmup	status	phase	wall_ms	cpu_ms	validation_ms	worker_max_rss_mib	detail
+0	1	pass	validation 0	14.458318	14.464217	86.924061	109.125	batch=3; volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4
+1	0	pass	validation 1	13.580935	13.586107	96.763685	109.125	batch=3; volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4
+2	0	pass	validation 2	17.145429	17.151388	109.017853	109.125	batch=3; volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4
+3	0	pass	validation 3	17.198331	17.204161	108.404192	109.125	batch=3; volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4
+4	0	pass	validation 4	17.143549	17.142806	108.4568	109.125	batch=3; volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4
+5	0	pass	validation 5	17.127122	17.125919	96.086796	109.125	batch=3; volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4 | volume=188.495558829; faces=4; edges=6; vertices=4

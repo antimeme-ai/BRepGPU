@@ -1,0 +1,9 @@
+filename	source	acquired_utc_date	sha256	note
+yang-jia-yan-2023-topology-guaranteed-slides.pdf	https://yangjieyin.github.io/homepage/ACMTOG2023/SIGA23-slides.pdf	2026-10-13	c14d21da8be9fa6463d3d98e407360dfda47614b096f7d8f26a06d7c38efde4c	Author slides; full article not acquired
+yang-et-al-2025-hybrid-cad-booleans-slides.pdf	https://yangjieyin.github.io/homepage/SIG2025/SIG25_slides.pdf	2026-10-13	cdccd2a54a95ae795a0ac3348f144691209751cdba4734d90d39eb3e99660e2a	Author slides; repository full article returned HTML and was discarded
+yang-jia-2025-overlap-region-slides.pdf	https://yangjieyin.github.io/homepage/SIGA2025/SigA25-slides.pdf	2026-10-13	3dad602b18cde74ab01c5749a857df4b4a05842b10957a5b67f223e9b128648f	Author slides; full article not acquired
+gao-lin-li-2026-mapper-2604.12631v1.pdf	https://arxiv.org/pdf/2604.12631v1	2026-10-13	516d5e8c96f56378a49539ef52253402e3b078b4dcb0100e067ad16418f55ecf	Preprint v1; acquired direct
+levy-2025-exact-predicates-constructions-mesh-csg.pdf	https://arxiv.org/pdf/2405.12949	2026-10-13	f5a571dc59acfa9847719dd507d8215623e6cec06c73172fbecb29dba1c5f235	Previously acquired preprint; copied unchanged
+guo-fu-2024-exact-efficient-intersection-mesh-arrangements.pdf	https://mangoleaves.github.io/projects/mesh-arrangements/	2026-10-13	06282710dcb27d52aa01d1496ac02355ed13cc62705e286387783f9a6ded81a1	Previously acquired author manuscript; project links PDF
+valque-lazard-2025-resolving-self-intersections-floating-point.pdf	https://inria.hal.science/hal-04907149/document	2026-10-13	3029a0d6dc0c25837ec7516edac25386d594c32605e6c23624d24de70959ab40	Previously acquired author preprint; earlier title Removing self-intersections
+zhou-et-al-2016-mesh-arrangements-solid-geometry.pdf	https://www.cs.columbia.edu/cg/mesh-arrangements/	2026-10-13	9584b03d52173fb7427c52e2f9d801417b0e32f98125d91758b34310f0970a08	Previously acquired author manuscript; project links PDF

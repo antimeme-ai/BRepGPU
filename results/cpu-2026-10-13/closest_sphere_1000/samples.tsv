@@ -1,0 +1,7 @@
+sample	warmup	status	phase	wall_ms	cpu_ms	validation_ms	worker_max_rss_mib	detail
+0	1	pass	validation 0	25.398658	25.405996	4.507382	109.125	calls=1000; analytic radial closest points
+1	0	pass	validation 1	24.670886	24.677749	4.530325	109.125	calls=1000; analytic radial closest points
+2	0	pass	validation 2	24.731274	24.740636	4.555888	109.125	calls=1000; analytic radial closest points
+3	0	pass	validation 3	24.595591	24.602052	4.875142	109.125	calls=1000; analytic radial closest points
+4	0	pass	validation 4	26.572026	26.578883	4.913717	109.125	calls=1000; analytic radial closest points
+5	0	pass	validation 5	26.637	26.635972	4.950225	109.125	calls=1000; analytic radial closest points

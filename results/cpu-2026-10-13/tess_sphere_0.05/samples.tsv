@@ -1,0 +1,2 @@
+sample	warmup	status	phase	wall_ms	cpu_ms	validation_ms	worker_max_rss_mib	detail
+0	1	oracle_mismatch	validation 0	141.268507	141.272433		109.125	AssertionError: sphere triangle violates radial bound: radius=9.942606814692091; chord=0.05

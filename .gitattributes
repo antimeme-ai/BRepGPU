@@ -1,0 +1,4 @@
+# Preserve generated evidence exactly, including CSV line endings and model spacing.
+results/**/*.tsv -whitespace
+results/**/*.smb -whitespace -diff
+results/**/*.usda -whitespace
