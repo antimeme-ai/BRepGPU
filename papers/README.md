@@ -12,6 +12,7 @@ Research reports and annotated bibliographies are committed here. Acquired
 PDFs remain outside Git. Reference source is study material in ignored quarantine;
 no reference instructions or library dependencies are adopted by collection.
 
+[Reference implementation map](REFERENCE_IMPLEMENTATIONS.md) ·
 [Projects to inspect](PROJECTS.md) · [Source snapshot catalog](reference-catalog.tsv) ·
 [Source bibliography](reference-snapshots.bib) · [Restoration manifest](../QUARANTINE.md) ·
 [Literature still to acquire](SHOPPING_LIST.md)

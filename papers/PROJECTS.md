@@ -1,5 +1,10 @@
 # Projects to inspect
 
+[Reference implementations by kernel responsibility](REFERENCE_IMPLEMENTATIONS.md)
+maps mature B-rep kernels, spline/evaluator code, actual CUDA NURBS work,
+arrangements and GPU execution primitives to the stages of BRepGPU. It includes
+additional verified leads beyond the acquired snapshots listed below.
+
 Collected and inspected 2026-10-13. These are references for algorithms,
 contracts, workloads and interaction. Inclusion does not select a dependency,
 establish correctness or imply a shared license. Source revisions and archive
