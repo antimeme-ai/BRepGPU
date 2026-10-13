@@ -1,0 +1,12 @@
+target	check	tests	inapplicable	outcome
+cpu0	public-caller-and-geometry	27	1	pass
+cuda0	public-caller-and-geometry	27	0	pass
+cuda0	device-memcheck-and-leak	27	0	pass
+cuda1	public-caller-and-geometry	27	0	pass
+cuda1	device-memcheck-and-leak	27	0	pass
+native-asan-ubsan	callback-model-admission-close	1	0	pass
+native-asan-ubsan	callback-model-publication-oom	1	0	pass
+native-asan-ubsan	callback-model-cleanup-fatal	1	0	pass
+native-asan-ubsan	callback-model-download-fatal	1	0	pass
+native-asan-ubsan	callback-model-restore-failure	1	0	pass
+native-asan-ubsan	callback-model-publication-oom-fatal-cleanup	1	0	pass

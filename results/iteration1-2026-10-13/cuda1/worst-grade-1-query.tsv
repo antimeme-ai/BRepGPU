@@ -1,0 +1,2 @@
+fixture	p	q	query_index	order	s_hex	t_hex	term	axis	observed_hex	expected_numerator_hex	expected_denominator_hex	error	oracle	status
+degree_0_3_cancellation	0	3	93	1	0x1.0000000000000p-1	0x1.fffffffffffffp-1	St	0	-0x1.7fffffffffb83p+10	-17fffffffffffd00000000000018000000000000000000000000000000000000000000000000000000	40000000000bf4000000008e214fffffffee27ea00000000ee20effffffffa0bfa000000000fe01	3.410605131314346e-13	binary-input	0
