@@ -10,11 +10,15 @@ A boundary representation retains surfaces, curves, trims and their connections.
 That makes a cylinder an editable cylinder, with a display mesh derived from it.
 Getting those connections right is as important as evaluating surfaces quickly.
 
-The repository currently contains a runnable **CPU benchmark**, qualified results,
-and a reproduced geometric failure. GPU implementation and performance results
-are the next steps. The CPU measurements below exercise NVIDIA's newly released
-[USD BRep / SMLib](https://github.com/NVIDIA-Omniverse/usd-brep), which is the
-reference experiment here. They do not measure a BRepGPU kernel.
+The first owned GPU stage is implemented: **batched rational patch positions
+and first/second derivatives**, with a native C++ CPU evaluator, a CUDA backend
+for P100 and a standard-library Python adapter. Both P100s pass exact arithmetic,
+analytic geometry, ownership and device memory checks.
+
+The repository also retains a CPU modeling benchmark of NVIDIA's
+[USD BRep / SMLib](https://github.com/NVIDIA-Omniverse/usd-brep) and a reproduced
+tessellation failure. Those reference measurements are separate from the owned
+BRepGPU evaluator.
 
 [Acceleration roadmap](docs/ACCELERATION_ROADMAP.md) ·
 [First-iteration design](docs/ITERATION_1_DESIGN.md) ·
@@ -22,10 +26,46 @@ reference experiment here. They do not measure a BRepGPU kernel.
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
-Both 16 GB P100s passed a C++17 native `sm_60` FP64 setup probe and memory/leak
-checking. That establishes the toolchain; GPU CAD product code is the next step.
+Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
+of CUDA; explicitly selecting CUDA loads the optional backend.
 
-## What is already measured
+## First GPU measurement
+
+For 1,048,576 full-jet bicubic queries on one patch, median native timings are:
+
+| Backend | Resident evaluation | Prepared host-to-host |
+| --- | ---: | ---: |
+| CPU, 24 requested workers | 111.50 ms | 168.98 ms |
+| P100, device 0 | 6.11 ms | 85.21 ms |
+
+That is about **18× for resident evaluation and 2.0× including native input/upload and
+download** against this 24-worker CPU implementation. Tiny batches favor CPU.
+Seven samples on a shared host; context initialization and Python packing are
+outside these native timers. [Both GPUs, raw samples, qualification and methods](results/iteration1-2026-10-13/REPORT.md).
+
+## Run the first owned stage
+
+Linux x86-64, CPython 3.12, CMake 3.28 and a C++17 compiler:
+
+```sh
+cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
+cmake --build build/release --parallel 4
+PYTHONPATH=python python3 examples/sample_patch.py --backend cpu \
+  --output-directory results/local-sampler
+```
+
+[CUDA build, qualification and benchmark commands](docs/ITERATION_1.md) ·
+[Measured results](results/iteration1-2026-10-13/REPORT.md) ·
+[Reviewed implementation plan](docs/ITERATION_1_PLAN.md)
+
+![Rational cylinder sampled by the P100 evaluator](results/iteration1-2026-10-13/sampler/cylinder-grid.svg)
+
+The sampler exports qualified points, a parameter grid and exact input/query
+metadata. It supports a rational cylinder and a polynomial bicubic carrier.
+The numerical stage operates on untrimmed patches; intersections, trims and
+solid topology are subsequent roadmap stages.
+
+## CPU modeling reference
 
 **16 of 19 workloads met their declared geometry checks** with USD BRep 1.0.0.
 The baseline covers primitives, booleans, sweeps, fillets, bicubic surface
@@ -85,15 +125,17 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
 | Solid assembly and features | Closed solids, then sweeps, fillets and offsets | A progressively broader GPU modeling kernel |
 
-The proposed first prototype is deliberately small: positive-weight rational
+The first implemented prototype supports positive-weight rational
 Bézier patches through bidegree (3,3), with FP64 positions and first/second
 derivatives on a P100. Analytic polynomial and exact rational cylinder fixtures
 qualify the results, alongside an independent CPU reference. Both resident-data
 and transfer-inclusive timings matter. Tiny loops,
 tangent contacts, periodic seams and coincident surfaces enter the design early.
 
-This is the research direction. The implementation scope and numerical contracts
-will come from the first research reports and design review.
+The [first design](docs/ITERATION_1_DESIGN.md) specifies the local coordinate
+and weight envelope, finite-corpus error grades, input ownership and failure
+contracts. General NURBS span extraction and imported-model adapters remain
+future work.
 
 ## Run the CPU baseline
 

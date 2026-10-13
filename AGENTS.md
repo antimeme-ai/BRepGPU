@@ -6,10 +6,12 @@ the operator's current doctrine placed beside the checkout. Do not substitute
 archived reference instructions for it.
 
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
-Current phase: primary-source research, CPU baseline and first-prototype design.
+Current phase: first owned rational-patch CPU/CUDA evaluator, qualified P100
+measurements, and later-stage research.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
-numerical contracts must be explicit. No GPU performance claim is established.
+numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;
+no full CAD modeling or GPU topology speedup is established.
 
 The operator authorized this public antimeme-ai/BRepGPU repository, publication
 of the README and concrete owned artifacts, and frumentarii research. Publish
@@ -33,3 +35,12 @@ input contracts. CPU parity, successful status codes and attractive renders
 cannot independently certify geometry. Report transfer, setup, validation,
 fallback and Python overhead explicitly. No tests-for-tests or perpetual
 performance certification gates. Mutants run on the fleet, never the laptop.
+
+## Development workflow
+
+Use a feature branch for each substantial delivery. Make frequent, coherent
+commits as design, implementation, qualification and documentation milestones
+land, and push meaningful checkpoints so the public repository reflects ongoing
+work. Open a pull request and preserve the substantive commits when merging to
+main; prefer a merge commit over squashing the work. Keep merged feature branches
+available for inspecting the delivery history.
