@@ -1,0 +1,7 @@
+# 2026-10-13: bounded seeded projection numerical research
+
+Read the active doctrine and repository instructions, then inspected pinned SISL local/edge/full closest-point routines, OCCT orthogonality and distance functions/root solvers, and public openNURBS six-jet/domain APIs. Reused intact existing archives and their restoration records. Acquired and read primary projection/optimization papers into ignored PDFs with provenance in `papers/projection-numerical-pdfs.tsv`. Corrected an acquisition whose misleading mirror filename contained the Schmidt/Kim/Sra chapter rather than Bertsekas; acquired the actual Bertsekas primary PDF separately.
+
+Sent early findings to integration and oracle/runtime owners: SISL local iteration is D1 Gauss–Newton despite its Newton name and does not certify a minimum; the inspected OCCT distance-gradient branch has a sign/scaling anomaly; clipped coupled Newton steps need a descent check; full-Hessian negative eigenvalues need feasibility checks at weak corners. Derived and directly checked a stable objective-change cancellation witness and the weak-corner quadratic counterexample.
+
+Wrote `papers/2026-10-13-projection-numerical-study.md` with explicit local-target/seed semantics, proposed bounded solver rules/caps, raw box-stationarity residual, independent classification and unresolved candidate behavior, range/error limitations, primary sources and direct mathematical qualification attacks. No product solver code, installation, dependency adoption, Git mutation or external communication was performed by this lane.
