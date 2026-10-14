@@ -1,0 +1,11 @@
+backend	device	threads	count	shape	phase	ms
+cuda	1	1	1024	polynomial	input_preparation	18.570722022559494
+cuda	1	1	1024	polynomial	context_first_use	522.4446119973436
+cuda	1	1	1024	polynomial	patch_pack_snapshot_upload	0.49599696649238467
+cuda	1	1	1024	polynomial	query_pack_snapshot_upload	1.1433339677751064
+cuda	1	1	1024	polynomial	resident_project	0.8971439674496651
+cuda	1	1	1024	polynomial	download_allocate_and_host_provenance	0.35188201582059264
+cuda	1	1	1024	polynomial	native_cleanup	62.989903963170946
+cuda	1	1	1024	polynomial	independent_exact_qualification	1209.9398029968143
+cuda	1	1	1024	polynomial	record_export	15.53218497429043
+cuda	1	1	1024	polynomial	visual_export	5.244505009613931
