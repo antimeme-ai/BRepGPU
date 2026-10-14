@@ -72,7 +72,7 @@ and pair source behavior plus a known native position caller provide regression
 checks; unchanged native ASan/ABI/deep-cache campaigns are not repeated.
 Run direct production mutants after baseline green, isolated ignored source
 copies, on the fleet: omit component, ignore plate hole, break seam/span
-grouping and corrupt one source UV. Credit real oracle assertions, not imports,
+grouping, corrupt one source UV and reverse component traversal. Credit real oracle assertions, not imports,
 crashes or generic exceptions. Pin used sources/binaries in exported summaries.
 
 Benchmarks/intersections/run.py compares both literal cases at resolutions65
@@ -116,6 +116,15 @@ Batch also retains actual source_descriptors (136*P bytes), native_slots
 downloaded source buffers after checks, enabling independent source qualification
 and concrete exports. Empty no-query batches have all four artifacts empty;
 they do not fabricate native provenance. No new native call or ABI is needed.
+
+Independent qualifier reads the actual prepared request as well as batch:
+qualify_batch(batch,request) binds count/order/IDs/exact common parameters and
+source values to those submitted candidates, then independently proves map/
+graph/native truth. Its one-argument form establishes submitted-row validity
+only. Physical component order is checked after collapsing adjacent duplicate
+span occurrences. Resource tests use genuine narrow subnormal-offset geometry
+with scoped lower preparation budgets and verify recovery under defaults;
+they do not claim the production4096-step limit was reached.
 
 ## Publication and return pass
 

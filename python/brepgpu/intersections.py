@@ -2,6 +2,7 @@
 
 Construction is CPU work. Immutable records expose spatial and both original
 UV maps; representation occurrences are distinct from physical graph spans.
+Python construction/conversion assumes round-to-nearest and gradual underflow.
 """
 from dataclasses import dataclass
 from fractions import Fraction
@@ -168,7 +169,8 @@ class Scalar:
             raise OverflowError("exact scalar exceeds finite binary64")
         if not self.b:
             # Exact integer quantization, including gradual subnormal spacing.
-            # This does not rely on the calling thread's FP rounding mode.
+            # Numeric quantization is integer; float decoding assumes the
+            # declared round-to-nearest/gradual-underflow environment.
             numerator, denominator = self.a.numerator, self.a.denominator
             if not numerator:
                 return 0., 0.

@@ -14,6 +14,11 @@ apply positive power-of-two scale; they do not rotate. Supported plane domains
 are the existing closed rectangle, disk and rectangle-minus-open-disk. The
 wall is its closed finite-height cylindrical surface with four rational charts.
 Coordinates are interpreted as exact binary64 rationals, including subnormals.
+Supported Python execution uses round-to-nearest/ties-even and gradual
+underflow, as in the qualified CPython/native environment. Integer root/sign/
+quantization work does not establish arbitrary FTZ/DAZ environment support;
+Python float-to-Fraction decoding and float equality retain this execution
+precondition. A future environment-independent decoder is separate work.
 
 The body-facing convenience operation is
 `snapshot.intersect_faces(face_id, other_snapshot, other_face_id)`. It constructs
