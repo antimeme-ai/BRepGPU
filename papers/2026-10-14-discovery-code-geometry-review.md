@@ -112,3 +112,9 @@ The native numerical check passed and constant-third public case passed CPU
 and both P100s. Full public/sanitizer and compatibility results will be appended
 after root supplies actual outcomes. No speedup or final hardware qualification
 is inferred from source review alone.
+
+Root's later execution report: both P100 full58-method public memcheck runs
+passed with0 errors/leaks,9/9 production mutants were killed, and23 actual
+compatibility combinations passed77,280 jet component checks and34 discovery
+attempts. CPU ASAN exact standalone qualification also passed309 rows.
+These are reported target outcomes, distinct from this source review.

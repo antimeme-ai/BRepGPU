@@ -1,0 +1,13 @@
+metric	value
+requests	1024
+nodes	511
+bound_cache_doubles	10220
+gap	0
+unresolved	1024
+coverage	1024
+visit_limit	0
+refinement_limit	0
+maximum_descriptive_error_point_0	1.1102230246251565e-16
+maximum_descriptive_error_point_1	2.220446049250313e-16
+maximum_descriptive_error_point_2	1.3530810381877848e-16
+maximum_descriptive_error_approximate_distance	1.543055954363678e-17

@@ -1,0 +1,15 @@
+backend	device	threads	count	shape	mode	depth	phase	ms
+cpu	0	24	1024	cylinder	dop26	8	input_preparation	19.97119700536132
+cpu	0	24	1024	cylinder	dop26	8	context_first_use	1.8771920003928244
+cpu	0	24	1024	cylinder	dop26	8	patch_pack_snapshot_upload	0.13890297850593925
+cpu	0	24	1024	cylinder	dop26	8	hierarchy_cpu_build_upload	5.347802012693137
+cpu	0	24	1024	cylinder	dop26	8	actual_hierarchy_download	0.23183797020465136
+cpu	0	24	1024	cylinder	dop26	8	independent_exact_cache_qualification	1533.9244659990072
+cpu	0	24	1024	cylinder	dop26	8	query_pack_snapshot_upload	0.7941239746287465
+cpu	0	24	1024	cylinder	dop26	8	resident_discover	6.125006009824574
+cpu	0	24	1024	cylinder	dop26	8	download_allocate_host_provenance	0.38192805368453264
+cpu	0	24	1024	cylinder	dop26	8	native_cleanup	0.0492790131829679
+cpu	0	24	1024	cylinder	dop26	8	independent_exact_result_qualification	716.7609939933755
+cpu	0	24	1024	cylinder	dop26	8	record_export	34.66632304480299
+cpu	0	24	1024	cylinder	dop26	8	owned_geometry_svg_export	14.722481020726264
+cpu	0	24	1024	cylinder	dop26	8	caller_total_through_svg	2335.1465560263023

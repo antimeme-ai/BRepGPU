@@ -1,0 +1,8 @@
+metric	value	backend	device	threads
+requests	309	cpu	0	24
+hierarchy_nodes_checked	11415	cpu	0	24
+violations	0	cpu	0	24
+maximum_descriptive_error_point_0	1.2988750510536969e-16	cpu	0	24
+maximum_descriptive_error_point_1	1.4239306674431535e-16	cpu	0	24
+maximum_descriptive_error_point_2	1.355990959911673e-16	cpu	0	24
+maximum_descriptive_error_approximate_distance	5.327775675802198e-16	cpu	0	24

@@ -46,3 +46,21 @@ shared CPU build/eight discovery relinks and up to 1–2 minutes for two small s
 probe compilations/executions, subject to compiler/load. These are planning
 estimates, not measured timings. Authoritative product files, retained libraries,
 benchmark/caller/compatibility lanes and archived reference material remain untouched.
+
+## Actual integration outcome
+
+Integration reported successful qualified-fleet execution of the prepared runner:
+all nine actual production mutants were killed, all associated unmutated baselines
+passed, and there were no build, loader or other infrastructure failures. The actual
+per-mutant exits and logs are preserved under ignored
+`context/discovery/production-mutants-2026-10-14/`; authoritative product sources
+and retained baselines were unchanged. This entry attributes execution to
+integration; the numerical owner performed source preparation/review only.
+
+The killed fault classes are reversed outward subdivision endpoints, removal of
+CPU outward primitive rounding, rounded descriptive distance substituted for the
+root upper witness, DOP normal norm/sign errors, negative Bernstein C0 clipping,
+inactive padding evaluation, partial lower after visit cap, and equality pruning
+in the actual CUDA shared discovery algorithm. Concrete primary log messages
+belong in the published qualification table after integration reads the actual
+per-mutant evidence; source-predicted failure reasons are not substituted for logs.

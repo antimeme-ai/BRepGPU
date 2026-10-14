@@ -94,3 +94,18 @@
   outward arithmetic, rounded witness upper, DOP norm/sign, negative Bernstein
   C0, inactive padding and capped lower; a real CUDA constant-zero query killed
   equality pruning. Authoritative source and preserved binaries were untouched.
+- The final standalone corpus at the retained current oracle source passed on
+  CPU24 and each P100: 309 rows/11,415 actual nodes per backend, zero violations.
+  The additive caller-only known-global lower option preserves the existing
+  standalone flat/root reduction by default.
+- The real point-cloud caller passed all 24 batches across CPU24 and both
+  P100s: 24,576 actual returned UV witnesses, actual complete caches, analytic
+  global brackets and gap/coverage/cap checks. Directly measured caller wall
+  scope includes setup, exact qualification and records/SVG export; it is a
+  single caller receipt, not a native benchmark median.
+- The finer curved clouds remain unresolved at depth8 despite valid brackets.
+  Native coarse dyadic target sites align with tree boundaries and can give
+  Bernstein unusually tight gaps. Added independently reviewed odd/64 off-grid
+  cylinder/axis corpora to the measured study; their exact analytic squared
+  distances need at most 32 significant numerator bits. Retain alignment and
+  repeated-input scope in published precision interpretations.

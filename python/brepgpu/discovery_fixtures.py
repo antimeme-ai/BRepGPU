@@ -348,8 +348,12 @@ def qualify_hierarchy(fixtures,batch,depth,mode):
     return issues,HierarchyOracle(fixtures,tuple(truth),roots,tuple(tuple(x) for x in leaves),mode)
 
 
-def qualify_row(case,values,status,flags,visits,pruned,refinements,evaluations,oracle,slot):
-    """Direct interval truth; every certificate comparison is exact, no epsilon."""
+def qualify_row(case,values,status,flags,visits,pruned,refinements,evaluations,oracle,slot,*,check_flat_lower=True):
+    """Exact certificates; callers with analytic truth can omit recipe-floor check.
+
+    Cache/standalone conformance retains the flat method-specific lower check.
+    A known-global caller instead checks its actual lower against analytic truth.
+    """
     errors=[];metrics={}
     if len(values)!=8:return ["field count differs"],metrics
     if status not in (0,1):return ["valid discovery case failed status "+str(status)],metrics
@@ -363,8 +367,11 @@ def qualify_row(case,values,status,flags,visits,pruned,refinements,evaluations,o
     lower,upper=map(ratio,values[6:8]);point,distance=exact_distance(case.fixture,case.target,values[:2])
     if not 0<=lower<=upper:errors.append("invalid bracket")
     if upper<distance:errors.append("upper misses exact original-UV distance")
-    limit=oracle.lower_limit(slot,case.target,bool(flags&VISIT_LIMIT))
-    if lower>limit:errors.append("lower exceeds independent flat/root bound")
+    if check_flat_lower:
+        limit=oracle.lower_limit(slot,case.target,bool(flags&VISIT_LIMIT))
+        if lower>limit:errors.append("lower exceeds independent flat/root bound")
+    elif case.distance_answer is None:
+        raise ValueError("omitting flat lower qualification requires exact analytic global truth")
     if case.distance_answer is not None:
         global_distance=ratio(case.distance_answer)
         if not lower<=global_distance<=upper:errors.append("bracket misses analytic global minimum")

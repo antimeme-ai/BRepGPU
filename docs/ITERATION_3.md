@@ -14,7 +14,22 @@ No modeling-task or full B-rep kernel speedup follows from this query operation.
 
 ## Call the operation
 
-After building the CPU core or optional CUDA backend:
+Use the [native build instructions](ITERATION_2.md) and the
+[qualified CUDA toolchain](CUDA_TOOLCHAIN.md). For a CPU-only discovery build:
+
+```sh
+cmake -S . -B build/discovery-release -DCMAKE_BUILD_TYPE=Release \
+  -DBREPGPU_ENABLE_CUDA=OFF
+cmake --build build/discovery-release --parallel 4
+export BREPGPU_LIBRARY="$PWD/build/discovery-release/libbrepgpu.so"
+export PYTHONPATH="$PWD/python"
+```
+
+Keep that environment setting for the Python example and qualification commands
+below; it selects the new core explicitly. For CUDA, configure the same folder
+with the optional backend enabled as described in the linked build guide.
+
+Then call the operation:
 
 ```python
 from brepgpu import Engine, Patch, HierarchyOptions, DiscoveryOptions
@@ -81,6 +96,11 @@ and [independent oracle study](../papers/2026-10-14-strong-bounds-oracle-study.m
 record the computational-geometry sources and their admitted assumptions.
 These are owned implementations, without adopting reference libraries.
 
+CUDA query input uses 28 bytes per row, and compact output uses 88 bytes per
+row. The hierarchy/cache upload is preprocessing. These transfer sizes describe
+same-machine host RAM to/from GPU VRAM over PCIe, rather than network traffic.
+Python snapshots and provenance add separately measured host copying costs.
+
 ## Interpret an answer
 
 For a valid row, `batch.bracket(i)` returns `(L2, U2)` with
@@ -114,8 +134,9 @@ calls for a valid row.
 
 ## Ownership and budgets
 
-Hierarchy creation snapshots patch data; query creation snapshots patch slots
-and targets. Results retain original descriptors, slots, targets and both option
+Patch creation snapshots controls; the hierarchy retains that immutable patch
+snapshot. Query creation snapshots patch slots and targets. Results retain
+original descriptors, slots, targets and both option
 records. Closing a parent resource does not invalidate an already published
 child. Closing the context invalidates its shared handle graph. The API exports
 packed node IDs and dyadic cell/source identity rather than device pointers.

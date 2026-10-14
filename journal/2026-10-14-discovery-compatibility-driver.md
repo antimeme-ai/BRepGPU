@@ -26,3 +26,9 @@
   protected adapter sources cannot create __pycache__ inside baselines. Legacy
   extraction uses exclusive creation, and each compatibility worker has a60s
   timeout. No baseline is rebuilt, overwritten or used as an output directory.
+- Parent executed the actual fleet matrix with explicit current source revision
+  7ae27e8e5a7753549efec258155bdac7a2f29f9b. Retained compatibility.tsv confirms
+  all23 rows PASS,77,280 exact jet-component checks and34 discovery attempts:
+  28 nonfatal unsupported attempts and6 successful gap-certificate attempts.
+  Parent reports protected hashes unchanged. No performance measurement or
+  hardware transient-failure claim follows from these compatibility cases.
