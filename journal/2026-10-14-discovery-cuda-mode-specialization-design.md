@@ -16,3 +16,8 @@
 - No product/performance-source edits, builds, target execution, deployment,
   dependencies or Git mutations. Current CPU1 measurements remain undisturbed;
   any implementation follows design/plan disposition.
+- Independent numerical and callback reviews accepted the corrected proposal.
+  Made raw-buffer comparison explicit; rejected invalid retained modes before
+  allocation even for empty requests; described the unchanged CUDA stream-event
+  bracket honestly, including a possible submission gap. No arithmetic, ABI or
+  ownership blocker remains. Implementation-plan preparation follows.
