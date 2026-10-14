@@ -1,0 +1,7 @@
+group	suite
+focused-families	test_body
+focused-families	test_projection
+focused-families	test_qualification
+focused-families	test_runtime
+focused-families	test_pairs
+focused-families	test_discovery_modes

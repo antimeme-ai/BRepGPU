@@ -1,0 +1,27 @@
+field	value
+python	3.12.3
+machine	x86_64
+libc	glibc 2.39
+g++	g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+cmake	cmake version 3.28.3
+nvcc	Cuda compilation tools, release 12.8, V12.8.93
+gpu_0	Tesla P100-PCIE-16GB
+gpu_0_memory_MiB	16384
+gpu_0_capability	6.0
+gpu_0_driver	580.178.04
+gpu_1	Tesla P100-PCIE-16GB
+gpu_1_memory_MiB	16384
+gpu_1_capability	6.0
+gpu_1_driver	580.178.04
+CPU(s)	48
+Model name	Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+Thread(s) per core	2
+Core(s) per socket	12
+Socket(s)	2
+cuda_architecture	60-real
+cuda_math_flags	FMA off; FTZ off; precise division/sqrt
+host_scope	shared, unreserved; no affinity or clock control
+owned_overlap	serial builds/checks/callers/trials
+performance_profile_events	0
+protected_discovery_libbrepgpu.so_sha256	3515b86d0aad1f4bac816b8cc720e2f9452759f2806b6e1938854eaf4fb355de
+protected_discovery_libbrepgpu_cuda.so_sha256	8a6a861c17c7c2c22a0fafe40ce8cc2b46b33272322c8b48af9ce5af24d27efe

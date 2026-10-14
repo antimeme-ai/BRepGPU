@@ -8,6 +8,8 @@ The owned [patch evaluator](ITERATION_1.md), [resident seeded projection](ITERAT
 and [automatic conservative patch discovery](ITERATION_3.md) are implemented.
 The first [body snapshot and sampling/normal consumer](BODY_SAMPLING.md) is
 also implemented and independently qualified on CPU and both P100s.
+The [surface-pair beachhead](PAIR_DISCOVERY.md) adds common-world carrier culling
+and retained typed identities, with CPU/P100 complete-shortlist measurements.
 Their reviewed designs/plans define the qualified support
 contracts; the [topology design](TOPOLOGY.md) explains how subsequent solid
 operations avoid pointer-defined identity.
@@ -36,7 +38,7 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Major theme | First working beachhead | Direct correctness claim | Return pass |
 | --- | --- | --- | --- |
 | Numerical geometry | Delivered rational patch jets and seeded projection | Exact-input geometry/derivative and declared stationarity checks | Wider degrees/weights, extraction, solver strength and tuning |
-| Bounds and geometric queries | Delivered seed-free named-patch distance brackets; add conservative multi-patch pair culling in a common body frame | Valid brackets; no intersecting pair excluded in the admitted analytic corpus, with the exclusion rule justified over whole source domains | Cross-face trimmed proximity, off-grid strengthening and traversal scheduling |
+| Bounds and geometric queries | Delivered seed-free named-patch distance brackets and resident conservative chart-pair culling in a common world frame | Valid brackets; exact original-control/world enclosure and closed-box bit truth over whole carrier domains, explicit page coverage and retained identity | Cross-face trimmed proximity, sparse-scene pruning, off-grid strengthening and traversal scheduling |
 | Body storage and identity | Delivered CPU-built immutable packed box/cylinder/one-hole-plate snapshots and sampling/normal caller | Exact analytic/control identities, typed references, oriented loops, shared edge/coedge occurrences, declared frames and source correspondence | Incremental edits, persistent naming, broader body families and normal/row performance |
 | Model integration and interchange | One qualified reference-to-owned carrier path, with face/chart provenance and explicit unsupported faces; reproducible owned output records | Positions/derivatives agree under the established parameter map; trim preservation is checked separately and never inferred from carrier conversion | General NURBS extraction, wider import/export and cross-session identity |
 | Curves, trims and charts | Delivered line/closed-circle boundaries, planar faces with a hole and a cylindrical seam with distinct uses for the canonical body fixtures | Exact submitted-UV trim membership, loop closure and complete spatial-edge/UV identities | General trim curves, additional charts, poles and difficult parameterizations |
@@ -52,7 +54,7 @@ Each row is a theme, not one oversized implementation assignment. Rows naming
 several operations are delivered as separate conceptual units. In particular,
 extrusion/revolution do not imply fillet or offset support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
-Numerical geometry, single-patch bounds and the narrow body/trim/chart consumer
+Numerical geometry, single-patch bounds, pair culling and the narrow body/trim/chart consumer
 are delivered. The remaining
 beachheads are proposed; each needs its own researched design, reviewed plan,
 implementation and qualification.
@@ -83,9 +85,15 @@ The immutable body snapshot and part-level sampling/normal consumer are now
 They establish canonical body/trim/chart data, with independent exact-input
 checks on 14,358 actual caller records and 24 CPU/P100 cost comparisons. CPU
 normal/row construction dominates; no whole-caller gain is established against
-CPU24. That performance opportunity goes into the return pass. The next
-uncovered design unit is conservative multi-patch pair discovery in a common
-body frame, with source identity and explicit capacity/unresolved outcomes.
+CPU24. That performance opportunity goes into the return pass. Conservative
+surface-pair discovery is now [delivered](../results/pairs-2026-10-14/REPORT.md):
+879,840 chart pairs reduce to 1,823 survivors; complete cached shortlist medians
+are 9.63 ms CPU24 versus 6.92–7.78 ms P100. CPU1 wins tiny cases and cold setup
+favors CPU. The next uncovered unit is intersection initialization and spatial/
+UV representation on the existing analytic corpus. At the operator's explicit
+direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
+are notes for AFTER the broad-pass big rocks. They are not an active tuning lane
+and do not replace the theme sequence.
 The off-grid separated-bound proposal remains a return-pass experiment until a
 consumer shows that its precision or cost blocks a required output.
 
@@ -123,7 +131,8 @@ before general NURBS solid modeling is complete.
 | 2 — resident seeded projection, implemented | Refine provided seeds against supported local untrimmed patches and download first-order box-stationary or unresolved candidates | Bounded local solver, resident patch/query snapshots, compact candidates/status/rank/curvature/work counters, retained provenance and shared CPU/CUDA lifetime handling | 104 independently qualified projection rows per backend; actual native/public/memory checks. Compare CPU1/CPU24 and each P100 with named resident/host/Python costs; no minimum/global-distance guarantee |
 | 3a — automatic conservative patch discovery, implemented | Submit targets without UV seeds and obtain candidate witnesses plus squared-distance brackets on named untrimmed local patches | Outward homogeneous subdivision; reusable packed dyadic hierarchy; AABB, 26-DOP and rational Bernstein caches; original-input witness upper; separate precision/coverage/budget flags | Exact CPU/both-P100 cache/witness and coverage oracles, actual memory/compatibility/mutation checks and 24,576 actual caller witnesses; 444 native CPU1/CPU24/P100 cost/precision comparisons, including controlled off-grid inputs |
 | Body beachhead — implemented | Sample supported box/cylinder/one-hole-plate faces with exact trim labels, oriented normals and source identities | CPU immutable packed body records, shared line/circle edges, coedge/loop/chart relationships and one common body frame | Nine direct tests on CPU1/CPU24/both P100s; zero device sanitizer errors/leaks; four host-code mutants killed; 14,358 independently checked caller records and 24 complete-caller comparisons |
-| 3b — bounded approximation and pair discovery | Produce error-bounded meshes for a declared carrier/face family and filter large surface-pair sets | Reuse conservative bounds; add adaptive subdivision scheduling, shared-edge sampling, trim-aware face data and candidate pairs | Actual approximation bound, edge agreement and mesh embedding checks; every known intersecting pair survives culling. A fast preview grid is a different output contract |
+| Pair beachhead — implemented | Discover conservative carrier chart pairs over immutable body scenes in a common world frame | Exact outward world bounds; resident CPU/CUDA bit pages, explicit coverage and retained typed sources | 13 direct pair cases, 60 native sanitizer cases, 68 focused family tests per P100, preserved-binary/mutation checks and eight measured complete-shortlist cases |
+| 3b — bounded approximation | Produce error-bounded meshes for a declared carrier/face family | Reuse conservative bounds; add adaptive subdivision scheduling, shared-edge sampling and trim-aware face data | Actual approximation bound, edge agreement and mesh embedding checks. A fast preview grid is a different output contract |
 | 4 — regular surface intersection | Obtain all branches, including interior closed loops, in a declared transverse family with established regularity/separation bounds, with matching spatial and both UV curve representations | Branch/event graph, domain provenance, subdivision exclusions, coupled fitting and seam treatment | Known component counts/connectivity, residual bounds and coverage of the remaining domain; unestablished assumptions or unresolved boxes fail the complete operation. Finite sampling or one successful Newton path cannot establish completeness |
 | 5 — first owned curved Boolean | Cut/fuse/intersect a narrow analytic/low-degree solid family; topology may initially be assembled on CPU | Per-face arrangements, region classification, shared edge/coedge identities, transactional candidate body and history | Material membership, expected components/cavities, geometric correspondence and supported manifold topology; measure complete modeling tasks including CPU work |
 | 6 — GPU topology construction | Keep established Boolean stages resident and emit packed adjacency on GPU | Count/scan/fill, event grouping, arrangement construction, classification and snapshot publication | Semantic geometry/topology preserved across scheduling and compaction; actual end-to-end benefit on modeling workloads |
@@ -217,6 +226,6 @@ claims. The [discovery design](ITERATION_3_DESIGN.md) and
 [qualified operation](ITERATION_3.md) add three owned literature-informed bounds
 and exact original-input certificates; preprocessing, cache memory and achieved
 precision participate in method choice. Later rows remain proposed work:
-bounded approximation, pair/trim queries, complete intersections and solid/topology
+bounded approximation, trimmed proximity, complete intersections and solid/topology
 construction. Provenance and explicit identity are retained; none of the three
 numerical operations mutates topology.
