@@ -10,7 +10,9 @@ Implementation, independent code review and direct qualification are complete
 on the supported Linux x86-64 host and both P100s.
 [Retained qualification receipts](../results/discovery-2026-10-14/QUALIFICATION.md)
 include exact geometry, memory, compatibility, mutations and actual callers.
-Repeated native measurement is in progress. The [reviewed design](ITERATION_3_DESIGN.md) and
+The [444 native comparisons](../results/discovery-2026-10-14/REPORT.md) include
+CPU1, CPU24 and both P100s, with setup, transfers, work and attained precision.
+The [reviewed design](ITERATION_3_DESIGN.md) and
 [implementation plan](ITERATION_3_PLAN.md) specify the operation in detail.
 No modeling-task or full B-rep kernel speedup follows from this query operation.
 
