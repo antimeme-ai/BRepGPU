@@ -28,3 +28,7 @@
   only after those dispositions, then dispatched numerical/runtime/oracle plan
   reviews. Preserved actual existing v2 binaries and Python adapter privately
   on the qualified target before any rebuild for additive compatibility probes.
+- All numerical/runtime/oracle plan reviews accepted. Clarified the arithmetic-
+  free empty query path and binary tolerance validation before unsupported
+  exception modes. Opened implementation with canonical ABI declarations and
+  independent direct red cases, then the owned numerical/runtime lanes.
