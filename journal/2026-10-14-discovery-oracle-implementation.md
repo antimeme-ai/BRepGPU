@@ -12,3 +12,12 @@ Root owns fleet invocation of the absent capability red before numeric bodies.
 No native execution, deployment or Git mutation was performed locally. Runtime
 canonical new classes/accessors are pending; full exact restriction/cache/query
 and public qualification unit follows that handoff.
+
+Root executed the genuine first red on the qualified execution target using the
+old core/adapter: one test ran in0.018s and failed at missing
+Engine.create_hierarchy with AttributeError. Existing imports and native engine
+creation succeeded; this is actual missing-operation red, not an import error.
+Runtime supplied canonical new headers and Python method/options/accessor names.
+Started discovery_fixtures.py with exact power-basis restriction and objective
+convolution, exported-cache/topology and flat lower oracles, original-UV upper
+checks and analytic/cap corpus. No native solver/traversal replica is used.
