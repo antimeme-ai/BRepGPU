@@ -1,0 +1,13 @@
+field	value
+cpu_model	Intel Xeon E5-2697 v2 @ 2.70GHz
+cpu_sockets	2
+physical_cores_per_socket	12
+hardware_threads_per_core	2
+cuda_device_0	Tesla P100-PCIE-16GB
+cuda_device_1	Tesla P100-PCIE-16GB
+cuda_memory_mib_per_device	16384
+driver_version	580.178.04
+python_version	3.12.3
+cuda_native_architecture	sm_60
+native_binaries	Unchanged qualified Release core/plugin; hashes in benchmark/binaries.tsv
+execution_conditions	Shared host; no reserved CPUs/devices, affinity or clock control

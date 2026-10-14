@@ -1,0 +1,8 @@
+metric	value
+count	42250
+accepted	41536
+rejected	714
+invalid	0
+boundary	2182
+max_position_error	1.3848935858110062e-17
+max_normal_error	1.5233118943427085e-16

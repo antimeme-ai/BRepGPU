@@ -54,3 +54,26 @@ real wrapper methods afterward, leaving no artificial destructor errors. The
 body, sampler, independent oracle and actual-caller source reviews accepted the
 corrected implementation. Raw operational logs remain in ignored context/body;
 public numerical outcomes are in results/body-2026-10-14/qualification.tsv.
+
+Four production host-code mutants were killed by the independent nine-test
+CPU suite after the original baseline passed. Source/core identities were
+pinned; private clones never overwrote product or native baselines. Actual
+caller exports passed exact analytic checks on 14,358 candidates and 13,996
+evaluated rows. Packed/control/UV records, PLY and owned SVGs are public.
+Display geometry was scaled within the SVG afterward to avoid caption overlap;
+sample, qualification and timing records were unchanged and the emitter now
+produces the same display grouping.
+
+The serial 24-case timing matrix completed after copies, qualification,
+mutations and caller output work had finished. It retains 1,248 raw phases and
+384 summaries, with one cold observation and five reused calls per case.
+Independent artifact review reproduced all summary statistics and caller
+counts/errors. Native source/core/plugin identities remain unchanged.
+
+No end-to-end gain over CPU24 is established: plate65 returns 41,536 evaluated
+samples in median 852.64 ms CPU24 versus 873.78/877.63 ms on the P100s. CPU
+normal/immutable row construction dominates despite the faster native GPU
+evaluate call. This is recorded as a return-pass opportunity; conservative
+multi-patch pair discovery is the next uncovered unit under the operator's
+breadth-first policy. Body/API/topology/roadmap/README status and graphics now
+describe the implemented scope and limitations.
