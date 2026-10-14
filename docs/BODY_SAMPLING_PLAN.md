@@ -46,6 +46,7 @@ Interface shared with the sampler/caller:
   cylinder; plate appends wall. Chart records expose `id`, `face_slot`,
   `quadrant` (or -1 for planes), `patch`.
 * Vertex/edge/coedge/loop records expose IDs and typed slot relationships.
+  Vertices use `position`. Chart slot equals native patch slot.
   Edges use `start`, `end`, `curve_slot`; coedges use `edge_slot`, `face_slot`,
   `loop_slot`, `orientation`, `uv_map`; loops use `face_slot`, `hole`,
   ordered `coedge_slots`. Curves/UV maps expose owned kind/data and
@@ -80,6 +81,30 @@ Implement `python/brepgpu/body_sampling.py`, borrowing an existing `Engine`:
   `count`, `evaluated_count`. Row fields: `index`, `patch_slot`, `face_id`,
   `chart_id`, `u`, `v`, `trim`, `native_status`, `position`, `normal`.
   Rejected/invalid rows have NaN vectors and native_status=-1.
+  `rows` is a tuple of frozen row records; `timings` is a tuple of
+  `(phase_name, milliseconds)` pairs, usable as `dict(batch.timings)`.
+
+Canonical plane parameter maps use a=3/4 (box/plate) or 1/4 (cylinder caps),
+h=1/2, x(u)=-a+2au, y(u)=-a+2au, z(v)=-h+2hv:
+
+| Face | Position | Cross-product orientation multiplier |
+| --- | --- | --- |
+| top | (x(u),y(v),h) | +1 |
+| bottom | (x(u),y(v),-h) | -1 |
+| front | (x(u),-a,z(v)) | +1 |
+| back | (x(u),a,z(v)) | -1 |
+| right | (a,y(u),z(v)) | +1 |
+| left | (-a,y(u),z(v)) | -1 |
+
+Cylinder cap charts use their own a=1/4; wall quarters retain the design's
+explicit circle map and ±1 orientation. The independent oracle uses these
+maps, not a map reverse-engineered from production control nets. Existing
+`Patch.__post_init__` freezes controls through `_flat` into a tuple; retaining
+those frozen Patch values introduces no mutable control buffer.
+
+When copying a user-supplied candidate iterable, enforce the row cap during
+iteration before allocating beyond it, rather than first creating an unbounded
+tuple. Derived labels/indices are computed once after structural admission.
 
 Record host phases `gather_ms`, `query_ms`, `evaluate_ms`, `download_ms`,
 `convert_ms`, `normal_scatter_ms`, `child_cleanup_ms`, `reused_wall_ms`.
