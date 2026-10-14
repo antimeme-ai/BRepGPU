@@ -25,6 +25,10 @@ are not intersections; cold setup and CPU word conversion remain measured costs.
 Keep the broad-first sequence. The operator explicitly defers GPU lifetime/
 residency reuse, session integration and polish until AFTER the broad-pass big
 rocks. Record opportunities in docs/RETURN_PASS.md; no active tuning lane.
+After the breadth sweep, investigate whether Python belongs in the delivered
+system at all. Compare native ownership/application, an optional thin binding,
+and Python orchestration using real whole-operation costs and user/developer
+needs. This is a deferred architecture decision, not a selected rewrite.
 The complete analytic intersection beachhead is delivered: exact CPU closed
 plane/wall components with symbolic endpoints/events, physical-span/chart-
 occurrence separation and coupled spatial/bothUV maps. CPU/P100 two-sided
@@ -36,6 +40,12 @@ CPU/P100 edge-use CSR using count/recursive scan/fill and reads actual mates/
 neighbor faces. Typed occurrence identity and same-face seam multiplicity survive
 slot permutations. See docs/ADJACENCY.md. Persistent GPU topology storage,
 compaction, radial ordering, edits and Boolean construction remain future.
+The exact CPU classification beachhead is delivered: original-value material
+membership for box/cylinder/plate with every supporting face, plus complete
+closed rectangular-face contacts and world/bothUV maps. See
+docs/CLASSIFICATION.md and results/classification-2026-10-14/REPORT.md.
+Curved-trim contact, algebraic witness input and GPU classification remain
+separate units. Continue uncovered arrangements, meshing and interchange.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;
