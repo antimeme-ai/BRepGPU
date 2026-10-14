@@ -2,9 +2,10 @@
 
 Design direction, 2026-10-13. This roadmap sequences useful operations and the
 machinery they leave behind. It assigns no calendar dates or unmeasured speedups.
-The [first-iteration design](ITERATION_1_DESIGN.md) specifies the next delivery;
-the [topology design](TOPOLOGY.md) explains how subsequent solid operations avoid
-pointer-defined identity.
+The owned [patch evaluator](ITERATION_1.md) and [resident seeded projection](ITERATION_2.md)
+are implemented. Their reviewed designs/plans define the qualified support
+contracts; the [topology design](TOPOLOGY.md) explains how subsequent solid
+operations avoid pointer-defined identity.
 
 ## Product and architecture
 
@@ -32,8 +33,8 @@ before general NURBS solid modeling is complete.
 | Delivery | What a user can do | Machinery retained for later stages | Direct qualification and value measurement |
 | --- | --- | --- | --- |
 | 0 — existing CPU characterization | Reproduce primitives, holes, sweeps, fillets, surface queries and a curved USD round trip | Analytic fixtures, saved geometry, declared timing regions and concrete failed outputs | Published 16/19 qualified workloads; three sphere chord-tolerance witnesses. Exploratory API timings, not a GPU ranking |
-| 1 — batched numerical geometry | Evaluate positive-weight low-degree rational patches and their first/second derivatives through Python or native calls; reuse uploaded geometry | Owned contiguous geometry, CPU/CUDA backends, explicit statuses, resident buffers, patch/face/chart provenance | Analytic and exact binary-input rational oracles; native CPU comparison and host-to-host/resident timing across batch sizes; publish crossover or lack of crossover |
-| 2 — resident query consumer | Project batches of points onto supported untrimmed patches; compute bulk surface samples without downloading every intermediate jet | Bounded subdivision, work queues, local solver, conservative distance lower bounds and reusable results | Analytic nearest points including edges/corners and multiple minima. State local candidate versus globally distance-qualified output; include unresolved and fallback cost |
+| 1 — batched numerical geometry, implemented | Evaluate positive-weight low-degree rational patches and their first/second derivatives through Python or native calls; reuse uploaded geometry | Owned contiguous geometry, CPU/CUDA backends, explicit statuses, resident buffers, patch/face/chart provenance | Analytic and exact binary-input rational oracles; native CPU comparison and host-to-host/resident timing across batch sizes; publish crossover or lack of crossover |
+| 2 — resident seeded projection, implemented | Refine provided seeds against supported local untrimmed patches and download first-order box-stationary or unresolved candidates | Bounded local solver, resident patch/query snapshots, compact candidates/status/rank/curvature/work counters, retained provenance and shared CPU/CUDA lifetime handling | 104 independently qualified projection rows per backend; actual native/public/memory checks. Compare CPU1/CPU24 and each P100 with named resident/host/Python costs; no minimum/global-distance guarantee |
 | 3 — bounded approximation and discovery | Produce error-bounded meshes for a declared carrier/face family and filter large surface-pair sets | Outward conservative bounds, subdivision scheduling, shared-edge sampling, trim-aware face data and candidate pairs | Actual approximation bound, edge agreement and mesh embedding checks; every known intersecting pair survives culling. A fast preview grid is a different output contract |
 | 4 — regular surface intersection | Obtain all branches, including interior closed loops, in a declared transverse family with established regularity/separation bounds, with matching spatial and both UV curve representations | Branch/event graph, domain provenance, subdivision exclusions, coupled fitting and seam treatment | Known component counts/connectivity, residual bounds and coverage of the remaining domain; unestablished assumptions or unresolved boxes fail the complete operation. Finite sampling or one successful Newton path cannot establish completeness |
 | 5 — first owned curved Boolean | Cut/fuse/intersect a narrow analytic/low-degree solid family; topology may initially be assembled on CPU | Per-face arrangements, region classification, shared edge/coedge identities, transactional candidate body and history | Material membership, expected components/cavities, geometric correspondence and supported manifold topology; measure complete modeling tasks including CPU work |
@@ -48,9 +49,10 @@ hole-cut benchmark. The 77 ms 16-hole result cannot be advertised as accelerated
 until a delivered path actually changes that task and passes its geometry checks.
 
 Within the query/meshing stages, prioritize the consumer with both a real caller
-and a strong oracle. Bulk point projection is the first proposed resident
-consumer because it uses both derivative orders and can retain iterations on
-device. Bounded tessellation is another strong value target, given the published
+and a strong oracle. Seeded bulk point projection now consumes both derivative orders with iterations
+resident on device. Conservative bounds, complete candidate discovery, distance
+exclusion and globally resolved projection remain future capabilities; they are
+not supplied by the local solver. Bounded tessellation is another strong value target, given the published
 reference failure. Its topology/trim obligations make it a larger unit than a
 surface sampler. Profiling can change their order.
 
@@ -110,8 +112,12 @@ The numerical, runtime and acceleration/topology source-study reports under
 existing array exports and dense maps teach useful layout patterns while still
 retaining pointer-defined identity or borrowed geometry.
 
-The first design's three review lanes have now completed and
-their valid findings are integrated; implementation planning is next. Product
-code follows plan review. Topology semantics are carried
-from the start through provenance and explicit identity, even though iteration 1
-performs no topology mutation.
+Both numerical deliveries followed researched designs, adversarial plan/code
+review and supported-host qualification. The [projection design](ITERATION_2_DESIGN.md)
+and [accepted plan](ITERATION_2_PLAN.md) record the local-candidate boundary; the
+[projection results](../results/projection-2026-10-14/REPORT.md) carry measured
+claims. Later rows in the delivery table remain proposed work: conservative
+bounds/global queries, approximation/discovery, complete intersections and
+solid/topology construction. Provenance and explicit identity are already
+retained, while the evaluator and projection operation perform no topology
+mutation.

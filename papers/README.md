@@ -61,3 +61,19 @@ research and design.
 The code reviews retain findings and corrected dispositions. Exact arithmetic
 qualification, actual device memory checks and modeled native failure checks
 provide distinct evidence; successful CPU/GPU parity alone is insufficient.
+
+## Resident projection study
+
+The next operation retains iterations and patch jets on device, returning a
+seeded first-order candidate with separate rank and curvature diagnostics.
+
+| Unit | Study | Design review |
+| --- | --- | --- |
+| Numerical algorithm | [Pinned kernels and optimization literature](2026-10-13-projection-numerical-study.md) · [BibTeX](projection-numerical.bib) | [Numerical review](2026-10-13-projection-design-numerical-review.md) |
+| Independent geometry | [Exact projection and boundary oracles](2026-10-13-projection-oracle-study.md) · [BibTeX](projection-oracles.bib) | [Oracle review](2026-10-13-projection-design-oracle-review.md) |
+| Runtime and ABI | [Lifetime and compatibility study](2026-10-13-projection-runtime-study.md) | [Runtime review](2026-10-13-projection-design-runtime-review.md) |
+| P100 execution | [Resident consumer and bounded thread loop](2026-10-13-projection-gpu-study.md) | Integrated in the numerical review |
+
+The [reviewed design](../docs/ITERATION_2_DESIGN.md) distinguishes stationarity
+from a nearest-point guarantee. Saddles, unequal boundary candidates and weak
+critical directions are deliberate parts of the qualification corpus.

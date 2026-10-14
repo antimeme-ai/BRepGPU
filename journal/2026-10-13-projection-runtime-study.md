@@ -1,0 +1,9 @@
+# Projection runtime study, 2026-10-13
+
+Read current project doctrine and inspected the owned evaluator public/private ABI, registry, optional CUDA callbacks and ctypes adapter. Read pinned OCCT seeded/global projector interfaces and implementation, NVIDIA USD BRep carrier/face query bindings and C contracts, carrier access and USD control export ordering; consulted primary CUDA stream/device and CPython ctypes documentation.
+
+Saved `papers/2026-10-13-projection-runtime-study.md` as the runtime/ABI/lifetime design input for iteration 2. Proposed separate additive public projection kinds/symbols, immutable local targets/seeds/options and compact output/provenance, lazy private v2 extension explicitly bound to the original v1 table/token domain, common context locking/cleanup/process poison, and native CPU1/24 versus each P100 resident/host task accounting. Numerical status/residual/options contracts remain explicit design decisions rather than guesses.
+
+No product code, dependency adoption, Git mutation, environment change or benchmark execution occurred in this study. Existing quarantined primary-source identities remain in the restoration catalog; no new reference archive was needed.
+
+Integrated the root/numerical early direction: compact SoA output is seven doubles plus four u32 slabs (status, iterations, evaluator calls, flags), totaling 72 bytes/request. Input remains 44 bytes/request. Proposed box projected-gradient residual has explicit local-objective/normalized-parameter semantics; valid best accepted unresolved candidates remain finite with mandatory statuses/curvature flags, while invalid/arithmetic rows are all NaN. Public Python check is `require_stationary()`, with no minimum/global guarantee. The numerical unit recommends finite local targets bounded by 4 per axis and closed-square seeds without clamping/reseeding. Canonical enums/options/count conventions still require reviewed design.

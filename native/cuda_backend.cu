@@ -1,5 +1,6 @@
 #include <cuda_runtime.h>
 #include "evaluator.hpp"
+#include "projection_solver.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -15,6 +16,17 @@ struct Context { int device; bool profile; cudaStream_t stream = nullptr; };
 struct Patches { Context* context; DevicePatch* records = nullptr; double* controls = nullptr; uint64_t count; };
 struct Queries { Context* context; Patches* patches; uint32_t* slots = nullptr; double* uv = nullptr; uint64_t count; };
 struct Result { Context* context; double* jets = nullptr; uint32_t* statuses = nullptr; uint64_t count; uint32_t order; };
+struct ProjectionQueries {
+    Context* context; Patches* patches;
+    uint32_t* slots = nullptr; double* targets = nullptr; double* seeds = nullptr;
+    uint64_t count;
+};
+struct ProjectionResult {
+    Context* context; double* fields = nullptr;
+    uint32_t* statuses = nullptr; uint32_t* updates = nullptr;
+    uint32_t* evaluations = nullptr; uint32_t* flags = nullptr;
+    uint64_t count;
+};
 
 void append_bounded(char* target, size_t capacity, const char* text) noexcept {
     size_t used = 0;
@@ -175,6 +187,32 @@ void destroy(Result* result, Operation& op) noexcept {
     }
     delete result;
 }
+void destroy(ProjectionQueries* queries, Operation& op) noexcept {
+    {
+        DeviceScope device(queries->context->device, BG_STAGE_CLOSE, op);
+        if (device.selected) {
+            finish(queries->context, op, BG_STAGE_CLOSE);
+            if (queries->slots) op.cuda(cudaFree(queries->slots), BG_STAGE_CLOSE, "free projection slots");
+            if (queries->targets) op.cuda(cudaFree(queries->targets), BG_STAGE_CLOSE, "free projection targets");
+            if (queries->seeds) op.cuda(cudaFree(queries->seeds), BG_STAGE_CLOSE, "free projection seeds");
+        }
+    }
+    delete queries;
+}
+void destroy(ProjectionResult* result, Operation& op) noexcept {
+    {
+        DeviceScope device(result->context->device, BG_STAGE_CLOSE, op);
+        if (device.selected) {
+            finish(result->context, op, BG_STAGE_CLOSE);
+            if (result->fields) op.cuda(cudaFree(result->fields), BG_STAGE_CLOSE, "free projection fields");
+            if (result->statuses) op.cuda(cudaFree(result->statuses), BG_STAGE_CLOSE, "free projection statuses");
+            if (result->updates) op.cuda(cudaFree(result->updates), BG_STAGE_CLOSE, "free projection updates");
+            if (result->evaluations) op.cuda(cudaFree(result->evaluations), BG_STAGE_CLOSE, "free projection evaluations");
+            if (result->flags) op.cuda(cudaFree(result->flags), BG_STAGE_CLOSE, "free projection flags");
+        }
+    }
+    delete result;
+}
 
 template<class T> struct Pending {
     T* value;
@@ -281,6 +319,47 @@ __global__ void evaluate_kernel(const DevicePatch* patches, uint64_t patch_count
         }
         if (success) statuses[request] = BG_QUERY_OK;
         else failed_query<Order>(request, count, BG_QUERY_ARITHMETIC, jets, statuses);
+    }
+}
+
+struct ScalarCUDA {
+    const double* net; unsigned p,q;
+    template<unsigned Order>
+    __device__ __forceinline__ bool evaluate(double s,double t,double* out) {
+        double weights[6]{};
+        channel_jet<Order>(net,p,q,3,s,t,weights);
+        for(unsigned axis=0;axis<3;++axis){
+            double numerator[6]{},result[6]{};
+            channel_jet<Order>(net,p,q,axis,s,t,numerator);
+            if(!brepgpu::recover_channel(numerator,weights,Order,result))return false;
+            for(unsigned k=0;k<brepgpu::jet_terms(Order);++k)out[k*3+axis]=result[k];
+        }
+        return true;
+    }
+    __device__ __forceinline__ bool full(double s,double t,double* out) {return evaluate<2>(s,t,out);}
+    __device__ __forceinline__ bool position(double s,double t,double* out) {return evaluate<0>(s,t,out);}
+};
+
+__global__ void projection_kernel(const DevicePatch* patches,uint64_t patch_count,
+    const double* controls,const uint32_t* slots,const double* targets,const double* seeds,
+    uint64_t count,bg_projection_options options,double* fields,uint32_t* statuses,
+    uint32_t* updates,uint32_t* evaluations,uint32_t* flags) {
+    const uint64_t stride=static_cast<uint64_t>(gridDim.x)*blockDim.x;
+    for(uint64_t i=static_cast<uint64_t>(blockIdx.x)*blockDim.x+threadIdx.x;i<count;i+=stride){
+        brepgpu::ProjectionCandidate answer;
+        const uint32_t slot=slots[i];
+        if(slot>=patch_count)answer=brepgpu::projection_detail::failed(BG_PROJ_BAD_PATCH);
+        else if(!brepgpu::projection_detail::parameters_valid(targets+3*i,seeds+2*i))
+            answer=brepgpu::projection_detail::failed(BG_PROJ_BAD_PARAMETER);
+        else{
+            const DevicePatch patch=patches[slot];
+            if(patch.p>3 || patch.q>3)answer=brepgpu::projection_detail::failed(BG_PROJ_UNSUPPORTED);
+            else{ScalarCUDA evaluator{controls+patch.offset*4,patch.p,patch.q};
+                answer=brepgpu::project_local(evaluator,targets+3*i,seeds+2*i,options);}
+        }
+        for(unsigned k=0;k<BG_PROJECTION_FIELD_COUNT;++k)fields[k*count+i]=answer.fields[k];
+        statuses[i]=answer.status;updates[i]=answer.updates;
+        evaluations[i]=answer.evaluations;flags[i]=answer.flags;
     }
 }
 
@@ -481,10 +560,158 @@ bg_status download(void* ctx, void* result_token, double* jets, uint64_t doubles
     });
 }
 
+bg_status projection_query_create(void* ctx,void* patch_token,const uint32_t* slots,uint64_t count,
+    const double* targets,const double* seeds,void** out,bg_diagnostic* diag) noexcept {
+    if(out)*out=nullptr;
+    return guarded(BG_STAGE_UPLOAD,diag,[&](Operation& op){
+        if(!ctx || !patch_token || !out || (count && (!slots || !targets || !seeds))){
+            op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"missing projection query input/output");return;
+        }
+        if(count>std::numeric_limits<uint64_t>::max()/3){
+            op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"projection input count overflow");return;
+        }
+        auto* context=static_cast<Context*>(ctx);
+        auto* patches=static_cast<Patches*>(patch_token);
+        if(patches->context!=context){op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"foreign projection patch context");return;}
+        Pending<ProjectionQueries> pending(new ProjectionQueries{context,patches,nullptr,nullptr,nullptr,count},op);
+        {
+            DeviceScope device(context->device,BG_STAGE_UPLOAD,op);
+            if(device.selected && op.ok()){
+                allocate(pending.value->slots,count,context,op,BG_STAGE_UPLOAD);
+                allocate(pending.value->targets,count*3,context,op,BG_STAGE_UPLOAD);
+                allocate(pending.value->seeds,count*2,context,op,BG_STAGE_UPLOAD);
+                upload(pending.value->slots,slots,count,context,op);
+                upload(pending.value->targets,targets,count*3,context,op);
+                upload(pending.value->seeds,seeds,count*2,context,op);
+                finish(context,op,BG_STAGE_UPLOAD);
+            }
+        }
+        if(op.ok())*out=pending.release();
+    });
+}
+bg_status projection_query_close(void* ctx,void* token,bg_diagnostic* diag) noexcept {
+    return guarded(BG_STAGE_CLOSE,diag,[&](Operation& op){
+        if(!ctx || !token)op.error(BG_INVALID_ARGUMENT,BG_STAGE_CLOSE,"missing projection query close input");
+        else destroy(static_cast<ProjectionQueries*>(token),op);
+    });
+}
+
+bool projection_options_valid(const bg_projection_options* options) noexcept {
+    return options && options->abi_version==BG_PROJECTION_ABI_VERSION &&
+        options->struct_size==sizeof(*options) && options->max_iterations<=BG_PROJECTION_MAX_ITERATIONS &&
+        options->max_backtracks<=BG_PROJECTION_MAX_BACKTRACKS &&
+        std::isfinite(options->gradient_tolerance) &&
+        options->gradient_tolerance>=BG_PROJECTION_MIN_TOLERANCE &&
+        options->gradient_tolerance<=BG_PROJECTION_MAX_TOLERANCE && !options->flags && !options->reserved;
+}
+bg_status project(void* ctx,void* query_token,const bg_projection_options* options,void** out,
+    bg_backend_profile* profile,bg_diagnostic* diag) noexcept {
+    if(out)*out=nullptr;
+    if(profile)*profile=bg_backend_profile{0,0,std::numeric_limits<double>::quiet_NaN()};
+    return guarded(BG_STAGE_EVALUATE,diag,[&](Operation& op){
+        if(!ctx || !query_token || !out || !profile || !projection_options_valid(options)){
+            op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid projection options/input/output");return;
+        }
+        auto* context=static_cast<Context*>(ctx);
+        auto* queries=static_cast<ProjectionQueries*>(query_token);
+        if(queries->context!=context){op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"foreign projection query context");return;}
+        if(queries->count>std::numeric_limits<uint64_t>::max()/BG_PROJECTION_FIELD_COUNT){
+            op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"projection result count overflow");return;
+        }
+        Pending<ProjectionResult> pending(new ProjectionResult{context,nullptr,nullptr,nullptr,nullptr,nullptr,queries->count},op);
+        float milliseconds=0;bool measured=false;
+        {
+            DeviceScope device(context->device,BG_STAGE_EVALUATE,op);
+            if(device.selected && op.ok()){
+                allocate(pending.value->fields,queries->count*BG_PROJECTION_FIELD_COUNT,context,op,BG_STAGE_EVALUATE);
+                allocate(pending.value->statuses,queries->count,context,op,BG_STAGE_EVALUATE);
+                allocate(pending.value->updates,queries->count,context,op,BG_STAGE_EVALUATE);
+                allocate(pending.value->evaluations,queries->count,context,op,BG_STAGE_EVALUATE);
+                allocate(pending.value->flags,queries->count,context,op,BG_STAGE_EVALUATE);
+                cudaEvent_t start=nullptr,stop=nullptr;
+                if(op.ok() && context->profile && queries->count){
+                    op.cuda(cudaEventCreate(&start),BG_STAGE_EVALUATE,"create projection start event");
+                    if(op.ok())op.cuda(cudaEventCreate(&stop),BG_STAGE_EVALUATE,"create projection stop event");
+                    if(op.ok())op.cuda(cudaEventRecord(start,context->stream),BG_STAGE_EVALUATE,"record projection start");
+                }
+                if(op.ok() && queries->count){
+                    constexpr unsigned threads=128;
+                    const uint64_t needed=queries->count/threads+(queries->count%threads!=0);
+                    const unsigned blocks=static_cast<unsigned>(std::min<uint64_t>(needed,4096));
+                    auto* patches=queries->patches;
+                    projection_kernel<<<blocks,threads,0,context->stream>>>(patches->records,patches->count,
+                        patches->controls,queries->slots,queries->targets,queries->seeds,queries->count,*options,
+                        pending.value->fields,pending.value->statuses,pending.value->updates,
+                        pending.value->evaluations,pending.value->flags);
+                    op.cuda(cudaGetLastError(),BG_STAGE_EVALUATE,"launch resident projection kernel");
+                    if(op.ok() && stop)op.cuda(cudaEventRecord(stop,context->stream),BG_STAGE_EVALUATE,"record projection stop");
+                }
+                finish(context,op,BG_STAGE_EVALUATE);
+                if(op.ok() && start && stop){
+                    op.cuda(cudaEventElapsedTime(&milliseconds,start,stop),BG_STAGE_EVALUATE,"read projection duration");
+                    measured=op.ok();
+                }
+                if(start)op.cuda(cudaEventDestroy(start),BG_STAGE_CLOSE,"destroy projection start event");
+                if(stop)op.cuda(cudaEventDestroy(stop),BG_STAGE_CLOSE,"destroy projection stop event");
+            }
+        }
+        if(op.ok()){
+            if(measured)*profile=bg_backend_profile{BG_RESULT_PROFILED,0,milliseconds};
+            *out=pending.release();
+        }
+    });
+}
+bg_status projection_result_close(void* ctx,void* token,bg_diagnostic* diag) noexcept {
+    return guarded(BG_STAGE_CLOSE,diag,[&](Operation& op){
+        if(!ctx || !token)op.error(BG_INVALID_ARGUMENT,BG_STAGE_CLOSE,"missing projection result close input");
+        else destroy(static_cast<ProjectionResult*>(token),op);
+    });
+}
+bg_status projection_download(void* ctx,void* result_token,double* fields,uint64_t doubles,
+    uint32_t* statuses,uint64_t status_count,uint32_t* updates,uint64_t update_count,
+    uint32_t* evaluations,uint64_t evaluation_count,uint32_t* flags,uint64_t flag_count,
+    bg_diagnostic* diag) noexcept {
+    return guarded(BG_STAGE_DOWNLOAD,diag,[&](Operation& op){
+        if(!ctx || !result_token){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"missing projection download input");return;}
+        auto* context=static_cast<Context*>(ctx);
+        auto* result=static_cast<ProjectionResult*>(result_token);
+        const uint64_t count=result->count;
+        if(result->context!=context || doubles!=count*BG_PROJECTION_FIELD_COUNT || status_count!=count ||
+            update_count!=count || evaluation_count!=count || flag_count!=count ||
+            (count && (!fields || !statuses || !updates || !evaluations || !flags))){
+            op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"invalid projection download capacities/context");return;
+        }
+        size_t field_bytes=0,integer_bytes=0;
+        if(!bytes_for(doubles,sizeof(double),field_bytes,op,BG_STAGE_DOWNLOAD) ||
+            !bytes_for(count,sizeof(uint32_t),integer_bytes,op,BG_STAGE_DOWNLOAD))return;
+        {
+            DeviceScope device(context->device,BG_STAGE_DOWNLOAD,op);
+            if(device.selected && op.ok()){
+                if(field_bytes)op.cuda(cudaMemcpyAsync(fields,result->fields,field_bytes,cudaMemcpyDeviceToHost,
+                    context->stream),BG_STAGE_DOWNLOAD,"download projection fields");
+                if(op.ok() && integer_bytes)op.cuda(cudaMemcpyAsync(statuses,result->statuses,integer_bytes,
+                    cudaMemcpyDeviceToHost,context->stream),BG_STAGE_DOWNLOAD,"download projection statuses");
+                if(op.ok() && integer_bytes)op.cuda(cudaMemcpyAsync(updates,result->updates,integer_bytes,
+                    cudaMemcpyDeviceToHost,context->stream),BG_STAGE_DOWNLOAD,"download projection updates");
+                if(op.ok() && integer_bytes)op.cuda(cudaMemcpyAsync(evaluations,result->evaluations,integer_bytes,
+                    cudaMemcpyDeviceToHost,context->stream),BG_STAGE_DOWNLOAD,"download projection evaluations");
+                if(op.ok() && integer_bytes)op.cuda(cudaMemcpyAsync(flags,result->flags,integer_bytes,
+                    cudaMemcpyDeviceToHost,context->stream),BG_STAGE_DOWNLOAD,"download projection flags");
+                finish(context,op,BG_STAGE_DOWNLOAD);
+            }
+        }
+    });
+}
+
 const bg_backend_v1 table = {
     BG_BACKEND_ABI_VERSION, sizeof(bg_backend_v1), BG_BACKEND_CAP_FP64,
     context_create, context_close, patch_create, patch_close, query_create,
     query_close, evaluate, result_close, download
+};
+const bg_backend_v2 projection_table = {
+    BG_PROJECTION_BACKEND_ABI_VERSION,sizeof(bg_backend_v2),
+    BG_BACKEND_CAP_FP64|BG_BACKEND_CAP_PROJECTION,&table,
+    projection_query_create,projection_query_close,project,projection_result_close,projection_download
 };
 }
 
@@ -496,5 +723,15 @@ extern "C" bg_status brepgpu_cuda_backend_v1(uint32_t requested_abi,
         if (!out || requested_abi != BG_BACKEND_ABI_VERSION)
             op.error(BG_UNSUPPORTED, BG_STAGE_PLUGIN, "unsupported backend ABI");
         else *out = &table;
+    });
+}
+
+extern "C" bg_status brepgpu_cuda_backend_v2(uint32_t requested_abi,const bg_backend_v2** out,
+                                             bg_diagnostic* diag) {
+    if(out)*out=nullptr;
+    return guarded(BG_STAGE_PLUGIN,diag,[&](Operation& op){
+        if(!out || requested_abi!=BG_PROJECTION_BACKEND_ABI_VERSION)
+            op.error(BG_UNSUPPORTED,BG_STAGE_PLUGIN,"unsupported projection backend ABI");
+        else *out=&projection_table;
     });
 }

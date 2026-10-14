@@ -1,0 +1,7 @@
+# 2026-10-13: numerical review of the resident projection design
+
+Read the integration design against the completed primary-source numerical study. Sent three implementation-critical moderate omissions promptly: normalized Cholesky pivot/RHS definition, exact gradient-safeguard scalar, and eigenvalue-based robust curvature threshold distinct from solver pivots. Supplied a direct exact coupled affine-plane fixture where both Cholesky pivots exceed the curvature guard but the smallest eigenvalue equals the ambiguous threshold.
+
+Wrote `papers/2026-10-13-projection-design-numerical-review.md`. Reviewed and accepted the coherence of exact-bound activity, critical-cone distinction, rank-before-convergence precedence, candidate-only saddle semantics, stable actual-distance Armijo, final returned-UV metrics and the single-search 3,329-callback cap. No product code, dependency or Git mutation was made. Awaiting the integrator's definitions for re-review before plan/implementation.
+
+Re-read integrated definitions and oracle dispositions. All three numerical findings are resolved: normalized pre-sqrt diagonal/Schur screening and RHS, specified full-matrix gradient scalar/reduced GN damping, and strict curvature eigenvalue thresholds. Additional actual-displacement negativity, floating-point order, tolerance-relaxed weak cone, rank-admitted inaccurate-UV fixture and exact flag combinations are explicit. Appended no-remaining-blocker disposition. Numerical design approval is supported; product work still awaits the accepted implementation plan.

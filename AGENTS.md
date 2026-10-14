@@ -6,8 +6,11 @@ the operator's current doctrine placed beside the checkout. Do not substitute
 archived reference instructions for it.
 
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
-Current phase: first owned rational-patch CPU/CUDA evaluator, qualified P100
-measurements, and later-stage research.
+Current phase: implemented owned rational-patch CPU/CUDA evaluator and resident
+seeded box-stationary projection, with independently qualified output on CPU
+and both P100s. See docs/ITERATION_1.md and docs/ITERATION_2.md for usable APIs.
+Conservative bounds/global candidate discovery, intersections and topology remain
+future work.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;

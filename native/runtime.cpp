@@ -1,4 +1,5 @@
 #include "backend_api.h"
+#include "projection_backend_api.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -30,7 +31,9 @@ namespace {
 static_assert(sizeof(double)==8 && std::numeric_limits<double>::is_iec559);
 static_assert(sizeof(bg_context_desc)==40 && sizeof(bg_patch_desc)==136);
 static_assert(sizeof(bg_result_info)==48 && sizeof(bg_diagnostic)==288);
-enum class Kind { Context, Patch, Query, Result };
+static_assert(sizeof(bg_projection_options)==32 && sizeof(bg_projection_info)==48);
+static_assert(sizeof(bg_projection_abi_info)==40 && sizeof(bg_backend_v2)==64);
+enum class Kind { Context, Patch, Query, Result, ProjectionQuery, ProjectionResult };
 struct Context;
 struct Object {
     Kind kind;
@@ -72,6 +75,8 @@ void backend_status(bg_status code,bg_diagnostic& d) {
 struct Plugin {
     void* library=nullptr;
     const bg_backend_v1* table=nullptr;
+    const bg_backend_v2* projection=nullptr;
+    uint32_t projection_state=0; // 0 unprobed, 1 valid, 2 stable unsupported
     ~Plugin(){if(library)dlclose(library);}
 };
 struct Context final:Object {
@@ -137,6 +142,26 @@ struct Result final:Object {
     ~Result(){cleanup();}
     void cleanup() noexcept;
 };
+struct ProjectionQueries final:Object {
+    std::shared_ptr<PatchSet> patches;
+    std::vector<uint32_t> slots;
+    std::vector<double> targets,seeds;
+    void* token=nullptr;
+    ProjectionQueries():Object(Kind::ProjectionQuery){}
+    ~ProjectionQueries(){cleanup();}
+    void cleanup() noexcept;
+};
+struct ProjectionResult final:Object {
+    std::shared_ptr<ProjectionQueries> queries;
+    bg_projection_options options{};
+    std::vector<double> fields;
+    std::vector<uint32_t> statuses,updates,evaluations,flags;
+    bg_backend_profile profile{0,0,std::numeric_limits<double>::quiet_NaN()};
+    void* token=nullptr;
+    ProjectionResult():Object(Kind::ProjectionResult){}
+    ~ProjectionResult(){cleanup();}
+    void cleanup() noexcept;
+};
 template<class Function> void cleanup_child(std::shared_ptr<Context>& c,void*& token,Function f) noexcept {
     if(!token)return;
     try{
@@ -150,6 +175,8 @@ template<class Function> void cleanup_child(std::shared_ptr<Context>& c,void*& t
 void PatchSet::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->table->patch_close);}
 void QuerySet::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->table->query_close);}
 void Result::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->table->result_close);}
+void ProjectionQueries::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->projection->projection_query_close);}
+void ProjectionResult::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->projection->projection_result_close);}
 
 template<class T> void pointer(const T* p,uint64_t count) {
     if(count && (!p || reinterpret_cast<uintptr_t>(p)%alignof(T)))fail(BG_INVALID_ARGUMENT,"null or unaligned nonempty buffer");
@@ -159,6 +186,10 @@ uint64_t multiply(uint64_t a,uint64_t b){if(b && a>UINT64_MAX/b)fail(BG_INVALID_
 template<class T> void version(const T* p,uint64_t bytes){
     pointer(p,1);if(bytes<sizeof(T))fail(BG_INVALID_ARGUMENT,"short descriptor");
     if(p->abi_version!=BG_ABI_VERSION || p->struct_size!=sizeof(T))fail(BG_INVALID_ARGUMENT,"descriptor ABI or size mismatch");
+}
+template<class T> void projection_version(const T* p,uint64_t bytes){
+    pointer(p,1);if(bytes<sizeof(T))fail(BG_INVALID_ARGUMENT,"short projection descriptor");
+    if(p->abi_version!=BG_PROJECTION_ABI_VERSION || p->struct_size!=sizeof(T))fail(BG_INVALID_ARGUMENT,"projection descriptor ABI or size mismatch");
 }
 template<class T> std::vector<T> snapshot(const T* p,uint64_t count){pointer(p,count);std::vector<T> v;if(count)v.assign(p,p+static_cast<size_t>(count));return v;}
 uint32_t terms(uint32_t order){if(order>2)fail(BG_INVALID_ARGUMENT,"unsupported derivative order");return order==0?1u:order==1?3u:6u;}
@@ -252,7 +283,36 @@ std::shared_ptr<Plugin> load_plugin(const bg_context_desc& desc){
     if(!(t->capabilities&BG_BACKEND_CAP_FP64) || !t->context_create || !t->context_close || !t->patch_create || !t->patch_close || !t->query_create || !t->query_close || !t->evaluate || !t->result_close || !t->download)fail(BG_BACKEND_UNAVAILABLE,"CUDA backend capability/function mismatch",BG_STAGE_PLUGIN);
     return p;
 }
+const bg_backend_v2* projection_backend(const std::shared_ptr<Context>& context){
+    auto& p=*context->plugin;
+    if(p.projection_state==1)return p.projection;
+    if(p.projection_state==2)fail(BG_UNSUPPORTED,"CUDA plugin does not support projection",BG_STAGE_PLUGIN);
+    auto factory=reinterpret_cast<bg_projection_backend_factory_fn>(dlsym(p.library,BG_PROJECTION_BACKEND_FACTORY_SYMBOL));
+    if(!factory){p.projection_state=2;fail(BG_UNSUPPORTED,"CUDA plugin has no projection extension",BG_STAGE_PLUGIN);}
+    auto d=diagnostic();const bg_backend_v2* table=nullptr;
+    const auto status=factory(BG_PROJECTION_BACKEND_ABI_VERSION,&table,&d);
+    if(status==BG_UNSUPPORTED && !(d.flags&BG_DIAG_FATAL)){
+        p.projection_state=2;fail(BG_UNSUPPORTED,"CUDA plugin refused projection extension",BG_STAGE_PLUGIN);
+    }
+    // Runtime/fatal errors are not capability refusal and must not be cached.
+    backend_status(status,d);
+    if(!table || table->abi_version!=BG_PROJECTION_BACKEND_ABI_VERSION || table->struct_size!=sizeof(bg_backend_v2)
+        || !(table->capabilities&BG_BACKEND_CAP_PROJECTION) || table->base!=p.table
+        || !table->projection_query_create || !table->projection_query_close || !table->project
+        || !table->projection_result_close || !table->projection_download){
+        p.projection_state=2;fail(BG_UNSUPPORTED,"CUDA projection extension layout/capability/base mismatch",BG_STAGE_PLUGIN);
+    }
+    p.projection=table;p.projection_state=1;return table;
+}
 bool overlaps(const void*a,uint64_t a_bytes,const void*b,uint64_t b_bytes){if(!a_bytes||!b_bytes)return false;auto x=reinterpret_cast<uintptr_t>(a),y=reinterpret_cast<uintptr_t>(b);if(x>UINTPTR_MAX-a_bytes||y>UINTPTR_MAX-b_bytes)fail(BG_INVALID_ARGUMENT,"pointer extent overflow");return x<y+b_bytes && y<x+a_bytes;}
+// Compare diagnostic writes without multiplying potentially invalid extents.
+// On overlap no diagnostic may be written: its write would itself corrupt a
+// payload. This guard runs before call() and reads no borrowed storage.
+bool diagnostic_alias(const bg_diagnostic* diag,const void* payload,uint64_t count,uint64_t width) noexcept {
+    if(!diag || !payload || !count)return false;
+    const auto d=reinterpret_cast<uintptr_t>(diag),p=reinterpret_cast<uintptr_t>(payload);
+    return p>=d ? p-d<sizeof(bg_diagnostic) : count>(d-p)/width;
+}
 }
 
 extern "C" bg_status bg1_abi_info(bg_abi_info*out,uint64_t bytes){return call(nullptr,0,[&](bg_diagnostic&){version(out,bytes);*out={BG_ABI_VERSION,sizeof(*out),sizeof(bg_context_desc),sizeof(bg_patch_desc),sizeof(bg_result_info),sizeof(bg_diagnostic),sizeof(double),sizeof(bg_handle),sizeof(uint32_t),sizeof(void*)};});}
@@ -337,4 +397,65 @@ extern "C" bg_status bg1_convert(const bg_patch_desc*patches,uint64_t pc,uint64_
         if(status!=BG_QUERY_OK)for(uint32_t term=0;term<k;++term)for(uint32_t axis=0;axis<3;++axis)output[(term*3+axis)*count+i]=nan;
         output_status[i]=status;
     }
+});}
+
+extern "C" bg_status bg2_projection_abi_info(bg_projection_abi_info*out,uint64_t bytes){return call(nullptr,0,[&](bg_diagnostic&){
+    projection_version(out,bytes);*out={BG_PROJECTION_ABI_VERSION,sizeof(*out),sizeof(bg_projection_options),sizeof(bg_projection_info),sizeof(bg_diagnostic),BG_PROJECTION_FIELD_COUNT,sizeof(double),sizeof(uint32_t),sizeof(bg_handle),sizeof(void*)};
+});}
+extern "C" bg_status bg2_create_projection_query_set(bg_handle id,const uint32_t*slots,uint64_t count,const double*targets,uint64_t target_doubles,const double*seeds,uint64_t seed_doubles,bg_handle*out,bg_diagnostic*diag,uint64_t db){zero_handle(out);return call(diag,db,[&](bg_diagnostic&){
+    pointer(out,1);pointer(slots,count);pointer(targets,target_doubles);pointer(seeds,seed_doubles);
+    if(target_doubles!=multiply(count,3)||seed_doubles!=multiply(count,2))fail(BG_INVALID_ARGUMENT,"projection query shape mismatch");
+    Admission a(id,Kind::Patch);const bg_backend_v2* backend=nullptr;
+    if(a.context->backend==BG_BACKEND_CUDA)backend=projection_backend(a.context);
+    auto q=std::make_shared<ProjectionQueries>();q->context=a.context;q->patches=std::static_pointer_cast<PatchSet>(a.object);
+    q->slots=snapshot(slots,count);q->targets=snapshot(targets,target_doubles);q->seeds=snapshot(seeds,seed_doubles);
+    if(backend){auto d=diagnostic();backend_status(backend->projection_query_create(a.context->token,q->patches->token,q->slots.data(),count,q->targets.data(),q->seeds.data(),&q->token,&d),d);
+        if(!q->token)fail(BG_INTERNAL_ERROR,"CUDA backend published no projection query token");++a.context->device_children;}
+    *out=publish_owned(q,a.context);
+});}
+extern "C" bg_status bg2_project(bg_handle id,const bg_projection_options*options,uint64_t bytes,bg_handle*out,bg_diagnostic*diag,uint64_t db){zero_handle(out);return call(diag,db,[&](bg_diagnostic&){
+    pointer(out,1);projection_version(options,bytes);const auto input=*options;
+    if(input.max_iterations>BG_PROJECTION_MAX_ITERATIONS || input.max_backtracks>BG_PROJECTION_MAX_BACKTRACKS
+        || !std::isfinite(input.gradient_tolerance) || input.gradient_tolerance<BG_PROJECTION_MIN_TOLERANCE
+        || input.gradient_tolerance>BG_PROJECTION_MAX_TOLERANCE || input.flags || input.reserved)fail(BG_INVALID_ARGUMENT,"invalid projection options");
+    Admission a(id,Kind::ProjectionQuery);auto r=std::make_shared<ProjectionResult>();r->context=a.context;r->queries=std::static_pointer_cast<ProjectionQueries>(a.object);r->options=input;
+    const auto n=uint64_t(r->queries->slots.size()),size=multiply(n,BG_PROJECTION_FIELD_COUNT);
+    if(size>std::vector<double>().max_size())fail(BG_INVALID_ARGUMENT,"projection result size overflow");
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();const auto backend=projection_backend(a.context);
+        backend_status(backend->project(a.context->token,r->queries->token,&r->options,&r->token,&r->profile,&d),d);
+        if(!r->token)fail(BG_INTERNAL_ERROR,"CUDA backend published no projection result token");++a.context->device_children;
+    }else{
+        r->fields.resize(static_cast<size_t>(size));r->statuses.resize(static_cast<size_t>(n));r->updates.resize(static_cast<size_t>(n));r->evaluations.resize(static_cast<size_t>(n));r->flags.resize(static_cast<size_t>(n));
+        auto&q=*r->queries;auto&p=*q.patches;const uint64_t workers=std::min<uint64_t>(a.context->threads,n);std::vector<std::thread> threads;threads.reserve(static_cast<size_t>(workers));
+        auto range=[&](uint64_t begin,uint64_t end){brepgpu::project_cpu_range(p.patches.data(),p.patches.size(),p.controls.data(),q.slots.data(),q.targets.data(),q.seeds.data(),n,&r->options,begin,end,r->fields.data(),r->statuses.data(),r->updates.data(),r->evaluations.data(),r->flags.data());};
+        auto boundary=[&](uint64_t i){return (n/workers)*i+std::min<uint64_t>(i,n%workers);};
+        if(workers<=1)range(0,n);else{try{for(uint64_t i=0;i<workers;++i)threads.emplace_back(range,boundary(i),boundary(i+1));}catch(...){for(auto&t:threads)if(t.joinable())t.join();throw;}for(auto&t:threads)t.join();}
+    }
+    *out=publish_owned(r,a.context);
+});}
+extern "C" bg_status bg2_projection_info(bg_handle id,bg_projection_info*out,uint64_t bytes,bg_diagnostic*diag,uint64_t db){return call(diag,db,[&](bg_diagnostic&){
+    projection_version(out,bytes);Admission a(id,Kind::ProjectionResult);auto r=std::static_pointer_cast<ProjectionResult>(a.object);final_cuda_check(a.context);
+    *out={BG_PROJECTION_ABI_VERSION,sizeof(*out),r->queries->slots.size(),r->queries->patches->patches.size(),a.context->backend,r->profile.flags,BG_PROJECTION_FIELD_COUNT,0,r->profile.kernel_ms};
+});}
+extern "C" bg_status bg2_projection_download(bg_handle id,double*fields,uint64_t doubles,uint32_t*statuses,uint64_t sc,uint32_t*updates,uint64_t uc,uint32_t*evaluations,uint64_t ec,uint32_t*flags,uint64_t fc,bg_diagnostic*diag,uint64_t db){
+    if(diagnostic_alias(diag,fields,doubles,8)||diagnostic_alias(diag,statuses,sc,4)||diagnostic_alias(diag,updates,uc,4)||diagnostic_alias(diag,evaluations,ec,4)||diagnostic_alias(diag,flags,fc,4))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){
+    pointer(fields,doubles);pointer(statuses,sc);pointer(updates,uc);pointer(evaluations,ec);pointer(flags,fc);
+    Admission a(id,Kind::ProjectionResult);auto r=std::static_pointer_cast<ProjectionResult>(a.object);const auto n=uint64_t(r->queries->slots.size());
+    if(doubles!=multiply(n,BG_PROJECTION_FIELD_COUNT)||sc!=n||uc!=n||ec!=n||fc!=n)fail(BG_INVALID_ARGUMENT,"projection download shape mismatch",BG_STAGE_DOWNLOAD);
+    const void* outputs[]={fields,statuses,updates,evaluations,flags};const uint64_t sizes[]={multiply(doubles,8),multiply(sc,4),multiply(uc,4),multiply(ec,4),multiply(fc,4)};
+    for(int i=0;i<5;++i)for(int j=i+1;j<5;++j)if(overlaps(outputs[i],sizes[i],outputs[j],sizes[j]))fail(BG_INVALID_ARGUMENT,"overlapping projection outputs",BG_STAGE_DOWNLOAD);
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();backend_status(a.context->plugin->projection->projection_download(a.context->token,r->token,fields,doubles,statuses,sc,updates,uc,evaluations,ec,flags,fc,&d),d);final_cuda_check(a.context);}
+    else{if(doubles)std::copy(r->fields.begin(),r->fields.end(),fields);if(n){std::copy(r->statuses.begin(),r->statuses.end(),statuses);std::copy(r->updates.begin(),r->updates.end(),updates);std::copy(r->evaluations.begin(),r->evaluations.end(),evaluations);std::copy(r->flags.begin(),r->flags.end(),flags);}}
+});}
+extern "C" bg_status bg2_projection_sources(bg_handle id,bg_patch_desc*patches,uint64_t pc,uint64_t bytes,uint32_t*slots,uint64_t count,double*targets,uint64_t td,double*seeds,uint64_t sd,bg_projection_options*options,uint64_t ob,bg_diagnostic*diag,uint64_t db){
+    if(diagnostic_alias(diag,patches,pc,sizeof(bg_patch_desc))||diagnostic_alias(diag,slots,count,4)||diagnostic_alias(diag,targets,td,8)||diagnostic_alias(diag,seeds,sd,8)||diagnostic_alias(diag,options,1,sizeof(*options)))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){
+    pointer(patches,pc);pointer(slots,count);pointer(targets,td);pointer(seeds,sd);projection_version(options,ob);
+    Admission a(id,Kind::ProjectionResult);auto r=std::static_pointer_cast<ProjectionResult>(a.object);auto&q=*r->queries;
+    if(pc!=q.patches->patches.size()||bytes!=multiply(pc,sizeof(bg_patch_desc))||count!=q.slots.size()||td!=multiply(count,3)||sd!=multiply(count,2))fail(BG_INVALID_ARGUMENT,"projection source shape mismatch");
+    const void* outputs[]={patches,slots,targets,seeds,options};const uint64_t sizes[]={bytes,multiply(count,4),multiply(td,8),multiply(sd,8),sizeof(*options)};
+    for(int i=0;i<5;++i)for(int j=i+1;j<5;++j)if(overlaps(outputs[i],sizes[i],outputs[j],sizes[j]))fail(BG_INVALID_ARGUMENT,"overlapping projection source outputs");
+    final_cuda_check(a.context);if(pc)std::copy(q.patches->patches.begin(),q.patches->patches.end(),patches);
+    if(count){std::copy(q.slots.begin(),q.slots.end(),slots);std::copy(q.targets.begin(),q.targets.end(),targets);std::copy(q.seeds.begin(),q.seeds.end(),seeds);}*options=r->options;
 });}
