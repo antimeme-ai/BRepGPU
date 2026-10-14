@@ -23,3 +23,14 @@ before frame subtraction, and curved-trim overlay must remain unsupported rather
 than approximated by its carrier box. Rectangle contacts retain the full closed
 intersection dimension, coincidence separately from plane identity, and both
 original chart maps. Three adversarial design reviews are underway.
+
+## Accepted plan and actual direct red
+
+All three design and plan tribunals accepted the bounded operation; runtime
+clarifications and independent corner/rank truth are incorporated. Published the
+whole-unit plan, issue25 and draft PR26. The fleet's existing cylinder/native
+sample returned its expected rim point and healthy status. Only then the new
+BodySnapshot.classify_point call failed with the intended absent-entry-point
+AttributeError: one direct test, 0.040s. No product code existed before this red.
+Native protected library hashes still match the preceding delivery. Product and
+independent oracle/test owners can now implement; root owns hooks and caller.
