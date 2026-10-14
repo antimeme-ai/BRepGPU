@@ -108,9 +108,10 @@ face's planar domain subtracts two and yields boundary Euler characteristic 0.
 Box/cylinder give 2. Incidence/counts supplement geometric correspondence;
 neither count equality nor a manifold flag alone supplies it.
 
-Snapshots/prepared requests must contain immutable records/tuples/bytes, not
-retained mutable `Patch.controls` arrays or ctypes descriptors. Sampler-created
-adapter patches are disposable copies. Mutate original constructor inputs and
+Snapshots/prepared requests contain immutable records/tuples/bytes. Existing
+`Patch.__post_init__` freezes controls through `_flat` into a tuple, so these
+Patch values can be retained safely; temporary native arrays/ctypes descriptors
+are not authoritative body data. Mutate original constructor inputs and
 attempt ordinary nested mutation; subsequent samples must keep their source
 geometry and labels. Prepared requests retain their exact snapshot authority,
 including frame/chart ordering; foreign body/frame requests are refused before

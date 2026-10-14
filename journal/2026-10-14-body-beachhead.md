@@ -31,3 +31,10 @@ Issue15 tracks the operation. Frequent design/test/implementation/result commits
 on feat/body-sampling will retain its history; the qualified delivery will be
 merged before deeper numerical or meshing work. Native baselines, SDK components
 and private operational logs remain outside published artifacts.
+
+The first direct fleet test created a healthy existing native Engine, then
+failed because brepgpu.body was absent. The expected mixed valid/invalid
+top-face sampling operation now drives implementation. Original stderr remains
+in ignored context/body/initial-red.log; no fake failure of unchanged native
+math was manufactured. Product body and sampler implementation began after
+this red result and accepted plan reviews.
