@@ -67,9 +67,10 @@ silently.
 The public ABI1/2/3, private v1/v2/v3 tables/factories, hierarchy cache layout,
 query/result ownership and lazy loading remain unchanged. Dispatch uses the
 retained hierarchy token's admitted mode, never a new caller/query field.
-An unrecognized private mode must report an evaluation error through the
-existing `Operation`; it must never default to AABB or publish a result.
-Public upload admission already prevents that mode.
+Validate the retained private mode before allocation and before the nonempty
+launch guard. An unrecognized mode must report an evaluation error through the
+existing `Operation`; it must never default to AABB or publish even an empty
+result. Public upload admission already prevents that mode.
 
 Exactly one kernel is launched per nonempty operation. Keep the launch inside
 the existing `DeviceScope` and context stream, followed by the existing
@@ -80,9 +81,11 @@ events; their unprofiled metadata remains zero flags/NaN duration. No kernel
 pointer is stored in a public handle or introduced as a new owned resource.
 
 Record optional start/stop events around the selected kernel at the same
-locations. `kernel_ms` still means CUDA-event duration for that one launch;
-allocation, host dispatch, synchronization/restoration and download remain
-outside event time and inside their existing native phases as applicable.
+locations. `kernel_ms` retains the existing stream-event bracket around that
+one launch. The start event is enqueued before the host computes the grid and
+dispatches, so its duration may include a submission/idle gap; it is not an
+assertion of pure device execution time. Allocation precedes the event bracket;
+synchronization/restoration and download retain their existing native scopes.
 No event may measure a separate dynamic fallback instead of the selected kernel.
 
 Preserve all operations and their sequence in the shared arithmetic: directed
@@ -108,7 +111,8 @@ identity separately attacks the promised unchanged-operation contract.
    minima and capped cases. Require zero certificate violations.
 2. Compare all eight returned binary64 fields and six integer slabs between the
    two plugins for these identical cases, excluding profile duration. Require
-   bitwise identity, including canonical invalid NaNs and signed zeros. Do not
+   bitwise identity by comparing raw double/integer buffer bytes, including
+   canonical invalid NaNs and signed zeros, rather than Python float equality. Do not
    replace a difference with CPU parity or an epsilon; investigate it.
 3. Extend the existing direct invalid-row and empty/tail cases across all three
    modes: invalid slot plus invalid target must remain BAD_PATCH first; valid
@@ -165,7 +169,7 @@ qualification or other owned performance job. If an apparent gain/regression
 is within the observed spread or depends on order, repeat that comparison in
 reverse order rather than broadening the whole matrix. Retain full requested
 condition keys, all samples, min/median/max, achieved widths, populations and
-work histograms. Compare resident, CUDA-event kernel and cached-hierarchy
+work histograms. Compare resident, CUDA-event bracket and cached-hierarchy
 host-to-host phases separately. Setup, cleanup and first-use phases retain their
 existing scopes; no sum of independent medians becomes an end-to-end result.
 The bounded repeated-input geometry remains the same; specialization does not
