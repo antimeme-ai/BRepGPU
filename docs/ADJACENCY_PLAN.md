@@ -1,6 +1,6 @@
 # GPU adjacency implementation plan
 
-Status: accepted and implemented; qualification passed, cost campaign follows, 2026-10-14.
+Status: accepted and implemented; qualification and the 24-case cost campaign complete, 2026-10-14.
 Issue [23](https://github.com/antimeme-ai/BRepGPU/issues/23).
 
 ## Complete units and their owners
