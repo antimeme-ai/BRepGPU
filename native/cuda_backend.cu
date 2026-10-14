@@ -404,12 +404,14 @@ __global__ void projection_kernel(const DevicePatch* patches,uint64_t patch_coun
     }
 }
 
+template<unsigned Mode>
 __global__ void discovery_kernel(const DevicePatch* patches,uint64_t patch_count,
     const double* controls,const bg_hierarchy_node* nodes,uint64_t node_count,
-    const uint32_t* roots,const double* bounds,uint32_t mode,const uint32_t* slots,
+    const uint32_t* roots,const double* bounds,const uint32_t* slots,
     const double* targets,uint64_t count,bg_discovery_options options,double* fields,
     uint32_t* statuses,uint32_t* flags,uint32_t* visits,uint32_t* pruned,
     uint32_t* refinements,uint32_t* evaluations){
+    static_assert(Mode<=BG_BOUND_BERNSTEIN,"only admitted discovery modes are instantiated");
     const uint64_t stride=static_cast<uint64_t>(gridDim.x)*blockDim.x;
     for(uint64_t i=static_cast<uint64_t>(blockIdx.x)*blockDim.x+threadIdx.x;i<count;i+=stride){
         brepgpu::DiscoveryCandidate answer;const uint32_t slot=slots[i];
@@ -417,12 +419,23 @@ __global__ void discovery_kernel(const DevicePatch* patches,uint64_t patch_count
         else{const uint32_t root=roots[slot];const DevicePatch patch=patches[slot];
             if(root>=node_count||nodes[root].patch_slot!=slot)answer=brepgpu::discovery_detail::failed(BG_DISC_ARITHMETIC);
             else{ScalarCUDA evaluator{controls+patch.offset*4,patch.p,patch.q};
-                answer=brepgpu::discover_local(evaluator,controls+patch.offset*4,patch.p,patch.q,nodes,node_count,root,bounds,mode,targets+3*i,options);}
+                answer=brepgpu::discover_local(evaluator,controls+patch.offset*4,patch.p,patch.q,nodes,node_count,root,bounds,Mode,targets+3*i,options);}
         }
         for(unsigned k=0;k<8;++k)fields[k*count+i]=answer.fields[k];
         statuses[i]=answer.status;flags[i]=answer.flags;visits[i]=answer.visits;
         pruned[i]=answer.pruned;refinements[i]=answer.refinements;evaluations[i]=answer.evaluations;
     }
+}
+
+template<unsigned Mode>
+void launch_discovery(Context* context,DiscoveryQueries* queries,DiscoveryResult* result,
+    const bg_discovery_options& options,unsigned blocks,unsigned threads){
+    const auto* hierarchy=queries->hierarchy;const auto* patches=hierarchy->patches;
+    discovery_kernel<Mode><<<blocks,threads,0,context->stream>>>(patches->records,
+        patches->count,patches->controls,hierarchy->nodes,hierarchy->node_count,
+        hierarchy->roots,hierarchy->bounds,queries->slots,queries->targets,queries->count,
+        options,result->fields,result->slabs[0],result->slabs[1],result->slabs[2],
+        result->slabs[3],result->slabs[4],result->slabs[5]);
 }
 
 bg_status context_create(const bg_context_desc* desc, void** out, bg_diagnostic* diag) noexcept {
@@ -831,6 +844,8 @@ bg_status discover(void*ctx,void*query_token,const bg_discovery_options*options,
         if(!ctx||!query_token||!out||!profile||!discovery_options_valid(options)){op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid discovery operation input");return;}
         auto*c=static_cast<Context*>(ctx);auto*q=static_cast<DiscoveryQueries*>(query_token);
         if(q->context!=c||q->count>UINT64_MAX/8){op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid discovery query context/count");return;}
+        const uint32_t mode=q->hierarchy->mode;
+        if(mode>BG_BOUND_BERNSTEIN){op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid discovery hierarchy mode");return;}
         Pending<DiscoveryResult> pending(new DiscoveryResult{},op);auto*r=pending.value;r->context=c;r->count=q->count;
         float milliseconds=0;bool measured=false;
         {DeviceScope device(c->device,BG_STAGE_EVALUATE,op);if(device.selected&&op.ok()){
@@ -840,9 +855,14 @@ bg_status discover(void*ctx,void*query_token,const bg_discovery_options*options,
                 if(op.ok())op.cuda(cudaEventCreate(&stop),BG_STAGE_EVALUATE,"create discovery stop event");
                 if(op.ok())op.cuda(cudaEventRecord(start,c->stream),BG_STAGE_EVALUATE,"record discovery start");}
             if(op.ok()&&q->count){constexpr unsigned threads=128;const uint64_t needed=q->count/threads+(q->count%threads!=0);
-                const unsigned blocks=static_cast<unsigned>(std::min<uint64_t>(needed,4096));auto*h=q->hierarchy;auto*p=h->patches;
-                discovery_kernel<<<blocks,threads,0,c->stream>>>(p->records,p->count,p->controls,h->nodes,h->node_count,h->roots,h->bounds,h->mode,q->slots,q->targets,q->count,*options,r->fields,r->slabs[0],r->slabs[1],r->slabs[2],r->slabs[3],r->slabs[4],r->slabs[5]);
-                op.cuda(cudaGetLastError(),BG_STAGE_EVALUATE,"launch resident discovery kernel");
+                const unsigned blocks=static_cast<unsigned>(std::min<uint64_t>(needed,4096));
+                switch(mode){
+                case BG_BOUND_AABB:launch_discovery<BG_BOUND_AABB>(c,q,r,*options,blocks,threads);break;
+                case BG_BOUND_DOP26:launch_discovery<BG_BOUND_DOP26>(c,q,r,*options,blocks,threads);break;
+                case BG_BOUND_BERNSTEIN:launch_discovery<BG_BOUND_BERNSTEIN>(c,q,r,*options,blocks,threads);break;
+                default:op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid discovery hierarchy mode");break;
+                }
+                if(op.ok())op.cuda(cudaGetLastError(),BG_STAGE_EVALUATE,"launch resident discovery kernel");
                 if(op.ok()&&stop)op.cuda(cudaEventRecord(stop,c->stream),BG_STAGE_EVALUATE,"record discovery stop");}
             finish(c,op,BG_STAGE_EVALUATE);
             if(op.ok()&&start&&stop){op.cuda(cudaEventElapsedTime(&milliseconds,start,stop),BG_STAGE_EVALUATE,"read discovery duration");measured=op.ok();}
