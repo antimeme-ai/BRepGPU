@@ -38,3 +38,11 @@ top-face sampling operation now drives implementation. Original stderr remains
 in ignored context/body/initial-red.log; no fake failure of unchanged native
 math was manufactured. Product body and sampler implementation began after
 this red result and accepted plan reviews.
+
+The initial mixed-row box test passed on the fleet after immutable body and
+sampler implementation. The independent oracle checks the canonical graph,
+all packed-table fields/offsets and exact row geometry/labels. The complete
+three-body/adversarial suite and code reviews remain pending at this checkpoint.
+The runnable caller and serial timing driver are implemented; the primary
+reused measurement wraps the returned sample call externally, distinguishing
+it from internal phases ending through child cleanup.
