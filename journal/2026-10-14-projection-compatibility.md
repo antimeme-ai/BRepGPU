@@ -1,0 +1,7 @@
+# 2026-10-14: actual preserved projection compatibility
+
+Read active target home and project instructions before target actions. Touched only owned project utility/context/results; original device acquisitions and other host data were untouched. Waited for the integrator's current production build/adapter readiness before executing dependent combinations.
+
+Added `scripts/check_projection_compatibility.py` to exercise current Python plus actual preserved v1 binaries, current core plus actual preserved CUDA plugin, and the committed old ABI-1 Python adapter plus current core/plugin. The utility uses a fresh process per combination, exact supplied-input Fraction jets and independently known plane/rational-cylinder maps, repeated unsupported projection checks and evaluation after refusal. Baseline binary identities are checked before/after; old caller code is extracted under ignored context with no Git mutation.
+
+All eight supported-target cases passed: two CPU and six CUDA cases across both P100s, 21,840 jet-component checks and 2,184 OK request statuses. All ten projection attempts through old interfaces returned nonfatal BG_UNSUPPORTED; later evaluation remained correct. Published sanitized `results/projection-2026-10-14/compatibility.tsv` and `compatibility.md`; notified integration immediately when GPU correctness jobs ended so its published timing hold could be released. No performance measurement, baseline rebuild/overwrite, dependency or unrelated host operation occurred.
