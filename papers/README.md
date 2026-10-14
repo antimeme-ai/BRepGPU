@@ -1,5 +1,26 @@
 # BRepGPU research
 
+## First body-level beachhead
+
+The [owned body consumer](../docs/BODY_SAMPLING.md) now connects numerical jets
+to canonical box/cylinder/one-hole-plate snapshots, trims, shared boundaries and
+oriented normals. [Results](../results/body-2026-10-14/REPORT.md).
+
+* [Topology source study](2026-10-14-body-topology-study.md),
+  [oracle study](2026-10-14-body-oracle-study.md) and
+  [runtime study](2026-10-14-body-runtime-study.md).
+* [Design](../docs/BODY_SAMPLING_DESIGN.md),
+  [plan](../docs/BODY_SAMPLING_PLAN.md),
+  [body code review](2026-10-14-body-code-topology-review.md),
+  [oracle code review](2026-10-14-body-code-oracle-review.md) and
+  [sampler code review](2026-10-14-body-sampler-code-review.md).
+* [Actual caller artifact review](2026-10-14-body-caller-artifact-review.md) and
+  [complete-caller performance review](2026-10-14-body-performance-review.md).
+
+CPU normal/row work dominates the measured caller; no end-to-end gain against
+CPU24 is established. This is a completed narrow beachhead, with broader
+geometry and optimization reserved for the return pass.
+
 The first frumentarii dispatch covers three connected questions:
 
 | Lane | Question | Report |
