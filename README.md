@@ -7,8 +7,8 @@ independently qualified beachhead in each major theme, then return to strengthen
 it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
 cover body data, integration, curves/trims, meshing, pair discovery, intersections,
 classification, arrangements, solid operations, features and GPU topology.
-The next design unit connects the delivered numerical stages to an owned body
-snapshot and a part-level sampling/normal caller.
+The first body snapshot and part-level sampling/normal caller are now delivered.
+Conservative multi-patch pair discovery is the next uncovered operation.
 
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
@@ -25,6 +25,10 @@ adapter. Discovery removes supplied UV seeds and returns a certified
 squared-distance bracket with separate precision, coverage and budget flags.
 Both cards pass exact geometry, ownership and device memory checks.
 
+An owned body consumer now samples **boxes, cylinders and a plate with one
+through-hole**, retaining shared boundaries, trim loops, chart identity and
+oriented normals. CPU body/trim/normal work uses the existing native evaluator.
+
 The repository also retains a CPU modeling benchmark of NVIDIA's
 [USD BRep / SMLib](https://github.com/NVIDIA-Omniverse/usd-brep) and a reproduced
 tessellation failure. Those reference measurements are separate from the owned
@@ -40,6 +44,36 @@ BRepGPU evaluator.
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Body-aware samples and normals
+
+One immutable body snapshot retains faces, shared edges/coedges, holes and the
+two uses of a cylindrical seam. Quarter patches remain charts of one face.
+The runnable caller gathers exact trim-admitted UVs, evaluates one native
+first-jet batch and emits XYZ/normals with complete source identity.
+
+![Actual P100 drilled-plate samples and normals with owned shared boundaries](results/body-2026-10-14/caller/cuda-0-plate/body-samples.svg)
+
+All **14,358 candidate records and 13,996 evaluated witnesses** passed independent
+exact-input checks. CPU1/CPU24 and both P100s passed nine direct tests; each P100
+ran under Compute Sanitizer with zero errors/leaks. Four production host-code
+mutants were caught. The point output includes explicit rejected rows and raw
+UV/control/table records; no mesh or Boolean claim is implied.
+
+The **24-case complete-caller comparison** exposes the next performance limit:
+for 41,536 drilled-plate samples, reused wall is about **853 ms CPU24 versus
+874–878 ms on P100**. CPU normal/row construction dominates despite faster
+GPU evaluation; no end-to-end win is established here. This working beachhead
+now lets the breadth-first pass move to another theme.
+
+```sh
+PYTHONPATH=python python3 examples/sample_body.py --shape plate --backend cuda \
+  --device 0 --resolution 33 --output-directory results/local-body
+```
+
+[API and explicit library selection](docs/BODY_SAMPLING.md) ·
+[All results, ranges and timing scopes](results/body-2026-10-14/REPORT.md) ·
+[Reviewed design](docs/BODY_SAMPLING_DESIGN.md).
 
 ## Automatic bounds and discovery
 

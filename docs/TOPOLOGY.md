@@ -1,8 +1,10 @@
 # Topology identities and packed body snapshots
 
-Proposed architecture, 2026-10-13. The first numerical iteration carries lineage;
-later iterations implement this body model. This document does not claim an
-implemented topology backend.
+Architecture, 2026-10-13, status updated 2026-10-14. The first numerical
+iteration carries lineage. The [body sampling beachhead](BODY_SAMPLING.md)
+now implements a narrow read-only subset: CPU-built canonical box/cylinder/
+one-hole-plate snapshots with shared boundaries, loops, charts and packed tables.
+General construction/edit history and device topology remain proposed here.
 
 ## What the references teach
 

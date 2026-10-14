@@ -5,7 +5,8 @@ plate snapshots. It retains faces, shared edges/coedges, holes and a periodic
 seam, then samples admitted chart UVs through the existing native first-jet
 evaluator. This is CPU body construction/classification and normal consumption
 around C++/CUDA geometry execution; no new native ABI or dependency is needed.
-Qualification and measurements are recorded in the delivery report when ready.
+[Qualification and complete-caller measurements](../results/body-2026-10-14/REPORT.md)
+are delivered on CPU1/CPU24 and both P100s.
 
 ## Run the actual caller
 
