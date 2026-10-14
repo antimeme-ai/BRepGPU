@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560">
+<rect width="900" height="560" fill="#101923"/>
+<g font-family="sans-serif">
+<text x="28" y="38" fill="#edf4fc" font-size="24">BRepGPU · resident pair shortlist costs</text>
+<text x="28" y="68" fill="#a9bed0" font-size="14">Five calls · retained common-world indexes · actual page, download, cleanup and Python decoding</text>
+<text x="28" y="119" fill="#edf4fc" font-size="14">CPU1 · 4 bodies/side</text>
+<rect x="240" y="103" width="2.998" height="22" rx="3" fill="#f4c878"/>
+<path d="M242.738,114 H245.193" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="119" fill="#edf4fc" font-size="14">0.144 ms</text>
+<text x="28" y="162" fill="#edf4fc" font-size="14">CPU24 · 4 bodies/side</text>
+<rect x="240" y="146" width="33.117" height="22" rx="3" fill="#f4c878"/>
+<path d="M270.787,157 H275.081" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="162" fill="#edf4fc" font-size="14">1.586 ms</text>
+<text x="28" y="205" fill="#edf4fc" font-size="14">P100 0 · 4 bodies/side</text>
+<rect x="240" y="189" width="6.156" height="22" rx="3" fill="#58c9e7"/>
+<path d="M245.562,200 H246.900" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="205" fill="#edf4fc" font-size="14">0.295 ms</text>
+<text x="28" y="248" fill="#edf4fc" font-size="14">P100 1 · 4 bodies/side</text>
+<rect x="240" y="232" width="7.120" height="22" rx="3" fill="#58c9e7"/>
+<path d="M245.715,243 H248.157" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="248" fill="#edf4fc" font-size="14">0.341 ms</text>
+<text x="28" y="291" fill="#edf4fc" font-size="14">CPU1 · 128 bodies/side</text>
+<rect x="240" y="275" width="400.495" height="22" rx="3" fill="#f4c878"/>
+<path d="M633.768,286 H670.000" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="291" fill="#edf4fc" font-size="14">19.182 ms</text>
+<text x="28" y="334" fill="#edf4fc" font-size="14">CPU24 · 128 bodies/side</text>
+<rect x="240" y="318" width="201.080" height="22" rx="3" fill="#f4c878"/>
+<path d="M431.676,329 H455.484" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="334" fill="#edf4fc" font-size="14">9.631 ms</text>
+<text x="28" y="377" fill="#edf4fc" font-size="14">P100 0 · 128 bodies/side</text>
+<rect x="240" y="361" width="162.349" height="22" rx="3" fill="#58c9e7"/>
+<path d="M392.524,372 H423.194" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="377" fill="#edf4fc" font-size="14">7.776 ms</text>
+<text x="28" y="420" fill="#edf4fc" font-size="14">P100 1 · 128 bodies/side</text>
+<rect x="240" y="404" width="144.476" height="22" rx="3" fill="#58c9e7"/>
+<path d="M378.533,415 H391.578" stroke="#edf4fc" stroke-width="2"/>
+<text x="720" y="420" fill="#edf4fc" font-size="14">6.920 ms</text>
+<text x="28" y="486" fill="#a9bed0" font-size="14">Cold body/bounds preparation, upload and independent qualification reported separately.</text>
+<text x="28" y="513" fill="#a9bed0" font-size="14">Shared host; ranges are min/max. Closed-AABB survivors, not actual intersections.</text>
+<text x="28" y="541" fill="#a9bed0" font-size="14">No event timing in this matrix. Kernel-only speed does not establish whole-CAD speed.</text>
+</g></svg>

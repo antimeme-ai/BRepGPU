@@ -4,6 +4,11 @@ Architecture, 2026-10-13, status updated 2026-10-14. The first numerical
 iteration carries lineage. The [body sampling beachhead](BODY_SAMPLING.md)
 now implements a narrow read-only subset: CPU-built canonical box/cylinder/
 one-hole-plate snapshots with shared boundaries, loops, charts and packed tables.
+The [pair discovery consumer](PAIR_DISCOVERY.md) retains those exact snapshots
+and typed body/face/chart sources while GPU work sees only copied world boxes.
+Its page-local bits map through immutable source order; no pointer address or
+coordinate proximity defines identity. Chart exclusions remain distinct from
+face/body exclusions and intersection events.
 General construction/edit history and device topology remain proposed here.
 
 ## What the references teach

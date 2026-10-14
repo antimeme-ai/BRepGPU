@@ -1,0 +1,12 @@
+field	value
+bodies_per_side	4
+backend	cpu
+device	0
+threads	24
+profile	0
+left_charts	28
+right_charts	28
+cuda_index_upload_bytes	0
+cuda_mask_download_bytes	0
+topology_upload_bytes	0
+mask_layout	page-local LSB-first u32 little-endian

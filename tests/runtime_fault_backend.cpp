@@ -1,12 +1,15 @@
 // Owned test-only callback model: no CUDA execution or numerical oracle.
 #include "projection_backend_api.h"
 #include "discovery_backend_api.h"
+#include "pair_backend_api.h"
 #include <vector>
+#include <algorithm>
 #include <atomic>
 #include <cstring>
 #include <new>
 namespace {
 std::atomic<int> mode{0}, contexts{0}, patches{0}, queries{0}, results{0}, projection_queries{0}, projection_results{0}, factory_calls{0}, hierarchies{0}, discovery_queries{0}, discovery_results{0};
+std::atomic<int> pair_indices{0},pair_pages{0};
 struct Token { uint64_t count=0; uint32_t order=0; };
 bg_status error(bg_diagnostic* d,const char* text,bool fatal,uint32_t stage){
     *d={};d->abi_version=BG_ABI_VERSION;d->struct_size=sizeof(*d);
@@ -105,6 +108,8 @@ const bg_backend_v3 discovery_extension={3,sizeof(bg_backend_v3),BG_BACKEND_CAP_
 const bg_backend_v3 discovery_wrong_base=[](){auto value=discovery_extension;value.base=&other_base;return value;}();
 const bg_backend_v3 discovery_wrong_size=[](){auto value=discovery_extension;value.struct_size-=8;return value;}();
 
+#include "pair_fault_backend.inc"
+
 }
 extern "C" bg_status brepgpu_cuda_backend_v1(uint32_t version,const bg_backend_v1**out,bg_diagnostic*){
     *out=nullptr;if(version!=BG_BACKEND_ABI_VERSION)return BG_BACKEND_UNAVAILABLE;*out=&table;return BG_OK;
@@ -120,7 +125,7 @@ extern "C" bg_status brepgpu_cuda_backend_v2(uint32_t version,const bg_backend_v
 }
 extern "C" void bg_fault_mode(int value){mode=value;}
 extern "C" int bg_fault_factory_calls(){return factory_calls.load();}
-extern "C" int bg_fault_live(int kind){return kind==0?contexts.load():kind==1?patches.load():kind==2?queries.load():kind==3?results.load():kind==4?projection_queries.load():kind==5?projection_results.load():kind==6?hierarchies.load():kind==7?discovery_queries.load():kind==8?discovery_results.load():0;}
+extern "C" int bg_fault_live(int kind){return kind==0?contexts.load():kind==1?patches.load():kind==2?queries.load():kind==3?results.load():kind==4?projection_queries.load():kind==5?projection_results.load():kind==6?hierarchies.load():kind==7?discovery_queries.load():kind==8?discovery_results.load():kind==9?pair_indices.load():kind==10?pair_pages.load():0;}
 
 extern "C" bg_status brepgpu_cuda_backend_v3(uint32_t version,const bg_backend_v3**out,bg_diagnostic*d){
     ++factory_calls;*out=nullptr;
@@ -130,4 +135,14 @@ extern "C" bg_status brepgpu_cuda_backend_v3(uint32_t version,const bg_backend_v
     if(mode==55){error(d,"modeled fatal plus OK discovery factory",true,BG_STAGE_PLUGIN);return BG_OK;}
     if(mode==56){error(d,"modeled fatal plus unsupported discovery factory",true,BG_STAGE_PLUGIN);d->code=BG_UNSUPPORTED;return BG_UNSUPPORTED;}
     *out=mode==51?&discovery_wrong_base:mode==52?&discovery_wrong_size:&discovery_extension;return BG_OK;
+}
+
+extern "C" bg_status brepgpu_cuda_backend_v4(uint32_t version,const bg_backend_v4**out,bg_diagnostic*d){
+    ++factory_calls;*out=nullptr;
+    if(version!=4||mode==80)return BG_UNSUPPORTED;
+    if(mode==83)return allocation_error(d,BG_STAGE_PLUGIN);
+    if(mode==84)return error(d,"modeled fatal pair factory",true,BG_STAGE_PLUGIN);
+    if(mode==85){error(d,"modeled fatal plus OK pair factory",true,BG_STAGE_PLUGIN);return BG_OK;}
+    if(mode==86){error(d,"modeled fatal plus unsupported pair factory",true,BG_STAGE_PLUGIN);d->code=BG_UNSUPPORTED;return BG_UNSUPPORTED;}
+    *out=mode==81?&pair_wrong_base:mode==82?&pair_wrong_size:&pair_extension;return BG_OK;
 }

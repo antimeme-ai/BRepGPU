@@ -2,6 +2,8 @@
 #include "evaluator.hpp"
 #include "projection_solver.hpp"
 #include "discovery_math.hpp"
+#include "pair_backend_api.h"
+#include "pair_math.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -41,6 +43,11 @@ struct DiscoveryQueries {
 struct DiscoveryResult {
     Context* context=nullptr;double* fields=nullptr;uint32_t* slabs[6]{};uint64_t count=0;
 };
+struct DevicePairIndex;
+struct DevicePairPage;
+struct Operation;
+void destroy(DevicePairIndex*,Operation&) noexcept;
+void destroy(DevicePairPage*,Operation&) noexcept;
 
 void append_bounded(char* target, size_t capacity, const char* text) noexcept {
     size_t used = 0;
@@ -879,6 +886,8 @@ const bg_backend_v3 discovery_table={BG_DISCOVERY_BACKEND_ABI_VERSION,sizeof(bg_
     hierarchy_upload,hierarchy_close,hierarchy_download,hierarchy_bound_download,
     discovery_query_create,discovery_query_close,discover,discovery_result_close,discovery_download};
 
+#include "pair_cuda.inc"
+
 }
 
 extern "C" bg_status brepgpu_cuda_backend_v1(uint32_t requested_abi,
@@ -906,4 +915,12 @@ extern "C" bg_status brepgpu_cuda_backend_v3(uint32_t requested_abi,const bg_bac
     if(out)*out=nullptr;
     return guarded(BG_STAGE_PLUGIN,diag,[&](Operation&op){if(!out||requested_abi!=BG_DISCOVERY_BACKEND_ABI_VERSION)
         op.error(BG_UNSUPPORTED,BG_STAGE_PLUGIN,"unsupported discovery backend ABI");else *out=&discovery_table;});
+}
+
+extern "C" bg_status brepgpu_cuda_backend_v4(uint32_t version,const bg_backend_v4**out,bg_diagnostic*diag){
+    if(out)*out=nullptr;
+    return guarded(BG_STAGE_PLUGIN,diag,[&](Operation&op){
+        if(!out||version!=BG_PAIR_BACKEND_ABI_VERSION)op.error(BG_UNSUPPORTED,BG_STAGE_PLUGIN,"unsupported pair backend ABI");
+        else *out=&pair_table;
+    });
 }

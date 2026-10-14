@@ -2,6 +2,8 @@
 #include "projection_backend_api.h"
 #include "discovery_backend_api.h"
 #include "discovery_cpu.h"
+#include "pair_backend_api.h"
+#include "pair_math.hpp"
 #include <atomic>
 #include <initializer_list>
 #include <algorithm>
@@ -40,7 +42,7 @@ static_assert(sizeof(bg_projection_abi_info)==40 && sizeof(bg_backend_v2)==64);
 static_assert(sizeof(bg_hierarchy_options)==32 && sizeof(bg_hierarchy_node)==80 && alignof(bg_hierarchy_node)==8);
 static_assert(sizeof(bg_hierarchy_info)==40 && sizeof(bg_discovery_options)==32 && sizeof(bg_discovery_info)==48);
 static_assert(sizeof(bg_discovery_abi_info)==56 && sizeof(bg_backend_v3)==96);
-enum class Kind { Context, Patch, Query, Result, ProjectionQuery, ProjectionResult, Hierarchy, DiscoveryQuery, DiscoveryResult };
+enum class Kind { Context, Patch, Query, Result, ProjectionQuery, ProjectionResult, Hierarchy, DiscoveryQuery, DiscoveryResult, PairIndex, PairPage };
 struct Context;
 struct Object {
     Kind kind;
@@ -84,6 +86,8 @@ struct Plugin {
     const bg_backend_v1* table=nullptr;
     const bg_backend_v2* projection=nullptr;
     const bg_backend_v3* discovery=nullptr;
+    const bg_backend_v4* pairs=nullptr;
+    uint32_t pair_state=0;
     uint32_t discovery_state=0;
     uint32_t projection_state=0; // 0 unprobed, 1 valid, 2 stable unsupported
     ~Plugin(){if(library)dlclose(library);}
@@ -671,3 +675,5 @@ extern "C" bg_status bg3_discovery_sources(bg_handle id,bg_patch_desc*patches,ui
     if(pc!=h.patches->patches.size()||pb!=multiply(pc,sizeof(bg_patch_desc))||count!=q.slots.size()||td!=multiply(count,3))fail(BG_INVALID_ARGUMENT,"discovery source shape mismatch");
     final_cuda_check(a.context);if(pc)std::copy(h.patches->patches.begin(),h.patches->patches.end(),patches);if(count){std::copy(q.slots.begin(),q.slots.end(),slots);std::copy(q.targets.begin(),q.targets.end(),targets);}*ho=h.options;*options=r->options;
 });}
+
+#include "pair_runtime.inc"

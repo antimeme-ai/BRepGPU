@@ -1,5 +1,33 @@
 # BRepGPU research
 
+## Deferred integration return pass
+
+At the operator's direction, [GPU setup, residency and integration polish](../docs/RETURN_PASS.md)
+wait until AFTER the broad-pass big rocks. Source-grounded notes cover
+[GPU/stream/plugin lifetime](2026-10-14-gpu-lifetime-reuse-study.md) and
+[scene/template/index reuse](2026-10-14-scene-residency-reuse-study.md).
+No optimization implementation or new profiling campaign is active.
+
+## Conservative surface-pair beachhead
+
+The [pair design](../docs/PAIR_DISCOVERY_DESIGN.md) and
+[implementation plan](../docs/PAIR_DISCOVERY_PLAN.md) apply
+[broad-phase literature](2026-10-14-pair-literature.md),
+[bibliography](pair-discovery.bib) and independent
+[runtime](2026-10-14-pair-runtime-study.md),
+[topology](2026-10-14-pair-topology-study.md) and
+[geometry oracle](2026-10-14-pair-oracle-study.md) source studies.
+Carrier-box survivors preserve source identity and explicit page coverage;
+they do not establish intersections.
+The [delivered API](../docs/PAIR_DISCOVERY.md) and
+[qualified results](../results/pairs-2026-10-14/REPORT.md) retain actual source/
+mask exports and eight complete-caller cost cases. Reviews cover
+[runtime code](2026-10-14-pair-code-runtime-review.md),
+[scene consumer](2026-10-14-pair-code-scene-oracle-review.md),
+[independent truth](2026-10-14-pair-oracle-code-review.md),
+[serialized artifacts](2026-10-14-pair-artifact-oracle-review.md) and
+[performance](2026-10-14-pair-performance-review.md).
+
 ## First body-level beachhead
 
 The [owned body consumer](../docs/BODY_SAMPLING.md) now connects numerical jets

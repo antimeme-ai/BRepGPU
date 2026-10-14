@@ -1,6 +1,7 @@
 // Direct native ownership oracle. Each scenario must run in a fresh process.
 #include "brepgpu_projection.h"
 #include "brepgpu_discovery.h"
+#include "brepgpu_pairs.h"
 #include <cfenv>
 #include <xmmintrin.h>
 #include "runtime_test_hooks.h"
@@ -52,8 +53,9 @@ struct Gate {std::mutex mutex;std::condition_variable cv;bg_handle target=0;bool
 void pause_admission(uint32_t event,bg_handle handle,void* data){auto&g=*static_cast<Gate*>(data);if(event!=BG_TEST_ADMISSION||handle!=g.target)return;
     std::unique_lock<std::mutex> l(g.mutex);g.arrived=true;g.cv.notify_all();g.cv.wait(l,[&]{return g.resume;});}
 void throw_publication(uint32_t event,bg_handle,void*){if(event==BG_TEST_PUBLICATION)throw std::bad_alloc();}
-void assert_drained(){for(int i=0;i<9;++i)check(bg_fault_live(i)==0,"backend token leaked");}
+void assert_drained(){for(int i=0;i<11;++i)check(bg_fault_live(i)==0,"backend token leaked");}
 void cpu_still_operates(const char* plugin){Fixture cpu(plugin,false);cpu.evaluate();double j[3];uint32_t status;auto d=diagnostic();check(bg1_download(cpu.result,j,3,&status,1,&d,sizeof(d))==BG_OK,"CPU blocked by CUDA poison");close_ok(cpu.context);}
+#include "pair_fault_scenarios.inc"
 }
 int main(int argc,char**argv){try{
     check(argc==3,"usage: brepgpu_runtime_faults SCENARIO PLUGIN");const std::string scenario=argv[1];const char*plugin=argv[2];
@@ -236,6 +238,7 @@ int main(int argc,char**argv){try{
             _mm_setcsr(saved);check(refused&&workers_refused,"unsupported actual CPU environment admitted");check(ecode==BG_OK&&er!=0,"empty discovery ran environment guard");check(bad==BG_INVALID_ARGUMENT&&out==0,"sNaN tolerance admitted or zeroing lost");close_ok(er);
         }
         discovery_result(q);close_ok(f.context);assert_drained();
+    }else if(pair_scenario(scenario,plugin)){
     }else throw std::runtime_error("unknown scenario");
     std::cout<<scenario<<": PASS (owned callback model; not hardware fault injection)\n";return 0;
 }catch(const std::exception&e){std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}}
