@@ -72,6 +72,8 @@ if(BREPGPU_ENABLE_CUDA)
   target_sources(brepgpu_topology PRIVATE native/topology_cuda.cu)
   target_compile_definitions(brepgpu_topology PRIVATE BG_TOPOLOGY_HAS_CUDA=1)
   target_link_libraries(brepgpu_topology PRIVATE CUDA::cudart)
+  target_compile_definitions(brepgpu_topology_native_checks PRIVATE BG_TOPOLOGY_CHECK_CUDA=1)
+  target_link_libraries(brepgpu_topology_native_checks PRIVATE CUDA::cudart)
   set_target_properties(brepgpu_topology PROPERTIES CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 60-real CUDA_RUNTIME_LIBRARY Shared
     BUILD_RPATH "$<TARGET_FILE_DIR:CUDA::cudart>")

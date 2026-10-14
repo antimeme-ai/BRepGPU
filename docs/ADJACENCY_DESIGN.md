@@ -1,6 +1,6 @@
 # Edge-use adjacency beachhead
 
-Status: proposed design for adversarial review, 2026-10-14.
+Status: implemented contract after adversarial design/plan/code review, 2026-10-14.
 
 ## Purpose and bounded claim
 

@@ -61,3 +61,11 @@ No test-for-tests, oracle mutant or geometric claim is needed to strengthen this
 unit. Direct production mutation and native memory/admission/fault campaigns
 remain root's serialized fleet work. The oracle is sound for its declared
 relationship; only O1 remains before full public-reader acceptance.
+
+## O1 disposition
+
+Re-read the corrected test methods. The all-six-class case now asserts actual
+`edge_kind` results against literal kind values; malformed-reader slots include
+that method. O1 resolved. Oracle/public-reader test review accepted with no
+remaining finding. This disposition is a source review, not a new execution
+claim.
