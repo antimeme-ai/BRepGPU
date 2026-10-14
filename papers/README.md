@@ -94,8 +94,8 @@ lectures were acquired at pinned revisions; their actual kernels were inspected.
 
 The integrated [next-operation recommendation](../docs/ITERATION_3_STUDY.md)
 keeps conservative arithmetic, complete domain accounting and candidate quality
-distinct. These are completed studies; the new operation has no product API,
-implementation or measured speedup yet.
+distinct. The operation is now [implemented and qualified](../docs/ITERATION_3.md),
+with [retained native cost and attained precision](../results/discovery-2026-10-14/REPORT.md).
 
 The next delivery now has a [reviewed design](../docs/ITERATION_3_DESIGN.md),
 including a concrete three-mode comparison informed by the
@@ -104,4 +104,14 @@ including a concrete three-mode comparison informed by the
 [Numerical](2026-10-14-discovery-design-numerical-review.md),
 [runtime](2026-10-14-discovery-design-runtime-review.md) and
 [oracle](2026-10-14-discovery-design-oracle-review.md) reviews retain findings
-and dispositions. Product work follows the reviewed implementation plan.
+and dispositions. The [implementation plan](../docs/ITERATION_3_PLAN.md) and
+[qualification](../results/discovery-2026-10-14/QUALIFICATION.md) retain the
+delivered scope and evidence.
+
+The [off-grid separated-bound study](2026-10-14-offgrid-separated-bounds-study.md)
+explains the measured axis relaxation and proposes exact extrusion recognition
+with a separated height bound. [Bibliography](offgrid-bounds.bib),
+[primary reading](offgrid-bounds-pdfs.tsv) and
+[exact algebra](offgrid-bounds-exact-algebra.tsv) accompany it. This is a proposed
+numerical strengthening; its floating-point implementation and hardware value
+remain unmeasured.

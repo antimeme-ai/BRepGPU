@@ -252,6 +252,9 @@ third operation. The [strong-bound design study](papers/2026-10-14-discovery-str
 turns computational-geometry literature into owned DOP and Bernstein methods,
 with exact independent cache/witness oracles and explicit cost/precision
 comparisons. Pinned sources, bibliographies and restoration commands are retained.
+The [off-grid extrusion study](papers/2026-10-14-offgrid-separated-bounds-study.md)
+explains a measured Bernstein relaxation and proposes a tighter separated bound;
+implementation and hardware value remain future work.
 
 Useful contributions include small analytic fixtures, difficult intersection
 cases, relevant papers, and independently reproducible findings. State what the
