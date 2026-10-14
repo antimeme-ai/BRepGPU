@@ -1,0 +1,8 @@
+reference	revision	path	bytes	sha256	source_url
+warp	28159649a2bb8b91e1badf692007c38a9f62d6b5	warp/native/bvh.h	26010	fc211845311174785f622cd36e15e9218d0aaae92c6976cbd0993dc965501341	https://github.com/NVIDIA/warp/blob/28159649a2bb8b91e1badf692007c38a9f62d6b5/warp/native/bvh.h
+warp	28159649a2bb8b91e1badf692007c38a9f62d6b5	warp/native/bvh.cpp	30009	010c32d10536ddf9ac4d43183f01f405ba95514d7335e014c4bcba8cc265530e	https://github.com/NVIDIA/warp/blob/28159649a2bb8b91e1badf692007c38a9f62d6b5/warp/native/bvh.cpp
+warp	28159649a2bb8b91e1badf692007c38a9f62d6b5	warp/native/bvh.cu	34379	15fad0fdf07b69f756ff6bacf87281f44273028e54e144bb0def2c7b707c85ed	https://github.com/NVIDIA/warp/blob/28159649a2bb8b91e1badf692007c38a9f62d6b5/warp/native/bvh.cu
+warp	28159649a2bb8b91e1badf692007c38a9f62d6b5	warp/native/tile_bvh.h	15859	2325ada8d9b442f39058ea8c097d92b6d0d3519741a32820f08d726a7ed55b6c	https://github.com/NVIDIA/warp/blob/28159649a2bb8b91e1badf692007c38a9f62d6b5/warp/native/tile_bvh.h
+sisl	e0a82b1a851e932657f3e1af25033fbbcd33e907	src/s1958.c	9914	fbc307140aa647f4472122d3c13b6c7687cde2c2bfcd76c357f99a4ab5e32119	https://github.com/SINTEF-Geometry/SISL/blob/e0a82b1a851e932657f3e1af25033fbbcd33e907/src/s1958.c
+sisl	e0a82b1a851e932657f3e1af25033fbbcd33e907	src/s1790.c	10186	d9e048c4b202506d036efd1b46006eb050e1a02caea9e3bd6ba3738c2cddf2c7	https://github.com/SINTEF-Geometry/SISL/blob/e0a82b1a851e932657f3e1af25033fbbcd33e907/src/s1790.c
+sisl	e0a82b1a851e932657f3e1af25033fbbcd33e907	src/s1992.c	16886	825c5f9f389b8c24abd51de01e309095827be1a897f048d0974a7aa376dd454e	https://github.com/SINTEF-Geometry/SISL/blob/e0a82b1a851e932657f3e1af25033fbbcd33e907/src/s1992.c

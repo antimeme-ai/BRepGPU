@@ -52,3 +52,18 @@ extractions. Their primary source/hashes are in the
 the numerical catalog's codeload URLs restore those sources with the same owned
 importer. GPU-NURBS remains public-browser/paper study only, without a source
 archive or adopted code.
+
+## Wafer and GPU MODE
+
+The requested study acquired Wafer's GPU performance resource index and the
+GPU MODE lectures it explicitly links, at pinned revisions. Intact ZIPs and
+clean extracted trees are in `quarantine/wafer-gpu-mode/`; reference scripts
+were not executed and no dependency was adopted.
+
+[Archive catalog](papers/wafer-gpu-mode-sources.tsv) records revisions, sizes,
+digests, destinations and source URLs. [Restoration commands](papers/wafer-gpu-mode-reference-restoration.md)
+use the same owned safe ZIP importer. [Inspected files](papers/wafer-gpu-mode-entrypoints.tsv)
+and [study findings](papers/2026-10-14-wafer-gpu-mode-study.md) record the actual
+read scope. GPU MODE includes Apache-2.0 licensing; Wafer's README declares MIT
+but its pinned archive has no LICENSE file. Acquisition selects neither for
+product reuse.

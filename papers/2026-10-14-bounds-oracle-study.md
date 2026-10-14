@@ -1,0 +1,103 @@
+# Conservative bounds and candidate discovery: independent oracle study
+
+Research only, 2026-10-14. No implementation or dependency adoption is selected by this report. The proposed domain is the exact union of supplied, positive-weight rational Bézier patch rectangles, with degrees at most (3,3), as accepted by iterations 1–2. These are untrimmed carriers. A carrier bound also encloses a trimmed face subset, but a carrier witness is not necessarily a valid trimmed-face upper-distance witness. Trims, arbitrary NURBS extraction, world-coordinate arithmetic and CAD topology remain separate contracts.
+
+## Recommendation and attainable result meaning
+
+Deliver conservative subpatch bounds and complete bounded-work radius/candidate discovery first. Reuse immutable patch snapshots, stable source lineage and packed device slots. This supplies useful work to point-cloud matching, collision broad phase and future intersection discovery: eliminate certified distant rectangles, retain difficult rectangles, and generate interior/boundary seeds for the existing local solver. Measure survivors, false-positive workload, build/amortization costs, and delivered batch work, not only box-test throughput.
+
+A tolerance-qualified global distance interval is a reasonable subsequent operation using the same machinery. It requires complete domain coverage, a sound lower bound on every surviving region, and a rigorously enclosed evaluation at an incumbent UV. The seeded solver can improve that incumbent; it cannot establish these three properties. Distance accuracy, one approximate representative, unique nearest UV, and coverage of *every* global minimizer are different promises. Do not couple a distance-gap success to narrow UV boxes: constant or symmetric patches can have continuum minimizers. No topology completeness or global nearest claim is inherited from iteration 2's box-stationary status.
+
+Suggested first result vocabulary is semantic, not an API proposal: `excluded` means the entire named closed rectangle is proved outside a closed query ball; `candidate` means exclusion was not established; `unresolved` means a budget or arithmetic limitation left coverage unfinished. A candidate is not a root or local minimum. If the public operation claims complete discovery, unresolved coverage must be returned or the entire operation must fail explicitly. Truncating to the first K candidates cannot be called complete.
+
+## Exact model and enclosure derivation
+
+Treat every finite input binary64 homogeneous control as an exact rational number. Write a control H_ij=(A_ij,W_ij), Cartesian P_ij=A_ij/W_ij, and tensor Bernstein basis B_ij(s,t). The exact surface is
+
+    S(s,t) = sum B_ij A_ij / sum B_ij W_ij
+           = sum alpha_ij P_ij,
+    alpha_ij = B_ij W_ij / sum B_kl W_kl >= 0,
+    sum alpha_ij = 1.
+
+Thus positive-weight Cartesian control hulls enclose the entire closed rectangle, including edges, corners, rank-deficient regions and self-overlap. The exact child net after dyadic de Casteljau subdivision is obtained by repeatedly averaging *homogeneous* controls. Splitting rows and columns produces the same restricted rational map with an affine local-to-parent UV map. Original weight positivity persists under these nonnegative combinations. Original control bounds and parent Cartesian AABBs remain valid for every child.
+
+Production binary64 averaging changes a net unless rounding error is enclosed. An implementation can carry outward homogeneous intervals, or a rounded net with an analytically sound error enclosure, and then outward-enclose each ratio A/W with denominator strictly positive. Merely expanding the final AABB by one ULP is insufficient when earlier subdivisions accumulated error. Treat every interval operation's rounding, underflow, zero signs and possible overflow explicitly. Parent-box intersection is safe because both parent and newly constructed child bounds enclose the exact child; it also prevents accumulated enclosure growth from enlarging a child past its parent. Retaining known original weight/control envelopes is also safe.
+
+An axis-aligned box [l_k,h_k] gives exact squared lower distance
+
+    L_box = sum_k max(l_k-X_k, 0, X_k-h_k)^2.
+
+Production must round this lower bound downward, including subtraction, multiplication and summation. Any tighter bound may be combined by taking the maximum of sound lower bounds. A numerically found closest point *inside a control hull* gives an upper bound on distance to that hull, not a lower bound; it cannot justify exclusion. A separating-plane certificate or an exactly solved hull distance can. A plane direction n gives a lower bound max(0,n·X-max_i n·P_i)/||n|| when its orientation, products, denominator and rounding are enclosed. The initial delivery need not own a hull QP solver.
+
+A query-dependent alternative follows from products of Bernstein bases. Let b_ij=A_ij-W_ij X. The exact squared-distance function is N(s,t)/D(s,t), with N=||sum B_ij b_ij||² and D=(sum B_ij W_ij)². For each degree-(2p,2q) coefficient (k,l), form products over i+i'=k,j+j'=l with factors
+
+    binom(p,i) binom(p,i') / binom(2p,k)
+    * binom(q,j) binom(q,j') / binom(2q,l).
+
+Apply these factors to b_ij·b_i'j' for N and W_ij W_i'j' for D. Every D coefficient is positive. Hence max(0,min N_kl/D_kl) is a sound exact lower bound, even when some N coefficients are negative. To exclude against squared upper U, strictly positive enclosed lower coefficients of N-U D suffice. This costs up to 49 objective coefficients per bicubic node and is query dependent; investigate only if AABB survivors dominate delivered work. This derivation is independent of a projection iteration.
+
+## An incumbent is an exact UV witness, not an approximate XYZ
+
+For any valid binary64 UV u inside the original rectangle, the exact S(u) is a surface point. Its stationarity, chart rank or seed-solver outcome is irrelevant to the inequality d*² <= ||S(u)-X||². Evaluate the original patch at u with a proven coordinate enclosure Q; an upward bound on max_{q in Q} ||q-X||² provides U. Keep approximate XYZ/distance descriptive and certificate U separate. An interval box farthest-distance formula is sufficient. Check target subtraction and square/sum outward; arithmetic overflow can yield a safe +infinity upper but must never become a finite false success. Iteration 1's finite-corpus error grades are empirical qualifications, not a pointwise bound reusable here.
+
+A failed/rank-unresolved local solve may still return a valid UV that improves U after enclosure evaluation. Conversely, a STATIONARY saddle is only another upper witness. If a CAD face is trimmed, require a separately certified valid trim-domain UV; an untrimmed carrier witness can lie inside a hole and underestimate face distance.
+
+For active frontier F and an incumbent U, retain L = min(U, min_{n in F} L_n) when every discarded region was proved to have lower distance at least the incumbent used at its discard, and incumbents only decrease. Keep a lower-floor summary if discarded regions can instead have other terminal meanings. With no incumbent, initialize U=+infinity and never exclude from a guessed distance. With no patches, nearest distance is undefined rather than zero. Empty candidate output after complete closed-radius exclusion has meaning; empty output after overflow does not.
+
+For retaining every global minimizer, prune only when L_n > U. Equality can contain ties and exact minimizers. For obtaining one distance representative, L_n >= U is safe provided the witness and coverage contract are correct. Closed radius queries similarly retain equality. Compute completion gaps conservatively: squared-distance gap U-L and Euclidean-distance gap sqrt(U)-sqrt(L) have different units. Near zero, a small squared gap does not imply the same small distance gap. Use upward gap arithmetic and directed square roots, or define the public contract entirely in squared distance.
+
+## Frontier and identity oracle
+
+A node names its exact source snapshot/revision, patch identity, dyadic subdivision path and original UV rectangle. Dense device slot is storage, not identity. Child ownership and local UV maps must survive compaction; same-sized foreign snapshots cannot be substituted. Shared subdivision boundaries are geometrically closed; half-open bookkeeping may deduplicate outputs but must not lose boundary answers.
+
+The complete terminal cut contains candidate leaves, unresolved leaves and proved-excluded leaves. Per original root, these paths must be prefix-free and recursively cover every child of every expanded parent. An exact integer/dyadic path checker is stronger than area totals: duplicated area can mask a hole. Verify each emitted exclusion against the exact source child net and criterion. This is direct qualification of coverage and exclusion, not a reference traversal solver. A GPU queue/stack/output failure must retain the parent or all unscheduled children and report unresolved; partial publication must not destroy the terminal cut. Depth exhaustion, midpoint no-progress, stack cap and output cap are distinct useful reasons. Reconstructing float rectangles alone loses exact path identity beyond binary64 UV resolution.
+
+For analytic cases, every known global-minimizer UV must lie in the candidate/unresolved union under the all-minimizer promise. For arbitrary fixtures, exact control-ratio enclosure and exact pruning inequalities qualify universal exclusion without enumerating roots or sampling. If product output does not expose enough node identity/bounds/terminal coverage to check these claims, provide an owned qualification download or trace scope; do not replace this oracle with CPU parity.
+
+## Concrete independent fixture corpus
+
+All models below can use the existing homogeneous patch input format; binary64 inputs are exact Fractions. The exact oracle builds child nets with Fraction arithmetic and compares reported outward bounds as exact binary rationals. This does not run the production subdivision or local solver.
+
+| Fixture | Exact answer or claim attacked |
+| --- | --- |
+| All 16 degree pairs, constant/affine/generic bounded positive weights | Exact dyadic child homogeneous controls; all Cartesian ratios enclosed, child boxes inside parent intersections, positive weights. Include depth 0, both split axes, alternating splits, boundary paths and nonuniform weights 1 through 256. |
+| Constant H=(1,0,0,3) | S=(1/3,0,0), every UV minimizes. Approximate XYZ=round(1/3) is not exact S. Query X=that binary64 approximation has positive exact distance although approximate distance is zero. A zero incumbent from rounded XYZ is false. |
+| Linear x controls 0 and 2^-1074, W=1 | Shared midpoint is exactly 2^-1075; nearest-rounded midpoint becomes zero. Left-child zero-width box fails enclosure. Squared distance may underflow, so check coordinate/net enclosure directly. |
+| Weighted line H0=(0,0,0,1), H1=(256,0,0,256) | S_x=256s/(1+255s); midpoint=256/257. Splitting Cartesian controls instead of homogeneous controls gives 1/2 and changes the patch. |
+| Orthoplane S=(s,t,0), X=(a,b,c) | UV=(clip(a),clip(b)); d*²=gap(a,[0,1])²+gap(b,[0,1])²+c². Interior, all four edges and corners, exact on-surface zero, nextafter boundary offsets; source subdivision boundary s=1/2. |
+| Tilted plane S=(s,t,(s+2t)/4), X=(-1/4,1/2,1/4) | Correct UV=(0,1/2), d*²=1/16. Free UV=(-5/21,11/21); componentwise clipping is incorrect. |
+| Quarter-cylinder S=((1-s²)/(1+s²),2s/(1+s²),t), X=(3/4,1,1/4) | Unique UV=(1/2,1/4), d*²=1/16. Exact rational controls/ratios allow independent enclosure of curved children. |
+| Same cylinder X=(-3/4,-1,1/4) | Global endpoint UV=(0,1/4), d*²=65/16; other endpoint d²=73/16 is another strict local minimum; interior UV=(1/2,1/4) is saddle with d²=81/16. A local-positive-curvature answer still cannot prune the better endpoint without bounds. |
+| Cylinder X=(0,0,1/2) | d*²=1, minimizer continuum [0,1]×{1/2}. Distance completion must not require isolated UV. |
+| Cylinder X=(-1,-1,1/2) | Both endpoint UVs (0,1/2),(1,1/2) are global, d*²=5; all-minimizer output loses a tie if it prunes on equality. |
+| Parabolic S=(a,t,a²), a=2s-1, X=(0,1/2,3/4) | Two global UVs (1/4,1/2),(3/4,1/2), d*²=1/2. Middle UV is stationary saddle with d²=9/16. Independent identity d²=1/2+(a²-1/4)²+(t-1/2)² proves globality. |
+| Same parabola X=(0,1/2,1/2) | d²=1/4+a⁴+(t-1/2)², unique quartic-flat minimum at (1/2,1/2). Small Hessian is not grounds for omission. |
+| Same parabola normal family | a0 in ±1/2,±1/4, lambda=1/16, target=(a0-2a0 lambda,t0,a0²+lambda). Unique global UV=((a0+1)/2,t0), d*²=lambda²(4a0²+1), useful nontrivial performance corpus. |
+| Fold S=((2s-1)²,t,0), X=(1/4,1/2,c) | Two UVs (1/4,1/2),(3/4,1/2) give d*²=c²; same XYZ does not mean same source UV. At X_x=0 the rank-deficient fold minimum must remain covered. |
+| Rank-one S=(s,0,0) and constant patch | Exact line/point nearest distance with entire unused-parameter minimizer families. Rank-refused seed solver cannot stop discovery. |
+| Linear S=(2s-1,t,0), X=(0,1/2,0), query radius 1/2 | Both endpoint controls are outside the ball, but the carrier crosses its center. Minimum control-point distance is an unsafe lower bound. |
+| Duplicate/coincident source patches and far/near patch union | Same geometry, distinct lineage; slot permutations preserve distance and source membership. Put the actual nearest patch last. Empty/truncated output, top-K selection, reduction omission, snapshot mixing and compaction errors become visible. |
+
+AABB tightness is not promised: a tilted planar patch may have a large empty axis-aligned box interior; conservative extra candidates are correct. For exact arbitrary-model exclusions, compare emitted lower L_n <= the exact child-box distance, if the public algorithm promises the box formula. If a stronger supported criterion is used, independently validate its exact inequality instead. Do not demand a box oracle dominate a mathematically stronger hull/objective certificate.
+
+## Required fault attacks and qualification limits
+
+Qualification should attack rounding direction at each stage; omitted ratio denominators; rational/Cartesian split confusion; repeated split accumulation; subnormal flush-to-zero; singleton boxes treated as empty; open comparisons at closed boundaries; a nearest control point mistaken for a lower bound; nearest-rounded incumbent underestimated; rejected/rank-failed seed suppressing a child; queue overflow discarding an unscheduled sibling; exactly exhausted budget; zero budget; depth/no-progress; mixed valid and invalid slots; per-query frontier sharing; omitted last patch; foreign source revision; stale retained resources; absent requested backend; and incomplete candidate publication after allocation/device failure. Explicit counters must count all performed bound/evaluation/split work, including failed attempts, and budgets must apply to the documented unit.
+
+A finite exact corpus directly qualifies these fault classes; it does not prove all arithmetic executions correct. The arithmetic design must establish enclosure rules for the entire admitted domain. CPU parity, sampling, stationarity and rendered bounds add no independent evidence for universal exclusion. Sanitizers/device restoration/lifetime probes remain useful for different resource fault classes. Performance qualification must include useful survivors, far easy exclusions, zero-distance/boundary/nonunique cases and deliberately unresolved budgets; fast rejection of invalid queries is not discovery throughput.
+
+## Primary literature, source inspection and access limits
+
+- [Chen, Yong, Wang, Paul and Xu (2008), minimum point–NURBS curve distance](https://doi.org/10.1016/j.cad.2008.06.008), [author deposit](https://inria.hal.science/inria-00518359/document). Read full acquired article: its scalar rational Bernstein squared-distance coefficients support exclusion by coefficient lower bounds; it also explicitly warns that controls outside a ball do not imply the curve is outside. Curve-specific termination and one-dimensional shape criteria do not become a bicubic surface completeness theorem. The article body and HAL metadata were read; use DOI/HAL for citation, not a web crawler's upload date.
+- [Chen, Su, Yong, Paul and Sun (2007), control-polygon projection counterexample](https://doi.org/10.1016/j.cagd.2007.03.008), [author deposit](https://inria.hal.science/inria-00518368/document). Read the full one-page article as a rendered image: it contrasts a true interior closest point with an incorrect endpoint returned by Ma/Hewitt. Its geometric diagram supplies no numeric controls, so it motivates adversarial exact fixtures rather than a fabricated numerical reproduction.
+- [Thomas, Turnbull, Ros and Cameron (2000), Computing Signed Distances between Free-Form Objects](https://www.iri.upc.edu/people/thomas/papers/ICRA2000.pdf). Read sections 2,4–6: upper/lower bounding-volume subdivision, local Newton refinement and normal restrictions on rational patches. It motivates tighter hierarchies, not our binary64 enclosure arithmetic. Normal-alignment exclusions from regular interior surface reasoning require separate treatment at boundaries and singularities; do not introduce them in the first bounds increment.
+- [Yap (2006), Complete Subdivision Algorithms I](https://cs.nyu.edu/exact/doc/subdiv1.pdf). Read introduction and separation-bound architecture: hull rejection alone cannot establish exact intersection or uniqueness; tangencies need additional completion machinery. This is a curve-intersection result with stated assumptions, not a nearest-surface theorem.
+- [Burr, Gao and Tsigaridas, arXiv v1 (2018)](https://arxiv.org/abs/1801.05864). Read introduction and diameter-distance framework: termination/work is sensitive to separation and difficult sets. Its smooth implicit-surface example does not provide a fixed budget guarantee for degenerate rational patch projection. Record v1 separately from later journal publication.
+- SISL pinned e0a82b1a851e932657f3e1af25033fbbcd33e907: `src/s1711.c:145` explicitly uses homogeneous rational coefficients for subdivision; `src/s1954.c:115` transforms closest point into a scalar extrema problem; `src/s1921.c:185` carries rational weights; `src/s1958.c:82` explicitly disclaims reliable global success for its fast one-point route; `src/s1834.c:194` rotates controls and compares projected boxes with ordinary floating arithmetic/tolerant equality. These mechanisms motivate owned bounds but supply no directed-rounding certificate.
+- OCCT pinned b8f597c677811d1f9f4d8a97f5ae2825c0353a42: `src/ModelingData/TKGeomBase/BndLib/BndLib_AddSurface.cxx` dispatches to GeomBndLib. `GeomBndLib/GeomBndLib_BezierSurface.cxx:26` encloses a full patch by poles; `:49` restricted-patch Box instead samples a grid and enlarges by tolerance; BoxOptimal samples midpoint deflection and optimizes extrema. `GeomBndLib_BSplineSurface.cxx:86` uses influencing poles for in-domain bounds. Full-pole convex hull is the transferable mathematical mechanism; a sampled restricted Box is not an independent universal enclosure oracle.
+- Warp pinned 28159649a2bb8b91e1badf692007c38a9f62d6b5: `warp/native/bvh.h:54` bounds3 stores float vec3, and its `empty()` uses >= on axis widths. Our valid planes/curves/points can have zero-width bounds. Neither float narrowing nor that volume-empty predicate can be imported as a conservative patch semantic.
+- opencadkernel pinned 3d77c6bd5ec2c7a380b2ae296bafd56dbe430fb4: `src/brep/bounds.rs:125` directly uses finite positive-weight NURBS control hulls; other edge routes sample and add chord-based padding. The latter padding is not a rational enclosure proof.
+
+Source snapshots and restoration already exist in [reference catalog](reference-catalog.tsv), [acceleration restoration](acceleration-roadmap-reference-restoration.md) and [numerical restoration](first-iteration-numerical-restoration.md). No reference was adopted, installed or copied into product code. The live Axiolid certified_projection Rust API documentation is a follow-up lead for separate scalar witness/certificate fields and unresolved reasons, not inspected algorithmic authority or an adopted dependency. Ma/Hewitt (2003) full text remains an acquisition gap; its separate curve-conference and curve/surface journal articles must not be conflated. Existing projection algebraic/iteration papers remain useful within their earlier scope.
+
+See [bounds bibliography](bounds-oracles.bib), [PDF catalog](bounds-oracle-pdfs.tsv), [source map](bounds-oracle-sources.tsv) and [shopping list](SHOPPING_LIST.md).
