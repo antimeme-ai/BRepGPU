@@ -34,3 +34,22 @@ BodySnapshot.classify_point call failed with the intended absent-entry-point
 AttributeError: one direct test, 0.040s. No product code existed before this red.
 Native protected library hashes still match the preceding delivery. Product and
 independent oracle/test owners can now implement; root owns hooks and caller.
+
+## Implementation, direct greens and mutations
+
+Implemented the complete exact CPU operation and two lazy body entry points.
+The first direct fleet green passed one entry test in0.073s. Independent source-
+derived point and half-space/corner contact truth plus eleven direct methods
+then passed with old body/pair/section/adjacency compatibility:61tests in9.371s,
+one existing GPU-only test skipped. Added actual query binding, iterator-failure
+and body contact-adapter assertions; the final twelve new/entry tests passed
+in0.466s. Native sources/libraries remain unchanged.
+
+Caller review fixed result-to-submitted-query correspondence, source dependency
+pins, and graphics derived from actual emitted contact loci and original body
+geometry. Seven isolated fleet product mutants were killed by actual geometry
+assertions (hole sense, float radial sign, float frame normalization, first face
+only, boundary segment crossing, missing corner, wrong right UV). Each targeted
+healthy baseline and retry passed; Python bytecode writes were disabled to avoid
+same-size mutation cache reuse. Protected native library hashes were unchanged.
+Performance execution is next, serial and without overlapping owned activity.
