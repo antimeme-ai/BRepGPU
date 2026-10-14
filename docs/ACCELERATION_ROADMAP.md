@@ -1,12 +1,82 @@
 # Deliver useful acceleration while building a GPU B-rep kernel
 
-Design direction, 2026-10-13. This roadmap sequences useful operations and the
-machinery they leave behind. It assigns no calendar dates or unmeasured speedups.
+Design direction, updated 2026-10-14. The operator selected an intentional
+breadth-first pass: establish a working beachhead in each major theme before
+returning to deepen individual capabilities. Scope is narrow; correctness is
+not relaxed. This roadmap assigns no calendar dates or unmeasured speedups.
 The owned [patch evaluator](ITERATION_1.md), [resident seeded projection](ITERATION_2.md)
 and [automatic conservative patch discovery](ITERATION_3.md) are implemented.
 Their reviewed designs/plans define the qualified support
 contracts; the [topology design](TOPOLOGY.md) explains how subsequent solid
 operations avoid pointer-defined identity.
+
+## Breadth-first delivery policy
+
+A beachhead is a runnable operation on a declared input family, with an
+independent correctness oracle, usable outputs, explicit unsupported/unresolved
+results and measured complete-caller costs. A study, layout sketch or attractive
+render does not complete a beachhead. CPU execution is a valid first placement
+where it establishes semantics; GPU placement and supported geometry are tracked
+separately. CUDA beachheads still target the qualified P100 toolchain.
+
+After a beachhead works and has been reviewed, qualified and published, move to
+an uncovered theme. Return early only to fix a correctness defect or remove a
+demonstrated dependency blocking another beachhead. Broader geometry, tighter
+bounds, additional optimizations and generalized robustness go into the return
+pass. This policy does not require every theme to finish before repairing a bug.
+
+Use the same small owned body corpus where the contracts fit: a box, a cylinder
+and a plate with one separated through-hole, then a multi-hole plate. These are
+fixtures for several independent operations, rather than a claim that one
+successful part establishes general B-rep correctness. A narrow reference
+adapter is a separate input path; general import must not block owned fixtures.
+
+| Major theme | First working beachhead | Direct correctness claim | Return pass |
+| --- | --- | --- | --- |
+| Numerical geometry | Delivered rational patch jets and seeded projection | Exact-input geometry/derivative and declared stationarity checks | Wider degrees/weights, extraction, solver strength and tuning |
+| Bounds and geometric queries | Delivered seed-free named-patch distance brackets; add conservative multi-patch pair culling in a common body frame | Valid brackets; no intersecting pair excluded in the admitted analytic corpus, with the exclusion rule justified over whole source domains | Cross-face trimmed proximity, off-grid strengthening and traversal scheduling |
+| Body storage and identity | CPU-built immutable packed box/cylinder/drilled-part snapshots, consumed by a sampling/normal caller | Typed references, oriented loops, shared edge/coedge occurrences, declared frames and source correspondence | Incremental edits, persistent naming and broader body families |
+| Model integration and interchange | One qualified reference-to-owned carrier path, with face/chart provenance and explicit unsupported faces; reproducible owned output records | Positions/derivatives agree under the established parameter map; trim preservation is checked separately and never inferred from carrier conversion | General NURBS extraction, wider import/export and cross-session identity |
+| Curves, trims and charts | Owned line/circular-arc boundaries, planar faces with a hole and a cylindrical seam with distinct oriented uses | Trim membership, loop closure and spatial-edge/UV correspondence over the declared boundaries | General trim curves, additional charts, poles and difficult parameterizations |
+| Approximation and meshing | Shared-edge, trim-aware meshing of supported planar/cylindrical bodies | Declared chord bounds, hole preservation, shared boundary agreement and supported mesh incidence/embedding | General adaptive rational meshing and broader seam/pole coverage |
+| Surface intersections | Plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
+| Predicates, contacts and region classification | Analytic crossing/touching/disjoint fixtures and a planar overlap case with declared coincidence/contact semantics | Correct classification against exact analytic truth; ambiguity remains explicit | General tangent contacts, near-coincidence and adaptive predicate machinery |
+| Face arrangements and topology construction | Split a planar trimmed face with supported intersection arcs; construct ordered regions and shared event identities on CPU | Region membership, holes, loop orientation and shared incidence, without coordinate-only welding | General curved arrangements and more complex event graphs |
+| Solid operations and history | One supported box-minus-through-cylinder Boolean, assembled on CPU using owned events/arrangements | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
+| Feature construction | An owned extrusion and revolution of supported profiles; separate narrow circular fillet and analytic offset fixtures | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
+| GPU topology and residency | Count/scan/fill of one established packed adjacency construction, with an actual downstream reader | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
+
+Each row is a theme, not one oversized implementation assignment. Rows naming
+several operations are delivered as separate conceptual units. In particular,
+extrusion/revolution do not imply fillet or offset support; analytic contact
+fixtures do not establish complete general tangent surface intersection.
+
+## First pass across the themes
+
+Begin with the body snapshot and sampling/normal caller, then the smallest
+curve/trim/chart operation it needs. Advance conservative pair discovery and
+the narrow reference adapter independently when their input contracts are
+ready. Meshing, analytic intersection and feature fixtures can then use the
+same owned geometry without waiting for a general importer or Boolean engine.
+Planar arrangements can start with independently constructed analytic arcs,
+without waiting for a general surface-intersection operation. Extrusion of a
+validated profile can precede Boolean construction.
+Contact/classification and face arrangements supply the next solid-operation
+dependencies. A small GPU adjacency construction can run as soon as its CPU
+semantics and reader exist; it does not wait for every Boolean stage to migrate.
+
+Only implement prerequisites needed by the next consumer. For example, the
+first immutable body reader needs complete shared-boundary meaning, but does
+not need an incremental editor. A plane/cylinder intersection needs a complete
+answer for its admitted family, but not a general rational intersection solver.
+Meshing needs actual trim coverage and a shared-edge protocol; classifying a
+few sampled UV points cannot stand in for either.
+
+The next design unit is the immutable owned body snapshot plus its part-level
+sampling/normal consumer. Its support family, frame/chart maps, boundaries,
+output and direct oracles must be researched and reviewed before implementation.
+The off-grid separated-bound proposal remains a return-pass experiment until a
+consumer shows that its precision or cost blocks a required output.
 
 ## Product and architecture
 
@@ -17,13 +87,17 @@ qualified output, an honest end-to-end measurement, and usable failure results.
 
 ```mermaid
 flowchart LR
-    A[CPU task baseline] --> B[Batched rational patch jets]
-    B --> C[Resident geometric queries]
-    C --> D[Bounded meshing and pair discovery]
-    D --> E[Complete regular intersection graphs]
-    E --> F[Owned curved Boolean operations]
-    F --> G[GPU arrangements and topology]
-    G --> H[Broader features and difficult geometry]
+    N[Delivered numerical geometry and bounds] --> B[Owned body snapshots and charts]
+    B --> M[Trim-aware meshing]
+    B --> P[Conservative pair discovery]
+    B --> F[Feature construction]
+    B --> C[Contact and region classification]
+    R[Narrow reference adapter] --> B
+    P --> I[Supported intersection components]
+    I --> A[Face arrangements]
+    C --> A
+    A --> S[First owned curved Boolean]
+    B --> G[GPU adjacency beachhead]
 ```
 
 Placement and coverage are separate axes. We can expand the supported geometry
@@ -44,6 +118,13 @@ before general NURBS solid modeling is complete.
 | 7 — broader coverage and features | Extend regularity/separation coverage to tighter transverse loops, tangencies, coincidence and additional seams/poles, then sweeps/fillets/offsets | Stronger predicates and bounds, chart/overlap semantics, feature construction on the same geometry/topology model | A direct oracle for each new family; unsupported/unresolved cases remain visible. Add features in an order informed by measured workload value |
 
 ## How we select the next delivery
+
+The numbered delivery rows above describe architectural dependencies and
+existing evidence, rather than a requirement to exhaust one row before touching
+another. The breadth-first theme table governs work selection. Prefer an
+uncovered theme whose immediate dependencies are available, complete one
+coherent operation, and publish it. Optimize an established theme when measured
+consumer costs justify the return pass, or when it blocks another delivery.
 
 Measure where complete tasks spend time before claiming a modeling win. A useful
 numerical unit can serve sampling or fitting without accelerating the existing
