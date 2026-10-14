@@ -71,7 +71,8 @@ For each current accepted UV:
    merely nearby coordinate. Solve the reduced positive-definite H system
    Hp=-g with the same scaled pivot discipline. For any reduced M, let
    scale=max(1,||M||_infinity); normalize M and RHS by scale. Compare a and
-   c-b*b/a to 2^-40 before square roots, then solve scaled Cholesky triangular
+   c-b*b/a to 2^-40 before square roots: each must be strictly greater than
+   that floor; a positive pivot equal to or below it is Small. Then solve scaled Cholesky triangular
    systems. A one-dimensional solve tests its normalized diagonal similarly.
    Failed/nonfinite direction arithmetic uses the next safeguard while valid
    current jets remain usable. If unavailable, solve the reduced G_FF+mu*I
@@ -119,7 +120,7 @@ after measuring homogeneous and mixed iteration cases.
 
 All flags describe evaluated numerical quantities. BOUNDARY means an exact
 returned coordinate is 0 or 1. Rank flags distinguish an observed nonpositive
-metric pivot from a positive pivot below the numerical floor, without claiming
+metric pivot from a positive pivot equal to or below the numerical floor, without claiming
 a geometric singularity certificate.
 
 Curvature classification is attached only to a stationary row. A bound is
