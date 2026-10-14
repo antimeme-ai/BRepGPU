@@ -9,8 +9,9 @@ cover body data, integration, curves/trims, meshing, pair discovery, intersectio
 classification, arrangements, solid operations, features and GPU topology.
 Body snapshots, part-level sampling/normals and conservative surface-pair
 discovery are delivered, along with complete analytic face intersections and
-their coupled spatial/two-UV representations. Arrangements, GPU adjacency and
-narrow interchange remain broad-pass themes.
+their coupled spatial/two-UV representations. GPU edge-use adjacency and its
+mate/face-neighbor reader are delivered too. Classification, arrangements,
+trim-aware meshing and narrow interchange remain broad-pass themes.
 [GPU setup/residency and integration notes](docs/RETURN_PASS.md) are queued
 after the broad-pass big rocks.
 
@@ -22,9 +23,10 @@ A boundary representation retains surfaces, curves, trims and their connections.
 That makes a cylinder an editable cylinder, with a display mesh derived from it.
 Getting those connections right is as important as evaluating surfaces quickly.
 
-Four owned GPU stages are implemented: **batched rational patch jets**,
+Five owned GPU stages are implemented: **batched rational patch jets**,
 **resident seeded surface projection**, **automatic conservative patch discovery**,
-and **conservative surface-pair discovery**, with native C++ CPU/CUDA backends and a standard-library Python
+**conservative surface-pair discovery**, and **edge-use adjacency construction/reading**,
+with native C++ CPU/CUDA backends and a standard-library Python
 adapter. Discovery removes supplied UV seeds and returns a certified
 squared-distance bracket with separate precision, coverage and budget flags.
 Both cards pass exact geometry, ownership and device memory checks.
@@ -48,12 +50,53 @@ BRepGPU evaluator.
 [Automatic discovery API](docs/ITERATION_3.md) ·
 [Surface-pair API](docs/PAIR_DISCOVERY.md) ·
 [Analytic face intersections](docs/INTERSECTIONS.md) ·
+[GPU adjacency and mate reader](docs/ADJACENCY.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## GPU topology: construct adjacency, preserve the seam
+
+GPU count/scan/fill builds packed edge-to-coedge rows, then an actual reader
+returns unique opposed mates and their owning faces. The cylinder seam keeps
+both uses on one face. Stable entity identity stays separate from storage slots;
+independent permutations preserve the typed result.
+
+![Actual shuffled P100 cylinder adjacency, with both same-face seam uses](results/adjacency-2026-10-14/caller/p100-1-cylinder/adjacency.svg)
+
+CPU1/CPU24 and both P100s pass **ten direct adjacency tests per placement**.
+Both cards pass device memory and recoverable failure/restoration checks with
+**zero errors/leaks**. Native host sanitizers pass; **eight actual CPU/CUDA/Python
+production mutants** are caught. All **120 exported uses and diagram labels**
+pass independent signed-source, loop/UV, CSR and mate/neighbor checks.
+
+For **491,520 edges / 983,040 uses**, count+scan+fill+native-reader host spans are
+about **17.6–17.7× faster ordered and 11.4–11.6× faster shuffled than CPU24**. Those
+scopes exclude allocation/transfers/cleanup. Complete native ordered storage
+favors CPU1: **8.2 ms versus about 17 ms GPU**. Shuffled native medians are
+**19.4 ms CPU24 versus 21.8/15.3 ms P100**, with overlapping ranges on the faster
+card. Full typed Python traversal remains **4–5 seconds**, with no established
+complete-caller gain. Repeated plates are separate topology occurrences at the
+same coordinates, rather than one complicated solid.
+
+![Complete native adjacency operation, including transfers and cleanup](results/adjacency-2026-10-14/benchmark/native-costs.svg)
+
+```sh
+PYTHONPATH=python python3 examples/build_adjacency.py --recipe cylinder \
+  --order permuted --backend cuda --device 0 \
+  --library-path build/topology-release/libbrepgpu_topology.so \
+  --output-directory results/local-topology
+```
+
+[API and construction scope](docs/ADJACENCY.md) ·
+[24 matched cases, cold costs and full timing scopes](results/adjacency-2026-10-14/REPORT.md) ·
+[Research and bibliography](papers/README.md#gpu-edge-use-adjacency-beachhead) ·
+[Round-two notes](papers/2026-10-14-adjacency-round2-notes.md).
+Native bulk consumption, resident buffers and integration follow the broad-pass
+big rocks. Radial ordering, topology editing and Boolean construction remain future.
 
 ## Exact sections and both surface representations
 

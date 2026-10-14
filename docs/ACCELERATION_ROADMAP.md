@@ -10,6 +10,8 @@ The first [body snapshot and sampling/normal consumer](BODY_SAMPLING.md) is
 also implemented and independently qualified on CPU and both P100s.
 The [surface-pair beachhead](PAIR_DISCOVERY.md) adds common-world carrier culling
 and retained typed identities, with CPU/P100 complete-shortlist measurements.
+The [GPU adjacency beachhead](ADJACENCY.md) adds owned CPU/P100 edge-use CSR
+and a seam-preserving mate/face reader with retained typed occurrence identity.
 Their reviewed designs/plans define the qualified support
 contracts; the [topology design](TOPOLOGY.md) explains how subsequent solid
 operations avoid pointer-defined identity.
@@ -43,19 +45,20 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Model integration and interchange | One qualified reference-to-owned carrier path, with face/chart provenance and explicit unsupported faces; reproducible owned output records | Positions/derivatives agree under the established parameter map; trim preservation is checked separately and never inferred from carrier conversion | General NURBS extraction, wider import/export and cross-session identity |
 | Curves, trims and charts | Delivered line/closed-circle boundaries, planar faces with a hole and a cylindrical seam with distinct uses for the canonical body fixtures | Exact submitted-UV trim membership, loop closure and complete spatial-edge/UV identities | General trim curves, additional charts, poles and difficult parameterizations |
 | Approximation and meshing | Shared-edge, trim-aware meshing of supported planar/cylindrical bodies | Declared chord bounds, hole preservation, shared boundary agreement and supported mesh incidence/embedding | General adaptive rational meshing and broader seam/pole coverage |
-| Surface intersections | Plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
+| Surface intersections | Delivered plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
 | Predicates, contacts and region classification | Analytic crossing/touching/disjoint fixtures and a planar overlap case with declared coincidence/contact semantics | Correct classification against exact analytic truth; ambiguity remains explicit | General tangent contacts, near-coincidence and adaptive predicate machinery |
 | Face arrangements and topology construction | Split a planar trimmed face with supported intersection arcs; construct ordered regions and shared event identities on CPU | Region membership, holes, loop orientation and shared incidence, without coordinate-only welding | General curved arrangements and more complex event graphs |
 | Solid operations and history | One supported box-minus-through-cylinder Boolean, assembled on CPU using owned events/arrangements | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
 | Feature construction | Construct an extrusion and revolution of supported profiles; separately construct a declared circular fillet and analytic offset | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
-| GPU topology and residency | Count/scan/fill of one established packed adjacency construction, with an actual downstream reader | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
+| GPU topology and residency | Delivered owned count/scan/fill of edge-use CSR and an actual mate/face-neighbor reader; per-call device storage | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
 
 Each row is a theme, not one oversized implementation assignment. Rows naming
 several operations are delivered as separate conceptual units. In particular,
 extrusion/revolution do not imply fillet or offset support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
 Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/chart
-consumer and complete analytic plane/wall intersections are delivered. The remaining
+consumer, complete analytic plane/wall intersections and GPU edge-use adjacency
+are delivered. The remaining
 beachheads are proposed; each needs its own researched design, reviewed plan,
 implementation and qualification.
 
@@ -94,8 +97,11 @@ favors CPU. Complete analytic closed plane/wall intersections are now
 spatial/bothUV maps and a qualified CPU/P100 consumer. Native large-row evaluation
 is about15–17.5 times faster on P100, while full consumption remains CPU bound
 at2.3–2.5s and exact request preparation costs27–32s. Continue uncovered
-arrangement/classification, GPU adjacency and narrow interchange beachheads;
-broader SSI or integration tuning does not displace them. At the operator's explicit
+arrangement/classification, trim-aware meshing and narrow interchange beachheads;
+broader SSI or integration tuning does not displace them. GPU adjacency now
+constructs and reads packed edge-use CSR without pointer-defined identity;
+compaction, editing, resident arrangements and Booleans remain return-pass work.
+At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane
 and do not replace the theme sequence.
@@ -121,7 +127,7 @@ flowchart LR
     I --> A[Face arrangements]
     C --> A
     A --> S[First owned curved Boolean]
-    B --> G[GPU adjacency beachhead]
+    B --> G[Delivered GPU edge-use adjacency]
 ```
 
 Placement and coverage are separate axes. We can expand the supported geometry

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 933">
+<rect width="1160" height="933" fill="#101923"/>
+<g font-family="sans-serif">
+<text x="28" y="38" fill="#edf4fc" font-size="24">BRepGPU · Complete topology caller</text>
+<text x="28" y="65" fill="#a9bed0" font-size="14">Native rebuild + immutable wrapper publication + every typed mate/neighbor read</text>
+<text x="28" y="107" fill="#edf4fc" font-size="13">CPU1 · 3 instances · ordered</text>
+<rect x="400" y="92" width="0.024" height="20" rx="3" fill="#f4c878"/>
+<path d="M400.023,102 H400.025" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="107" fill="#edf4fc" font-size="14">0.257 ms</text>
+<text x="28" y="139" fill="#edf4fc" font-size="13">CPU24 · 3 instances · ordered</text>
+<rect x="400" y="124" width="0.405" height="20" rx="3" fill="#f4c878"/>
+<path d="M400.380,134 H400.412" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="139" fill="#edf4fc" font-size="14">4.279 ms</text>
+<text x="28" y="171" fill="#edf4fc" font-size="13">P100 0 · 3 instances · ordered</text>
+<rect x="400" y="156" width="0.122" height="20" rx="3" fill="#58c9e7"/>
+<path d="M400.081,166 H400.147" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="171" fill="#edf4fc" font-size="14">1.286 ms</text>
+<text x="28" y="203" fill="#edf4fc" font-size="13">P100 1 · 3 instances · ordered</text>
+<rect x="400" y="188" width="0.072" height="20" rx="3" fill="#58c9e7"/>
+<path d="M400.070,198 H400.107" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="203" fill="#edf4fc" font-size="14">0.761 ms</text>
+<text x="28" y="235" fill="#edf4fc" font-size="13">CPU1 · 3 instances · permuted</text>
+<rect x="400" y="220" width="0.025" height="20" rx="3" fill="#f4c878"/>
+<path d="M400.022,230 H400.026" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="235" fill="#edf4fc" font-size="14">0.266 ms</text>
+<text x="28" y="267" fill="#edf4fc" font-size="13">CPU24 · 3 instances · permuted</text>
+<rect x="400" y="252" width="0.681" height="20" rx="3" fill="#f4c878"/>
+<path d="M400.395,262 H401.081" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="267" fill="#edf4fc" font-size="14">7.202 ms</text>
+<text x="28" y="299" fill="#edf4fc" font-size="13">P100 0 · 3 instances · permuted</text>
+<rect x="400" y="284" width="0.066" height="20" rx="3" fill="#58c9e7"/>
+<path d="M400.064,294 H400.071" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="299" fill="#edf4fc" font-size="14">0.697 ms</text>
+<text x="28" y="331" fill="#edf4fc" font-size="13">P100 1 · 3 instances · permuted</text>
+<rect x="400" y="316" width="0.072" height="20" rx="3" fill="#58c9e7"/>
+<path d="M400.066,326 H400.078" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="331" fill="#edf4fc" font-size="14">0.762 ms</text>
+<text x="28" y="363" fill="#edf4fc" font-size="13">CPU1 · 512 instances · ordered</text>
+<rect x="400" y="348" width="5.682" height="20" rx="3" fill="#f4c878"/>
+<path d="M405.264,358 H407.921" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="363" fill="#edf4fc" font-size="14">60.067 ms</text>
+<text x="28" y="395" fill="#edf4fc" font-size="13">CPU24 · 512 instances · ordered</text>
+<rect x="400" y="380" width="5.883" height="20" rx="3" fill="#f4c878"/>
+<path d="M405.482,390 H406.962" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="395" fill="#edf4fc" font-size="14">62.192 ms</text>
+<text x="28" y="427" fill="#edf4fc" font-size="13">P100 0 · 512 instances · ordered</text>
+<rect x="400" y="412" width="5.503" height="20" rx="3" fill="#58c9e7"/>
+<path d="M405.103,422 H411.231" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="427" fill="#edf4fc" font-size="14">58.178 ms</text>
+<text x="28" y="459" fill="#edf4fc" font-size="13">P100 1 · 512 instances · ordered</text>
+<rect x="400" y="444" width="6.153" height="20" rx="3" fill="#58c9e7"/>
+<path d="M405.318,454 H411.033" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="459" fill="#edf4fc" font-size="14">65.052 ms</text>
+<text x="28" y="491" fill="#edf4fc" font-size="13">CPU1 · 512 instances · permuted</text>
+<rect x="400" y="476" width="5.575" height="20" rx="3" fill="#f4c878"/>
+<path d="M405.419,486 H409.793" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="491" fill="#edf4fc" font-size="14">58.939 ms</text>
+<text x="28" y="523" fill="#edf4fc" font-size="13">CPU24 · 512 instances · permuted</text>
+<rect x="400" y="508" width="6.610" height="20" rx="3" fill="#f4c878"/>
+<path d="M406.357,518 H415.406" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="523" fill="#edf4fc" font-size="14">69.888 ms</text>
+<text x="28" y="555" fill="#edf4fc" font-size="13">P100 0 · 512 instances · permuted</text>
+<rect x="400" y="540" width="5.830" height="20" rx="3" fill="#58c9e7"/>
+<path d="M405.726,550 H406.536" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="555" fill="#edf4fc" font-size="14">61.635 ms</text>
+<text x="28" y="587" fill="#edf4fc" font-size="13">P100 1 · 512 instances · permuted</text>
+<rect x="400" y="572" width="5.478" height="20" rx="3" fill="#58c9e7"/>
+<path d="M405.157,582 H406.226" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="587" fill="#edf4fc" font-size="14">57.914 ms</text>
+<text x="28" y="619" fill="#edf4fc" font-size="13">CPU1 · 32768 instances · ordered</text>
+<rect x="400" y="604" width="410.235" height="20" rx="3" fill="#f4c878"/>
+<path d="M771.504,614 H834.306" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="619" fill="#edf4fc" font-size="14">4337.130 ms</text>
+<text x="28" y="651" fill="#edf4fc" font-size="13">CPU24 · 32768 instances · ordered</text>
+<rect x="400" y="636" width="400.642" height="20" rx="3" fill="#f4c878"/>
+<path d="M761.284,646 H814.527" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="651" fill="#edf4fc" font-size="14">4235.714 ms</text>
+<text x="28" y="683" fill="#edf4fc" font-size="13">P100 0 · 32768 instances · ordered</text>
+<rect x="400" y="668" width="378.349" height="20" rx="3" fill="#58c9e7"/>
+<path d="M770.082,678 H805.669" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="683" fill="#edf4fc" font-size="14">4000.025 ms</text>
+<text x="28" y="715" fill="#edf4fc" font-size="13">P100 1 · 32768 instances · ordered</text>
+<rect x="400" y="700" width="379.633" height="20" rx="3" fill="#58c9e7"/>
+<path d="M758.463,710 H817.063" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="715" fill="#edf4fc" font-size="14">4013.594 ms</text>
+<text x="28" y="747" fill="#edf4fc" font-size="13">CPU1 · 32768 instances · permuted</text>
+<rect x="400" y="732" width="471.349" height="20" rx="3" fill="#f4c878"/>
+<path d="M839.115,742 H911.212" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="747" fill="#edf4fc" font-size="14">4983.248 ms</text>
+<text x="28" y="779" fill="#edf4fc" font-size="13">CPU24 · 32768 instances · permuted</text>
+<rect x="400" y="764" width="481.559" height="20" rx="3" fill="#f4c878"/>
+<path d="M874.627,774 H931.379" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="779" fill="#edf4fc" font-size="14">5091.191 ms</text>
+<text x="28" y="811" fill="#edf4fc" font-size="13">P100 0 · 32768 instances · permuted</text>
+<rect x="400" y="796" width="456.281" height="20" rx="3" fill="#58c9e7"/>
+<path d="M850.649,806 H950.000" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="811" fill="#edf4fc" font-size="14">4823.938 ms</text>
+<text x="28" y="843" fill="#edf4fc" font-size="13">P100 1 · 32768 instances · permuted</text>
+<rect x="400" y="828" width="458.944" height="20" rx="3" fill="#58c9e7"/>
+<path d="M836.308,838 H896.381" stroke="#edf4fc" stroke-width="2"/>
+<text x="970" y="843" fill="#edf4fc" font-size="14">4852.094 ms</text>
+<text x="28" y="889" fill="#a9bed0" font-size="14">Five calls after one warmup · marks show min/max · disjoint primitive instances · no resident topology allocation</text>
+<text x="28" y="913" fill="#a9bed0" font-size="14">Packing/permutation, cold first call and independent qualification are reported separately in raw/summary TSV.</text>
+</g></svg>

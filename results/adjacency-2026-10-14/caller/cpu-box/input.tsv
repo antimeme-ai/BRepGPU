@@ -1,0 +1,16 @@
+field	value
+recipe	box
+replicas	1
+order	ordered
+backend	cpu
+device	0
+threads	1
+edges	12
+faces	6
+coedges	24
+instances	1
+host_slot_sign_input_bytes	288
+host_csr_reader_output_bytes	388
+cuda_slot_sign_upload_bytes	0
+cuda_csr_reader_download_bytes	0
+cuda_source_identity_upload_bytes	0

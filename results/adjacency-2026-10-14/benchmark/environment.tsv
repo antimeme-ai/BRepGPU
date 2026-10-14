@@ -1,0 +1,36 @@
+field	value
+python	3.12.3
+system	Linux
+kernel	6.8.0-146-generic
+machine	x86_64
+libc	glibc 2.39
+cpu_0	Architecture:                            x86_64
+cpu_1	CPU(s):                                  48
+cpu_2	On-line CPU(s) list:                     0-47
+cpu_3	Model name:                              Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+cpu_4	Thread(s) per core:                      2
+cpu_5	Core(s) per socket:                      12
+cpu_6	Socket(s):                               2
+g++_0	g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+g++_1	Copyright (C) 2023 Free Software Foundation, Inc.
+g++_2	This is free software; see the source for copying conditions.  There is NO
+g++_3	warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+cmake_0	cmake version 3.28.3
+cmake_1	
+cmake_2	CMake suite maintained and supported by Kitware (kitware.com/cmake).
+cuda_compiler_0	nvcc: NVIDIA (R) Cuda compiler driver
+cuda_compiler_1	Copyright (c) 2005-2025 NVIDIA Corporation
+cuda_compiler_2	Built on Fri_Feb_21_20:23:50_PST_2025
+cuda_compiler_3	Cuda compilation tools, release 12.8, V12.8.93
+cuda_compiler_4	Build cuda_12.8.r12.8/compiler.35583870_0
+gpu_0	0, Tesla P100-PCIE-16GB, 16384, 580.178.04
+gpu_1	1, Tesla P100-PCIE-16GB, 16384, 580.178.04
+cmake_BREPGPU_ENABLE_CUDA	ON
+cmake_BREPGPU_ENABLE_SANITIZERS	OFF
+cmake_BREPGPU_TOPOLOGY_TEST_HOOKS	OFF
+cmake_CMAKE_BUILD_TYPE	Release
+cmake_CMAKE_CUDA_ARCHITECTURES	52
+cmake_CMAKE_CUDA_FLAGS	
+cmake_CMAKE_CUDA_FLAGS_RELEASE	-O3 -DNDEBUG
+cmake_CMAKE_CXX_FLAGS	
+cmake_CMAKE_CXX_FLAGS_RELEASE	-O3 -DNDEBUG

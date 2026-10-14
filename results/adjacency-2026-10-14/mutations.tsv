@@ -1,0 +1,9 @@
+mutant	production_source	backend	direct_test	baseline_seconds	build_seconds	test_seconds	baseline	failure	result
+cpu-wrong-member	native/topology.cpp	cpu	test_cylinder_seam_literal_members_and_mates	0.119393668952398	2.289748424082063	0.166081830044277	healthy baseline	AssertionError	KILLED
+cpu-wrong-neighbor	native/topology.cpp	cpu	test_cylinder_seam_literal_members_and_mates	0.12215263408143073	2.212188195902854	0.15550406300462782	healthy baseline	AssertionError	KILLED
+cuda-wrong-member	native/topology_cuda.cu	cuda	test_cylinder_seam_literal_members_and_mates	0.8856824000831693	7.357649988029152	0.8643973889993504	healthy baseline	AssertionError	KILLED
+cuda-omitted-block-prefix	native/topology_cuda.cu	cuda	test_recursive_scan_uneven_boundaries_and_empty_tail	1.7064182549947873	8.104796814033762	1.2011904739774764	healthy baseline	AssertionError	KILLED
+cuda-wrong-neighbor	native/topology_cuda.cu	cuda	test_cylinder_seam_literal_members_and_mates	0.7264948860974982	7.763076379080303	0.9503406569128856	healthy baseline	AssertionError	KILLED
+cuda-same-face-label-lost	native/topology_cuda.cu	cuda	test_cylinder_seam_literal_members_and_mates	0.8980129660340026	7.823963526985608	0.7920757430838421	healthy baseline	AssertionError	KILLED
+cuda-sign-conflict-ignored	native/topology_cuda.cu	cuda	test_all_degree_sign_and_same_face_classes	0.44308553903829306	8.105200398014858	0.6009499509818852	healthy baseline	AssertionError	KILLED
+python-mate-identity-shift	python/brepgpu/adjacency.py	cpu	test_cylinder_seam_literal_members_and_mates	0.10796080098953098	0.0	0.13482550100889057	healthy baseline	AssertionError	KILLED
