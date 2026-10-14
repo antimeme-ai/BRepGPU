@@ -57,14 +57,16 @@ bg_status bg2_projection_info(bg_handle result,bg_projection_info* out,
 /* Fields are SoA fields[field*count+i] in enum order. Integer arrays are
    status, accepted updates, actual evaluator invocations, diagnostic flags.
    All ten output pairs must be disjoint. Preflight rejection writes nothing;
-   backend copy failure makes all five destinations unusable. */
+   backend copy failure makes all five destinations unusable. A diagnostic
+   overlapping any output is rejected without writing it or the outputs. */
 bg_status bg2_projection_download(bg_handle result,double* fields,uint64_t field_doubles,
     uint32_t* statuses,uint64_t status_count,uint32_t* updates,uint64_t update_count,
     uint32_t* evaluations,uint64_t evaluation_count,uint32_t* flags,uint64_t flag_count,
     bg_diagnostic* diag,uint64_t diag_bytes);
 /* Retained host source snapshots, available after public patch/query close.
    Exact payload extents; all output regions (including options) disjoint.
-   Options destination must be initialized with version 2/canonical size. */
+   Options destination must be initialized with version 2/canonical size.
+   Diagnostic overlap is rejected without writing any output or diagnostic. */
 bg_status bg2_projection_sources(bg_handle result,bg_patch_desc* patches,
     uint64_t patch_count,uint64_t patch_bytes,uint32_t* slots,uint64_t count,
     double* targets,uint64_t target_doubles,double* seeds,uint64_t seed_doubles,
