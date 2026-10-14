@@ -225,6 +225,17 @@ class BodySnapshot:
         from .intersections import FaceRef, intersect_faces
         return intersect_faces(FaceRef(self, face_id), FaceRef(other, other_face_id))
 
+    def classify_point(self, point):
+        """Classify exact submitted world coordinates against closed material."""
+        from .classification import classify_point
+        return classify_point(self, point)
+
+    def contact_faces(self, face_id, other, other_face_id):
+        """Construct the complete supported closed rectangular-face contact."""
+        from .classification import contact_faces
+        from .intersections import FaceRef
+        return contact_faces(FaceRef(self, face_id), FaceRef(other, other_face_id))
+
 
 def _namespace():
     global _next_body_id
