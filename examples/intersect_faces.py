@@ -3,6 +3,7 @@
 import argparse
 import csv
 from pathlib import Path
+import struct
 import time
 
 from brepgpu import Engine
@@ -188,6 +189,13 @@ def main(args):
     start = time.perf_counter()
     export_result(result,output)
     export_batch(batch,output)
+    (output/"pair-mask.u32le").write_bytes(struct.pack(f"<{len(page.words)}I",*page.words))
+    tsv(output/"pair-page.tsv",("field","value"),
+        ((name,getattr(page.info,name)) for name in
+         ("total_pairs","start","count","next_start","left_count","right_count","flags")))
+    tsv(output/"pair-resident-boxes.tsv",("side","index","lx_hex","ly_hex","lz_hex","ux_hex","uy_hex","uz_hex"),
+        ((side,i,*map(float.hex,box)) for side,boxes in (("left",actual_left),("right",actual_right))
+         for i,box in enumerate(boxes)))
     render(batch,output,args.recipe,args.backend,args.device)
     phases.append(("export_ms",milliseconds(start)))
     phases.append(("actual_whole_caller_ms",milliseconds(whole)))
@@ -202,6 +210,7 @@ def main(args):
         ("cuda_position_status_download_bytes",56*batch.count if args.backend=="cuda" else 0),
         ("cuda_pair_index_upload_bytes",240 if args.backend=="cuda" else 0),
         ("cuda_pair_mask_download_bytes",4 if args.backend=="cuda" else 0),
+        ("cuda_pair_bounds_download_bytes",240 if args.backend=="cuda" else 0),
         ("topology_upload_bytes",0)))
     print(f"{args.recipe} {args.backend}:{args.device}: {len(result.components)} components, "
           f"{len(result.pieces)} occurrences, {batch.count} samples, {2*batch.count} native rows")
