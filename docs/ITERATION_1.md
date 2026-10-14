@@ -112,9 +112,11 @@ cmake --build build/runtime-check --parallel 4
 ctest --test-dir build/runtime-check --output-on-failure
 ```
 
-These six fresh-process scenarios use an owned callback model to exercise
+The original six evaluator scenarios use an owned callback model to exercise
 admission/close races, allocation failure before publication, cleanup and
 download fatality, and device-restoration failure reporting. They verify the
 core's lifetime and error paths under ASan/UBSan. They do not induce actual
 hardware faults. Test hooks and the callback model are absent from the default
 product build; Compute Sanitizer separately checks the real P100 kernels.
+The current check target also includes the projection scenarios and scalar
+numerical checks described in [iteration two](ITERATION_2.md), for 21 cases.
