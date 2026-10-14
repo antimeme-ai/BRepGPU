@@ -204,12 +204,15 @@ def comparisons(rows, output):
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument('--summary', type=Path, required=True)
+    parser.add_argument('--summary', type=Path, action='append', required=True,
+                        help='retained native summary; repeat for disjoint fields')
     parser.add_argument('--offgrid-summary', type=Path)
     parser.add_argument('--output-directory', type=Path, required=True)
     args = parser.parse_args()
-    with args.summary.open(newline='') as stream:
-        rows = list(csv.DictReader(stream, delimiter='\t'))
+    rows = []
+    for path in args.summary:
+        with path.open(newline='') as stream:
+            rows.extend(csv.DictReader(stream, delimiter='\t'))
     unique_rows(rows)
     args.output_directory.mkdir(parents=True, exist_ok=True)
     timing(rows, args.output_directory / 'resident-discovery.svg')
