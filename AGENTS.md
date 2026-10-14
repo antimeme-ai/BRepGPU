@@ -25,6 +25,10 @@ are not intersections; cold setup and CPU word conversion remain measured costs.
 Keep the broad-first sequence. The operator explicitly defers GPU lifetime/
 residency reuse, session integration and polish until AFTER the broad-pass big
 rocks. Record opportunities in docs/RETURN_PASS.md; no active tuning lane.
+After the breadth sweep, investigate whether Python belongs in the delivered
+system at all. Compare native ownership/application, an optional thin binding,
+and Python orchestration using real whole-operation costs and user/developer
+needs. This is a deferred architecture decision, not a selected rewrite.
 The complete analytic intersection beachhead is delivered: exact CPU closed
 plane/wall components with symbolic endpoints/events, physical-span/chart-
 occurrence separation and coupled spatial/bothUV maps. CPU/P100 two-sided
