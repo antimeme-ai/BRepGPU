@@ -32,3 +32,9 @@
   free empty query path and binary tolerance validation before unsupported
   exception modes. Opened implementation with canonical ABI declarations and
   independent direct red cases, then the owned numerical/runtime lanes.
+- Executed the first genuine direct public red case on the qualified target
+  using the existing CPU core/adapter: constant homogeneous (1,0,0,3) queried at
+  rounded 1/3. The existing patch creation succeeded; the case failed at the
+  absent create_hierarchy operation (one test, 0.018 seconds). Its exact nonzero
+  original-point distance will attack a false rounded-XYZ upper certificate.
+  Canonical ABI3 declarations now permit numerical/runtime implementation.
