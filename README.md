@@ -217,7 +217,7 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | Bounds and geometric queries | Seeded projection and automatic conservative patch discovery delivered; pair/trim queries next | Work queues for irregular geometry |
 | Surface intersections | Curves in 3D and both surfaces' parameter domains | Complete intersection branches and consistent trims |
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
-| Solid assembly and features | Closed solids, then sweeps, fillets and offsets | A progressively broader GPU modeling kernel |
+| Solid assembly and features | Narrow solid operations and independently scoped extrusions, revolutions, fillets and offsets; features can precede Booleans | A progressively broader GPU modeling kernel |
 
 The first implemented prototype supports positive-weight rational
 Bézier patches through bidegree (3,3), with FP64 positions and first/second

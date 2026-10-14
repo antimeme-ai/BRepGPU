@@ -26,4 +26,23 @@ not indefinitely deferred behind a general curved Boolean implementation.
 
 This delivery edits planning/documentation only. Product design, adversarial
 review, implementation and qualification remain required for each operation.
-Review and documentation validation are recorded below when complete.
+
+## Review and validation
+
+Independent topology/dependency review accepted the breadth-first coverage
+after three findings were fixed: the reference adapter is an optional input
+in the diagram; the README no longer places every feature after closed-solid
+Boolean work; and required boundary/chart semantics are developed with the
+first body consumer rather than deferred until afterward. The reviewer
+rechecked the focused changes and reported no remaining blocker.
+
+The feature row explicitly requires constructing the narrow fillet/offset
+outputs rather than only preparing fixtures. Delivered numerical capabilities
+and proposed beachheads are distinguished. The reviewer confirmed early
+curve/trim, contact, arrangement, feature and GPU adjacency work, with CPU/GPU
+placement separate from geometry coverage.
+
+Checked all 65 relative link targets across the four changed documents and
+Git whitespace checks. The final edits changed no link targets. Inspected
+the Mermaid dependency syntax and optional-input relationship. No product
+code changed, so no native qualification or performance trials were run.
