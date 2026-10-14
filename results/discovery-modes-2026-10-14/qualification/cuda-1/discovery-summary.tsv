@@ -1,0 +1,8 @@
+metric	value	backend	device	threads
+requests	309	cuda	1	1
+hierarchy_nodes_checked	11415	cuda	1	1
+violations	0	cuda	1	1
+maximum_descriptive_error_point_0	1.6566444394620803e-16	cuda	1	1
+maximum_descriptive_error_point_1	7.272501747492147e-17	cuda	1	1
+maximum_descriptive_error_point_2	1.2547515105652511e-16	cuda	1	1
+maximum_descriptive_error_approximate_distance	5.327775675802198e-16	cuda	1	1
