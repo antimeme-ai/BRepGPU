@@ -82,3 +82,15 @@
 - Opened draft PR #10 with the implemented operation and completed evidence,
   explicitly listing pending compatibility, mutation, repeated measurement and
   caller/graphics work. The issue remains open until those deliverables land.
+- Actual preserved-binary compatibility passed 23 fresh-process combinations
+  spanning v1/v2 cores/plugins/adapters and current CPU/both-P100 code: 77,280
+  exact jet component checks, supported projection/discovery or repeated
+  nonfatal refusal, and evaluator geometry before/after. Protected baseline
+  input identities were unchanged. Published identities and outcomes omit
+  operational paths. Transient factory faults remain separately modeled.
+- Nine isolated production numerical mutations were killed by direct geometry
+  cases, with each associated original baseline green. No build, loader or
+  device failure was counted as a kill. CPU mutations attacked subdivision,
+  outward arithmetic, rounded witness upper, DOP norm/sign, negative Bernstein
+  C0, inactive padding and capped lower; a real CUDA constant-zero query killed
+  equality pruning. Authoritative source and preserved binaries were untouched.
