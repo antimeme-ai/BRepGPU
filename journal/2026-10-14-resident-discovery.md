@@ -72,3 +72,13 @@
   arithmetic allowance and does not replace exact Fraction upper certification.
   Both benchmark findings were independently re-reviewed and resolved before
   publishing repeated timings.
+- The full public suite passed under Compute Sanitizer on each P100: 58 tests,
+  zero memory errors and zero leaked device allocations per card. The exact
+  309-row CPU corpus also passed under ASan/UBSan with 24 requested workers;
+  CPython process leak detection was disabled for that run, while the native
+  42-check sanitizer suite and three 4,096-row native corpus runs retained
+  leak detection. All passed. Rebuilt and directly exercised the strengthened
+  native benchmark consumer before repeated publication measurements.
+- Opened draft PR #10 with the implemented operation and completed evidence,
+  explicitly listing pending compatibility, mutation, repeated measurement and
+  caller/graphics work. The issue remains open until those deliverables land.
