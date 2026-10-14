@@ -55,7 +55,8 @@ checks the declared supported expected geometry; no early prefix shortcut.
 
 Export sources/controls/maps/exact Scalar coefficients, components/pieces/events,
 two-sided samples and phase TSVs. Owned SVG plots actual geometry and labels
-one physical component versus its chart occurrences. Export exact scalar a/b/d
+each physical component versus its chart occurrences, with actual component
+counts for each recipe. Export exact scalar a/b/d
 separately from approximated coordinates; floats are hex where bit identity
 matters. Actual caller reports construction, request, engine/geometry setup,
 pair preparation/discovery, sample phases, independent qualification, cleanup,
@@ -88,6 +89,26 @@ device bytes per two-sided candidate; CPU construction/topology stay host work.
 No owned copying/build/test/review execution overlaps trials. Retain raw
 iterations and min/median/max; shared host is a limitation. GPU's useful value
 may be confined to evaluation while Python/exact construction dominates.
+
+## Consumer handoff
+
+`prepare_samples(result,resolution)` returns factory-only
+IntersectionSampleRequest(result,candidates,resolution). Candidate fields:
+piece_id/component_id/span_id, exact parameter, location('lo','hi','point',
+'interior'), exact left_uv/right_uv/reference_position. IntersectionSampler
+borrows Engine and result; sample(request) returns IntersectionSampleBatch
+(result,rows,timings), count and evaluated_count; native row count is2*count.
+SampleRow retains IDs/parameter/location/reference_position, original left_slot/
+right_slot, rounded left_uv/right_uv, left_position/right_position and both
+statuses. Native rows interleave left/right at2*i/2*i+1. Dense patch keys are
+(side,original_slot). No ordering relies on a global chart-slot namespace.
+
+Timing phases: gather_ms, query_ms, evaluate_ms, download_ms, convert_ms,
+world_scatter_ms, grade_ms, child_cleanup_ms, reused_wall_ms. Caller external
+sample wall is separate. Prepared exact values are immutable bound inputs;
+their CPU preparation belongs in request prep, not GPU evaluation. Result/
+request/source identity checks happen before publication. Initial independent
+qualification remains outside reused benchmark timing.
 
 ## Publication and return pass
 
