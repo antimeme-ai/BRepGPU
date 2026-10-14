@@ -1,0 +1,5 @@
+kind	identity	url	sha256_or_prior_manifest	local_path	read_scope
+pdf	Dokken 1997 revised2000	https://www.sintef.no/globalassets/upload/ikt/9011/geometri/gaia-ii/ph_d_dokken_1997.pdf	041d84631196d262636215849b1e960c7d1bc9ef4bb9c47d04fe87f49b66903f	papers/pdfs/dokken-1997-revised-2000-intersection-approximation.pdf	sections2.4/2.5.2-2.5.5/chapter5discussion
+pdf	Gleicher-Kass1992	https://graphicsinterface.org/wp-content/uploads/gi1992-28.pdf	346b6cf49e97ebbed9175d4584a59b4b6ea2a7f619fe4c9998aef131b53ec50a	papers/pdfs/gleicher-kass-1992-interval-refinement-ssi.pdf	sections4-6
+source	SISL e0a82b1a851e932657f3e1af25033fbbcd33e907	https://github.com/SINTEF-Geometry/SISL/tree/e0a82b1a851e932657f3e1af25033fbbcd33e907	prior NUMERICAL_MANIFEST.md	quarantine/new-iteration/sisl	s1859.c/s1310.c/sisl.h/example13.cpp
+source	OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42	https://github.com/Open-Cascade-SAS/OCCT/tree/b8f597c677811d1f9f4d8a97f5ae2825c0353a42	prior MANIFEST.md	quarantine/new-iteration/occt	IntAna_QuadQuadGeo.cxx543-722/IntPatch_ImpImpIntersection.cxxboundaryreading

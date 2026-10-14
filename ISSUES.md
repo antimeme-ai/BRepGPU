@@ -22,3 +22,9 @@ See the [research index](papers/README.md).
 
 CUDA 12.8.1 is installed and qualified on both initial P100 GPUs.
 [Recreate the isolated toolchain](docs/CUDA_TOOLCHAIN.md).
+# Active intersection work
+
+- [#20 Complete analytic face-intersection beachhead](https://github.com/antimeme-ai/BRepGPU/issues/20):
+  researched design in adversarial review; exact supported closed plane/wall
+  components and coupled spatial/two-UV representations, separate native consumer.
+
