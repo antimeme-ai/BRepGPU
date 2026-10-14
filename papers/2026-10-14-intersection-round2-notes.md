@@ -23,3 +23,34 @@ complete before choosing performance work.
 
 No hardware speedup, library adoption, generic extraction or method selection
 is implied by these notes.
+
+## Findings retained during delivery
+
+Exact CPU component construction and per-sample preparation are different
+costs. The actual65-per-piece caller prepares260 paired candidates in roughly
+half a second on the observed host; exact face construction is tens of
+milliseconds. Reused world-row construction and exact grades dominate that
+caller's native evaluator span. These are individual caller observations;
+the matched repeated matrix and its timing scopes will govern comparisons.
+Bulk owned C++/CUDA parameter/UV/row generation is a return-pass candidate,
+not selected work or an excuse to skip remaining broad-pass themes.
+
+Keep exact endpoint values and event identity separately from approximate
+queries. Thin exact intervals can collapse to the same binary64 coordinates;
+plate-hole endpoints need not classify BOUNDARY after rounding. Future meshing
+and arrangements must consume symbolic spans/events, rather than weld or infer
+topology from these preview samples. Scoped preparation-budget tests confirm
+refusal and recovery on genuine narrow geometry, without claiming the default
+4096-step cap was reached.
+
+Cross-pair shared events, Boolean region/coedge orientation, persistent names
+and arbitrary importer provenance remain separate work. Current event/span IDs
+are result-local; typed source identities retain the exact snapshot namespace.
+Cardinal generators have multiple chart occurrences of one physical span.
+Any future scan/fill or deduplication must preserve that grouping and both
+seam lifts. Complete component order is directed, not an unordered piece set.
+
+Current Python float decoding assumes round-to-nearest and gradual underflow.
+An environment-independent input decoder is an optional later numerical unit;
+exact integer root predicates/quantization alone do not supply that guarantee.
+Do not widen admitted environments without a concrete design and direct tests.
