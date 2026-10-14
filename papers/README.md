@@ -77,3 +77,22 @@ seeded first-order candidate with separate rank and curvature diagnostics.
 The [reviewed design](../docs/ITERATION_2_DESIGN.md) distinguishes stationarity
 from a nearest-point guarantee. Saddles, unequal boundary candidates and weak
 critical directions are deliberate parts of the qualification corpus.
+
+## Conservative discovery and Wafer / GPU MODE
+
+The next dispatch studied automatic candidate generation, exact-input enclosure
+and bounded resident execution. The requested Wafer index and linked GPU MODE
+lectures were acquired at pinned revisions; their actual kernels were inspected.
+
+| Unit | Study and bibliography | Acquisition / source map |
+| --- | --- | --- |
+| Wafer and GPU MODE | [Selected-code study](2026-10-14-wafer-gpu-mode-study.md) · [BibTeX](wafer-gpu-mode.bib) | [Archives](wafer-gpu-mode-sources.tsv) · [Read files](wafer-gpu-mode-entrypoints.tsv) · [Restore](wafer-gpu-mode-reference-restoration.md) |
+| Numerical conservatism | [Homogeneous intervals and distance bounds](2026-10-14-bounds-numerical-study.md) · [BibTeX](bounds-numerical.bib) | [Sources](bounds-numerical-sources.tsv) · [PDFs](bounds-numerical-pdfs.tsv) |
+| Independent geometry | [Exact enclosure, exclusion and coverage oracles](2026-10-14-bounds-oracle-study.md) · [BibTeX](bounds-oracles.bib) | [Sources](bounds-oracle-sources.tsv) · [PDFs](bounds-oracle-pdfs.tsv) |
+| Resident execution | [Packed hierarchy, queues and lifetime](2026-10-14-bounds-runtime-study.md) · [BibTeX](bounds-runtime.bib) | [Read files](bounds-runtime-entrypoints.tsv) · [PDFs](bounds-runtime-pdfs.tsv) |
+| GPU traversal | [Architecture-dependent scheduling lessons](2026-10-14-bounds-gpu-study.md) · [BibTeX](bounds-gpu.bib) | [PDFs](bounds-gpu-pdfs.tsv) |
+
+The integrated [next-operation recommendation](../docs/ITERATION_3_STUDY.md)
+keeps conservative arithmetic, complete domain accounting and candidate quality
+distinct. These are completed studies; the new operation has no product API,
+implementation or measured speedup yet.

@@ -1,0 +1,22 @@
+reference	path	bytes	sha256	inspection
+wafer-resources	README.md	22429	0b74287acd087271f6013139dc0aa5605a0925d80092abac05fe57fcf50f5dfd	Source read only; not executed
+wafer-resources	CONTRIBUTING.md	1607	78ddbed740a8ba2bb5830074859123c93bfdf3162d1069d61e01b04bed3b26f7	Source read only; not executed
+wafer-resources	scripts/check_guide.py	2769	b016c3b5b7389d95a2935b4a31b93917aacb9a52f027951b25152958503e7be7	Source read only; not executed
+gpu-mode-lectures	README.md	11063	49b368ab2bd83e6644e05fcdab7a382198302d2e22b119a12e79b85b1406f4ef	Source read only; not executed
+gpu-mode-lectures	LICENSE	11339	4d2cc99fff8919eed9486aaa7e41186f0f5d8f0658d16ae635d60b797d8eb1cb	Source read only; not executed
+gpu-mode-lectures	utils.py	2637	9440c8363c568a2b4dc24e0fb7a5f842ecc4d60dedeb8a450ac94115e549d12a	Source read only; not executed
+gpu-mode-lectures	lecture_001/load_inline.py	3387	9dfd3f69a0602a5f5f6e7faa501ea7406361737cc216ea6cb4599254e8b4e9af	Source read only; not executed
+gpu-mode-lectures	lecture_001/load_inline_cuda/cuda.cu	961	28a2ae88aa88133dc34250bb1b5c495ab6f2202497b78e253989daf6d47c92a6	Source read only; not executed
+gpu-mode-lectures	lecture_001/nsys_square.py	443	df98dc607580827dc115e07fe4a955458b787b8ea56657f1fe69461c120df3f2	Source read only; not executed
+gpu-mode-lectures	lecture_001/pt_profiler.py	1745	35542186b340be9a9f2d4ebd307857b788d43ff0ef378cb66d21b16954ca85cc	Source read only; not executed
+gpu-mode-lectures	lecture_001/test.py	119	7ae4f82d080ae15eabf585b6b52c800a0ccd0da93d2a7bf12df6f9d8f270e7c0	Source read only; not executed
+gpu-mode-lectures	lecture_008/README.md	76	6f18afa53aef90401b1638cf4d24763231d9ed4c496cdd0fef5bf5c0ca995978	Source read only; not executed
+gpu-mode-lectures	lecture_008/occupancy.cu	1321	56a3aa8b844530063e0789f249f0a0582824a53b14fd0ab25265ab67e5a27a7a	Source read only; not executed
+gpu-mode-lectures	lecture_008/divergence.cu	1865	30c708813cfda60c9b97f9fca08f30314c71cd09b9ec3623dd6c67bd8d2af5ce	Source read only; not executed
+gpu-mode-lectures	lecture_008/coarsening.cu	3205	e68bb7dafef5fd585f3288eab10b5ccec7159224b7eb845ff36ec92c1e85c48e	Source read only; not executed
+gpu-mode-lectures	lecture_008/privatization2.cu	2890	f4faa3109eb4590adfc8b7b73dce48e71cc762b10f0dc596c17c853e0190c002	Source read only; not executed
+gpu-mode-lectures	lecture_009/simple_reduce.cu	1470	b72c7dc3872e3ab1eb95285d7225392aaca0751d1653c46771b1fc869edccaa3	Source read only; not executed
+gpu-mode-lectures	lecture_009/multistream-reduce.cu	3429	08c9a5b4736c43732141a84187f162ce6e95edfb80b67a20510823b2eb71463b	Source read only; not executed
+gpu-mode-lectures	lecture_009/accuracy.py	774	2ab8e2323ec4cd0b6985da2ede68e8f131f9afc66d942b0cd0fa2da4635f21c0	Source read only; not executed
+gpu-mode-lectures	lecture_009/nondeterminism.py	453	c193d730541108bd2deadbc1cd47f8c294b4088b5b2dc69650babb7194dc1685	Source read only; not executed
+gpu-mode-lectures	lecture_018/kernels/profile_fused_kernel_add_mul_activation.py	1263	3f2ba7371c26f8c2b1c6238b28bf5f0205b1dd20d672a0bc8d7030c5ff000d35	Source read only; not executed

@@ -17,3 +17,13 @@ The [topology acquisition list](gpu-topology-shopping-list.md) adds seven
 surface-intersection, Boolean, overlap and watertightness articles. The
 [numerical manifest](gpu-numerics-acquisitions.tsv) records acquired PDFs and
 attempts separately. No access requests have been sent.
+
+
+## Conservative bounds follow-up, 2026-10-14
+
+The [numerical acquisition list](bounds-numerical-shopping-list.md) records
+remaining homogeneous-box and interval-arithmetic full-text/PDF gaps, with
+their design relevance. They do not block the positive-weight hierarchy study.
+
+- Selimovic2006, *Improved algorithms for the projection of points on NURBS curves and surfaces*, CAGD23(5):439–445, [DOI](https://doi.org/10.1016/j.cagd.2006.01.007). Author publication page and Chen2008 references were inspected; full article not acquired. Needed before any derivative/normal-based exclusion is considered. This is a follow-up gap, not a blocker for positive-weight control-hull/AABB bounds.
+- Ma/Hewitt2003 above remains a fulltext gap. The journal curve/surface article is distinct from the curve-only TPCG2003 paper (DOI10.1109/TPCG.2003.1206938). The acquired [Chen et al.2007 counterexample](https://inria.hal.science/inria-00518368/document) is now available in the bounds PDF catalog; no numeric controls are supplied by its diagram.
