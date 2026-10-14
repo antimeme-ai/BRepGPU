@@ -1,5 +1,9 @@
 #include "backend_api.h"
 #include "projection_backend_api.h"
+#include "discovery_backend_api.h"
+#include "discovery_cpu.h"
+#include <atomic>
+#include <initializer_list>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -33,7 +37,10 @@ static_assert(sizeof(bg_context_desc)==40 && sizeof(bg_patch_desc)==136);
 static_assert(sizeof(bg_result_info)==48 && sizeof(bg_diagnostic)==288);
 static_assert(sizeof(bg_projection_options)==32 && sizeof(bg_projection_info)==48);
 static_assert(sizeof(bg_projection_abi_info)==40 && sizeof(bg_backend_v2)==64);
-enum class Kind { Context, Patch, Query, Result, ProjectionQuery, ProjectionResult };
+static_assert(sizeof(bg_hierarchy_options)==32 && sizeof(bg_hierarchy_node)==80 && alignof(bg_hierarchy_node)==8);
+static_assert(sizeof(bg_hierarchy_info)==40 && sizeof(bg_discovery_options)==32 && sizeof(bg_discovery_info)==48);
+static_assert(sizeof(bg_discovery_abi_info)==56 && sizeof(bg_backend_v3)==96);
+enum class Kind { Context, Patch, Query, Result, ProjectionQuery, ProjectionResult, Hierarchy, DiscoveryQuery, DiscoveryResult };
 struct Context;
 struct Object {
     Kind kind;
@@ -76,6 +83,8 @@ struct Plugin {
     void* library=nullptr;
     const bg_backend_v1* table=nullptr;
     const bg_backend_v2* projection=nullptr;
+    const bg_backend_v3* discovery=nullptr;
+    uint32_t discovery_state=0;
     uint32_t projection_state=0; // 0 unprobed, 1 valid, 2 stable unsupported
     ~Plugin(){if(library)dlclose(library);}
 };
@@ -162,6 +171,37 @@ struct ProjectionResult final:Object {
     ~ProjectionResult(){cleanup();}
     void cleanup() noexcept;
 };
+struct Hierarchy final:Object {
+    std::shared_ptr<PatchSet> patches;
+    bg_hierarchy_options options{};
+    std::vector<bg_hierarchy_node> nodes;
+    std::vector<uint32_t> roots;
+    std::vector<double> bounds;
+    void* token=nullptr;
+    Hierarchy():Object(Kind::Hierarchy){}
+    ~Hierarchy(){cleanup();}
+    void cleanup() noexcept;
+};
+struct DiscoveryQueries final:Object {
+    std::shared_ptr<Hierarchy> hierarchy;
+    std::vector<uint32_t> slots;
+    std::vector<double> targets;
+    void* token=nullptr;
+    DiscoveryQueries():Object(Kind::DiscoveryQuery){}
+    ~DiscoveryQueries(){cleanup();}
+    void cleanup() noexcept;
+};
+struct DiscoveryResult final:Object {
+    std::shared_ptr<DiscoveryQueries> queries;
+    bg_discovery_options options{};
+    std::vector<double> fields;
+    std::vector<uint32_t> statuses,flags,visits,pruned,refinements,evaluations;
+    bg_backend_profile profile{0,0,std::numeric_limits<double>::quiet_NaN()};
+    void* token=nullptr;
+    DiscoveryResult():Object(Kind::DiscoveryResult){}
+    ~DiscoveryResult(){cleanup();}
+    void cleanup() noexcept;
+};
 template<class Function> void cleanup_child(std::shared_ptr<Context>& c,void*& token,Function f) noexcept {
     if(!token)return;
     try{
@@ -177,6 +217,10 @@ void QuerySet::cleanup()noexcept{if(token)cleanup_child(context,token,context->p
 void Result::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->table->result_close);}
 void ProjectionQueries::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->projection->projection_query_close);}
 void ProjectionResult::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->projection->projection_result_close);}
+
+void Hierarchy::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->discovery->hierarchy_close);}
+void DiscoveryQueries::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->discovery->discovery_query_close);}
+void DiscoveryResult::cleanup()noexcept{if(token)cleanup_child(context,token,context->plugin->discovery->discovery_result_close);}
 
 template<class T> void pointer(const T* p,uint64_t count) {
     if(count && (!p || reinterpret_cast<uintptr_t>(p)%alignof(T)))fail(BG_INVALID_ARGUMENT,"null or unaligned nonempty buffer");
@@ -303,6 +347,65 @@ const bg_backend_v2* projection_backend(const std::shared_ptr<Context>& context)
         p.projection_state=2;fail(BG_UNSUPPORTED,"CUDA projection extension layout/capability/base mismatch",BG_STAGE_PLUGIN);
     }
     p.projection=table;p.projection_state=1;return table;
+}
+const bg_backend_v3* discovery_backend(const std::shared_ptr<Context>& context){
+    auto& p=*context->plugin;
+    if(p.discovery_state==1)return p.discovery;
+    if(p.discovery_state==2)fail(BG_UNSUPPORTED,"CUDA plugin does not support discovery",BG_STAGE_PLUGIN);
+    auto factory=reinterpret_cast<bg_discovery_backend_factory_fn>(dlsym(p.library,BG_DISCOVERY_BACKEND_FACTORY_SYMBOL));
+    if(!factory){p.discovery_state=2;fail(BG_UNSUPPORTED,"CUDA plugin has no discovery extension",BG_STAGE_PLUGIN);}
+    auto d=diagnostic();const bg_backend_v3* table=nullptr;
+    const auto status=factory(BG_DISCOVERY_BACKEND_ABI_VERSION,&table,&d);
+    if(status==BG_UNSUPPORTED && !(d.flags&BG_DIAG_FATAL)){
+        p.discovery_state=2;fail(BG_UNSUPPORTED,"CUDA plugin refused discovery extension",BG_STAGE_PLUGIN);
+    }
+    backend_status(status,d);
+    if(!table || table->abi_version!=BG_DISCOVERY_BACKEND_ABI_VERSION || table->struct_size!=sizeof(bg_backend_v3)
+        || !(table->capabilities&BG_BACKEND_CAP_DISCOVERY) || table->base!=p.table
+        || !table->hierarchy_upload || !table->hierarchy_close || !table->hierarchy_download
+        || !table->hierarchy_bound_download || !table->discovery_query_create || !table->discovery_query_close
+        || !table->discover || !table->discovery_result_close || !table->discovery_download){
+        p.discovery_state=2;fail(BG_UNSUPPORTED,"CUDA discovery extension layout/capability/base mismatch",BG_STAGE_PLUGIN);
+    }
+    p.discovery=table;p.discovery_state=1;return table;
+}
+template<class T> void discovery_version(const T* p,uint64_t bytes){
+    pointer(p,1);if(bytes<sizeof(T))fail(BG_INVALID_ARGUMENT,"short discovery descriptor");
+    if(p->abi_version!=BG_DISCOVERY_ABI_VERSION || p->struct_size!=sizeof(T))fail(BG_INVALID_ARGUMENT,"discovery descriptor ABI or size mismatch");
+}
+uint64_t bound_stride(uint32_t mode){return mode==BG_BOUND_AABB?0:mode==BG_BOUND_DOP26?20:490;}
+// Inspect copied bits: no floating comparison on sNaN/subnormal before FPenv admission.
+bool discovery_tolerance_valid(double value)noexcept{
+    uint64_t bits=0;std::memcpy(&bits,&value,sizeof(bits));
+    const uint64_t magnitude=bits&0x7fffffffffffffffull;
+    return magnitude<=0x3ff0000000000000ull && (!(bits>>63)||magnitude==0);
+}
+struct Region { const void* pointer; uint64_t count,width; };
+bool region_span(Region r,uintptr_t& begin,uintptr_t& end)noexcept{
+    begin=reinterpret_cast<uintptr_t>(r.pointer);end=begin;
+    if(!r.count || !r.pointer)return true;
+    if(r.width && r.count>UINTPTR_MAX/r.width)return false;
+    const uint64_t bytes=r.count*r.width;
+    if(begin>UINTPTR_MAX-bytes)return false;
+    end=begin+bytes;return true;
+}
+bool region_overlap(Region a,Region b,bool& invalid)noexcept{
+    uintptr_t ab,ae,bb,be;
+    if(!region_span(a,ab,ae)||!region_span(b,bb,be)){invalid=true;return true;}
+    return ab<be && bb<ae;
+}
+bool discovery_alias(std::initializer_list<Region> outputs,std::initializer_list<Region> inputs,
+    const bg_diagnostic* diag)noexcept{
+    bool invalid=false;
+    for(auto a:outputs){
+        uintptr_t begin,end;if(!region_span(a,begin,end))return true;
+        if(region_overlap(a,{diag,1,sizeof(bg_diagnostic)},invalid))return true;
+        for(auto b:inputs)if(region_overlap(a,b,invalid))return true;
+    }
+    for(auto a:inputs)if(region_overlap({diag,1,sizeof(bg_diagnostic)},a,invalid))return true;
+    for(auto i=outputs.begin();i!=outputs.end();++i)for(auto j=i+1;j!=outputs.end();++j)
+        if(region_overlap(*i,*j,invalid))return true;
+    return invalid;
 }
 bool overlaps(const void*a,uint64_t a_bytes,const void*b,uint64_t b_bytes){if(!a_bytes||!b_bytes)return false;auto x=reinterpret_cast<uintptr_t>(a),y=reinterpret_cast<uintptr_t>(b);if(x>UINTPTR_MAX-a_bytes||y>UINTPTR_MAX-b_bytes)fail(BG_INVALID_ARGUMENT,"pointer extent overflow");return x<y+b_bytes && y<x+a_bytes;}
 // Compare diagnostic writes without multiplying potentially invalid extents.
@@ -458,4 +561,113 @@ extern "C" bg_status bg2_projection_sources(bg_handle id,bg_patch_desc*patches,u
     for(int i=0;i<5;++i)for(int j=i+1;j<5;++j)if(overlaps(outputs[i],sizes[i],outputs[j],sizes[j]))fail(BG_INVALID_ARGUMENT,"overlapping projection source outputs");
     final_cuda_check(a.context);if(pc)std::copy(q.patches->patches.begin(),q.patches->patches.end(),patches);
     if(count){std::copy(q.slots.begin(),q.slots.end(),slots);std::copy(q.targets.begin(),q.targets.end(),targets);std::copy(q.seeds.begin(),q.seeds.end(),seeds);}*options=r->options;
+});}
+
+extern "C" bg_status bg3_discovery_abi_info(bg_discovery_abi_info*out,uint64_t bytes){return call(nullptr,0,[&](bg_diagnostic&){
+    discovery_version(out,bytes);*out={BG_DISCOVERY_ABI_VERSION,sizeof(*out),sizeof(bg_hierarchy_options),sizeof(bg_hierarchy_node),sizeof(bg_hierarchy_info),sizeof(bg_discovery_options),sizeof(bg_discovery_info),sizeof(bg_diagnostic),BG_DISCOVERY_FIELD_COUNT,BG_DISCOVERY_INTEGER_SLAB_COUNT,sizeof(double),sizeof(uint32_t),sizeof(bg_handle),sizeof(void*)};
+});}
+extern "C" bg_status bg3_create_hierarchy(bg_handle id,const bg_hierarchy_options*options,uint64_t bytes,bg_handle*out,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{out,1,sizeof(bg_handle)}},{{options,1,sizeof(*options)}},diag))return BG_INVALID_ARGUMENT;
+    zero_handle(out);return call(diag,db,[&](bg_diagnostic&){
+    pointer(out,1);discovery_version(options,bytes);const auto input=*options;
+    if(input.depth>BG_HIERARCHY_MAX_DEPTH || !input.max_nodes || input.max_nodes>BG_HIERARCHY_MAX_NODES || input.flags>BG_BOUND_BERNSTEIN || input.reserved || input.reserved2)fail(BG_INVALID_ARGUMENT,"invalid hierarchy options");
+    Admission a(id,Kind::Patch);auto p=std::static_pointer_cast<PatchSet>(a.object);
+    uint64_t node_count=0;const uint64_t varying=(uint64_t(1)<<(input.depth+1))-1;
+    for(const auto& patch:p->patches){const auto add=(patch.degree_u||patch.degree_v)?varying:1;
+        if(add>input.max_nodes-node_count)fail(BG_INVALID_ARGUMENT,"hierarchy node cap exceeded");
+        node_count+=add;}
+    if(node_count>std::vector<bg_hierarchy_node>().max_size() || node_count>SIZE_MAX/sizeof(bg_hierarchy_node))fail(BG_INVALID_ARGUMENT,"hierarchy node bytes overflow");
+    const auto bound_count=multiply(node_count,bound_stride(input.flags));
+    if(bound_count>std::vector<double>().max_size() || bound_count>SIZE_MAX/sizeof(double))fail(BG_INVALID_ARGUMENT,"hierarchy bound bytes overflow");
+    const bg_backend_v3* backend=nullptr;if(a.context->backend==BG_BACKEND_CUDA)backend=discovery_backend(a.context);
+    auto h=std::make_shared<Hierarchy>();h->context=a.context;h->patches=p;h->options=input;
+    if(!p->patches.empty()){
+        if(!brepgpu::discovery_environment_supported())fail(BG_UNSUPPORTED,"unsupported CPU floating-point environment for hierarchy build");
+        for(const auto& patch:p->patches)for(uint64_t i=0;i<patch.control_count;++i){const auto* record=p->controls.data()+4*(patch.control_offset+i);const double w=record[3];
+            if(!std::isfinite(w)||w<1 || w>256)fail(BG_UNSUPPORTED,"hierarchy weight outside admitted envelope");
+            for(unsigned axis=0;axis<3;++axis)if(!std::isfinite(record[axis])||std::abs(record[axis])>w)fail(BG_UNSUPPORTED,"hierarchy numerator outside admitted envelope");}
+    }
+    if(!brepgpu::build_discovery_hierarchy(p->patches.data(),p->patches.size(),p->controls.data(),input,h->nodes,h->roots,h->bounds))fail(BG_INTERNAL_ERROR,"hierarchy enclosure or tree invariant failed");
+    if(h->nodes.size()!=node_count || h->roots.size()!=p->patches.size() || h->bounds.size()!=bound_count)fail(BG_INTERNAL_ERROR,"hierarchy builder output shape mismatch");
+    if(backend){auto d=diagnostic();backend_status(backend->hierarchy_upload(a.context->token,p->token,h->nodes.data(),node_count,h->roots.data(),h->roots.size(),h->bounds.data(),bound_count,input.flags,&h->token,&d),d);
+        if(!h->token)fail(BG_INTERNAL_ERROR,"CUDA backend published no hierarchy token");
+        ++a.context->device_children;}
+    *out=publish_owned(h,a.context);
+});}
+extern "C" bg_status bg3_hierarchy_info(bg_handle id,bg_hierarchy_info*out,uint64_t bytes,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{out,1,sizeof(*out)}},{},diag))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){discovery_version(out,bytes);Admission a(id,Kind::Hierarchy);auto h=std::static_pointer_cast<Hierarchy>(a.object);final_cuda_check(a.context);
+    *out={BG_DISCOVERY_ABI_VERSION,sizeof(*out),h->patches->patches.size(),h->nodes.size(),h->options.depth,a.context->backend,h->options.flags,sizeof(bg_hierarchy_node)};
+});}
+extern "C" bg_status bg3_hierarchy_download(bg_handle id,bg_hierarchy_node*nodes,uint64_t nc,uint64_t nb,uint32_t*roots,uint64_t rc,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{nodes,nc,sizeof(*nodes)},{roots,rc,4}},{},diag))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){pointer(nodes,nc);pointer(roots,rc);Admission a(id,Kind::Hierarchy);auto h=std::static_pointer_cast<Hierarchy>(a.object);
+    if(nc!=h->nodes.size() || nb!=multiply(nc,sizeof(*nodes)) || rc!=h->roots.size())fail(BG_INVALID_ARGUMENT,"hierarchy download shape mismatch",BG_STAGE_DOWNLOAD);
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();backend_status(a.context->plugin->discovery->hierarchy_download(a.context->token,h->token,nodes,nc,roots,rc,&d),d);final_cuda_check(a.context);}
+    else{if(nc)std::copy(h->nodes.begin(),h->nodes.end(),nodes);if(rc)std::copy(h->roots.begin(),h->roots.end(),roots);}
+});}
+extern "C" bg_status bg3_hierarchy_bound_download(bg_handle id,double*bounds,uint64_t count,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{bounds,count,8}},{},diag))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){pointer(bounds,count);Admission a(id,Kind::Hierarchy);auto h=std::static_pointer_cast<Hierarchy>(a.object);
+    if(count!=h->bounds.size())fail(BG_INVALID_ARGUMENT,"hierarchy bound download shape mismatch",BG_STAGE_DOWNLOAD);
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();backend_status(a.context->plugin->discovery->hierarchy_bound_download(a.context->token,h->token,bounds,count,&d),d);final_cuda_check(a.context);}
+    else if(count)std::copy(h->bounds.begin(),h->bounds.end(),bounds);
+});}
+extern "C" bg_status bg3_create_discovery_query_set(bg_handle id,const uint32_t*slots,uint64_t count,const double*targets,uint64_t td,bg_handle*out,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{out,1,sizeof(bg_handle)}},{{slots,count,4},{targets,td,8}},diag))return BG_INVALID_ARGUMENT;
+    zero_handle(out);return call(diag,db,[&](bg_diagnostic&){pointer(out,1);pointer(slots,count);pointer(targets,td);
+    if(td!=multiply(count,3))fail(BG_INVALID_ARGUMENT,"discovery query shape mismatch");
+    Admission a(id,Kind::Hierarchy);
+    auto q=std::make_shared<DiscoveryQueries>();q->context=a.context;q->hierarchy=std::static_pointer_cast<Hierarchy>(a.object);
+    q->slots=snapshot(slots,count);q->targets=snapshot(targets,td);
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();const auto* backend=discovery_backend(a.context);
+        backend_status(backend->discovery_query_create(a.context->token,q->hierarchy->token,q->slots.data(),count,q->targets.data(),&q->token,&d),d);
+        if(!q->token)fail(BG_INTERNAL_ERROR,"CUDA backend published no discovery query token");
+        ++a.context->device_children;}
+    *out=publish_owned(q,a.context);
+});}
+extern "C" bg_status bg3_discover(bg_handle id,const bg_discovery_options*options,uint64_t bytes,bg_handle*out,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{out,1,sizeof(bg_handle)}},{{options,1,sizeof(*options)}},diag))return BG_INVALID_ARGUMENT;
+    zero_handle(out);return call(diag,db,[&](bg_diagnostic&){pointer(out,1);discovery_version(options,bytes);const auto input=*options;
+    if(!input.max_visits || input.max_visits>BG_DISCOVERY_MAX_VISITS || input.max_refinements>BG_DISCOVERY_MAX_REFINEMENTS || !discovery_tolerance_valid(input.tolerance_squared) || input.flags || input.reserved)fail(BG_INVALID_ARGUMENT,"invalid discovery options");
+    Admission a(id,Kind::DiscoveryQuery);auto r=std::make_shared<DiscoveryResult>();r->context=a.context;r->queries=std::static_pointer_cast<DiscoveryQueries>(a.object);r->options=input;
+    const uint64_t n=r->queries->slots.size(),size=multiply(n,BG_DISCOVERY_FIELD_COUNT);
+    if(size>std::vector<double>().max_size())fail(BG_INVALID_ARGUMENT,"discovery result size overflow");
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();const auto* backend=discovery_backend(a.context);
+        backend_status(backend->discover(a.context->token,r->queries->token,&r->options,&r->token,&r->profile,&d),d);
+        if(!r->token)fail(BG_INTERNAL_ERROR,"CUDA backend published no discovery result token");
+        ++a.context->device_children;
+    }else{
+        r->fields.resize(size);r->statuses.resize(n);r->flags.resize(n);r->visits.resize(n);r->pruned.resize(n);r->refinements.resize(n);r->evaluations.resize(n);
+        if(n){auto&q=*r->queries;auto&h=*q.hierarchy;auto&p=*h.patches;
+            const uint64_t workers=std::min<uint64_t>(a.context->threads,n);std::vector<std::thread> threads;threads.reserve(workers);std::atomic<bool> unsupported{false};
+            auto range=[&](uint64_t begin,uint64_t end)noexcept{
+                if(!brepgpu::discovery_environment_supported()){unsupported.store(true,std::memory_order_relaxed);return;}
+                brepgpu::discover_cpu_range(p.patches.data(),p.patches.size(),p.controls.data(),h.nodes.data(),h.nodes.size(),h.roots.data(),h.bounds.data(),h.options.flags,q.slots.data(),q.targets.data(),n,&r->options,begin,end,r->fields.data(),r->statuses.data(),r->flags.data(),r->visits.data(),r->pruned.data(),r->refinements.data(),r->evaluations.data());};
+            auto boundary=[&](uint64_t i){return (n/workers)*i+std::min<uint64_t>(i,n%workers);};
+            if(workers==1)range(0,n);else{try{for(uint64_t i=0;i<workers;++i)threads.emplace_back(range,boundary(i),boundary(i+1));}catch(...){for(auto&t:threads)if(t.joinable())t.join();throw;}for(auto&t:threads)t.join();}
+            if(unsupported.load(std::memory_order_relaxed))fail(BG_UNSUPPORTED,"unsupported CPU floating-point environment for discovery worker");
+        }
+    }
+    *out=publish_owned(r,a.context);
+});}
+extern "C" bg_status bg3_discovery_info(bg_handle id,bg_discovery_info*out,uint64_t bytes,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{out,1,sizeof(*out)}},{},diag))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){discovery_version(out,bytes);Admission a(id,Kind::DiscoveryResult);auto r=std::static_pointer_cast<DiscoveryResult>(a.object);final_cuda_check(a.context);
+    *out={BG_DISCOVERY_ABI_VERSION,sizeof(*out),r->queries->slots.size(),r->queries->hierarchy->patches->patches.size(),a.context->backend,r->profile.flags,BG_DISCOVERY_FIELD_COUNT,0,r->profile.kernel_ms};
+});}
+extern "C" bg_status bg3_discovery_download(bg_handle id,double*fields,uint64_t doubles,uint32_t*statuses,uint64_t sc,uint32_t*flags,uint64_t fc,uint32_t*visits,uint64_t vc,uint32_t*pruned,uint64_t pc,uint32_t*refinements,uint64_t rc,uint32_t*evaluations,uint64_t ec,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{fields,doubles,8},{statuses,sc,4},{flags,fc,4},{visits,vc,4},{pruned,pc,4},{refinements,rc,4},{evaluations,ec,4}},{},diag))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){pointer(fields,doubles);pointer(statuses,sc);pointer(flags,fc);pointer(visits,vc);pointer(pruned,pc);pointer(refinements,rc);pointer(evaluations,ec);
+    Admission a(id,Kind::DiscoveryResult);auto r=std::static_pointer_cast<DiscoveryResult>(a.object);const uint64_t n=r->queries->slots.size();
+    if(doubles!=multiply(n,BG_DISCOVERY_FIELD_COUNT)||sc!=n||fc!=n||vc!=n||pc!=n||rc!=n||ec!=n)fail(BG_INVALID_ARGUMENT,"discovery download shape mismatch",BG_STAGE_DOWNLOAD);
+    if(a.context->backend==BG_BACKEND_CUDA){auto d=diagnostic();backend_status(a.context->plugin->discovery->discovery_download(a.context->token,r->token,fields,doubles,statuses,sc,flags,fc,visits,vc,pruned,pc,refinements,rc,evaluations,ec,&d),d);final_cuda_check(a.context);}
+    else{if(doubles)std::copy(r->fields.begin(),r->fields.end(),fields);if(n){std::copy(r->statuses.begin(),r->statuses.end(),statuses);std::copy(r->flags.begin(),r->flags.end(),flags);std::copy(r->visits.begin(),r->visits.end(),visits);std::copy(r->pruned.begin(),r->pruned.end(),pruned);std::copy(r->refinements.begin(),r->refinements.end(),refinements);std::copy(r->evaluations.begin(),r->evaluations.end(),evaluations);}}
+});}
+extern "C" bg_status bg3_discovery_sources(bg_handle id,bg_patch_desc*patches,uint64_t pc,uint64_t pb,uint32_t*slots,uint64_t count,double*targets,uint64_t td,bg_hierarchy_options*ho,uint64_t hb,bg_discovery_options*options,uint64_t ob,bg_diagnostic*diag,uint64_t db){
+    if(discovery_alias({{patches,pc,sizeof(bg_patch_desc)},{slots,count,4},{targets,td,8},{ho,1,sizeof(*ho)},{options,1,sizeof(*options)}},{},diag))return BG_INVALID_ARGUMENT;
+    return call(diag,db,[&](bg_diagnostic&){pointer(patches,pc);pointer(slots,count);pointer(targets,td);discovery_version(ho,hb);discovery_version(options,ob);
+    Admission a(id,Kind::DiscoveryResult);auto r=std::static_pointer_cast<DiscoveryResult>(a.object);auto&q=*r->queries;auto&h=*q.hierarchy;
+    if(pc!=h.patches->patches.size()||pb!=multiply(pc,sizeof(bg_patch_desc))||count!=q.slots.size()||td!=multiply(count,3))fail(BG_INVALID_ARGUMENT,"discovery source shape mismatch");
+    final_cuda_check(a.context);if(pc)std::copy(h.patches->patches.begin(),h.patches->patches.end(),patches);if(count){std::copy(q.slots.begin(),q.slots.end(),slots);std::copy(q.targets.begin(),q.targets.end(),targets);}*ho=h.options;*options=r->options;
 });}

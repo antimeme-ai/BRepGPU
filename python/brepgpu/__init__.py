@@ -297,6 +297,39 @@ class Engine(_Resource):
         desc=_projection_options_descriptor(options)
         return _create_resource(self,ProjectionResult,"bg2_project",queries.handle,C.byref(desc),C.sizeof(desc))
 
+    def _discovery_ready(self):
+        if getattr(self,"_discovery_configured",False):return
+        try:_declare_discovery(self._lib)
+        except AttributeError as error:raise BgError(BG_UNSUPPORTED,message="native core has no discovery extension") from error
+        info=DiscoveryAbiInfo()
+        code=self._lib.bg3_discovery_abi_info(C.byref(info),C.sizeof(info))
+        sizes=(info.abi_version,info.struct_size,info.hierarchy_options_size,info.node_size,info.hierarchy_info_size,info.options_size,info.info_size,info.diagnostic_size,info.field_count,info.integer_slab_count,info.double_size,info.integer_size,info.handle_size,info.pointer_size)
+        expected=(3,56,C.sizeof(HierarchyOptionsDesc),C.sizeof(HierarchyNode),C.sizeof(HierarchyInfo),C.sizeof(DiscoveryOptionsDesc),C.sizeof(DiscoveryInfo),C.sizeof(Diagnostic),8,6,8,4,8,8)
+        if code or sizes!=expected:raise BgError(BG_UNSUPPORTED,message="native discovery ABI does not match this adapter")
+        self._discovery_configured=True
+    def create_hierarchy(self,patches,options=None):
+        self._check(patches)
+        if not isinstance(patches,PatchSet):raise BgError(BG_INVALID_HANDLE,message="expected patch set")
+        self._discovery_ready()
+        if options is None:options=HierarchyOptions()
+        if not isinstance(options,HierarchyOptions):raise TypeError("options must be HierarchyOptions")
+        desc=_hierarchy_options_descriptor(options)
+        return _create_resource(self,Hierarchy,"bg3_create_hierarchy",patches.handle,C.byref(desc),C.sizeof(desc))
+    def create_discovery_query_set(self,hierarchy,patch_slots,targets):
+        self._check(hierarchy)
+        if not isinstance(hierarchy,Hierarchy):raise BgError(BG_INVALID_HANDLE,message="expected hierarchy")
+        self._discovery_ready()
+        slots=array("I",(_integer(x,32,"patch slot") for x in patch_slots));values=array("d",_flat(targets,3))
+        return _create_resource(self,DiscoveryQueries,"bg3_create_discovery_query_set",hierarchy.handle,_pointer(slots,C.c_uint32),len(slots),_pointer(values,C.c_double),len(values))
+    def discover(self,queries,options=None):
+        self._check(queries)
+        if not isinstance(queries,DiscoveryQueries):raise BgError(BG_INVALID_HANDLE,message="expected discovery query set")
+        self._discovery_ready()
+        if options is None:options=DiscoveryOptions()
+        if not isinstance(options,DiscoveryOptions):raise TypeError("options must be DiscoveryOptions")
+        desc=_discovery_options_descriptor(options)
+        return _create_resource(self,DiscoveryResult,"bg3_discover",queries.handle,C.byref(desc),C.sizeof(desc))
+
 class PatchSet(_Resource):pass
 class QuerySet(_Resource):pass
 
@@ -452,5 +485,131 @@ class ProjectionBatch:
     def residual(self,index):return self.field(6,index)
     def require_stationary(self):
         failures=[(i,int(status)) for i,status in enumerate(self.statuses) if status!=BG_PROJ_STATIONARY]
+        if failures:raise QueryError(failures)
+        return self
+
+BG_DISCOVERY_ABI_VERSION=3
+BG_BOUND_AABB,BG_BOUND_DOP26,BG_BOUND_BERNSTEIN=0,1,2
+BG_HIERARCHY_LEAF=1
+BG_DISC_GAP_SATISFIED,BG_DISC_UNRESOLVED,BG_DISC_BAD_PATCH,BG_DISC_BAD_TARGET,BG_DISC_ARITHMETIC=range(5)
+BG_DISC_CANDIDATE_VALID,BG_DISC_GAP,BG_DISC_COVERAGE_COMPLETE=1,2,4
+BG_DISC_VISIT_LIMIT,BG_DISC_REFINEMENT_LIMIT,BG_DISC_ARITHMETIC_REASON=8,16,32
+class _DiscoveryVersioned(C.Structure):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.abi_version=3;self.struct_size=C.sizeof(type(self))
+class HierarchyOptionsDesc(_DiscoveryVersioned):
+    _fields_=[(name,C.c_uint32) for name in ("abi_version","struct_size","depth","reserved")]
+    _fields_ += [("max_nodes",C.c_uint64),("flags",C.c_uint32),("reserved2",C.c_uint32)]
+class HierarchyNode(C.Structure):
+    _fields_=[("lower",C.c_double*3),("upper",C.c_double*3)]
+    _fields_ += [(name,C.c_uint32) for name in ("left","right","patch_slot","u_index","v_index","u_level","v_level","flags")]
+class HierarchyInfo(_DiscoveryVersioned):
+    _fields_=[("abi_version",C.c_uint32),("struct_size",C.c_uint32),("patch_count",C.c_uint64),("node_count",C.c_uint64)]
+    _fields_ += [(name,C.c_uint32) for name in ("depth","backend","flags","node_size")]
+class DiscoveryOptionsDesc(_DiscoveryVersioned):
+    _fields_=[(name,C.c_uint32) for name in ("abi_version","struct_size","max_visits","max_refinements")]
+    _fields_ += [("tolerance_squared",C.c_double),("flags",C.c_uint32),("reserved",C.c_uint32)]
+class DiscoveryInfo(_DiscoveryVersioned):
+    _fields_=[("abi_version",C.c_uint32),("struct_size",C.c_uint32),("count",C.c_uint64),("patch_count",C.c_uint64)]
+    _fields_ += [(name,C.c_uint32) for name in ("backend","flags","field_count","reserved")]
+    _fields_ += [("kernel_ms",C.c_double)]
+class DiscoveryAbiInfo(_DiscoveryVersioned):
+    _fields_=[(name,C.c_uint32) for name in ("abi_version","struct_size","hierarchy_options_size","node_size","hierarchy_info_size","options_size","info_size","diagnostic_size","field_count","integer_slab_count","double_size","integer_size","handle_size","pointer_size")]
+@dataclass(frozen=True)
+class HierarchyOptions:
+    depth:int=8
+    max_nodes:int=1048576
+    mode:int=0
+    def __post_init__(self):
+        object.__setattr__(self,"depth",_integer(self.depth,32,"depth"))
+        object.__setattr__(self,"max_nodes",_integer(self.max_nodes,64,"max_nodes"))
+        mode={"aabb":0,"dop26":1,"bernstein":2}.get(self.mode,self.mode) if isinstance(self.mode,str) else self.mode
+        object.__setattr__(self,"mode",_integer(mode,32,"bound mode"))
+@dataclass(frozen=True)
+class DiscoveryOptions:
+    max_visits:int=8191
+    max_refinements:int=8
+    tolerance_squared:float=2.**-24
+    def __post_init__(self):
+        object.__setattr__(self,"max_visits",_integer(self.max_visits,32,"max_visits"))
+        object.__setattr__(self,"max_refinements",_integer(self.max_refinements,32,"max_refinements"))
+        object.__setattr__(self,"tolerance_squared",float(self.tolerance_squared))
+def _hierarchy_options_descriptor(options):
+    desc=HierarchyOptionsDesc();desc.depth=options.depth;desc.max_nodes=options.max_nodes;desc.flags=options.mode;return desc
+def _discovery_options_descriptor(options):
+    desc=DiscoveryOptionsDesc();desc.max_visits=options.max_visits;desc.max_refinements=options.max_refinements;desc.tolerance_squared=options.tolerance_squared;return desc
+def _declare_discovery(lib):
+    H,U,D=C.c_uint64,C.c_uint64,C.POINTER(Diagnostic)
+    P,I=C.POINTER(C.c_double),C.POINTER(C.c_uint32)
+    HD,OD=C.POINTER(HierarchyOptionsDesc),C.POINTER(DiscoveryOptionsDesc)
+    specs={
+        "bg3_discovery_abi_info":[C.POINTER(DiscoveryAbiInfo),U],
+        "bg3_create_hierarchy":[H,HD,U,C.POINTER(H),D,U],
+        "bg3_hierarchy_info":[H,C.POINTER(HierarchyInfo),U,D,U],
+        "bg3_hierarchy_download":[H,C.POINTER(HierarchyNode),U,U,I,U,D,U],
+        "bg3_hierarchy_bound_download":[H,P,U,D,U],
+        "bg3_create_discovery_query_set":[H,I,U,P,U,C.POINTER(H),D,U],
+        "bg3_discover":[H,OD,U,C.POINTER(H),D,U],
+        "bg3_discovery_info":[H,C.POINTER(DiscoveryInfo),U,D,U],
+        "bg3_discovery_download":[H,P,U,I,U,I,U,I,U,I,U,I,U,I,U,D,U],
+        "bg3_discovery_sources":[H,C.POINTER(PatchDesc),U,U,I,U,P,U,HD,U,OD,U,D,U],
+    }
+    for name,args in specs.items():function=getattr(lib,name);function.argtypes=args;function.restype=C.c_uint32
+class Hierarchy(_Resource):
+    def info(self):
+        out=HierarchyInfo();_invoke(self._engine._lib,"bg3_hierarchy_info",self.handle,C.byref(out),C.sizeof(out));return out
+    def download(self):
+        info=self.info();lib=self._engine._lib
+        nodes=(HierarchyNode*info.node_count)();roots=array("I",[0])*info.patch_count
+        _invoke(lib,"bg3_hierarchy_download",self.handle,nodes,info.node_count,C.sizeof(nodes),_pointer(roots,C.c_uint32),len(roots))
+        stride=(0,20,490)[info.flags];bounds=array("d",[0.])*(info.node_count*stride)
+        _invoke(lib,"bg3_hierarchy_bound_download",self.handle,_pointer(bounds,C.c_double),len(bounds))
+        return HierarchyBatch(info,nodes,roots,bounds)
+class HierarchyBatch:
+    def __init__(self,info,nodes,roots,bounds):
+        self.info,self.nodes,self.roots,self.bounds=info,nodes,roots,bounds
+        self.mode,self.node_count=int(info.flags),int(info.node_count)
+    def box(self,index):return tuple(self.nodes[index].lower),tuple(self.nodes[index].upper)
+    def cell(self,index):
+        n=self.nodes[index];return (int(n.u_level),int(n.u_index),int(n.v_level),int(n.v_index))
+class DiscoveryQueries(_Resource):pass
+class DiscoveryResult(_Resource):
+    def info(self):
+        out=DiscoveryInfo();_invoke(self._engine._lib,"bg3_discovery_info",self.handle,C.byref(out),C.sizeof(out));return out
+    def download(self):
+        info=self.info();lib=self._engine._lib;n=int(info.count)
+        data=array("d",[0.])*(n*8);slabs=[array("I",[0])*n for _ in range(6)]
+        args=[self.handle,_pointer(data,C.c_double),len(data)]
+        for slab in slabs:args.extend((_pointer(slab,C.c_uint32),len(slab)))
+        _invoke(lib,"bg3_discovery_download",*args)
+        descriptors=(PatchDesc*info.patch_count)();slots=array("I",[0])*n;targets=array("d",[0.])*(n*3)
+        hierarchy_options=HierarchyOptionsDesc();options=DiscoveryOptionsDesc()
+        _invoke(lib,"bg3_discovery_sources",self.handle,descriptors,info.patch_count,C.sizeof(descriptors),_pointer(slots,C.c_uint32),n,_pointer(targets,C.c_double),len(targets),C.byref(hierarchy_options),C.sizeof(hierarchy_options),C.byref(options),C.sizeof(options))
+        return DiscoveryBatch(lib,info,data,*slabs,descriptors,slots,targets,
+            HierarchyOptions(hierarchy_options.depth,hierarchy_options.max_nodes,hierarchy_options.flags),
+            DiscoveryOptions(options.max_visits,options.max_refinements,options.tolerance_squared))
+class DiscoveryBatch:
+    _field_names=("s","t","x","y","z","approximate_distance_squared","lower_squared","upper_squared")
+    def __init__(self,lib,info,data,statuses,flags,visits,pruned,refinements,evaluations,descriptors,slots,targets,hierarchy_options,options):
+        self._lib,self.info,self.count=lib,info,int(info.count)
+        self.data,self.statuses,self.flags,self.visits,self.pruned,self.refinements,self.evaluation_counts=data,statuses,flags,visits,pruned,refinements,evaluations
+        self._descriptors,self._slots=descriptors,slots
+        self.targets,self.hierarchy_options,self.options=targets,hierarchy_options,options
+    @property
+    def lineage(self):
+        sources=[Lineage(d.body_id,d.entity_kind,d.entity_id,d.revision,d.chart_id) if d.flags&1 else None for d in self._descriptors]
+        return tuple(sources[slot] if slot<len(sources) else None for slot in self._slots)
+    def field(self,name,index):
+        if isinstance(name,str):name=self._field_names.index(name)
+        name,index=operator.index(name),operator.index(index)
+        if not 0<=name<8 or not 0<=index<self.count:raise IndexError("discovery field index outside batch")
+        return self.data[name*self.count+index]
+    def uv(self,index):return self.field(0,index),self.field(1,index)
+    def point(self,index):return tuple(self.field(axis+2,index) for axis in range(3))
+    def approximate_distance_squared(self,index):return self.field(5,index)
+    def bracket(self,index):return self.field(6,index),self.field(7,index)
+    def require_gap(self):
+        failures=[(i,int(status)) for i,status in enumerate(self.statuses) if status!=BG_DISC_GAP_SATISFIED or not(self.flags[i]&BG_DISC_GAP)]
         if failures:raise QueryError(failures)
         return self

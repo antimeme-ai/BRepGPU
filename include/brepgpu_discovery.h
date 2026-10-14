@@ -63,7 +63,7 @@ typedef struct bg_discovery_abi_info {
    Canonical record sizes are exact, byte capacities can be larger. All numeric
    payload extents are exact; nonempty pointers are aligned, valid and stable
    for the call. Written regions are mutually disjoint and separate from the
-   diagnostic and all borrowed creator inputs. Alias rejection writes nothing,
+   diagnostic and all borrowed creator inputs. Alias or unrepresentable-span preflight rejection writes nothing,
    including handle/diagnostic storage. Other creator failures zero a valid
    disjoint handle output. bg1_close closes all new resource kinds. */
 bg_status bg3_discovery_abi_info(bg_discovery_abi_info* out,uint64_t out_bytes);

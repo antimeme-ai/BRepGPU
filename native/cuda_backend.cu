@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 #include "evaluator.hpp"
 #include "projection_solver.hpp"
+#include "discovery_math.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -26,6 +27,19 @@ struct ProjectionResult {
     uint32_t* statuses = nullptr; uint32_t* updates = nullptr;
     uint32_t* evaluations = nullptr; uint32_t* flags = nullptr;
     uint64_t count;
+};
+
+struct Hierarchy {
+    Context* context=nullptr;Patches* patches=nullptr;
+    bg_hierarchy_node* nodes=nullptr;uint32_t* roots=nullptr;double* bounds=nullptr;
+    uint64_t node_count=0,patch_count=0,bound_count=0;uint32_t mode=0;
+};
+struct DiscoveryQueries {
+    Context* context=nullptr;Hierarchy* hierarchy=nullptr;
+    uint32_t* slots=nullptr;double* targets=nullptr;uint64_t count=0;
+};
+struct DiscoveryResult {
+    Context* context=nullptr;double* fields=nullptr;uint32_t* slabs[6]{};uint64_t count=0;
 };
 
 void append_bounded(char* target, size_t capacity, const char* text) noexcept {
@@ -214,6 +228,33 @@ void destroy(ProjectionResult* result, Operation& op) noexcept {
     delete result;
 }
 
+void destroy(Hierarchy* h,Operation& op)noexcept{
+    {DeviceScope device(h->context->device,BG_STAGE_CLOSE,op);if(device.selected){
+        finish(h->context,op,BG_STAGE_CLOSE);
+        if(h->nodes)op.cuda(cudaFree(h->nodes),BG_STAGE_CLOSE,"free hierarchy nodes");
+        if(h->roots)op.cuda(cudaFree(h->roots),BG_STAGE_CLOSE,"free hierarchy roots");
+        if(h->bounds)op.cuda(cudaFree(h->bounds),BG_STAGE_CLOSE,"free hierarchy bounds");
+    }}delete h;
+}
+void destroy(DiscoveryQueries* q,Operation& op)noexcept{
+    {DeviceScope device(q->context->device,BG_STAGE_CLOSE,op);if(device.selected){
+        finish(q->context,op,BG_STAGE_CLOSE);
+        if(q->slots)op.cuda(cudaFree(q->slots),BG_STAGE_CLOSE,"free discovery slots");
+        if(q->targets)op.cuda(cudaFree(q->targets),BG_STAGE_CLOSE,"free discovery targets");
+    }}delete q;
+}
+void destroy(DiscoveryResult* r,Operation& op)noexcept{
+    {DeviceScope device(r->context->device,BG_STAGE_CLOSE,op);if(device.selected){
+        finish(r->context,op,BG_STAGE_CLOSE);
+        if(r->fields)op.cuda(cudaFree(r->fields),BG_STAGE_CLOSE,"free discovery fields");
+        for(auto p:r->slabs)if(p)op.cuda(cudaFree(p),BG_STAGE_CLOSE,"free discovery integer slab");
+    }}delete r;
+}
+template<class T>void download_array(T* host,const T* device,uint64_t count,Context* context,Operation& op)noexcept{
+    size_t bytes=0;if(!op.ok()||!bytes_for(count,sizeof(T),bytes,op,BG_STAGE_DOWNLOAD)||!bytes)return;
+    op.cuda(cudaMemcpyAsync(host,device,bytes,cudaMemcpyDeviceToHost,context->stream),BG_STAGE_DOWNLOAD,"download discovery buffer");
+}
+
 template<class T> struct Pending {
     T* value;
     Operation& operation;
@@ -360,6 +401,27 @@ __global__ void projection_kernel(const DevicePatch* patches,uint64_t patch_coun
         for(unsigned k=0;k<BG_PROJECTION_FIELD_COUNT;++k)fields[k*count+i]=answer.fields[k];
         statuses[i]=answer.status;updates[i]=answer.updates;
         evaluations[i]=answer.evaluations;flags[i]=answer.flags;
+    }
+}
+
+__global__ void discovery_kernel(const DevicePatch* patches,uint64_t patch_count,
+    const double* controls,const bg_hierarchy_node* nodes,uint64_t node_count,
+    const uint32_t* roots,const double* bounds,uint32_t mode,const uint32_t* slots,
+    const double* targets,uint64_t count,bg_discovery_options options,double* fields,
+    uint32_t* statuses,uint32_t* flags,uint32_t* visits,uint32_t* pruned,
+    uint32_t* refinements,uint32_t* evaluations){
+    const uint64_t stride=static_cast<uint64_t>(gridDim.x)*blockDim.x;
+    for(uint64_t i=static_cast<uint64_t>(blockIdx.x)*blockDim.x+threadIdx.x;i<count;i+=stride){
+        brepgpu::DiscoveryCandidate answer;const uint32_t slot=slots[i];
+        if(slot>=patch_count)answer=brepgpu::discovery_detail::failed(BG_DISC_BAD_PATCH);
+        else{const uint32_t root=roots[slot];const DevicePatch patch=patches[slot];
+            if(root>=node_count||nodes[root].patch_slot!=slot)answer=brepgpu::discovery_detail::failed(BG_DISC_ARITHMETIC);
+            else{ScalarCUDA evaluator{controls+patch.offset*4,patch.p,patch.q};
+                answer=brepgpu::discover_local(evaluator,controls+patch.offset*4,patch.p,patch.q,nodes,node_count,root,bounds,mode,targets+3*i,options);}
+        }
+        for(unsigned k=0;k<8;++k)fields[k*count+i]=answer.fields[k];
+        statuses[i]=answer.status;flags[i]=answer.flags;visits[i]=answer.visits;
+        pruned[i]=answer.pruned;refinements[i]=answer.refinements;evaluations[i]=answer.evaluations;
     }
 }
 
@@ -703,6 +765,106 @@ bg_status projection_download(void* ctx,void* result_token,double* fields,uint64
     });
 }
 
+bg_status hierarchy_upload(void* ctx,void* patch_token,const bg_hierarchy_node* nodes,uint64_t nc,
+    const uint32_t* roots,uint64_t rc,const double* bounds,uint64_t bc,uint32_t mode,void** out,bg_diagnostic* diag)noexcept{
+    if(out)*out=nullptr;
+    return guarded(BG_STAGE_UPLOAD,diag,[&](Operation& op){
+        if(!ctx||!patch_token||!out||mode>BG_BOUND_BERNSTEIN||nc>BG_HIERARCHY_MAX_NODES ||
+            (nc&&!nodes)||(rc&&!roots)||(bc&&!bounds)){
+            op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"invalid hierarchy upload input");return;}
+        auto* context=static_cast<Context*>(ctx);auto* patches=static_cast<Patches*>(patch_token);
+        const uint64_t stride=mode==0?0:mode==1?20:490;
+        if(patches->context!=context||rc!=patches->count||bc!=nc*stride){op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"hierarchy upload shape/context mismatch");return;}
+        Pending<Hierarchy> pending(new Hierarchy{},op);auto*h=pending.value;
+        h->context=context;h->patches=patches;h->node_count=nc;h->patch_count=rc;h->bound_count=bc;h->mode=mode;
+        {DeviceScope device(context->device,BG_STAGE_UPLOAD,op);if(device.selected&&op.ok()){
+            allocate(h->nodes,nc,context,op,BG_STAGE_UPLOAD);allocate(h->roots,rc,context,op,BG_STAGE_UPLOAD);allocate(h->bounds,bc,context,op,BG_STAGE_UPLOAD);
+            upload(h->nodes,nodes,nc,context,op);upload(h->roots,roots,rc,context,op);upload(h->bounds,bounds,bc,context,op);finish(context,op,BG_STAGE_UPLOAD);
+        }}if(op.ok())*out=pending.release();
+    });
+}
+bg_status hierarchy_close(void*ctx,void*token,bg_diagnostic*diag)noexcept{
+    return guarded(BG_STAGE_CLOSE,diag,[&](Operation&op){if(!ctx||!token)op.error(BG_INVALID_ARGUMENT,BG_STAGE_CLOSE,"missing hierarchy close input");else destroy(static_cast<Hierarchy*>(token),op);});
+}
+bg_status hierarchy_download(void*ctx,void*token,bg_hierarchy_node*nodes,uint64_t nc,uint32_t*roots,uint64_t rc,bg_diagnostic*diag)noexcept{
+    return guarded(BG_STAGE_DOWNLOAD,diag,[&](Operation&op){
+        if(!ctx||!token){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"missing hierarchy download input");return;}
+        auto*c=static_cast<Context*>(ctx);auto*h=static_cast<Hierarchy*>(token);
+        if(h->context!=c||nc!=h->node_count||rc!=h->patch_count||(nc&&!nodes)||(rc&&!roots)){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"invalid hierarchy download shape/context");return;}
+        {DeviceScope device(c->device,BG_STAGE_DOWNLOAD,op);if(device.selected&&op.ok()){download_array(nodes,h->nodes,nc,c,op);download_array(roots,h->roots,rc,c,op);finish(c,op,BG_STAGE_DOWNLOAD);}}
+    });
+}
+bg_status hierarchy_bound_download(void*ctx,void*token,double*bounds,uint64_t bc,bg_diagnostic*diag)noexcept{
+    return guarded(BG_STAGE_DOWNLOAD,diag,[&](Operation&op){
+        if(!ctx||!token){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"missing hierarchy bound download input");return;}
+        auto*c=static_cast<Context*>(ctx);auto*h=static_cast<Hierarchy*>(token);
+        if(h->context!=c||bc!=h->bound_count||(bc&&!bounds)){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"invalid hierarchy bound download shape/context");return;}
+        {DeviceScope device(c->device,BG_STAGE_DOWNLOAD,op);if(device.selected&&op.ok()){download_array(bounds,h->bounds,bc,c,op);finish(c,op,BG_STAGE_DOWNLOAD);}}
+    });
+}
+bg_status discovery_query_create(void*ctx,void*tree_token,const uint32_t*slots,uint64_t count,const double*targets,void**out,bg_diagnostic*diag)noexcept{
+    if(out)*out=nullptr;
+    return guarded(BG_STAGE_UPLOAD,diag,[&](Operation&op){
+        if(!ctx||!tree_token||!out||(count&&(!slots||!targets))||count>UINT64_MAX/3){op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"invalid discovery query input");return;}
+        auto*c=static_cast<Context*>(ctx);auto*h=static_cast<Hierarchy*>(tree_token);
+        if(h->context!=c){op.error(BG_INVALID_ARGUMENT,BG_STAGE_UPLOAD,"foreign discovery hierarchy context");return;}
+        Pending<DiscoveryQueries> pending(new DiscoveryQueries{},op);auto*q=pending.value;q->context=c;q->hierarchy=h;q->count=count;
+        {DeviceScope device(c->device,BG_STAGE_UPLOAD,op);if(device.selected&&op.ok()){
+            allocate(q->slots,count,c,op,BG_STAGE_UPLOAD);allocate(q->targets,count*3,c,op,BG_STAGE_UPLOAD);
+            upload(q->slots,slots,count,c,op);upload(q->targets,targets,count*3,c,op);finish(c,op,BG_STAGE_UPLOAD);
+        }}if(op.ok())*out=pending.release();
+    });
+}
+bg_status discovery_query_close(void*ctx,void*token,bg_diagnostic*diag)noexcept{
+    return guarded(BG_STAGE_CLOSE,diag,[&](Operation&op){if(!ctx||!token)op.error(BG_INVALID_ARGUMENT,BG_STAGE_CLOSE,"missing discovery query close input");else destroy(static_cast<DiscoveryQueries*>(token),op);});
+}
+bool discovery_options_valid(const bg_discovery_options* options)noexcept{
+    if(!options)return false;uint64_t bits=0;std::memcpy(&bits,&options->tolerance_squared,sizeof(bits));
+    const uint64_t magnitude=bits&0x7fffffffffffffffull;
+    return options->abi_version==BG_DISCOVERY_ABI_VERSION && options->struct_size==sizeof(*options) &&
+        options->max_visits && options->max_visits<=BG_DISCOVERY_MAX_VISITS && options->max_refinements<=BG_DISCOVERY_MAX_REFINEMENTS &&
+        magnitude<=0x3ff0000000000000ull && (!(bits>>63)||magnitude==0) && !options->flags && !options->reserved;
+}
+bg_status discover(void*ctx,void*query_token,const bg_discovery_options*options,void**out,bg_backend_profile*profile,bg_diagnostic*diag)noexcept{
+    if(out)*out=nullptr;if(profile)*profile={0,0,std::numeric_limits<double>::quiet_NaN()};
+    return guarded(BG_STAGE_EVALUATE,diag,[&](Operation&op){
+        if(!ctx||!query_token||!out||!profile||!discovery_options_valid(options)){op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid discovery operation input");return;}
+        auto*c=static_cast<Context*>(ctx);auto*q=static_cast<DiscoveryQueries*>(query_token);
+        if(q->context!=c||q->count>UINT64_MAX/8){op.error(BG_INVALID_ARGUMENT,BG_STAGE_EVALUATE,"invalid discovery query context/count");return;}
+        Pending<DiscoveryResult> pending(new DiscoveryResult{},op);auto*r=pending.value;r->context=c;r->count=q->count;
+        float milliseconds=0;bool measured=false;
+        {DeviceScope device(c->device,BG_STAGE_EVALUATE,op);if(device.selected&&op.ok()){
+            allocate(r->fields,q->count*8,c,op,BG_STAGE_EVALUATE);for(auto&slab:r->slabs)allocate(slab,q->count,c,op,BG_STAGE_EVALUATE);
+            cudaEvent_t start=nullptr,stop=nullptr;
+            if(op.ok()&&c->profile&&q->count){op.cuda(cudaEventCreate(&start),BG_STAGE_EVALUATE,"create discovery start event");
+                if(op.ok())op.cuda(cudaEventCreate(&stop),BG_STAGE_EVALUATE,"create discovery stop event");
+                if(op.ok())op.cuda(cudaEventRecord(start,c->stream),BG_STAGE_EVALUATE,"record discovery start");}
+            if(op.ok()&&q->count){constexpr unsigned threads=128;const uint64_t needed=q->count/threads+(q->count%threads!=0);
+                const unsigned blocks=static_cast<unsigned>(std::min<uint64_t>(needed,4096));auto*h=q->hierarchy;auto*p=h->patches;
+                discovery_kernel<<<blocks,threads,0,c->stream>>>(p->records,p->count,p->controls,h->nodes,h->node_count,h->roots,h->bounds,h->mode,q->slots,q->targets,q->count,*options,r->fields,r->slabs[0],r->slabs[1],r->slabs[2],r->slabs[3],r->slabs[4],r->slabs[5]);
+                op.cuda(cudaGetLastError(),BG_STAGE_EVALUATE,"launch resident discovery kernel");
+                if(op.ok()&&stop)op.cuda(cudaEventRecord(stop,c->stream),BG_STAGE_EVALUATE,"record discovery stop");}
+            finish(c,op,BG_STAGE_EVALUATE);
+            if(op.ok()&&start&&stop){op.cuda(cudaEventElapsedTime(&milliseconds,start,stop),BG_STAGE_EVALUATE,"read discovery duration");measured=op.ok();}
+            if(start)op.cuda(cudaEventDestroy(start),BG_STAGE_CLOSE,"destroy discovery start event");if(stop)op.cuda(cudaEventDestroy(stop),BG_STAGE_CLOSE,"destroy discovery stop event");
+        }}if(op.ok()){if(measured)*profile={BG_RESULT_PROFILED,0,milliseconds};*out=pending.release();}
+    });
+}
+bg_status discovery_result_close(void*ctx,void*token,bg_diagnostic*diag)noexcept{
+    return guarded(BG_STAGE_CLOSE,diag,[&](Operation&op){if(!ctx||!token)op.error(BG_INVALID_ARGUMENT,BG_STAGE_CLOSE,"missing discovery result close input");else destroy(static_cast<DiscoveryResult*>(token),op);});
+}
+bg_status discovery_download(void*ctx,void*token,double*fields,uint64_t doubles,uint32_t*statuses,uint64_t sc,uint32_t*flags,uint64_t fc,uint32_t*visits,uint64_t vc,uint32_t*pruned,uint64_t pc,uint32_t*refinements,uint64_t rc,uint32_t*evaluations,uint64_t ec,bg_diagnostic*diag)noexcept{
+    return guarded(BG_STAGE_DOWNLOAD,diag,[&](Operation&op){
+        if(!ctx||!token){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"missing discovery download input");return;}
+        auto*c=static_cast<Context*>(ctx);auto*r=static_cast<DiscoveryResult*>(token);const auto n=r->count;
+        if(r->context!=c||doubles!=n*8||sc!=n||fc!=n||vc!=n||pc!=n||rc!=n||ec!=n || (n&&(!fields||!statuses||!flags||!visits||!pruned||!refinements||!evaluations))){op.error(BG_INVALID_ARGUMENT,BG_STAGE_DOWNLOAD,"invalid discovery download shape/context");return;}
+        {DeviceScope device(c->device,BG_STAGE_DOWNLOAD,op);if(device.selected&&op.ok()){
+            download_array(fields,r->fields,doubles,c,op);uint32_t*outputs[]={statuses,flags,visits,pruned,refinements,evaluations};
+            for(unsigned i=0;i<6;++i)download_array(outputs[i],r->slabs[i],n,c,op);finish(c,op,BG_STAGE_DOWNLOAD);
+        }}
+    });
+}
+
 const bg_backend_v1 table = {
     BG_BACKEND_ABI_VERSION, sizeof(bg_backend_v1), BG_BACKEND_CAP_FP64,
     context_create, context_close, patch_create, patch_close, query_create,
@@ -713,6 +875,10 @@ const bg_backend_v2 projection_table = {
     BG_BACKEND_CAP_FP64|BG_BACKEND_CAP_PROJECTION,&table,
     projection_query_create,projection_query_close,project,projection_result_close,projection_download
 };
+const bg_backend_v3 discovery_table={BG_DISCOVERY_BACKEND_ABI_VERSION,sizeof(bg_backend_v3),BG_BACKEND_CAP_DISCOVERY,&table,
+    hierarchy_upload,hierarchy_close,hierarchy_download,hierarchy_bound_download,
+    discovery_query_create,discovery_query_close,discover,discovery_result_close,discovery_download};
+
 }
 
 extern "C" bg_status brepgpu_cuda_backend_v1(uint32_t requested_abi,
@@ -734,4 +900,10 @@ extern "C" bg_status brepgpu_cuda_backend_v2(uint32_t requested_abi,const bg_bac
             op.error(BG_UNSUPPORTED,BG_STAGE_PLUGIN,"unsupported projection backend ABI");
         else *out=&projection_table;
     });
+}
+
+extern "C" bg_status brepgpu_cuda_backend_v3(uint32_t requested_abi,const bg_backend_v3**out,bg_diagnostic*diag){
+    if(out)*out=nullptr;
+    return guarded(BG_STAGE_PLUGIN,diag,[&](Operation&op){if(!out||requested_abi!=BG_DISCOVERY_BACKEND_ABI_VERSION)
+        op.error(BG_UNSUPPORTED,BG_STAGE_PLUGIN,"unsupported discovery backend ABI");else *out=&discovery_table;});
 }
