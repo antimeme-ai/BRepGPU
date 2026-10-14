@@ -1,0 +1,16 @@
+field	value
+recipe	plate
+replicas	1
+order	permuted
+backend	cuda
+device	0
+threads	1
+edges	15
+faces	7
+coedges	30
+instances	1
+host_slot_sign_input_bytes	360
+host_csr_reader_output_bytes	484
+cuda_slot_sign_upload_bytes	360
+cuda_csr_reader_download_bytes	484
+cuda_source_identity_upload_bytes	0

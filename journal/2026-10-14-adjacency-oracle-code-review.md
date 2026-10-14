@@ -11,3 +11,6 @@ Applied root's caller metadata wording finding in the owned benchmark:
 `profile=0` is now `event_profile=0`. Synchronous host phase measurements remain
 enabled and separately named; the metadata only states that CUDA event profiling
 is absent. This changes no product computation or timing scope.
+
+Re-read root's O1 correction: literal public edge-kind assertions and bad-slot
+cases are present. O1 resolved; oracle/reader test unit accepted by source review.

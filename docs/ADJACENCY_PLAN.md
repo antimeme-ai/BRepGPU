@@ -1,6 +1,6 @@
 # GPU adjacency implementation plan
 
-Status: proposed for adversarial review after design dispositions, 2026-10-14.
+Status: accepted and implemented; qualification passed, cost campaign follows, 2026-10-14.
 Issue [23](https://github.com/antimeme-ai/BRepGPU/issues/23).
 
 ## Complete units and their owners

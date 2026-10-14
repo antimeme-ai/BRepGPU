@@ -1,4 +1,7 @@
 #include "brepgpu_topology.h"
+#ifdef BG_TOPOLOGY_CHECK_CUDA
+#include <cuda_runtime.h>
+#endif
 #ifdef BG_TOPOLOGY_TEST_HOOKS
 #include "topology_test_hooks.h"
 #endif
@@ -15,6 +18,19 @@
 namespace {
 constexpr uint32_t Marker=0xababababu;
 void require(bool condition,const char* message){if(!condition)throw std::runtime_error(message);}
+int current_device(uint32_t backend){
+#ifdef BG_TOPOLOGY_CHECK_CUDA
+    if(backend==BG_BACKEND_CUDA){int device=-1;
+        require(cudaGetDevice(&device)==cudaSuccess,"cannot read current device for restoration witness");return device;
+    }
+#else
+    (void)backend;
+#endif
+    return -1;
+}
+void restored(uint32_t backend,int before){
+    if(before>=0)require(current_device(backend)==before,"native call failed to restore previous CUDA device");
+}
 struct Fixture {
     bg5_desc desc{5,sizeof(bg5_desc),BG_BACKEND_CPU,0,1,0,6,3,10};
     std::vector<uint32_t> edges{0,0,1,1,2,3,3,3,4,4};
@@ -117,6 +133,33 @@ void permitted_inputs(uint32_t backend,int device,uint32_t threads){
         &&neighbors[0]==0&&neighbors[1]==0,"permitted input overlap result wrong");
 }
 
+void device_restoration(uint32_t backend,int requested,uint32_t threads){
+#ifdef BG_TOPOLOGY_CHECK_CUDA
+    if(backend!=BG_BACKEND_CUDA)return;
+    const int original=current_device(backend);int count=0;
+    require(cudaGetDeviceCount(&count)==cudaSuccess&&count>0,"cannot enumerate restoration witness devices");
+    const int prior=count>1?(requested+1)%count:requested;
+    struct RestoreOriginal {int device;~RestoreOriginal(){cudaSetDevice(device);}} guard{original};
+    require(cudaSetDevice(prior)==cudaSuccess,"cannot select restoration witness prior device");
+    Fixture f(backend,requested,threads);const int before=current_device(backend);
+    require(before==prior,"restoration witness prior selection wrong");
+    require(f.call()==BG_OK,"device restoration success witness call failed");restored(backend,before);f.qualify();
+#ifdef BG_TOPOLOGY_TEST_HOOKS
+    for(uint32_t point:{3u,4u,5u,6u,7u,8u}){
+        f.reset();bg5_test_fail_after(point,1,0);
+        const auto expected=point==3?BG_OUT_OF_MEMORY:point==8?BG_DEVICE_FAILURE:BG_INTERNAL_ERROR;
+        require(f.call()==expected,"device restoration fault witness status wrong");restored(backend,before);
+        require(bg5_test_live_resources()==0,"restoration fault witness leaked resource");
+        bg5_test_fail_after(0,0,0);f.reset();require(f.call()==BG_OK,"device restoration fault healthy retry failed");
+        restored(backend,before);f.qualify();
+    }
+#endif
+    std::printf("device restoration witnessed prior=%d requested=%d distinct=%u\n",prior,requested,prior!=requested?1u:0u);
+#else
+    (void)backend;(void)requested;(void)threads;
+#endif
+}
+
 void empty_and_scan(uint32_t backend,int device,uint32_t threads){
     for(uint64_t edge_count:{0ull,1ull,255ull,256ull,257ull,65537ull}){
         Fixture f(backend,device,threads);f.desc.edge_count=edge_count;f.desc.face_count=0;f.desc.coedge_count=0;
@@ -149,11 +192,13 @@ void faults(uint32_t backend,int device){
     const auto run=[&](uint32_t point,uint64_t ordinal,bg_status expected,bool secondary){
         Fixture f(backend,device,24);const auto original_times=f.times;
         bg5_test_fail_after(point,ordinal,secondary?1:0);
+        const int before=current_device(backend);
         require(f.call()==expected,"fault did not report expected primary status");
+        restored(backend,before);
         require(std::memcmp(&f.times,&original_times,sizeof(f.times))==0,"fault published timings");
         if(secondary)require(std::strstr(f.diagnostic.message,"secondary")!=nullptr,"secondary cleanup diagnostic lost");
         require(bg5_test_live_resources()==0,"recoverable fault leaked real CUDA resource");
-        bg5_test_fail_after(0,0,0);f.reset();require(f.call()==BG_OK,"healthy retry failed");f.qualify();
+        bg5_test_fail_after(0,0,0);f.reset();require(f.call()==BG_OK,"healthy retry failed");restored(backend,before);f.qualify();
     };
     if(backend==BG_BACKEND_CPU){run(1,1,BG_OUT_OF_MEMORY,false);run(1,1,BG_OUT_OF_MEMORY,true);
         run(2,2,BG_INTERNAL_ERROR,false);run(5,1,BG_INTERNAL_ERROR,false);run(6,1,BG_INTERNAL_ERROR,false);
@@ -177,6 +222,7 @@ int main(int argc,char** argv){
         require(bg5_abi_info(&info,23)==BG_INVALID_ARGUMENT,"short ABI output accepted");
         Fixture literal(backend,device,threads);require(literal.call()==BG_OK,"literal operation failed");literal.qualify();
         admission(backend,device,threads);permitted_inputs(backend,device,threads);empty_and_scan(backend,device,threads);
+        device_restoration(backend,device,threads);
 #ifdef BG_TOPOLOGY_TEST_HOOKS
         faults(backend,device);
 #endif

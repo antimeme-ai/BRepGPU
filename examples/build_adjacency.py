@@ -180,7 +180,7 @@ def render(result, bodies, output, backend, device):
     offsets, members, kinds = (binary_values(result.offsets), binary_values(result.members),
                                binary_values(result.kinds))
     count = len(result.input.edge_sources)
-    height = 150+48*count
+    height = 158+84*count
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 {height}">',
         f'<rect width="1120" height="{height}" fill="#101923"/>',
         '<g font-family="sans-serif">',
@@ -189,18 +189,18 @@ def render(result, bodies, output, backend, device):
         f'{len(result.input.coedge_sources)} distinct uses · {escape(backend)} {device if backend == "cuda" else ""}</text>',
         '<text x="28" y="87" fill="#a9bed0" font-size="13">Edge → actual CSR occurrences → emitted mate/face. Cyan: two uses on the same face.</text>']
     for slot, edge in enumerate(result.input.edge_sources):
-        y = 112+48*slot
+        y = 132+84*slot
         color = "#58c9e7" if kinds[slot] == 3 else "#f4c878"
-        parts.append(f'<text x="28" y="{y+16}" fill="{color}" font-size="14">{escape(source_label(edge,"e"))}</text>')
+        parts.append(f'<text x="28" y="{y+5}" fill="{color}" font-size="14">{escape(source_label(edge,"e"))}</text>')
         row = members[offsets[slot]:offsets[slot+1]]
         for index, cslot in enumerate(row):
-            x = 240+430*index
+            x, use_y = 240, y-20+40*index
             coedge = result.input.coedge_sources[cslot]
             neighbor, mate = result.neighbor(cslot), result.mate(cslot)
             label = f'{source_label(coedge,"c")} → {source_label(mate,"c")} / {source_label(neighbor,"f")}'
-            parts.extend((f'<path d="M180,{y+10} H{x}" stroke="{color}" fill="none"/>',
-                f'<rect x="{x}" y="{y-6}" width="410" height="34" rx="5" fill="#182733" stroke="{color}"/>',
-                f'<text x="{x+10}" y="{y+15}" fill="#edf4fc" font-size="13">{escape(label)}</text>'))
+            parts.extend((f'<path d="M180,{y} H210 V{use_y} H{x}" stroke="{color}" fill="none"/>',
+                f'<rect x="{x}" y="{use_y-16}" width="840" height="32" rx="5" fill="#182733" stroke="{color}"/>',
+                f'<text x="{x+10}" y="{use_y+5}" fill="#edf4fc" font-size="13">{escape(label)}</text>'))
     parts.extend((f'<text x="28" y="{height-21}" fill="#a9bed0" font-size="13">Immutable body sources · original loop/UV occurrences retained · incidence diagram, no geometric embedding claim</text>',
                   '</g></svg>'))
     (output/"adjacency.svg").write_text("\n".join(parts)+"\n")
