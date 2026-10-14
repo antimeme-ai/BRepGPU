@@ -202,6 +202,11 @@ intersection/topology machinery and geometric correctness oracles.
 [Research and bibliographies](papers/README.md) ·
 [Projects to inspect](papers/PROJECTS.md) · [Open work](ISSUES.md).
 
+The next dispatch includes a [Wafer / GPU MODE code study](papers/2026-10-14-wafer-gpu-mode-study.md)
+and [conservative discovery studies](docs/ITERATION_3_STUDY.md). Pinned sources,
+bibliographies and restoration commands are published; the studies inform the
+next operation rather than claiming an implemented bounds kernel.
+
 Useful contributions include small analytic fixtures, difficult intersection
 cases, relevant papers, and independently reproducible findings. State what the
 case should produce and how that expectation is known.
