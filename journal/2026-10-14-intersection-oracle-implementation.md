@@ -93,3 +93,22 @@ narrow irrational arc. Default preparation and subsequent normal requests remain
 usable. The test explicitly does not claim that the default4096 cap is reached
 by this input. Full source suite now16 methods; AST passes. Parent owns actual
 execution/review dispositions; no product or native changes.
+
+## All-construction-family native consumer coverage
+
+Coordinator qualified the current16 tests on CPU1 with existing body/pair suites
+(38 tests,6.641s), CPU24 (16 tests,3.362s), and both P100s under Compute Sanitizer
+(16 tests,4.953/7.547s; zero errors/leaks). Independent runtime and topology
+reviews accepted all source findings after disposition.
+
+Coordinator identified a remaining coverage gap: exact construction tested
+vertical generators/points, but actual two-sided consumption exercised only
+horizontal circle/clipped/empty results. Added ONE method,
+`test_sampling_consumes_generators_points_and_framed_faces`, without changing
+existing16 methods. It samples noncardinal irrational x/y generators, cardinal
+and tangent duplicate occurrences, height and trim singleton points, and
+scale4/origin16 frames. Literal complete counts/carrier flags/irrational branch
+values remain separate from whole original-control/source-buffer/model truth.
+Selected cases reverse operands; native rows are qualified against their actual
+prepared request and remain readable after owners close. AST passes only;
+coordinator runs this new method on CPU1/24 and both sanitized P100s.

@@ -26,6 +26,9 @@ def main(args):
         ("cpu24-intersections","cpu",0,24,("test_intersections",)),
         ("p100-0-intersections","cuda",0,1,("test_intersections",)),
         ("p100-1-intersections","cuda",1,1,("test_intersections",))):
+        if args.sampling_classes_only:
+            key=key.split("-")[0]+("-"+str(device) if backend=="cuda" else "")+"-sampling-classes"
+            suites=("test_intersections.IntersectionTests.test_sampling_consumes_generators_points_and_framed_faces",)
         env=dict(os.environ,PYTHONPATH=str(ROOT/"python")+os.pathsep+str(ROOT/"tests"),
             BREPGPU_LIBRARY=str(args.core.resolve()),BREPGPU_TEST_BACKEND=backend,
             BREPGPU_TEST_DEVICE=str(device),BREPGPU_TEST_THREADS=str(threads),
@@ -67,4 +70,6 @@ if __name__ == "__main__":
     parser.add_argument("--compute-sanitizer",type=Path,required=True)
     parser.add_argument("--cudart",type=Path,required=True)
     parser.add_argument("--output",type=Path,required=True)
+    parser.add_argument("--sampling-classes-only",action="store_true",
+                        help="Run only the new consumer class/frame test after previous families passed")
     main(parser.parse_args())
