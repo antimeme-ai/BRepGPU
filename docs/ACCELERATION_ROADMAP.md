@@ -12,6 +12,8 @@ The [surface-pair beachhead](PAIR_DISCOVERY.md) adds common-world carrier cullin
 and retained typed identities, with CPU/P100 complete-shortlist measurements.
 The [GPU adjacency beachhead](ADJACENCY.md) adds owned CPU/P100 edge-use CSR
 and a seam-preserving mate/face reader with retained typed occurrence identity.
+The [exact CPU classification beachhead](CLASSIFICATION.md) adds material
+membership and complete finite rectangular-face contact with both source UVs.
 Their reviewed designs/plans define the qualified support
 contracts; the [topology design](TOPOLOGY.md) explains how subsequent solid
 operations avoid pointer-defined identity.
@@ -46,7 +48,7 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Curves, trims and charts | Delivered line/closed-circle boundaries, planar faces with a hole and a cylindrical seam with distinct uses for the canonical body fixtures | Exact submitted-UV trim membership, loop closure and complete spatial-edge/UV identities | General trim curves, additional charts, poles and difficult parameterizations |
 | Approximation and meshing | Shared-edge, trim-aware meshing of supported planar/cylindrical bodies | Declared chord bounds, hole preservation, shared boundary agreement and supported mesh incidence/embedding | General adaptive rational meshing and broader seam/pole coverage |
 | Surface intersections | Delivered plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
-| Predicates, contacts and region classification | Analytic crossing/touching/disjoint fixtures and a planar overlap case with declared coincidence/contact semantics | Correct classification against exact analytic truth; ambiguity remains explicit | General tangent contacts, near-coincidence and adaptive predicate machinery |
+| Predicates, contacts and region classification | Delivered exact CPU material membership for all three owned solids and complete rectangular-face crossing/touch/disjoint/overlap/coincidence | Exact submitted-value truth, every incident face ID, complete closed contact corners and both original UVs; unsupported curved trims explicit | Algebraic witnesses, curved tangent contacts, near-coincidence and certified accelerator filters |
 | Face arrangements and topology construction | Split a planar trimmed face with supported intersection arcs; construct ordered regions and shared event identities on CPU | Region membership, holes, loop orientation and shared incidence, without coordinate-only welding | General curved arrangements and more complex event graphs |
 | Solid operations and history | One supported box-minus-through-cylinder Boolean, assembled on CPU using owned events/arrangements | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
 | Feature construction | Construct an extrusion and revolution of supported profiles; separately construct a declared circular fillet and analytic offset | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
@@ -57,7 +59,8 @@ several operations are delivered as separate conceptual units. In particular,
 extrusion/revolution do not imply fillet or offset support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
 Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/chart
-consumer, complete analytic plane/wall intersections and GPU edge-use adjacency
+consumer, complete analytic plane/wall intersections, GPU edge-use adjacency
+and exact material/rectangular-face classification
 are delivered. The remaining
 beachheads are proposed; each needs its own researched design, reviewed plan,
 implementation and qualification.
@@ -97,14 +100,21 @@ favors CPU. Complete analytic closed plane/wall intersections are now
 spatial/bothUV maps and a qualified CPU/P100 consumer. Native large-row evaluation
 is about15–17.5 times faster on P100, while full consumption remains CPU bound
 at2.3–2.5s and exact request preparation costs27–32s. Continue uncovered
-arrangement/classification, trim-aware meshing and narrow interchange beachheads;
+arrangement, trim-aware meshing and narrow interchange beachheads;
 broader SSI or integration tuning does not displace them. GPU adjacency now
 constructs and reads packed edge-use CSR without pointer-defined identity;
 compaction, editing, resident arrangements and Booleans remain return-pass work.
+Exact material/rectangular-face classification is now
+[delivered](../results/classification-2026-10-14/REPORT.md), with closed contacts,
+all supporting source faces and complete world/bothUV loci. Face arrangements
+are the next geometric dependency for the first solid operation.
 At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane
 and do not replace the theme sequence.
+Investigate whether Python belongs in the delivered system, and its role,
+after the breadth sweep as explicitly requested; current wrappers are an
+implementation state, not a settled product architecture.
 The off-grid separated-bound proposal remains a return-pass experiment until a
 consumer shows that its precision or cost blocks a required output.
 

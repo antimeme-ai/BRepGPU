@@ -1,0 +1,5 @@
+case	placement	tests	skips	test_seconds	result
+existing-body-new-entry-red	CPU1	1	0	0.040	EXPECTED_ABSENT_ENTRY_ATTRIBUTE_ERROR
+first-new-entry-green	CPU1	1	0	0.073	PASS
+classification-and-prior-body-pair-section-adjacency	CPU1	61	1	9.371	PASS
+final-classification-and-body-adapters	CPU1	12	0	0.466	PASS

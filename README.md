@@ -10,10 +10,13 @@ classification, arrangements, solid operations, features and GPU topology.
 Body snapshots, part-level sampling/normals and conservative surface-pair
 discovery are delivered, along with complete analytic face intersections and
 their coupled spatial/two-UV representations. GPU edge-use adjacency and its
-mate/face-neighbor reader are delivered too. Classification, arrangements,
-trim-aware meshing and narrow interchange remain broad-pass themes.
+mate/face-neighbor reader are delivered too. Exact material classification and
+finite rectangular-face contacts are delivered on CPU. Arrangements, trim-aware
+meshing and narrow interchange remain broad-pass themes.
 [GPU setup/residency and integration notes](docs/RETURN_PASS.md) are queued
 after the broad-pass big rocks.
+That return pass also investigates whether Python belongs in the delivered
+system at all, and in which role.
 
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
@@ -51,12 +54,33 @@ BRepGPU evaluator.
 [Surface-pair API](docs/PAIR_DISCOVERY.md) ·
 [Analytic face intersections](docs/INTERSECTIONS.md) ·
 [GPU adjacency and mate reader](docs/ADJACENCY.md) ·
+[Exact material and face contact](docs/CLASSIFICATION.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Exact material regions and finite-face contact
+
+The owned box, cylinder and one-hole plate now answer exact inside/boundary/
+outside queries, retaining every incident boundary face. Rectangle-face pairs
+return complete point, segment or area contacts with both original UV maps;
+crossing, boundary touch, overlap and whole-face coincidence stay distinct.
+This is exact CPU construction; curved-trim overlap and GPU placement remain
+separate work.
+
+![Qualified exact material labels and actual finite-face contact loci](results/classification-2026-10-14/caller/classification.svg)
+
+A cylinder-rim point offset by the smallest positive binary64 subnormal is
+exterior; the corresponding point on the plate is interior. Exact arithmetic
+preserves that distinction even when the drawing pixels coincide. Qualification
+passed **61 new/compatibility tests** and **seven focused assertion-killed
+mutants**. Complete reused medians for 12,288 points are **365–490ms** across
+the three solids; 512 contact requests take **147ms**, with wide variability.
+Preparation and independent checking are separate published costs.
+[API](docs/CLASSIFICATION.md) · [Full results and scope](results/classification-2026-10-14/REPORT.md)
 
 ## GPU topology: construct adjacency, preserve the seam
 

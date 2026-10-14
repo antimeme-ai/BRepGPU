@@ -6,12 +6,23 @@ pass**. Record opportunities now; do not start their implementation or a new
 profiling campaign before those themes are delivered. Correctness fixes and a
 demonstrated prerequisite blocking the next theme retain the roadmap exception.
 
+The operator also explicitly requests an investigation of **whether Python
+should be part of the delivered system at all**, after the breadth sweep.
+This is an architecture decision, not a commitment to optimize Python or to
+remove it. Compare an owned native application/core, an optional thin Python
+binding, and Python orchestration against actual modeling consumers. Include
+whole-operation latency, cold preparation, memory and ownership, exact arithmetic,
+failure handling, interoperation, scripting needs and development cost. Python
+may remain useful for research and independent qualification even if it does not
+belong in the shipping execution path. Select a role and a concrete migration
+sequence only after that study; current beachheads keep their existing APIs.
+See the [investigation brief](../papers/2026-10-14-python-role-return-pass.md).
+
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
 Complete analytic intersection and spatial/bothUV representation, plus the
 GPU edge-use adjacency/mate-reader beachhead, are delivered.
-This backlog does not replace planar arrangements/classification, the first
-trim-aware meshing, narrow model interchange, or another uncovered
-theme with polish.
+Finish classification, planar arrangements, trim-aware meshing, narrow model
+interchange and the other uncovered themes before this return pass.
 
 ## GPU lifetime and reusable inputs
 
@@ -89,6 +100,13 @@ shutdown and recovery outcomes rather than hiding costs at process exit.
   consumer and retained storage are later candidates, preserving complete
   occurrence identity and recoverable cleanup. Transfer differences alone do
   not select a NUMA or PCIe optimization. [Source notes](../papers/2026-10-14-adjacency-round2-notes.md).
+* [Exact classification](../results/classification-2026-10-14/REPORT.md) now
+  delivers CPU material/rectangular-face semantics. Later placement may use
+  certified sign filters and exact fallback, or native region consumers. Its
+  complete large point medians are365–490ms and512 face requests147ms; independent
+  checking is a separate900–1,723ms cost. These are exact construction workloads,
+  not GPU/Boolean speedups. Broader algebraic witnesses and curved contacts are
+  [separately scoped](../papers/2026-10-14-classification-round2-notes.md).
 * The existing off-grid separated-bound proposal remains a numerical return
   experiment; it does not displace an uncovered theme without a blocking need.
 
