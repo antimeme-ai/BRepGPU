@@ -1,0 +1,3 @@
+# Projection numerical/CUDA source review, 2026-10-13
+
+Read the complete shared bounded solver, CPU scalar/range integration, CUDA per-thread evaluator/kernel and private query/result/factory resource callbacks against accepted design/plan/canonical ABI. Saved `papers/2026-10-13-projection-code-numerical-review.md`: no blocking numerical/CUDA source finding. Checked current-iterate reporting/counting, exact bounds and projected descent, rank/curvature rules, full-N indexing, record offsets, Pending/device/stream/event cleanup and pure v2 factory/base identity. No numerical file was edited; target execution remains the integrator's qualification task.

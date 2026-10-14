@@ -1,0 +1,11 @@
+backend	device	threads	count	shape	phase	ms
+cpu	0	1	1024	cylinder	input_preparation	18.811143992934376
+cpu	0	1	1024	cylinder	context_first_use	1.776502002030611
+cpu	0	1	1024	cylinder	patch_pack_snapshot_upload	0.09280600352212787
+cpu	0	1	1024	cylinder	query_pack_snapshot_upload	1.017419039271772
+cpu	0	1	1024	cylinder	resident_project	2.6892099995166063
+cpu	0	1	1024	cylinder	download_allocate_and_host_provenance	0.1938359928317368
+cpu	0	1	1024	cylinder	native_cleanup	0.033279997296631336
+cpu	0	1	1024	cylinder	independent_exact_qualification	964.1694219899364
+cpu	0	1	1024	cylinder	record_export	15.452839026693255
+cpu	0	1	1024	cylinder	visual_export	5.45405998127535

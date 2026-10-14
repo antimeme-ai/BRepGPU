@@ -140,6 +140,36 @@ def _invoke(lib,name,*args):
         if code==BG_OUT_OF_MEMORY: raise MemoryError(BgError(code,diagnostic))
         raise BgError(code,diagnostic)
 
+def _close_unwrapped(lib,handle,error):
+    """Release native publication when Python ownership construction fails."""
+    try:
+        diagnostic=None
+        try:diagnostic=Diagnostic()
+        except MemoryError:pass
+        code=lib.bg1_close(handle,C.byref(diagnostic) if diagnostic is not None else None,
+                           C.sizeof(diagnostic) if diagnostic is not None else 0)
+        if code not in (BG_OK,BG_INVALID_HANDLE):
+            cleanup=BgError(code,diagnostic)
+            # Preserve the primary exception and make a cleanup failure visible.
+            error.brepgpu_cleanup_error=cleanup
+            if hasattr(error,"add_note"):
+                details=f"flags={cleanup.flags}, backend_code={cleanup.backend_code}" if diagnostic is not None else "diagnostic unavailable"
+                error.add_note(f"Native resource cleanup also failed: {cleanup}; {details}")
+    except BaseException as cleanup:
+        try:
+            if hasattr(error,"add_note"):error.add_note(f"Native resource cleanup also failed: {cleanup}")
+        except BaseException:pass
+
+def _create_resource(engine,resource_type,name,*arguments):
+    handle=C.c_uint64()
+    try:
+        _invoke(engine._lib,name,*arguments,C.byref(handle))
+        # Keep .value conversion and constructor allocation inside the guard.
+        return resource_type(engine,handle.value)
+    except BaseException as error:
+        _close_unwrapped(engine._lib,handle,error)
+        raise
+
 def _pointer(owner, ctype):
     if not len(owner): return None
     return (ctype*len(owner)).from_buffer(owner)
@@ -212,9 +242,14 @@ class Engine(_Resource):
         if b"\0" in encoded:raise ValueError("embedded zero in plugin path")
         desc.plugin_path=encoded or None;desc.plugin_path_bytes=len(encoded)
         handle=C.c_uint64()
-        _invoke(self._lib,"bg1_create_context",C.byref(desc),C.sizeof(desc),C.byref(handle))
-        self.backend,self.device,self.threads,self.profile=backend,device,int(threads),bool(profile)
-        super().__init__(None,handle.value)
+        try:
+            _invoke(self._lib,"bg1_create_context",C.byref(desc),C.sizeof(desc),C.byref(handle))
+            self.backend,self.device,self.threads,self.profile=backend,device,int(threads),bool(profile)
+            super().__init__(None,handle.value)
+        except BaseException as error:
+            _close_unwrapped(self._lib,handle,error)
+            self._handle=0
+            raise
     def _check(self,resource):
         if resource._engine is not self:raise BgError(BG_INVALID_HANDLE,message="resource belongs to a different engine")
         if not resource.handle:raise BgError(BG_INVALID_HANDLE,message="resource is closed")
@@ -223,22 +258,44 @@ class Engine(_Resource):
         if any(not isinstance(p,Patch) for p in patches):raise TypeError("patches must contain Patch values")
         descriptors=(PatchDesc*len(patches))();controls=array("d")
         for i,p in enumerate(patches):descriptors[i]=_descriptor(p,len(controls)//4);controls.extend(p.controls)
-        payload=_pointer(controls,C.c_double);handle=C.c_uint64()
-        _invoke(self._lib,"bg1_create_patch_set",self.handle,descriptors,len(patches),C.sizeof(descriptors),payload,len(controls),C.byref(handle))
-        return PatchSet(self,handle.value)
+        payload=_pointer(controls,C.c_double)
+        return _create_resource(self,PatchSet,"bg1_create_patch_set",self.handle,descriptors,len(patches),C.sizeof(descriptors),payload,len(controls))
     def create_query_set(self,patches,patch_slots,uv):
         self._check(patches)
         if not isinstance(patches,PatchSet):raise BgError(BG_INVALID_HANDLE,message="expected patch set")
         slots=array("I",(_integer(x,32,"patch slot") for x in patch_slots));parameters=array("d",_flat(uv,2))
-        sp,up=_pointer(slots,C.c_uint32),_pointer(parameters,C.c_double);handle=C.c_uint64()
-        _invoke(self._lib,"bg1_create_query_set",patches.handle,sp,len(slots),up,len(parameters),C.byref(handle))
-        return QuerySet(self,handle.value)
+        sp,up=_pointer(slots,C.c_uint32),_pointer(parameters,C.c_double)
+        return _create_resource(self,QuerySet,"bg1_create_query_set",patches.handle,sp,len(slots),up,len(parameters))
     def evaluate(self,queries,order=2):
         self._check(queries)
         if not isinstance(queries,QuerySet):raise BgError(BG_INVALID_HANDLE,message="expected query set")
-        handle=C.c_uint64()
-        _invoke(self._lib,"bg1_evaluate",queries.handle,_integer(order,32,"order"),C.byref(handle))
-        return Result(self,handle.value)
+        return _create_resource(self,Result,"bg1_evaluate",queries.handle,_integer(order,32,"order"))
+
+    def _projection_ready(self):
+        if getattr(self,"_projection_configured",False):return
+        try:_declare_projection(self._lib)
+        except AttributeError as error:raise BgError(BG_UNSUPPORTED,message="native core has no projection extension") from error
+        info=ProjectionAbiInfo()
+        code=self._lib.bg2_projection_abi_info(C.byref(info),C.sizeof(info))
+        if code or (info.abi_version,info.struct_size,info.options_size,info.info_size,info.diagnostic_size,info.field_count,info.double_size,info.integer_size,info.handle_size,info.pointer_size)!=(2,40,32,48,288,7,8,4,8,8):
+            raise BgError(BG_UNSUPPORTED,message="native projection ABI does not match this adapter")
+        self._projection_configured=True
+    def create_projection_query_set(self,patches,patch_slots,targets,seeds):
+        self._check(patches)
+        if not isinstance(patches,PatchSet):raise BgError(BG_INVALID_HANDLE,message="expected patch set")
+        self._projection_ready()
+        slots=array("I",(_integer(x,32,"patch slot") for x in patch_slots))
+        target_data=array("d",_flat(targets,3));seed_data=array("d",_flat(seeds,2))
+        sp,tp,up=_pointer(slots,C.c_uint32),_pointer(target_data,C.c_double),_pointer(seed_data,C.c_double)
+        return _create_resource(self,ProjectionQueries,"bg2_create_projection_query_set",patches.handle,sp,len(slots),tp,len(target_data),up,len(seed_data))
+    def project(self,queries,options=None):
+        self._check(queries)
+        if not isinstance(queries,ProjectionQueries):raise BgError(BG_INVALID_HANDLE,message="expected projection query set")
+        self._projection_ready()
+        if options is None:options=ProjectionOptions()
+        if not isinstance(options,ProjectionOptions):raise TypeError("options must be ProjectionOptions")
+        desc=_projection_options_descriptor(options)
+        return _create_resource(self,ProjectionResult,"bg2_project",queries.handle,C.byref(desc),C.sizeof(desc))
 
 class PatchSet(_Resource):pass
 class QuerySet(_Resource):pass
@@ -293,3 +350,107 @@ class JetBatch:
         batch=JetBatch(self._lib,self.count,self.order,output,output_status,self._descriptors,self._slots,self._uv,self.info)
         batch._converted=True
         return batch
+
+
+BG_PROJECTION_ABI_VERSION=2
+BG_PROJECTION_FIELD_COUNT=7
+BG_PROJ_STATIONARY,BG_PROJ_BAD_PATCH,BG_PROJ_BAD_PARAMETER=0,1,2
+BG_PROJ_ARITHMETIC,BG_PROJ_UNSUPPORTED=3,4
+BG_PROJ_ITERATION_LIMIT,BG_PROJ_LINESEARCH_LIMIT,BG_PROJ_STAGNATION,BG_PROJ_RANK_UNRESOLVED=5,6,7,8
+BG_PROJ_CANDIDATE_VALID,BG_PROJ_BOUNDARY,BG_PROJ_RANK_DEFICIENT,BG_PROJ_ILL_CONDITIONED=1,2,4,8
+BG_PROJ_CURVATURE_POSITIVE,BG_PROJ_CURVATURE_NEGATIVE,BG_PROJ_CURVATURE_AMBIGUOUS=16,32,64
+
+class _ProjectionVersioned(C.Structure):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.abi_version=BG_PROJECTION_ABI_VERSION
+        self.struct_size=C.sizeof(type(self))
+
+class ProjectionOptionsDesc(_ProjectionVersioned):
+    _fields_=[(name,C.c_uint32) for name in ("abi_version","struct_size","max_iterations","max_backtracks")]
+    _fields_ += [("gradient_tolerance",C.c_double),("flags",C.c_uint32),("reserved",C.c_uint32)]
+
+class ProjectionInfo(_ProjectionVersioned):
+    _fields_=[("abi_version",C.c_uint32),("struct_size",C.c_uint32),("count",C.c_uint64),("patch_count",C.c_uint64)]
+    _fields_ += [(name,C.c_uint32) for name in ("backend","flags","field_count","reserved")]
+    _fields_ += [("kernel_ms",C.c_double)]
+
+class ProjectionAbiInfo(_ProjectionVersioned):
+    _fields_=[(name,C.c_uint32) for name in ("abi_version","struct_size","options_size","info_size","diagnostic_size","field_count","double_size","integer_size","handle_size","pointer_size")]
+
+@dataclass(frozen=True)
+class ProjectionOptions:
+    max_iterations:int=64
+    max_backtracks:int=24
+    gradient_tolerance:float=2.**-24
+    def __post_init__(self):
+        object.__setattr__(self,"max_iterations",_integer(self.max_iterations,32,"max_iterations"))
+        object.__setattr__(self,"max_backtracks",_integer(self.max_backtracks,32,"max_backtracks"))
+        object.__setattr__(self,"gradient_tolerance",float(self.gradient_tolerance))
+
+def _projection_options_descriptor(options):
+    desc=ProjectionOptionsDesc()
+    desc.max_iterations,desc.max_backtracks=options.max_iterations,options.max_backtracks
+    desc.gradient_tolerance=options.gradient_tolerance
+    return desc
+
+def _declare_projection(lib):
+    U,H,D=C.c_uint64,C.c_uint64,C.POINTER(Diagnostic)
+    PD,OD=C.POINTER(PatchDesc),C.POINTER(ProjectionOptionsDesc)
+    FP,IP=C.POINTER(C.c_double),C.POINTER(C.c_uint32)
+    declarations={
+        "bg2_projection_abi_info":[C.POINTER(ProjectionAbiInfo),U],
+        "bg2_create_projection_query_set":[H,IP,U,FP,U,FP,U,C.POINTER(H),D,U],
+        "bg2_project":[H,OD,U,C.POINTER(H),D,U],
+        "bg2_projection_info":[H,C.POINTER(ProjectionInfo),U,D,U],
+        "bg2_projection_download":[H,FP,U,IP,U,IP,U,IP,U,IP,U,D,U],
+        "bg2_projection_sources":[H,PD,U,U,IP,U,FP,U,FP,U,OD,U,D,U],
+    }
+    for name,args in declarations.items():
+        function=getattr(lib,name);function.argtypes=args;function.restype=C.c_uint32
+
+class ProjectionQueries(_Resource):pass
+
+class ProjectionResult(_Resource):
+    def info(self):
+        info=ProjectionInfo()
+        _invoke(self._engine._lib,"bg2_projection_info",self.handle,C.byref(info),C.sizeof(info))
+        return info
+    def download(self):
+        info=self.info();lib=self._engine._lib
+        data=array("d",[0.])*(info.count*7)
+        statuses=array("I",[0])*info.count;iterations=array("I",[0])*info.count
+        evaluations=array("I",[0])*info.count;flags=array("I",[0])*info.count
+        dp,sp,ip,ep,fp=(_pointer(data,C.c_double),_pointer(statuses,C.c_uint32),_pointer(iterations,C.c_uint32),_pointer(evaluations,C.c_uint32),_pointer(flags,C.c_uint32))
+        _invoke(lib,"bg2_projection_download",self.handle,dp,len(data),sp,len(statuses),ip,len(iterations),ep,len(evaluations),fp,len(flags))
+        descriptors=(PatchDesc*info.patch_count)();slots=array("I",[0])*info.count
+        targets=array("d",[0.])*(info.count*3);seeds=array("d",[0.])*(info.count*2);options=ProjectionOptionsDesc()
+        slotp,tp,up=_pointer(slots,C.c_uint32),_pointer(targets,C.c_double),_pointer(seeds,C.c_double)
+        _invoke(lib,"bg2_projection_sources",self.handle,descriptors,info.patch_count,C.sizeof(descriptors),slotp,len(slots),tp,len(targets),up,len(seeds),C.byref(options),C.sizeof(options))
+        owned_options=ProjectionOptions(options.max_iterations,options.max_backtracks,options.gradient_tolerance)
+        return ProjectionBatch(lib,info,data,statuses,iterations,evaluations,flags,descriptors,slots,targets,seeds,owned_options)
+
+class ProjectionBatch:
+    _field_names=("s","t","x","y","z","distance_squared","residual")
+    def __init__(self,lib,info,data,statuses,iterations,evaluations,flags,descriptors,slots,targets,seeds,options):
+        self._lib,self.info,self.count=lib,info,int(info.count)
+        self.data,self.statuses,self.iterations,self.evaluation_counts,self.flags=data,statuses,iterations,evaluations,flags
+        self._descriptors,self._slots=descriptors,slots
+        self.targets,self.seeds,self.options=targets,seeds,options
+    @property
+    def lineage(self):
+        sources=[Lineage(d.body_id,d.entity_kind,d.entity_id,d.revision,d.chart_id) if d.flags&1 else None for d in self._descriptors]
+        return tuple(sources[slot] if slot<len(sources) else None for slot in self._slots)
+    def field(self,name,index):
+        if isinstance(name,str):name=self._field_names.index(name)
+        name,index=operator.index(name),operator.index(index)
+        if not 0<=name<7 or not 0<=index<self.count:raise IndexError("projection field index outside batch")
+        return self.data[name*self.count+index]
+    def uv(self,index):return (self.field(0,index),self.field(1,index))
+    def point(self,index):return tuple(self.field(axis+2,index) for axis in range(3))
+    def distance_squared(self,index):return self.field(5,index)
+    def residual(self,index):return self.field(6,index)
+    def require_stationary(self):
+        failures=[(i,int(status)) for i,status in enumerate(self.statuses) if status!=BG_PROJ_STATIONARY]
+        if failures:raise QueryError(failures)
+        return self
