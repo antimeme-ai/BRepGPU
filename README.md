@@ -10,10 +10,11 @@ A boundary representation retains surfaces, curves, trims and their connections.
 That makes a cylinder an editable cylinder, with a display mesh derived from it.
 Getting those connections right is as important as evaluating surfaces quickly.
 
-Two owned GPU stages are implemented: **batched rational patch jets** and
-**resident seeded surface projection**, with native C++ CPU/CUDA backends and
-a standard-library Python adapter. Projection keeps intermediate jets and
-iterations on the P100 and returns compact candidates, statuses and diagnostics.
+Three owned GPU stages are implemented: **batched rational patch jets**,
+**resident seeded surface projection**, and **automatic conservative patch
+discovery**, with native C++ CPU/CUDA backends and a standard-library Python
+adapter. Discovery removes supplied UV seeds and returns a certified
+squared-distance bracket with separate precision, coverage and budget flags.
 Both cards pass exact geometry, ownership and device memory checks.
 
 The repository also retains a CPU modeling benchmark of NVIDIA's
@@ -24,12 +25,55 @@ BRepGPU evaluator.
 [Acceleration roadmap](docs/ACCELERATION_ROADMAP.md) ·
 [First-iteration design](docs/ITERATION_1_DESIGN.md) ·
 [Resident projection API](docs/ITERATION_2.md) ·
+[Automatic discovery API](docs/ITERATION_3.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Automatic bounds and discovery
+
+Locate a candidate on a named untrimmed rational patch without a supplied seed.
+An immutable dyadic hierarchy retains original patch/chart identity. Resident
+queries compare three owned literature-informed methods: **AABB**, **26-DOP
+support slabs**, and **rational Bernstein squared-distance bounds**. Original
+input interval arithmetic certifies the candidate upper; ordinary rounded XYZ
+remains descriptive.
+
+![Actual seed-free P100 witnesses on a diagonal plane, with qualified distance gaps](results/discovery-2026-10-14/caller/cuda-0-diagonal-dop26/diagonal-discovery.svg)
+
+The actual caller passed exact checks for **24,576 returned witnesses** across
+CPU24 and both P100s. This diagonal 26-DOP batch meets all 1,024 requested
+squared gaps. The finer curved clouds retain valid unresolved brackets at
+depth8: stronger bounds and deeper trees are resource/precision choices.
+Gray boxes in the graphic are cached enclosures, rather than a traversal trace.
+
+All three methods passed **309 exact-input rows and 11,415 exported nodes per
+backend**. Each P100 passed the full 58-test suite under Compute Sanitizer with
+zero errors and zero leaked device allocations. Actual older binaries remain
+compatible, and direct geometry checks caught nine production numerical mutants.
+For 65,536 coarse cylinder queries with Bernstein bounds, each P100 takes about
+**35 ms resident versus 1.26 s on CPU24: 36×**, or **29–30× including native
+query upload, download and consumption**. Seven samples; all rows meet the gap.
+These repeated targets align with tree boundaries; finer off-grid cases remain
+unresolved at depth8. [354 completed comparisons and methods](results/discovery-2026-10-14/REPORT.md).
+The remaining scalar field continues in a follow-up.
+[Qualification receipts](results/discovery-2026-10-14/QUALIFICATION.md) ·
+[Caller, TSVs and graphics](docs/DISCOVERY_CLOUD.md) ·
+[Reviewed design](docs/ITERATION_3_DESIGN.md).
+
+![Discovery performance and achieved precision](results/discovery-2026-10-14/figures/bound-methods.svg)
+
+```sh
+PYTHONPATH=python python3 examples/discover_cloud.py --backend cpu \
+  --shape cylinder --mode bernstein --output-directory results/local-discovery
+```
+
+Use the [build and explicit library selection](docs/ITERATION_3.md) first.
+This operation bounds squared distance within one supported local carrier;
+trims, cross-patch selection, intersections and solid topology remain later work.
 
 ## Resident surface projection
 
@@ -161,7 +205,7 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | Stage | Useful deliverable | What it builds toward |
 | --- | --- | --- |
 | Geometry storage and evaluation | Batched FP64 points and derivatives | Shared device representation and CPU reference contracts |
-| Bounds and geometric queries | Seeded projection delivered; subdivision and candidate filtering next | Work queues for irregular geometry |
+| Bounds and geometric queries | Seeded projection and automatic conservative patch discovery delivered; pair/trim queries next | Work queues for irregular geometry |
 | Surface intersections | Curves in 3D and both surfaces' parameter domains | Complete intersection branches and consistent trims |
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
 | Solid assembly and features | Closed solids, then sweeps, fillets and offsets | A progressively broader GPU modeling kernel |
@@ -202,10 +246,12 @@ intersection/topology machinery and geometric correctness oracles.
 [Research and bibliographies](papers/README.md) ·
 [Projects to inspect](papers/PROJECTS.md) · [Open work](ISSUES.md).
 
-The next dispatch includes a [Wafer / GPU MODE code study](papers/2026-10-14-wafer-gpu-mode-study.md)
-and [conservative discovery studies](docs/ITERATION_3_STUDY.md). Pinned sources,
-bibliographies and restoration commands are published; the studies inform the
-next operation rather than claiming an implemented bounds kernel.
+The [Wafer / GPU MODE code study](papers/2026-10-14-wafer-gpu-mode-study.md)
+and [conservative discovery studies](docs/ITERATION_3_STUDY.md) informed the
+third operation. The [strong-bound design study](papers/2026-10-14-discovery-strong-bounds-design.md)
+turns computational-geometry literature into owned DOP and Bernstein methods,
+with exact independent cache/witness oracles and explicit cost/precision
+comparisons. Pinned sources, bibliographies and restoration commands are retained.
 
 Useful contributions include small analytic fixtures, difficult intersection
 cases, relevant papers, and independently reproducible findings. State what the

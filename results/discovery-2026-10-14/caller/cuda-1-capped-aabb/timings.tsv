@@ -1,0 +1,15 @@
+backend	device	threads	count	shape	mode	depth	phase	ms
+cuda	1	1	1024	cylinder	aabb	8	input_preparation	19.627322966698557
+cuda	1	1	1024	cylinder	aabb	8	context_first_use	642.3822029610164
+cuda	1	1	1024	cylinder	aabb	8	patch_pack_snapshot_upload	0.7258779951371253
+cuda	1	1	1024	cylinder	aabb	8	hierarchy_cpu_build_upload	3.3592949621379375
+cuda	1	1	1024	cylinder	aabb	8	actual_hierarchy_download	0.5484769935719669
+cuda	1	1	1024	cylinder	aabb	8	independent_exact_cache_qualification	974.9273209599778
+cuda	1	1	1024	cylinder	aabb	8	query_pack_snapshot_upload	0.9683360112830997
+cuda	1	1	1024	cylinder	aabb	8	resident_discover	1.1894640047103167
+cuda	1	1	1024	cylinder	aabb	8	download_allocate_host_provenance	0.3845960018225014
+cuda	1	1	1024	cylinder	aabb	8	native_cleanup	61.25041499035433
+cuda	1	1	1024	cylinder	aabb	8	independent_exact_result_qualification	520.4437319771387
+cuda	1	1	1024	cylinder	aabb	8	record_export	15.425829973537475
+cuda	1	1	1024	cylinder	aabb	8	owned_geometry_svg_export	13.195940002333373
+cuda	1	1	1024	cylinder	aabb	8	caller_total_through_svg	2254.7233200166374

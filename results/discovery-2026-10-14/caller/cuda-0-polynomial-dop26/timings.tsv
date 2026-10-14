@@ -1,0 +1,15 @@
+backend	device	threads	count	shape	mode	depth	phase	ms
+cuda	0	1	1024	polynomial	dop26	8	input_preparation	21.140263008419424
+cuda	0	1	1024	polynomial	dop26	8	context_first_use	241.24492501141503
+cuda	0	1	1024	polynomial	dop26	8	patch_pack_snapshot_upload	0.49738300731405616
+cuda	0	1	1024	polynomial	dop26	8	hierarchy_cpu_build_upload	5.6560299708507955
+cuda	0	1	1024	polynomial	dop26	8	actual_hierarchy_download	0.3681899979710579
+cuda	0	1	1024	polynomial	dop26	8	independent_exact_cache_qualification	1217.180865991395
+cuda	0	1	1024	polynomial	dop26	8	query_pack_snapshot_upload	0.9834920056164265
+cuda	0	1	1024	polynomial	dop26	8	resident_discover	5.515750963240862
+cuda	0	1	1024	polynomial	dop26	8	download_allocate_host_provenance	0.6895269616506994
+cuda	0	1	1024	polynomial	dop26	8	native_cleanup	33.61984499497339
+cuda	0	1	1024	polynomial	dop26	8	independent_exact_result_qualification	678.2665229984559
+cuda	0	1	1024	polynomial	dop26	8	record_export	36.38278302969411
+cuda	0	1	1024	polynomial	dop26	8	owned_geometry_svg_export	13.759542955085635
+cuda	0	1	1024	polynomial	dop26	8	caller_total_through_svg	2255.5869269999675

@@ -1,10 +1,12 @@
 // Owned test-only callback model: no CUDA execution or numerical oracle.
 #include "projection_backend_api.h"
+#include "discovery_backend_api.h"
+#include <vector>
 #include <atomic>
 #include <cstring>
 #include <new>
 namespace {
-std::atomic<int> mode{0}, contexts{0}, patches{0}, queries{0}, results{0}, projection_queries{0}, projection_results{0}, factory_calls{0};
+std::atomic<int> mode{0}, contexts{0}, patches{0}, queries{0}, results{0}, projection_queries{0}, projection_results{0}, factory_calls{0}, hierarchies{0}, discovery_queries{0}, discovery_results{0};
 struct Token { uint64_t count=0; uint32_t order=0; };
 bg_status error(bg_diagnostic* d,const char* text,bool fatal,uint32_t stage){
     *d={};d->abi_version=BG_ABI_VERSION;d->struct_size=sizeof(*d);
@@ -50,6 +52,43 @@ bg_status projection_download(void*,void*,double*f,uint64_t n,uint32_t*s,uint64_
     return BG_OK;
 }
 
+struct HierarchyToken {std::vector<bg_hierarchy_node> nodes;std::vector<uint32_t> roots;std::vector<double> bounds;};
+bg_status allocation_error(bg_diagnostic*d,uint32_t stage){error(d,"modeled discovery allocation failure",false,stage);d->code=BG_OUT_OF_MEMORY;return BG_OUT_OF_MEMORY;}
+bg_status hierarchy_upload(void*,void*,const bg_hierarchy_node*n,uint64_t nc,const uint32_t*r,uint64_t rc,const double*b,uint64_t bc,uint32_t,void**out,bg_diagnostic*d){
+    *out=nullptr;if(mode==31)return allocation_error(d,BG_STAGE_UPLOAD);
+    HierarchyToken*h=nullptr;
+    try{h=new HierarchyToken;if(nc)h->nodes.assign(n,n+nc);if(rc)h->roots.assign(r,r+rc);if(bc)h->bounds.assign(b,b+bc);++hierarchies;*out=h;return BG_OK;}
+    catch(const std::bad_alloc&){delete h;return allocation_error(d,BG_STAGE_UPLOAD);}
+    catch(...){delete h;error(d,"unexpected model allocation exception",false,BG_STAGE_UPLOAD);d->code=BG_INTERNAL_ERROR;return BG_INTERNAL_ERROR;}
+}
+bg_status hierarchy_close(void*,void*token,bg_diagnostic*d){delete static_cast<HierarchyToken*>(token);--hierarchies;
+    if(mode==33)return error(d,"modeled fatal unpublished hierarchy cleanup",true,BG_STAGE_CLOSE);return BG_OK;}
+bg_status hierarchy_download(void*,void*token,bg_hierarchy_node*n,uint64_t nc,uint32_t*r,uint64_t rc,bg_diagnostic*d){
+    if(mode==39){if(nc)n[0].lower[0]=123;return error(d,"modeled fatal partial node download",true,BG_STAGE_DOWNLOAD);}
+    auto*h=static_cast<HierarchyToken*>(token);for(uint64_t i=0;i<nc;++i)n[i]=h->nodes[i];for(uint64_t i=0;i<rc;++i)r[i]=h->roots[i];return BG_OK;
+}
+bg_status hierarchy_bound_download(void*,void*token,double*b,uint64_t bc,bg_diagnostic*d){
+    if(mode==40){if(bc)b[0]=123;return error(d,"modeled fatal partial cache download",true,BG_STAGE_DOWNLOAD);}
+    auto*h=static_cast<HierarchyToken*>(token);for(uint64_t i=0;i<bc;++i)b[i]=h->bounds[i];return BG_OK;
+}
+bg_status discovery_query_create(void*,void*,const uint32_t*,uint64_t n,const double*,void**out,bg_diagnostic*d){
+    if(mode==36){*out=nullptr;return allocation_error(d,BG_STAGE_UPLOAD);}return create(discovery_queries,n,0,out);
+}
+bg_status discovery_query_close(void*,void*token,bg_diagnostic*d){delete static_cast<Token*>(token);--discovery_queries;
+    if(mode==34)return error(d,"modeled fatal unpublished discovery query cleanup",true,BG_STAGE_CLOSE);return BG_OK;}
+bg_status discover(void*,void*token,const bg_discovery_options*,void**out,bg_backend_profile*profile,bg_diagnostic*d){
+    if(mode==32){*out=nullptr;return error(d,"modeled discovery restoration failure",false,BG_STAGE_EVALUATE);}
+    *profile={0,0,0};return create(discovery_results,static_cast<Token*>(token)->count,0,out);
+}
+bg_status discovery_result_close(void*,void*token,bg_diagnostic*d){delete static_cast<Token*>(token);--discovery_results;
+    if(mode==35)return error(d,"modeled fatal unpublished discovery result cleanup",true,BG_STAGE_CLOSE);return BG_OK;}
+bg_status discovery_download(void*,void*,double*f,uint64_t nd,uint32_t*s,uint64_t n,uint32_t*flags,uint64_t,
+    uint32_t*v,uint64_t,uint32_t*p,uint64_t,uint32_t*r,uint64_t,uint32_t*e,uint64_t,bg_diagnostic*d){
+    if(mode==38){if(nd)f[0]=123;return error(d,"modeled fatal partial discovery download",true,BG_STAGE_DOWNLOAD);}
+    for(uint64_t i=0;i<nd;++i)f[i]=0;
+    for(uint64_t i=0;i<n;++i){s[i]=BG_DISC_UNRESOLVED;flags[i]=BG_DISC_CANDIDATE_VALID;v[i]=1;p[i]=0;r[i]=0;e[i]=1;}return BG_OK;
+}
+
 const bg_backend_v1 table={BG_BACKEND_ABI_VERSION,sizeof(bg_backend_v1),BG_BACKEND_CAP_FP64,
     context_create,context_close,patch_create,patch_close,query_create,query_close,evaluate,result_close,download};
 const bg_backend_v1 other_base=table;
@@ -59,6 +98,12 @@ const bg_backend_v2 wrong_base={BG_PROJECTION_BACKEND_ABI_VERSION,sizeof(bg_back
     projection_query_create,projection_query_close,project,projection_result_close,projection_download};
 const bg_backend_v2 wrong_size={BG_PROJECTION_BACKEND_ABI_VERSION,sizeof(bg_backend_v2)-8,BG_BACKEND_CAP_PROJECTION,&table,
     projection_query_create,projection_query_close,project,projection_result_close,projection_download};
+
+const bg_backend_v3 discovery_extension={3,sizeof(bg_backend_v3),BG_BACKEND_CAP_DISCOVERY,&table,
+    hierarchy_upload,hierarchy_close,hierarchy_download,hierarchy_bound_download,
+    discovery_query_create,discovery_query_close,discover,discovery_result_close,discovery_download};
+const bg_backend_v3 discovery_wrong_base=[](){auto value=discovery_extension;value.base=&other_base;return value;}();
+const bg_backend_v3 discovery_wrong_size=[](){auto value=discovery_extension;value.struct_size-=8;return value;}();
 
 }
 extern "C" bg_status brepgpu_cuda_backend_v1(uint32_t version,const bg_backend_v1**out,bg_diagnostic*){
@@ -75,4 +120,14 @@ extern "C" bg_status brepgpu_cuda_backend_v2(uint32_t version,const bg_backend_v
 }
 extern "C" void bg_fault_mode(int value){mode=value;}
 extern "C" int bg_fault_factory_calls(){return factory_calls.load();}
-extern "C" int bg_fault_live(int kind){return kind==0?contexts.load():kind==1?patches.load():kind==2?queries.load():kind==3?results.load():kind==4?projection_queries.load():projection_results.load();}
+extern "C" int bg_fault_live(int kind){return kind==0?contexts.load():kind==1?patches.load():kind==2?queries.load():kind==3?results.load():kind==4?projection_queries.load():kind==5?projection_results.load():kind==6?hierarchies.load():kind==7?discovery_queries.load():kind==8?discovery_results.load():0;}
+
+extern "C" bg_status brepgpu_cuda_backend_v3(uint32_t version,const bg_backend_v3**out,bg_diagnostic*d){
+    ++factory_calls;*out=nullptr;
+    if(version!=BG_DISCOVERY_BACKEND_ABI_VERSION||mode==50)return BG_UNSUPPORTED;
+    if(mode==53)return allocation_error(d,BG_STAGE_PLUGIN);
+    if(mode==54)return error(d,"modeled fatal discovery factory",true,BG_STAGE_PLUGIN);
+    if(mode==55){error(d,"modeled fatal plus OK discovery factory",true,BG_STAGE_PLUGIN);return BG_OK;}
+    if(mode==56){error(d,"modeled fatal plus unsupported discovery factory",true,BG_STAGE_PLUGIN);d->code=BG_UNSUPPORTED;return BG_UNSUPPORTED;}
+    *out=mode==51?&discovery_wrong_base:mode==52?&discovery_wrong_size:&discovery_extension;return BG_OK;
+}
