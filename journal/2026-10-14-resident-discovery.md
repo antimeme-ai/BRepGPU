@@ -60,3 +60,15 @@
   nodes/cache enclosures with zero violations. Full public/raw ABI, guarded
   modeled failures, preserved-binary compatibility, sanitizer and independent
   code review remain required before declaring the operation delivered.
+- Full shared-runtime qualification at the integration checkpoint passed all
+  42 native Release checks and all 42 ASan/UBSan checks with native leak
+  detection enabled. The full public CPU suite passed 58 tests with three
+  device-only skips. Started the full public suites under Compute Sanitizer on
+  each P100; those runs are still pending, so no GPU memory result is claimed.
+- Independent numerical, runtime and oracle code review found no remaining
+  product blocker. Strengthened native benchmark consumption after review:
+  exact two-sum checks the binary squared gap, and independent expanded
+  analytic maps check descriptive witnesses. The latter has an explicit
+  arithmetic allowance and does not replace exact Fraction upper certification.
+  Both benchmark findings were independently re-reviewed and resolved before
+  publishing repeated timings.
