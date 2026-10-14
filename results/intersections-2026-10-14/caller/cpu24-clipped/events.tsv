@@ -1,0 +1,9 @@
+event_id	constraints	joins	incidences
+0	left:u1		0:lo
+1	left:v1		0:hi
+2	left:v1		1:lo
+3	left:u0		1:hi
+4	left:u0		2:lo
+5	left:v0		2:hi
+6	left:v0		3:lo
+7	left:u1		3:hi

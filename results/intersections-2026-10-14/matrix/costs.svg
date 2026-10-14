@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 698">
+<rect width="1080" height="698" fill="#101923"/>
+<g font-family="sans-serif">
+<text x="28" y="38" fill="#edf4fc" font-size="24">BRepGPU · two-sided section consumer costs</text>
+<text x="28" y="65" fill="#a9bed0" font-size="14">Five reused calls · exact CPU construction/request prep reported separately · every call includes model grades</text>
+<text x="28" y="108" fill="#edf4fc" font-size="13">CPU1 · circle · 260 samples</text>
+<rect x="360" y="93" width="5.468" height="20" rx="3" fill="#f4c878"/>
+<path d="M365.344,103 H365.851" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="108" fill="#edf4fc" font-size="14">33.176 ms</text>
+<text x="28" y="141" fill="#edf4fc" font-size="13">CPU24 · circle · 260 samples</text>
+<rect x="360" y="126" width="5.971" height="20" rx="3" fill="#f4c878"/>
+<path d="M365.960,136 H366.079" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="141" fill="#edf4fc" font-size="14">36.230 ms</text>
+<text x="28" y="174" fill="#edf4fc" font-size="13">P100 0 · circle · 260 samples</text>
+<rect x="360" y="159" width="5.585" height="20" rx="3" fill="#58c9e7"/>
+<path d="M365.415,169 H365.916" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="174" fill="#edf4fc" font-size="14">33.884 ms</text>
+<text x="28" y="207" fill="#edf4fc" font-size="13">P100 1 · circle · 260 samples</text>
+<rect x="360" y="192" width="5.660" height="20" rx="3" fill="#58c9e7"/>
+<path d="M365.548,202 H365.959" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="207" fill="#edf4fc" font-size="14">34.344 ms</text>
+<text x="28" y="240" fill="#edf4fc" font-size="13">CPU1 · circle · 16388 samples</text>
+<rect x="360" y="225" width="378.897" height="20" rx="3" fill="#f4c878"/>
+<path d="M710.142,235 H796.632" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="240" fill="#edf4fc" font-size="14">2298.884 ms</text>
+<text x="28" y="273" fill="#edf4fc" font-size="13">CPU24 · circle · 16388 samples</text>
+<rect x="360" y="258" width="383.331" height="20" rx="3" fill="#f4c878"/>
+<path d="M704.022,268 H744.684" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="273" fill="#edf4fc" font-size="14">2325.786 ms</text>
+<text x="28" y="306" fill="#edf4fc" font-size="13">P100 0 · circle · 16388 samples</text>
+<rect x="360" y="291" width="385.108" height="20" rx="3" fill="#58c9e7"/>
+<path d="M706.640,301 H749.549" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="306" fill="#edf4fc" font-size="14">2336.565 ms</text>
+<text x="28" y="339" fill="#edf4fc" font-size="13">P100 1 · circle · 16388 samples</text>
+<rect x="360" y="324" width="382.515" height="20" rx="3" fill="#58c9e7"/>
+<path d="M714.298,334 H820.000" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="339" fill="#edf4fc" font-size="14">2320.830 ms</text>
+<text x="28" y="372" fill="#edf4fc" font-size="13">CPU1 · clipped · 260 samples</text>
+<rect x="360" y="357" width="5.800" height="20" rx="3" fill="#f4c878"/>
+<path d="M365.637,367 H365.815" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="372" fill="#edf4fc" font-size="14">35.193 ms</text>
+<text x="28" y="405" fill="#edf4fc" font-size="13">CPU24 · clipped · 260 samples</text>
+<rect x="360" y="390" width="6.365" height="20" rx="3" fill="#f4c878"/>
+<path d="M366.199,400 H366.496" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="405" fill="#edf4fc" font-size="14">38.618 ms</text>
+<text x="28" y="438" fill="#edf4fc" font-size="13">P100 0 · clipped · 260 samples</text>
+<rect x="360" y="423" width="5.672" height="20" rx="3" fill="#58c9e7"/>
+<path d="M365.615,433 H365.767" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="438" fill="#edf4fc" font-size="14">34.413 ms</text>
+<text x="28" y="471" fill="#edf4fc" font-size="13">P100 1 · clipped · 260 samples</text>
+<rect x="360" y="456" width="5.872" height="20" rx="3" fill="#58c9e7"/>
+<path d="M365.660,466 H366.094" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="471" fill="#edf4fc" font-size="14">35.629 ms</text>
+<text x="28" y="504" fill="#edf4fc" font-size="13">CPU1 · clipped · 16388 samples</text>
+<rect x="360" y="489" width="412.342" height="20" rx="3" fill="#f4c878"/>
+<path d="M727.756,499 H780.231" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="504" fill="#edf4fc" font-size="14">2501.803 ms</text>
+<text x="28" y="537" fill="#edf4fc" font-size="13">CPU24 · clipped · 16388 samples</text>
+<rect x="360" y="522" width="410.317" height="20" rx="3" fill="#f4c878"/>
+<path d="M725.540,532 H775.455" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="537" fill="#edf4fc" font-size="14">2489.515 ms</text>
+<text x="28" y="570" fill="#edf4fc" font-size="13">P100 0 · clipped · 16388 samples</text>
+<rect x="360" y="555" width="408.569" height="20" rx="3" fill="#58c9e7"/>
+<path d="M740.199,565 H780.992" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="570" fill="#edf4fc" font-size="14">2478.909 ms</text>
+<text x="28" y="603" fill="#edf4fc" font-size="13">P100 1 · clipped · 16388 samples</text>
+<rect x="360" y="588" width="412.961" height="20" rx="3" fill="#58c9e7"/>
+<path d="M743.296,598 H780.747" stroke="#edf4fc" stroke-width="2"/>
+<text x="850" y="603" fill="#edf4fc" font-size="14">2505.555 ms</text>
+<text x="28" y="652" fill="#a9bed0" font-size="14">Raw iterations and native evaluation host spans accompany this chart. Shared host; marks show min/max.</text>
+<text x="28" y="678" fill="#a9bed0" font-size="14">CUDA evaluates supplied curves. Exact intersection construction and topology remain CPU work.</text>
+</g></svg>

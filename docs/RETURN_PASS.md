@@ -7,9 +7,10 @@ profiling campaign before those themes are delivered. Correctness fixes and a
 demonstrated prerequisite blocking the next theme retain the roadmap exception.
 
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
-The next major operation remains intersection initialization and spatial/UV
-representation. This backlog does not replace the first GPU topology/adjacency
-beachhead, narrow model interchange, or another uncovered theme with polish.
+Complete analytic intersection and spatial/bothUV representation are delivered.
+This backlog does not replace planar arrangements/classification, the first
+GPU topology/adjacency beachhead, narrow model interchange, or another uncovered
+theme with polish.
 
 ## GPU lifetime and reusable inputs
 
@@ -71,6 +72,14 @@ shutdown and recovery outcomes rather than hiding costs at process exit.
 * Sparse-scene BVH/sweep/grid pruning, tighter carrier bounds and tiling remain
   pair return-pass candidates. Keep complete examined-domain accounting and
   closed touching semantics when comparing them.
+* [Intersection results](../results/intersections-2026-10-14/REPORT.md) show
+  exact face construction around13–20ms, but preparing16,388 exact candidates
+  costs27–32s. Reused world-row/reference construction takes about1.5–1.63s and
+  exact grades another0.74–0.82s. Native P100 evaluation is roughly0.11–0.13ms;
+  the complete consumer stays2.3–2.5s on all backends. An owned bulk C++/CUDA
+  parameter/UV/row consumer is a later candidate, preserving exact endpoints,
+  request identity, whole-map/source truth and cleanup. Do not delete grades
+  or infer topology from rounded samples to make a timer attractive.
 * The existing off-grid separated-bound proposal remains a numerical return
   experiment; it does not displace an uncovered theme without a blocking need.
 
