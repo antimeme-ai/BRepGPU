@@ -39,13 +39,15 @@ with Engine(backend="cuda", device=0) as gpu:
 `prepare_scene(cpu,bodies,face_ids=None)` takes exact factory snapshots. Select
 faces with `(body_id,face_id)` keys; face IDs alone repeat across bodies. Empty
 selection is valid. Bodies, selected keys and admitted charts each have an
-incremental cap of65,536. Duplicate bodies/keys and unknown keys reject the
+incremental cap of 65,536. Duplicate bodies/keys and unknown keys reject the
 whole request. Body order and canonical chart order remain stable. A cylinder
 wall is one face with four charts; no coordinate welding or same-face filtering.
 
 `PairScene` construction is factory-only. Its bodies/sources/local_boxes/boxes/
 timings are frozen owned tuples. Each source retains snapshot/patch_slot/face_id/
 chart_id. Local depth0 AABB roots enclose the original rational carrier controls.
+Body namespaces and revisions are process-local snapshot provenance, as in the
+body factory; the exported integers are not cross-session persistent names.
 Positive source scale and origin transform exact binary64 endpoints through
 Fraction arithmetic, with outward binary64 rounding. Supported setup FP modes
 remain those of the existing hierarchy builder. Current Frame restrictions
@@ -88,8 +90,8 @@ Self queries include diagonals and both ordered directions.
 
 Public [ABI4 header](../include/brepgpu_pairs.h) adds PairIndex and PairPage
 resource kinds, all closed through bg1_close. Versioned records are ABI4;
-diagnostics remain ABI1. Exact sizes: boxes48B, options24B, index info24B,
-page info80B, ABI info40B. Numeric downloads require exact count/byte extents;
+diagnostics remain ABI1. Exact sizes: boxes48 B, options24 B, index info24 B,
+page info80 B, ABI info40 B. Numeric downloads require exact count/byte extents;
 record capacities may be larger but canonical struct_size stays exact.
 Alias/unrepresentable-span rejection preserves outputs and diagnostics;
 other creator failures zero a valid disjoint output handle. Backend copy
@@ -110,8 +112,9 @@ older operations remain usable. Transient/fatal failure is not capability refusa
 Current execution is all-pairs, with one CPU/CUDA owner per output word, at
 most32 comparisons per word. Fresh result allocation/synchronization/cleanup
 remain in resident call latency. No scan, atomics, compaction, BVH, spatial grid
-or work queue. Index payload is48*(nL+nR) bytes uploaded once; a page downloads
-4*ceil(count/32) mask bytes, at most131,072. Body topology upload is zero.
+or work queue. CUDA index payload is48*(nL+nR) bytes uploaded once; a CUDA page
+downloads4*ceil(count/32) mask bytes, at most131,072. CPU execution copies host
+records and masks with zero CUDA traffic. Body topology upload is zero.
 These are host/device transfers; SSH/network traffic is separate. Retained
 host controls/boxes, metadata and Python survivor objects consume additional
 memory and work. Bounds construction/world transform and decoding remain CPU.

@@ -1,0 +1,2 @@
+scope	tests	suite_seconds	asan	ubsan	host_leak_detection	status
+existing plus18pair scenarios	60	1.36	1	1	1	PASS

@@ -7,8 +7,10 @@ independently qualified beachhead in each major theme, then return to strengthen
 it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
 cover body data, integration, curves/trims, meshing, pair discovery, intersections,
 classification, arrangements, solid operations, features and GPU topology.
-The first body snapshot and part-level sampling/normal caller are now delivered.
-Conservative multi-patch pair discovery is the next uncovered operation.
+Body snapshots, part-level sampling/normals and conservative surface-pair
+discovery are now delivered. Intersection initialization/representation is next.
+[GPU setup/residency and integration notes](docs/RETURN_PASS.md) are queued
+after the broad-pass big rocks.
 
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
@@ -18,9 +20,9 @@ A boundary representation retains surfaces, curves, trims and their connections.
 That makes a cylinder an editable cylinder, with a display mesh derived from it.
 Getting those connections right is as important as evaluating surfaces quickly.
 
-Three owned GPU stages are implemented: **batched rational patch jets**,
-**resident seeded surface projection**, and **automatic conservative patch
-discovery**, with native C++ CPU/CUDA backends and a standard-library Python
+Four owned GPU stages are implemented: **batched rational patch jets**,
+**resident seeded surface projection**, **automatic conservative patch discovery**,
+and **conservative surface-pair discovery**, with native C++ CPU/CUDA backends and a standard-library Python
 adapter. Discovery removes supplied UV seeds and returns a certified
 squared-distance bracket with separate precision, coverage and budget flags.
 Both cards pass exact geometry, ownership and device memory checks.
@@ -38,12 +40,48 @@ BRepGPU evaluator.
 [First-iteration design](docs/ITERATION_1_DESIGN.md) ·
 [Resident projection API](docs/ITERATION_2.md) ·
 [Automatic discovery API](docs/ITERATION_3.md) ·
+[Surface-pair API](docs/PAIR_DISCOVERY.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Resident surface-pair shortlist
+
+CPU-built bounds enclose each whole carrier chart in a common world frame.
+Resident CPU/CUDA indexes emit deterministic paged masks; decoded survivors
+retain their exact body, face and chart identities. Touching remains, including
+zero-width boxes. Explicit coverage distinguishes a terminal suffix from a
+complete traversal. Survivors are candidates for later intersection work.
+
+![Actual P100 surface-pair mask with retained body and chart identities](results/pairs-2026-10-14/caller/p100-0/pairs.svg)
+
+For **128 bodies per side**, the operation examines **879,840 chart pairs** and
+retains **1,823 survivors**. Complete reused shortlist medians, including mask
+download, cleanup and Python decoding, are **9.63 ms CPU24 versus 7.78/6.92 ms
+on P100: 1.24–1.39×**. CPU1 wins the tiny scene; cold preparation favors CPU.
+Bounds/world conversion and output decoding stay on CPU. Geometry/index reuse
+and GPU setup/teardown are recorded for the later integration/performance pass.
+
+![Five-sample complete shortlist costs and ranges](results/pairs-2026-10-14/matrix/costs.svg)
+
+Both P100s passed **68 focused family tests** under Compute Sanitizer with zero
+errors/leaks. **60 native ASan/UBSan checks**, eight actual older-binary
+compatibility cases and four caught production mutants cover lifetime/failure
+paths. All **15,024 exported pair bits** passed independent original-control,
+world-bound, mask and source checks. This operation excludes carrier chart
+pairs; it does not establish intersections, trimmed-face contact or Booleans.
+
+```sh
+PYTHONPATH=python python3 examples/discover_pairs.py --backend cuda --device 0 \
+  --size 4 --library-path build/pair-release/libbrepgpu.so \
+  --output-directory results/local-pairs
+```
+
+[API](docs/PAIR_DISCOVERY.md) · [Results, cold costs and full scopes](results/pairs-2026-10-14/REPORT.md) ·
+[Reviewed design](docs/PAIR_DISCOVERY_DESIGN.md) · [Broad-phase literature](papers/2026-10-14-pair-literature.md).
 
 ## Body-aware samples and normals
 

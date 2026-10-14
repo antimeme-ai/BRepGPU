@@ -1,0 +1,3 @@
+case	backend	device	threads	suite_pattern	tests	skipped	suite_seconds	status
+cpu1-all	cpu	0	1	test_*.py	83	5	236.229	PASS
+cpu24-pairs	cpu	0	24	test_pairs.py	13	1	0.575	PASS
