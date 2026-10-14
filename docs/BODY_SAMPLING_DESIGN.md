@@ -78,7 +78,8 @@ layout will be documented with the module; no public C ABI is added.
 
 Each plane has a normalized [0,1]^2 chart. Its affine map and trim kind are
 owned: rectangle, rectangle minus open disk, or closed disk. Caps and the
-plate top/bottom use the same carrier with different exact membership rules.
+plate top/bottom share an affine carrier type, with different dimensions and
+exact membership rules.
 Plane orientation applies to normal direction and boundary traversal.
 
 A cylindrical face has one rectangular lifted atlas `(a,v)` in [0,4]x[0,1].
@@ -86,6 +87,9 @@ Native chart k in {0,1,2,3} uses s=a-k. Its source UV rectangle is
 [k,k+1]x[0,1] and its lineage retains body/revision/face/chart IDs.
 Internal chart joins a=1,2,3 are not body boundaries. The periodic seam has
 two coedge uses, at a=0 and a=4, referring to ONE spatial vertical edge.
+The rational quadrant parameter has different derivative speeds on its two
+ends. Native derivatives at chart joins are local-chart/one-sided derivatives,
+not a claim of a globally smooth atlas derivative; geometric normals agree.
 
 A closed circle edge uses a=4t, selecting quadrant floor(a), with t=1 handled
 as the last quadrant endpoint. Its planar coedge UV map is the exact expression
@@ -121,6 +125,10 @@ Plate outer-rectangle boundaries are also BOUNDARY. Wall t=0/1 and the true
 seam at chart0 s=0/chart3 s=1 are BOUNDARY; internal quadrant joins are INTERIOR
 unless on top/bottom. Boundary rows may repeat across chart/face grids; this
 caller is not a unique-point sampler or shared-edge mesh.
+No binary64 UV lies exactly on the plate's radius-1/4 hole in its half-width-3/4
+chart: clearing dyadic denominators would require 9 times an integer to equal
+a power of two. Its exact hole boundary remains represented by the owned edge
+and symbolic UV map, rather than by reclassifying rounded UV as BOUNDARY.
 
 Candidate grid order is selected faces in snapshot order, their charts in
 atlas order, then u-major/v-fast. Resolution is an integer in [2,257]; empty
@@ -129,7 +137,12 @@ unknown or duplicate IDs. Samples preserve local UV, chart/face IDs, dense
 patch slot, body ID/revision and original candidate row. The sampler also
 accepts an explicitly prepared candidate sequence for adversarial/caller uses.
 
-The grid and gather map are immutable reusable CPU inputs. Admitted rows are
+The grid and gather map are immutable reusable CPU inputs bound to the exact
+snapshot, including its frame/chart/patch ordering. A sampler rejects inputs
+from another snapshot even when IDs/counts/slots appear compatible. Candidate
+patch slots must belong to that snapshot; face/chart identities are derived
+from its authoritative chart records rather than caller-supplied labels.
+Admitted rows are
 gathered into native patch slots/UV once per operation; first-jet output uses
 the admitted count as its SoA stride. Scatter restores original candidate order.
 Rejected/invalid rows contain NaN XYZ and normals and an explicit not-evaluated
@@ -143,8 +156,10 @@ use after sampler/engine close fails. Construction failure closes any created
 native resource. Result/query handles use existing context managers even if
 download, conversion or normal preparation raises. No hidden CPU fallback.
 
-Every admitted native query must succeed. Any failed status raises with native
-diagnostics and prevents publication of a successful sample batch. Positions
+Every admitted native query must succeed. A failed query status raises with its
+candidate row, face/chart/UV and native status; a failed native call retains its
+available batch diagnostic. Either prevents publication of a successful batch.
+Positions
 and derivatives are converted once; normals are
 `orientation * cross(Su,Sv)/hypot(cross(Su,Sv))`.
 A nonfinite/zero norm or output raises ArithmeticError, rather than publishing
@@ -174,6 +189,10 @@ points, nextafter neighbors, chart joins/seam, rounded arc UVs, empty/selected
 faces, invalid inputs, immutable ownership and frame transforms. Body topology
 is established for these constructed fixtures, not inferred from point samples.
 PLY and SVG are point outputs, not tessellation, embedding or chord certificates.
+Expected (vertices,edges,faces,loops,coedges) counts are box (8,12,6,6,24),
+cylinder (2,3,3,3,6), plate (10,15,7,9,30). Closed-edge endpoint incidence
+counts both ends at the same vertex. Plate Euler characteristic uses its
+holed faces: V-E+sum(1-holes)=10-15+(7-2)=0; V-E+F alone is insufficient.
 
 Timing separates snapshot/request preparation, engine first use, patch upload,
 native query creation (including Python packing/upload), evaluation, download
