@@ -1,0 +1,16 @@
+phase	milliseconds
+admission_ms	0.019928
+context_ms	277.245086
+allocate_ms	0.308216
+upload_ms	0.146067
+count_ms	0.288845
+scan_ms	0.083585
+fill_ms	0.029618
+reader_ms	0.031848
+download_ms	0.236118
+cleanup_ms	0.254494
+total_ms	278.645216
+wrapper_allocation_ms	0.10812305845320225
+native_call_ms	278.6868230905384
+publication_ms	0.30530395451933146
+wrapper_wall_ms	279.1546049993485

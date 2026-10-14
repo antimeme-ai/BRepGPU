@@ -9,7 +9,10 @@ and typed body/face/chart sources while GPU work sees only copied world boxes.
 Its page-local bits map through immutable source order; no pointer address or
 coordinate proximity defines identity. Chart exclusions remain distinct from
 face/body exclusions and intersection events.
-General construction/edit history and device topology remain proposed here.
+The [GPU adjacency beachhead](ADJACENCY.md) now constructs edge-use CSR and
+reads mates/neighbor faces on CPU or P100 from these immutable records.
+General construction/edit history, radial ordering, compaction and resident
+arrangements remain proposed here.
 
 ## What the references teach
 
@@ -109,9 +112,13 @@ Coordinate proximity
 alone cannot merge edges or vertices: nearby points can belong to different
 branches, and tolerance proximity is not a transitive identity relation.
 
-Count/scan/fill and sort/group operations can construct dense arrays and
-adjacency on GPU once their semantics are established. CPU construction can
-produce the same format first. Compaction emits an old-slot-to-new-slot map and
+Owned count/recursive-scan/fill now constructs edge-to-coedge CSR on GPU, with
+an actual post-fill reader. Rows preserve all occurrences in unspecified order;
+loop order remains the source authority. Typed occurrence keys additionally
+name batch instance, so repeated snapshots are separate storage occurrences
+without invented body namespaces. CPU and both P100s retain semantic membership
+and mate/neighbor identity across slot permutations. Further sort/group and
+arrangement construction require their own established semantics. Compaction emits an old-slot-to-new-slot map and
 rewrites every dependent reference; stable entity IDs remain unchanged. Results
 carrying old slots also carry their snapshot revision and cannot silently be
 applied to a newer snapshot.

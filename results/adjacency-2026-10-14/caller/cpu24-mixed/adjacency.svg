@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 2678">
+<rect width="1120" height="2678" fill="#101923"/>
+<g font-family="sans-serif">
+<text x="28" y="36" fill="#edf4fc" font-size="24">BRepGPU · constructed edge-use adjacency</text>
+<text x="28" y="62" fill="#a9bed0" font-size="14">30 edge rows · 60 distinct uses · cpu </text>
+<text x="28" y="87" fill="#a9bed0" font-size="13">Edge → actual CSR occurrences → emitted mate/face. Cyan: two uses on the same face.</text>
+<text x="28" y="137" fill="#f4c878" font-size="14">i0 · e10</text>
+<path d="M180,132 H210 V112 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="96" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="117" fill="#edf4fc" font-size="13">i0 · c20 → i0 · c10 / i0 · f3</text>
+<path d="M180,132 H210 V152 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="136" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="157" fill="#edf4fc" font-size="13">i0 · c10 → i0 · c20 / i0 · f5</text>
+<text x="28" y="221" fill="#f4c878" font-size="14">i0 · e2</text>
+<path d="M180,216 H210 V196 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="180" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="201" fill="#edf4fc" font-size="13">i0 · c17 → i0 · c7 / i0 · f2</text>
+<path d="M180,216 H210 V236 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="220" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="241" fill="#edf4fc" font-size="13">i0 · c7 → i0 · c17 / i0 · f5</text>
+<text x="28" y="305" fill="#f4c878" font-size="14">i1 · e2</text>
+<path d="M180,300 H210 V280 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="264" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="285" fill="#edf4fc" font-size="13">i1 · c5 → i1 · c1 / i1 · f1</text>
+<path d="M180,300 H210 V320 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="304" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="325" fill="#edf4fc" font-size="13">i1 · c1 → i1 · c5 / i1 · f3</text>
+<text x="28" y="389" fill="#f4c878" font-size="14">i0 · e3</text>
+<path d="M180,384 H210 V364 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="348" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="369" fill="#edf4fc" font-size="13">i0 · c16 → i0 · c6 / i0 · f2</text>
+<path d="M180,384 H210 V404 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="388" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="409" fill="#edf4fc" font-size="13">i0 · c6 → i0 · c16 / i0 · f4</text>
+<text x="28" y="473" fill="#f4c878" font-size="14">i2 · e8</text>
+<path d="M180,468 H210 V448 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="432" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="453" fill="#edf4fc" font-size="13">i2 · c24 → i2 · c4 / i2 · f1</text>
+<path d="M180,468 H210 V488 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="472" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="493" fill="#edf4fc" font-size="13">i2 · c4 → i2 · c24 / i2 · f6</text>
+<text x="28" y="557" fill="#f4c878" font-size="14">i2 · e13</text>
+<path d="M180,552 H210 V532 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="516" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="537" fill="#edf4fc" font-size="13">i2 · c10 → i2 · c30 / i2 · f7</text>
+<path d="M180,552 H210 V572 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="556" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="577" fill="#edf4fc" font-size="13">i2 · c30 → i2 · c10 / i2 · f2</text>
+<text x="28" y="641" fill="#f4c878" font-size="14">i0 · e1</text>
+<path d="M180,636 H210 V616 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="600" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="621" fill="#edf4fc" font-size="13">i0 · c9 → i0 · c8 / i0 · f2</text>
+<path d="M180,636 H210 V656 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="640" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="661" fill="#edf4fc" font-size="13">i0 · c8 → i0 · c9 / i0 · f3</text>
+<text x="28" y="725" fill="#f4c878" font-size="14">i0 · e4</text>
+<path d="M180,720 H210 V700 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="684" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="705" fill="#edf4fc" font-size="13">i0 · c5 → i0 · c24 / i0 · f6</text>
+<path d="M180,720 H210 V740 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="724" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="745" fill="#edf4fc" font-size="13">i0 · c24 → i0 · c5 / i0 · f2</text>
+<text x="28" y="809" fill="#f4c878" font-size="14">i2 · e14</text>
+<path d="M180,804 H210 V784 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="768" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="789" fill="#edf4fc" font-size="13">i2 · c5 → i2 · c28 / i2 · f7</text>
+<path d="M180,804 H210 V824 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="808" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="829" fill="#edf4fc" font-size="13">i2 · c28 → i2 · c5 / i2 · f1</text>
+<text x="28" y="893" fill="#f4c878" font-size="14">i1 · e1</text>
+<path d="M180,888 H210 V868 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="852" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="873" fill="#edf4fc" font-size="13">i1 · c3 → i1 · c2 / i1 · f2</text>
+<path d="M180,888 H210 V908 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="892" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="913" fill="#edf4fc" font-size="13">i1 · c2 → i1 · c3 / i1 · f3</text>
+<text x="28" y="977" fill="#f4c878" font-size="14">i0 · e8</text>
+<path d="M180,972 H210 V952 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="936" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="957" fill="#edf4fc" font-size="13">i0 · c22 → i0 · c4 / i0 · f1</text>
+<path d="M180,972 H210 V992 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="976" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="997" fill="#edf4fc" font-size="13">i0 · c4 → i0 · c22 / i0 · f6</text>
+<text x="28" y="1061" fill="#58c9e7" font-size="14">i2 · e15</text>
+<path d="M180,1056 H210 V1036 H240" stroke="#58c9e7" fill="none"/>
+<rect x="240" y="1020" width="840" height="32" rx="5" fill="#182733" stroke="#58c9e7"/>
+<text x="250" y="1041" fill="#edf4fc" font-size="13">i2 · c27 → i2 · c29 / i2 · f7</text>
+<path d="M180,1056 H210 V1076 H240" stroke="#58c9e7" fill="none"/>
+<rect x="240" y="1060" width="840" height="32" rx="5" fill="#182733" stroke="#58c9e7"/>
+<text x="250" y="1081" fill="#edf4fc" font-size="13">i2 · c29 → i2 · c27 / i2 · f7</text>
+<text x="28" y="1145" fill="#f4c878" font-size="14">i0 · e7</text>
+<path d="M180,1140 H210 V1120 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1104" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1125" fill="#edf4fc" font-size="13">i0 · c3 → i0 · c14 / i0 · f4</text>
+<path d="M180,1140 H210 V1160 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1144" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1165" fill="#edf4fc" font-size="13">i0 · c14 → i0 · c3 / i0 · f1</text>
+<text x="28" y="1229" fill="#f4c878" font-size="14">i0 · e9</text>
+<path d="M180,1224 H210 V1204 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1188" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1209" fill="#edf4fc" font-size="13">i0 · c21 → i0 · c12 / i0 · f3</text>
+<path d="M180,1224 H210 V1244 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1228" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1249" fill="#edf4fc" font-size="13">i0 · c12 → i0 · c21 / i0 · f6</text>
+<text x="28" y="1313" fill="#58c9e7" font-size="14">i1 · e3</text>
+<path d="M180,1308 H210 V1288 H240" stroke="#58c9e7" fill="none"/>
+<rect x="240" y="1272" width="840" height="32" rx="5" fill="#182733" stroke="#58c9e7"/>
+<text x="250" y="1293" fill="#edf4fc" font-size="13">i1 · c6 → i1 · c4 / i1 · f3</text>
+<path d="M180,1308 H210 V1328 H240" stroke="#58c9e7" fill="none"/>
+<rect x="240" y="1312" width="840" height="32" rx="5" fill="#182733" stroke="#58c9e7"/>
+<text x="250" y="1333" fill="#edf4fc" font-size="13">i1 · c4 → i1 · c6 / i1 · f3</text>
+<text x="28" y="1397" fill="#f4c878" font-size="14">i2 · e11</text>
+<path d="M180,1392 H210 V1372 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1356" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1377" fill="#edf4fc" font-size="13">i2 · c20 → i2 · c17 / i2 · f4</text>
+<path d="M180,1392 H210 V1412 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1396" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1417" fill="#edf4fc" font-size="13">i2 · c17 → i2 · c20 / i2 · f5</text>
+<text x="28" y="1481" fill="#f4c878" font-size="14">i2 · e5</text>
+<path d="M180,1476 H210 V1456 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1440" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1461" fill="#edf4fc" font-size="13">i2 · c1 → i2 · c13 / i2 · f3</text>
+<path d="M180,1476 H210 V1496 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1480" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1501" fill="#edf4fc" font-size="13">i2 · c13 → i2 · c1 / i2 · f1</text>
+<text x="28" y="1565" fill="#f4c878" font-size="14">i2 · e12</text>
+<path d="M180,1560 H210 V1540 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1524" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1545" fill="#edf4fc" font-size="13">i2 · c25 → i2 · c15 / i2 · f4</text>
+<path d="M180,1560 H210 V1580 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1564" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1585" fill="#edf4fc" font-size="13">i2 · c15 → i2 · c25 / i2 · f6</text>
+<text x="28" y="1649" fill="#f4c878" font-size="14">i2 · e6</text>
+<path d="M180,1644 H210 V1624 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1608" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1629" fill="#edf4fc" font-size="13">i2 · c2 → i2 · c21 / i2 · f5</text>
+<path d="M180,1644 H210 V1664 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1648" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1669" fill="#edf4fc" font-size="13">i2 · c21 → i2 · c2 / i2 · f1</text>
+<text x="28" y="1733" fill="#f4c878" font-size="14">i0 · e12</text>
+<path d="M180,1728 H210 V1708 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1692" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1713" fill="#edf4fc" font-size="13">i0 · c13 → i0 · c23 / i0 · f6</text>
+<path d="M180,1728 H210 V1748 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1732" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1753" fill="#edf4fc" font-size="13">i0 · c23 → i0 · c13 / i0 · f4</text>
+<text x="28" y="1817" fill="#f4c878" font-size="14">i0 · e11</text>
+<path d="M180,1812 H210 V1792 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1776" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1797" fill="#edf4fc" font-size="13">i0 · c15 → i0 · c18 / i0 · f5</text>
+<path d="M180,1812 H210 V1832 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1816" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1837" fill="#edf4fc" font-size="13">i0 · c18 → i0 · c15 / i0 · f4</text>
+<text x="28" y="1901" fill="#f4c878" font-size="14">i2 · e2</text>
+<path d="M180,1896 H210 V1876 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1860" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1881" fill="#edf4fc" font-size="13">i2 · c8 → i2 · c19 / i2 · f5</text>
+<path d="M180,1896 H210 V1916 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1900" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1921" fill="#edf4fc" font-size="13">i2 · c19 → i2 · c8 / i2 · f2</text>
+<text x="28" y="1985" fill="#f4c878" font-size="14">i2 · e4</text>
+<path d="M180,1980 H210 V1960 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1944" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="1965" fill="#edf4fc" font-size="13">i2 · c26 → i2 · c6 / i2 · f2</text>
+<path d="M180,1980 H210 V2000 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="1984" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2005" fill="#edf4fc" font-size="13">i2 · c6 → i2 · c26 / i2 · f6</text>
+<text x="28" y="2069" fill="#f4c878" font-size="14">i2 · e1</text>
+<path d="M180,2064 H210 V2044 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2028" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2049" fill="#edf4fc" font-size="13">i2 · c9 → i2 · c11 / i2 · f3</text>
+<path d="M180,2064 H210 V2084 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2068" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2089" fill="#edf4fc" font-size="13">i2 · c11 → i2 · c9 / i2 · f2</text>
+<text x="28" y="2153" fill="#f4c878" font-size="14">i0 · e5</text>
+<path d="M180,2148 H210 V2128 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2112" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2133" fill="#edf4fc" font-size="13">i0 · c11 → i0 · c1 / i0 · f1</text>
+<path d="M180,2148 H210 V2168 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2152" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2173" fill="#edf4fc" font-size="13">i0 · c1 → i0 · c11 / i0 · f3</text>
+<text x="28" y="2237" fill="#f4c878" font-size="14">i2 · e10</text>
+<path d="M180,2232 H210 V2212 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2196" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2217" fill="#edf4fc" font-size="13">i2 · c22 → i2 · c12 / i2 · f3</text>
+<path d="M180,2232 H210 V2252 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2236" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2257" fill="#edf4fc" font-size="13">i2 · c12 → i2 · c22 / i2 · f5</text>
+<text x="28" y="2321" fill="#f4c878" font-size="14">i2 · e7</text>
+<path d="M180,2316 H210 V2296 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2280" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2301" fill="#edf4fc" font-size="13">i2 · c3 → i2 · c16 / i2 · f4</text>
+<path d="M180,2316 H210 V2336 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2320" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2341" fill="#edf4fc" font-size="13">i2 · c16 → i2 · c3 / i2 · f1</text>
+<text x="28" y="2405" fill="#f4c878" font-size="14">i0 · e6</text>
+<path d="M180,2400 H210 V2380 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2364" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2385" fill="#edf4fc" font-size="13">i0 · c2 → i0 · c19 / i0 · f5</text>
+<path d="M180,2400 H210 V2420 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2404" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2425" fill="#edf4fc" font-size="13">i0 · c19 → i0 · c2 / i0 · f1</text>
+<text x="28" y="2489" fill="#f4c878" font-size="14">i2 · e3</text>
+<path d="M180,2484 H210 V2464 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2448" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2469" fill="#edf4fc" font-size="13">i2 · c7 → i2 · c18 / i2 · f4</text>
+<path d="M180,2484 H210 V2504 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2488" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2509" fill="#edf4fc" font-size="13">i2 · c18 → i2 · c7 / i2 · f2</text>
+<text x="28" y="2573" fill="#f4c878" font-size="14">i2 · e9</text>
+<path d="M180,2568 H210 V2548 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2532" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2553" fill="#edf4fc" font-size="13">i2 · c14 → i2 · c23 / i2 · f6</text>
+<path d="M180,2568 H210 V2588 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="2572" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="2593" fill="#edf4fc" font-size="13">i2 · c23 → i2 · c14 / i2 · f3</text>
+<text x="28" y="2657" fill="#a9bed0" font-size="13">Immutable body sources · original loop/UV occurrences retained · incidence diagram, no geometric embedding claim</text>
+</g></svg>

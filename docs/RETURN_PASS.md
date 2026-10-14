@@ -7,9 +7,10 @@ profiling campaign before those themes are delivered. Correctness fixes and a
 demonstrated prerequisite blocking the next theme retain the roadmap exception.
 
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
-Complete analytic intersection and spatial/bothUV representation are delivered.
+Complete analytic intersection and spatial/bothUV representation, plus the
+GPU edge-use adjacency/mate-reader beachhead, are delivered.
 This backlog does not replace planar arrangements/classification, the first
-GPU topology/adjacency beachhead, narrow model interchange, or another uncovered
+trim-aware meshing, narrow model interchange, or another uncovered
 theme with polish.
 
 ## GPU lifetime and reusable inputs
@@ -80,6 +81,14 @@ shutdown and recovery outcomes rather than hiding costs at process exit.
   parameter/UV/row consumer is a later candidate, preserving exact endpoints,
   request identity, whole-map/source truth and cleanup. Do not delete grades
   or infer topology from rounded samples to make a timer attractive.
+* [GPU adjacency results](../results/adjacency-2026-10-14/REPORT.md) put large
+  construction/reader stages around0.32ms ordered/1.4ms shuffled on P100,
+  but transfers/allocation/cleanup bring native totals to15–22ms. CPU1 wins
+  ordered storage at8.2ms; shuffled CPU24 is19.4ms. Full typed traversal stays
+  4–5s, and preparing/permuting sources takes8–18s. An actual downstream native
+  consumer and retained storage are later candidates, preserving complete
+  occurrence identity and recoverable cleanup. Transfer differences alone do
+  not select a NUMA or PCIe optimization. [Source notes](../papers/2026-10-14-adjacency-round2-notes.md).
 * The existing off-grid separated-bound proposal remains a numerical return
   experiment; it does not displace an uncovered theme without a blocking need.
 

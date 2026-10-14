@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 410">
+<rect width="1120" height="410" fill="#101923"/>
+<g font-family="sans-serif">
+<text x="28" y="36" fill="#edf4fc" font-size="24">BRepGPU · constructed edge-use adjacency</text>
+<text x="28" y="62" fill="#a9bed0" font-size="14">3 edge rows · 6 distinct uses · cuda 1</text>
+<text x="28" y="87" fill="#a9bed0" font-size="13">Edge → actual CSR occurrences → emitted mate/face. Cyan: two uses on the same face.</text>
+<text x="28" y="137" fill="#f4c878" font-size="14">i0 · e2</text>
+<path d="M180,132 H210 V112 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="96" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="117" fill="#edf4fc" font-size="13">i0 · c1 → i0 · c5 / i0 · f3</text>
+<path d="M180,132 H210 V152 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="136" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="157" fill="#edf4fc" font-size="13">i0 · c5 → i0 · c1 / i0 · f1</text>
+<text x="28" y="221" fill="#f4c878" font-size="14">i0 · e1</text>
+<path d="M180,216 H210 V196 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="180" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="201" fill="#edf4fc" font-size="13">i0 · c2 → i0 · c3 / i0 · f3</text>
+<path d="M180,216 H210 V236 H240" stroke="#f4c878" fill="none"/>
+<rect x="240" y="220" width="840" height="32" rx="5" fill="#182733" stroke="#f4c878"/>
+<text x="250" y="241" fill="#edf4fc" font-size="13">i0 · c3 → i0 · c2 / i0 · f2</text>
+<text x="28" y="305" fill="#58c9e7" font-size="14">i0 · e3</text>
+<path d="M180,300 H210 V280 H240" stroke="#58c9e7" fill="none"/>
+<rect x="240" y="264" width="840" height="32" rx="5" fill="#182733" stroke="#58c9e7"/>
+<text x="250" y="285" fill="#edf4fc" font-size="13">i0 · c6 → i0 · c4 / i0 · f3</text>
+<path d="M180,300 H210 V320 H240" stroke="#58c9e7" fill="none"/>
+<rect x="240" y="304" width="840" height="32" rx="5" fill="#182733" stroke="#58c9e7"/>
+<text x="250" y="325" fill="#edf4fc" font-size="13">i0 · c4 → i0 · c6 / i0 · f3</text>
+<text x="28" y="389" fill="#a9bed0" font-size="13">Immutable body sources · original loop/UV occurrences retained · incidence diagram, no geometric embedding claim</text>
+</g></svg>

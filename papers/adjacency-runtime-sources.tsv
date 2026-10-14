@@ -1,0 +1,5 @@
+filename	source_url	sha256	acquired	content
+merrill-garland-decoupled-lookback-2016.pdf	https://research.nvidia.com/sites/default/files/pubs/2016-03_Single-pass-Parallel-Prefix/nvr-2016-002.pdf	f8e3fb29fe562bcba5cb4a2094a3a93d05209b867be4c2e58887a37076e4058c	2026-10-14	NVR-2016-002 nine-page scan report
+blelloch-prefix-sums-1993.pdf	https://www.cs.cmu.edu/~guyb/papers/Ble93.pdf	ac142af7295923bb017a95a1b0a08a6bf2cdfeaf071aeb66a3d2c8f69ca7901a	2026-10-14	Later chapter linked by CMU 1990 report index
+merrill-garland-grimshaw-gpu-graph-2012.pdf	https://research.nvidia.com/sites/default/files/pubs/2012-02_Scalable-GPU-Graph/ppo213s-merrill.pdf	779d3b669f09e60ecc0ed81aff7727ce0b913f8ab14099f23469de5f60f28819	2026-10-14	Scalable GPU Graph Traversal eleven-page paper
+satish-harris-garland-sorting-2008.pdf	https://www.nvidia.com/docs/io/67073/nvr-2008-001.pdf	e8b506003046b2ebdb0dff2b1cf5bc9730de4500d79d964a286e8e2edad953a9	2026-10-14	NVR-2008-001 fourteen-page sorting report

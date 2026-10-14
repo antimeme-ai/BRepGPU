@@ -1,0 +1,5 @@
+case	backend	device	threads	tool	scope	diagnostics	restoration	result
+cpu1-native-host	cpu	0	1	ASan/UBSan/LSan	admission/literal/empty/recursive/hot-row/recoverable faults	no sanitizer diagnostics	not applicable	PASS
+cpu24-native-host	cpu	0	24	ASan/UBSan/LSan	admission/literal/empty/recursive/hot-row/recoverable faults	no sanitizer diagnostics	not applicable	PASS
+p100-0-native-faults	cuda	0	1	Compute Sanitizer memcheck	admission/literal/empty/recursive/hot-row/recoverable faults	0 errors; 0 bytes leaked	distinct-device success/fault probes passed	PASS
+p100-1-native-faults	cuda	1	1	Compute Sanitizer memcheck	admission/literal/empty/recursive/hot-row/recoverable faults	0 errors; 0 bytes leaked	distinct-device success/fault probes passed	PASS

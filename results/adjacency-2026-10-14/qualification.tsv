@@ -1,0 +1,5 @@
+case	backend	device	threads	suites	tests	skips	test_seconds	process_seconds	device_errors	device_leaked_bytes	result
+cpu1-new-and-compatibility	cpu	0	1	test_adjacency,test_body,test_pairs,test_intersections	49	1	9.445	9.58911239192821	not-run	not-run	PASS
+cpu24-adjacency	cpu	0	24	test_adjacency	10	0	1.399	1.4843641300685704	not-run	not-run	PASS
+p100-0-adjacency	cuda	0	1	test_adjacency	10	0	1.909	2.1228082170709968	0	0	PASS
+p100-1-adjacency	cuda	1	1	test_adjacency	10	0	2.25	2.493338159052655	0	0	PASS
