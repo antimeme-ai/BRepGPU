@@ -32,8 +32,9 @@ Known outward axes/radial normals independently check face orientation, includin
 negative bore-wall orientation. Positive power-of-two frames preserve normals
 and trim coordinates. Frame/first-jet conversion fits the existing envelope;
 declared numerical error targets are finite-corpus checks rather than universal
-error bounds. Snapshot records must remain recursively immutable; adapter Patch
-arrays/descriptors belong only to sampler construction copies. Rejected/invalid
+error bounds. Snapshot records remain recursively immutable; existing Patch
+controls are tuples, and temporary native arrays/descriptors belong to sampler
+calls. Rejected/invalid
 rows, compact native stride, scatter/source identity and cleanup need direct
 tests, without claiming general imported B-rep or mesh correctness.
 

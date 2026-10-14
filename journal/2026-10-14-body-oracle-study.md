@@ -12,3 +12,7 @@
 - Saved papers/2026-10-14-body-oracle-study.md. Minimal campaign reuses analytic
   families and existing evaluator; no duplicate cache/degree campaign, new
   dependency, product edit, agent, native execution or fleet work.
+- Corrected a subsequent mistaken mutable-Patch suggestion after reading the
+  actual _flat/Patch.__post_init__: controls are copied to tuples already.
+  Existing frozen Patch records need no replacement type. Study/review wording
+  corrected; no production change was requested for this invalid finding.

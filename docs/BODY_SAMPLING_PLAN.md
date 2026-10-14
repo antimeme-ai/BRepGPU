@@ -56,6 +56,12 @@ Interface shared with the sampler/caller:
 * `snapshot.edge_point(edge_slot,t)` returns body-space curve evaluation.
   World conversion is explicit via the snapshot frame.
 
+Curve/map data schemas are flat immutable float tuples: line curve
+`(x0,y0,z0,x1,y1,z1)`, circle curve `(radius,z)` centered on the z axis;
+UV-map kinds `line` `(u0,v0,u1,v1)`, `circle_plane` `(radius,half_width)`,
+`circle_wall` `(v,)`, `seam_wall` `(a,)` with v=t. Their `evaluate(t)` methods
+use canonical spatial-edge t; coedge orientation reverses traversal externally.
+
 Use one shared cylinder face with four native charts, closed ring edges and a
 two-use seam. Plane and circle control data are copied into existing `Patch`
 records with complete `Lineage`. Packed table export describes this factory's
