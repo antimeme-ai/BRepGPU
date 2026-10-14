@@ -6,9 +6,11 @@ bracket, the candidate's UV and descriptive XYZ, and independent precision,
 coverage and work-budget flags. The C++17 CPU core, CUDA `sm_60` backend and
 standard-library Python adapter implement the same contract.
 
-Implementation and independent code review are complete. Qualification and
-repeated measurement are in progress on the supported Linux x86-64 host and
-both P100s. The [reviewed design](ITERATION_3_DESIGN.md) and
+Implementation, independent code review and direct qualification are complete
+on the supported Linux x86-64 host and both P100s.
+[Retained qualification receipts](../results/discovery-2026-10-14/QUALIFICATION.md)
+include exact geometry, memory, compatibility, mutations and actual callers.
+Repeated native measurement is in progress. The [reviewed design](ITERATION_3_DESIGN.md) and
 [implementation plan](ITERATION_3_PLAN.md) specify the operation in detail.
 No modeling-task or full B-rep kernel speedup follows from this query operation.
 
