@@ -146,8 +146,9 @@ def render(batch, output, recipe, backend, device):
             parts.append(f'<polyline points="{textpoints}" fill="none" stroke="{colors[q]}" stroke-width="3"/>')
             for x,y in (points[0],points[-1]):
                 parts.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="3.5" fill="#edf4fc"/>')
+    note = "Wall a=0/4 retains two seam lifts." if recipe=="circle" else "All four arcs end on the planar trim."
     parts.extend((f'<text x="28" y="491" fill="#a9bed0" font-size="14">Rectangle half-width {width:g}; wall radius 0.25. White dots are exact endpoint occurrences drawn approximately.</text>',
-        '<text x="28" y="517" fill="#edf4fc" font-size="14">One common parameter → spatial curve + both UV maps. Wall a=0/4 retains two seam lifts.</text>',
+        f'<text x="28" y="517" fill="#edf4fc" font-size="14">One common parameter → spatial curve + both UV maps. {note}</text>',
         '<text x="28" y="543" fill="#a9bed0" font-size="13">Exact CPU component construction · CPU/CUDA evaluates supplied curves · no general SSI or Boolean claim</text>',
         '</g></svg>'))
     (output/"section.svg").write_text("\n".join(parts)+"\n")
@@ -180,7 +181,7 @@ def main(args):
             quality = {}
             quality.update(("left_"+k,v) for k,v in qualify_scene(left,actual_left).items())
             quality.update(("right_"+k,v) for k,v in qualify_scene(right,actual_right).items())
-            quality.update(qualify_page(page,actual_left,actual_right))
+            quality.update(("pair_"+k,v) for k,v in qualify_page(page,actual_left,actual_right).items())
             if not page.info.flags & 2 or page.info.count != 4:
                 raise RuntimeError("caller did not consume the complete four chart pairs")
             face_pairs = {(ls.snapshot.body_id,ls.face_id,rs.snapshot.body_id,rs.face_id)
@@ -205,7 +206,9 @@ def main(args):
             phases.append(("actual_sample_caller_ms",milliseconds(start)))
             phases.extend(batch.timings)
             start = time.perf_counter()
-            quality.update(qualify_batch(batch,request))
+            sample_quality = qualify_batch(batch,request)
+            quality.update(("sample_"+k,sample_quality[k]) for k in
+                           ("count","evaluated_count","max_position_error","max_pair_error"))
             phases.append(("sample_qualification_ms",milliseconds(start)))
             cleanup = time.perf_counter()
         phases.append(("sampler_cleanup_ms",milliseconds(cleanup)))
