@@ -37,6 +37,12 @@ def main():
     args.output_directory.mkdir(parents=True, exist_ok=False)
     working = repository/"context"/"body"/("mutations-"+str(time.time_ns()))
     working.mkdir(parents=True)
+    def digest(path):
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    sources = ("python/brepgpu/body.py", "python/brepgpu/body_sampling.py",
+               "python/brepgpu/body_oracles.py", "tests/test_body.py", "scripts/run_body_mutations.py")
+    identities = tuple((name, digest(repository/name)) for name in sources)
+    core_sha = digest(args.library_path)
     base_environment = dict(os.environ)
     base_environment.update(BREPGPU_LIBRARY=str(args.library_path.resolve()),
                             BREPGPU_TEST_BACKEND="cpu", BREPGPU_TEST_THREADS="1")
@@ -77,6 +83,12 @@ def main():
                      hashlib.sha256(changed.encode()).hexdigest(), test_count, baseline.returncode,
                      result.returncode, "killed" if killed else "unqualified"))
         print(name+": "+rows[-1][-1], flush=True)
+    if digest(args.library_path) != core_sha or any(digest(repository/name) != sha for name, sha in identities):
+        raise RuntimeError("source or actual native core changed during mutation trials")
+    with (args.output_directory/"source-manifest.tsv").open("w", newline="") as stream:
+        writer = csv.writer(stream, delimiter="\t", lineterminator="\n")
+        writer.writerow(("source", "sha256"))
+        writer.writerows((*identities, ("native_core", core_sha)))
     with (args.output_directory/"mutations.tsv").open("w", newline="") as stream:
         writer = csv.writer(stream, delimiter="\t", lineterminator="\n")
         writer.writerow(("mutation", "module", "original_sha256", "mutant_sha256", "baseline_tests",
