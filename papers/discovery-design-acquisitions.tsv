@@ -1,0 +1,2 @@
+artifact	source_url	bytes	sha256	read_scope
+papers/pdfs/klosowski-1998-kdop.pdf	https://www.cs.cmu.edu/afs/cs/project/pscico-guyb/realworld/www/slidesF10/00675649.pdf	1885857	4ed5580b4d0219138a2becd3d23b0586dfc5a46c36fa37507fd0edc5b560b44a	Root read sections3.2-3.3.3 and5-5.2: fixed directions, storage/cost tradeoffs and whole collision measurements; no epsilon arithmetic adopted

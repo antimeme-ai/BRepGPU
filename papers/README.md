@@ -96,3 +96,12 @@ The integrated [next-operation recommendation](../docs/ITERATION_3_STUDY.md)
 keeps conservative arithmetic, complete domain accounting and candidate quality
 distinct. These are completed studies; the new operation has no product API,
 implementation or measured speedup yet.
+
+The next delivery now has a [reviewed design](../docs/ITERATION_3_DESIGN.md),
+including a concrete three-mode comparison informed by the
+[strong-bound numerical input](2026-10-14-discovery-strong-bounds-design.md) and
+[independent strong-bound study](2026-10-14-strong-bounds-oracle-study.md).
+[Numerical](2026-10-14-discovery-design-numerical-review.md),
+[runtime](2026-10-14-discovery-design-runtime-review.md) and
+[oracle](2026-10-14-discovery-design-oracle-review.md) reviews retain findings
+and dispositions. Product work follows the reviewed implementation plan.

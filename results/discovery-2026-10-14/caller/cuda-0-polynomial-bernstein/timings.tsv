@@ -1,0 +1,15 @@
+backend	device	threads	count	shape	mode	depth	phase	ms
+cuda	0	1	1024	polynomial	bernstein	8	input_preparation	19.917483034078032
+cuda	0	1	1024	polynomial	bernstein	8	context_first_use	282.83454600023106
+cuda	0	1	1024	polynomial	bernstein	8	patch_pack_snapshot_upload	0.47805201029405
+cuda	0	1	1024	polynomial	bernstein	8	hierarchy_cpu_build_upload	26.737381995189935
+cuda	0	1	1024	polynomial	bernstein	8	actual_hierarchy_download	2.2146699484437704
+cuda	0	1	1024	polynomial	bernstein	8	independent_exact_cache_qualification	4028.608338034246
+cuda	0	1	1024	polynomial	bernstein	8	query_pack_snapshot_upload	1.5221619978547096
+cuda	0	1	1024	polynomial	bernstein	8	resident_discover	7.657501962967217
+cuda	0	1	1024	polynomial	bernstein	8	download_allocate_host_provenance	0.6010009674355388
+cuda	0	1	1024	polynomial	bernstein	8	native_cleanup	38.87842205585912
+cuda	0	1	1024	polynomial	bernstein	8	independent_exact_result_qualification	613.7179330107756
+cuda	0	1	1024	polynomial	bernstein	8	record_export	276.6654369770549
+cuda	0	1	1024	polynomial	bernstein	8	owned_geometry_svg_export	15.052794944494963
+cuda	0	1	1024	polynomial	bernstein	8	caller_total_through_svg	5315.12158701662

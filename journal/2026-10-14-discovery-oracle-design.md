@@ -1,0 +1,7 @@
+# Iteration3 independent oracle/caller design input
+
+Read the iteration3 study synthesis and numerical/runtime research, and narrowed the earlier bounds oracle study to the parent-selected first delivery: named local patch queries, complete immutable CPU-built hierarchy, upload once, one resident witness with conservative squared bracket, bounded DFS/refinement and no public candidate enumeration.
+
+Wrote papers/2026-10-14-discovery-oracle-design.md. Exact hierarchy oracle uses direct Bernstein-to-power expansion, affine dyadic restriction and conversion back to Bernstein, avoiding a literal production de Casteljau replica. Exact original-patch witness distance and flat downloaded-leaf box reduction qualify upper/lower without a reference DFS or iterative solver. Complete hierarchy topology and all-node exactcell fields enable source-bound coverage checks.
+
+Parent clarified gap precision can succeed despite visit-limit root fallback. Incorporated explicit tests for GAP_SATISFIED/VISIT_LIMIT/COVERAGE_COMPLETE separation, alongside complete-but-wide cases. Refinement cap continues bounding. Added bounded exact corpus, environment/subnormal attacks, admission/resource boundary requirements, meaningful seed-free visualization and benchmark scopes. No product/test implementation, installation, Git mutation or target job performed; parent owns reviewed design/plan and root caller/benchmark.

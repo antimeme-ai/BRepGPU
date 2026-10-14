@@ -1,0 +1,15 @@
+backend	device	threads	count	shape	mode	depth	phase	ms
+cuda	1	1	1024	polynomial	aabb	8	input_preparation	17.83755701035261
+cuda	1	1	1024	polynomial	aabb	8	context_first_use	549.1105080000125
+cuda	1	1	1024	polynomial	aabb	8	patch_pack_snapshot_upload	0.5369779537431896
+cuda	1	1	1024	polynomial	aabb	8	hierarchy_cpu_build_upload	1.705276023130864
+cuda	1	1	1024	polynomial	aabb	8	actual_hierarchy_download	0.2464050194248557
+cuda	1	1	1024	polynomial	aabb	8	independent_exact_cache_qualification	1097.6420780061744
+cuda	1	1	1024	polynomial	aabb	8	query_pack_snapshot_upload	0.8833959582261741
+cuda	1	1	1024	polynomial	aabb	8	resident_discover	5.638643982820213
+cuda	1	1	1024	polynomial	aabb	8	download_allocate_host_provenance	0.3798260004259646
+cuda	1	1	1024	polynomial	aabb	8	native_cleanup	59.76552498759702
+cuda	1	1	1024	polynomial	aabb	8	independent_exact_result_qualification	848.5949740279466
+cuda	1	1	1024	polynomial	aabb	8	record_export	18.969435011968017
+cuda	1	1	1024	polynomial	aabb	8	owned_geometry_svg_export	13.069059990812093
+cuda	1	1	1024	polynomial	aabb	8	caller_total_through_svg	2614.635509031359

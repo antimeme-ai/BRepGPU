@@ -2,8 +2,9 @@
 
 Design direction, 2026-10-13. This roadmap sequences useful operations and the
 machinery they leave behind. It assigns no calendar dates or unmeasured speedups.
-The owned [patch evaluator](ITERATION_1.md) and [resident seeded projection](ITERATION_2.md)
-are implemented. Their reviewed designs/plans define the qualified support
+The owned [patch evaluator](ITERATION_1.md), [resident seeded projection](ITERATION_2.md)
+and [automatic conservative patch discovery](ITERATION_3.md) are implemented.
+Their reviewed designs/plans define the qualified support
 contracts; the [topology design](TOPOLOGY.md) explains how subsequent solid
 operations avoid pointer-defined identity.
 
@@ -35,7 +36,8 @@ before general NURBS solid modeling is complete.
 | 0 — existing CPU characterization | Reproduce primitives, holes, sweeps, fillets, surface queries and a curved USD round trip | Analytic fixtures, saved geometry, declared timing regions and concrete failed outputs | Published 16/19 qualified workloads; three sphere chord-tolerance witnesses. Exploratory API timings, not a GPU ranking |
 | 1 — batched numerical geometry, implemented | Evaluate positive-weight low-degree rational patches and their first/second derivatives through Python or native calls; reuse uploaded geometry | Owned contiguous geometry, CPU/CUDA backends, explicit statuses, resident buffers, patch/face/chart provenance | Analytic and exact binary-input rational oracles; native CPU comparison and host-to-host/resident timing across batch sizes; publish crossover or lack of crossover |
 | 2 — resident seeded projection, implemented | Refine provided seeds against supported local untrimmed patches and download first-order box-stationary or unresolved candidates | Bounded local solver, resident patch/query snapshots, compact candidates/status/rank/curvature/work counters, retained provenance and shared CPU/CUDA lifetime handling | 104 independently qualified projection rows per backend; actual native/public/memory checks. Compare CPU1/CPU24 and each P100 with named resident/host/Python costs; no minimum/global-distance guarantee |
-| 3 — bounded approximation and discovery | Produce error-bounded meshes for a declared carrier/face family and filter large surface-pair sets | Outward conservative bounds, subdivision scheduling, shared-edge sampling, trim-aware face data and candidate pairs | Actual approximation bound, edge agreement and mesh embedding checks; every known intersecting pair survives culling. A fast preview grid is a different output contract |
+| 3a — automatic conservative patch discovery, implemented | Submit targets without UV seeds and obtain candidate witnesses plus squared-distance brackets on named untrimmed local patches | Outward homogeneous subdivision; reusable packed dyadic hierarchy; AABB, 26-DOP and rational Bernstein caches; original-input witness upper; separate precision/coverage/budget flags | Exact CPU/both-P100 cache/witness and coverage oracles, actual memory/compatibility/mutation checks and 24,576 actual caller witnesses; repeated native cost/precision comparisons in progress, including off-grid inputs |
+| 3b — bounded approximation and pair discovery | Produce error-bounded meshes for a declared carrier/face family and filter large surface-pair sets | Reuse conservative bounds; add adaptive subdivision scheduling, shared-edge sampling, trim-aware face data and candidate pairs | Actual approximation bound, edge agreement and mesh embedding checks; every known intersecting pair survives culling. A fast preview grid is a different output contract |
 | 4 — regular surface intersection | Obtain all branches, including interior closed loops, in a declared transverse family with established regularity/separation bounds, with matching spatial and both UV curve representations | Branch/event graph, domain provenance, subdivision exclusions, coupled fitting and seam treatment | Known component counts/connectivity, residual bounds and coverage of the remaining domain; unestablished assumptions or unresolved boxes fail the complete operation. Finite sampling or one successful Newton path cannot establish completeness |
 | 5 — first owned curved Boolean | Cut/fuse/intersect a narrow analytic/low-degree solid family; topology may initially be assembled on CPU | Per-face arrangements, region classification, shared edge/coedge identities, transactional candidate body and history | Material membership, expected components/cavities, geometric correspondence and supported manifold topology; measure complete modeling tasks including CPU work |
 | 6 — GPU topology construction | Keep established Boolean stages resident and emit packed adjacency on GPU | Count/scan/fill, event grouping, arrangement construction, classification and snapshot publication | Semantic geometry/topology preserved across scheduling and compaction; actual end-to-end benefit on modeling workloads |
@@ -50,9 +52,10 @@ until a delivered path actually changes that task and passes its geometry checks
 
 Within the query/meshing stages, prioritize the consumer with both a real caller
 and a strong oracle. Seeded bulk point projection now consumes both derivative orders with iterations
-resident on device. Conservative bounds, complete candidate discovery, distance
-exclusion and globally resolved projection remain future capabilities; they are
-not supplied by the local solver. Bounded tessellation is another strong value target, given the published
+resident on device. Automatic named-patch discovery now supplies conservative
+distance brackets and explicit unresolved precision/coverage outcomes without
+provided seeds. It does not enumerate all minimizers or resolve imported frames,
+cross-patch selection and trims. Bounded tessellation is another strong value target, given the published
 reference failure. Its topology/trim obligations make it a larger unit than a
 surface sampler. Profiling can change their order.
 
@@ -112,12 +115,14 @@ The numerical, runtime and acceleration/topology source-study reports under
 existing array exports and dense maps teach useful layout patterns while still
 retaining pointer-defined identity or borrowed geometry.
 
-Both numerical deliveries followed researched designs, adversarial plan/code
+All three numerical deliveries followed researched designs, adversarial plan/code
 review and supported-host qualification. The [projection design](ITERATION_2_DESIGN.md)
 and [accepted plan](ITERATION_2_PLAN.md) record the local-candidate boundary; the
 [projection results](../results/projection-2026-10-14/REPORT.md) carry measured
-claims. Later rows in the delivery table remain proposed work: conservative
-bounds/global queries, approximation/discovery, complete intersections and
-solid/topology construction. Provenance and explicit identity are already
-retained, while the evaluator and projection operation perform no topology
-mutation.
+claims. The [discovery design](ITERATION_3_DESIGN.md) and
+[qualified operation](ITERATION_3.md) add three owned literature-informed bounds
+and exact original-input certificates; preprocessing, cache memory and achieved
+precision participate in method choice. Later rows remain proposed work:
+bounded approximation, pair/trim queries, complete intersections and solid/topology
+construction. Provenance and explicit identity are retained; none of the three
+numerical operations mutates topology.

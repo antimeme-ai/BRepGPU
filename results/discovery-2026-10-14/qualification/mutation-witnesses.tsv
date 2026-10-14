@@ -1,0 +1,10 @@
+mutant	backend	exact_case	observed_red
+subdivision-inward	cpu	degree_3_3_asymmetric	Valid-input hierarchy construction fails its enclosure/tree invariant
+interval-rn	cpu	one_third_false_zero	Actual root Cartesian interval misses exact original control hull
+rounded-root-upper	cpu	one_third_false_zero	Upper misses exact original-UV distance and analytic global minimum
+dop-wrong-norm	cpu	diagonal_norm3	Valid exact-input query returns arithmetic-failure status
+dop-target-sign	cpu	degree_0_0_constant	Valid exact-input query returns arithmetic-failure status
+bernstein-negative-c0	cpu	negative_C0	Valid-input hierarchy construction fails its enclosure/tree invariant
+bernstein-padding	cpu	negative_C0	Valid exact-input query returns arithmetic-failure status
+cap-partial-lower	cpu	cap_wide	Lower exceeds independent root bound and analytic minimum; false gap/status/flags
+prune-equality	cuda	constant_zero	Production query returns status4/flags32/NaN bracket after incorrectly pruning equality
