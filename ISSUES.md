@@ -8,7 +8,7 @@ Track implementation and research in this repository's
 | [#1: First P100 numerical geometry unit](https://github.com/antimeme-ai/BRepGPU/issues/1) | Implemented and qualified | [Owned CPU/CUDA six-jet API](docs/ITERATION_1.md); [exact oracles and both-P100 results](results/iteration1-2026-10-13/REPORT.md) |
 | [#2: Intersections and topology architecture](https://github.com/antimeme-ai/BRepGPU/issues/2) | Architecture reviewed; later operation designs remain | [Packed topology and identity](docs/TOPOLOGY.md); [iterative acceleration roadmap](docs/ACCELERATION_ROADMAP.md) |
 | [#3: CPU phase profiles and fair comparisons](https://github.com/antimeme-ai/BRepGPU/issues/3) | Native CPU/P100 comparisons published; modeling profiles remain | [Resident/download/host timings](results/iteration1-2026-10-13/REPORT.md); broader CAD phase profiles remain |
-| [#6: Resident seeded projection](https://github.com/antimeme-ai/BRepGPU/issues/6) | Source study and design underway | GPU-resident bounded solver, direct local-candidate oracles and complete native timings |
+| [#6: Resident seeded projection](https://github.com/antimeme-ai/BRepGPU/issues/6) | Implemented and qualified; PR #7 | [Resident solver/API](docs/ITERATION_2.md), [exact local-candidate oracles and all 144 native CPU/P100 cases](results/projection-2026-10-14/REPORT.md) |
 | [#4: Sphere chord-tolerance discrepancy](https://github.com/antimeme-ai/BRepGPU/issues/4) | Reproduced in reference runtime | Public triangle witnesses; independent confirmation and upstream-ready report |
 
 The first three frumentarii reports are published, including independent geometry

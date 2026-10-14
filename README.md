@@ -10,10 +10,11 @@ A boundary representation retains surfaces, curves, trims and their connections.
 That makes a cylinder an editable cylinder, with a display mesh derived from it.
 Getting those connections right is as important as evaluating surfaces quickly.
 
-The first owned GPU stage is implemented: **batched rational patch positions
-and first/second derivatives**, with a native C++ CPU evaluator, a CUDA backend
-for P100 and a standard-library Python adapter. Both P100s pass exact arithmetic,
-analytic geometry, ownership and device memory checks.
+Two owned GPU stages are implemented: **batched rational patch jets** and
+**resident seeded surface projection**, with native C++ CPU/CUDA backends and
+a standard-library Python adapter. Projection keeps intermediate jets and
+iterations on the P100 and returns compact candidates, statuses and diagnostics.
+Both cards pass exact geometry, ownership and device memory checks.
 
 The repository also retains a CPU modeling benchmark of NVIDIA's
 [USD BRep / SMLib](https://github.com/NVIDIA-Omniverse/usd-brep) and a reproduced
@@ -22,12 +23,52 @@ BRepGPU evaluator.
 
 [Acceleration roadmap](docs/ACCELERATION_ROADMAP.md) ·
 [First-iteration design](docs/ITERATION_1_DESIGN.md) ·
+[Resident projection API](docs/ITERATION_2.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Resident surface projection
+
+Refine a batch of provided seeds against untrimmed rational patches in one native
+call. Output includes UV, position, squared distance, projected-gradient residual,
+accepted updates, evaluation counts, and rank/curvature flags. Stationarity is
+an explicit first-order contract: a saddle can be stationary, and another seed
+can find a closer candidate. Global nearest points, trims and topology remain
+later operations.
+
+For 1,048,576 nonlinear cylinder projections, median native timings are:
+
+| Backend | Resident projection | Prepared host-to-host |
+| --- | ---: | ---: |
+| CPU, 24 requested workers | 229.73 ms | 227.46 ms |
+| P100, device 0 | 25.27 ms | 87.58 ms |
+| P100, device 1 | 25.27 ms | 77.35 ms |
+
+About **9.1× resident and 2.6–2.9× including native input/upload and download**
+against this CPU implementation. Seven samples on a shared host; the columns
+time separate calls and their medians are not additive. Tiny batches favor CPU1
+in this matrix.
+[All 144 qualified cases, ranges, exact oracles and methods](results/projection-2026-10-14/REPORT.md).
+
+![Off-surface targets projected by the P100 resident solver](results/projection-2026-10-14/caller/cuda-0-cylinder/cylinder-projection.svg)
+
+The actual caller projects independently constructed cylinder and polynomial
+point clouds, checks exact geometry and known solutions, and exports input/output
+records and individual caller costs.
+[Usage and contract](docs/ITERATION_2.md) ·
+[Reviewed design](docs/ITERATION_2_DESIGN.md) ·
+[CPU and both-P100 qualification, measurements and artifacts](results/projection-2026-10-14/REPORT.md).
+
+After the build below:
+
+```sh
+PYTHONPATH=python python3 examples/project_cloud.py --backend cpu \
+  --shape cylinder --output-directory results/local-projection
+```
 
 ## First GPU measurement
 
@@ -120,7 +161,7 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | Stage | Useful deliverable | What it builds toward |
 | --- | --- | --- |
 | Geometry storage and evaluation | Batched FP64 points and derivatives | Shared device representation and CPU reference contracts |
-| Bounds and geometric queries | Subdivision, candidate filtering, projection | Work queues for irregular geometry |
+| Bounds and geometric queries | Seeded projection delivered; subdivision and candidate filtering next | Work queues for irregular geometry |
 | Surface intersections | Curves in 3D and both surfaces' parameter domains | Complete intersection branches and consistent trims |
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
 | Solid assembly and features | Closed solids, then sweeps, fillets and offsets | A progressively broader GPU modeling kernel |

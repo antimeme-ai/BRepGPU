@@ -1,0 +1,23 @@
+field	value
+cpu_model	Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+logical_cpu_count	48
+available_logical_cpu_count	48
+cpu_workers	1,24 (unpinned)
+gpus	0, Tesla P100-PCIE-16GB, 580.178.04, 16384 MiB, 6.0; 1, Tesla P100-PCIE-16GB, 580.178.04, 16384 MiB, 6.0
+runtime_api_version	12080
+driver_api_version	13000
+nvcc	12.8, V12.8.93
+g++	13.3.0
+cmake	cmake version 3.28.3
+python	Python 3.12.3
+host_precision_flags	-O3 -fno-fast-math -ffp-contract=off
+cuda_precision_flags	-O3 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true
+device_code	compute_60 -> sm_60 cubin (60-real)
+profiling	off for public wall samples; separate profiled context for CUDA events
+machine_controls	shared host; no core pinning, frequency lock, SMT or other-workload isolation
+source_revision	e9d63c56a0af18e1e5eb38101cf86e226d0e695a
+capture_utc	2026-10-14T00:31:49.149489+00:00
+projection_kernel_resources	166 registers; 224-byte stack; 0 spill stores/loads (ptxas)
+owned_job_isolation	No owned target build/test job overlapped published timing matrix
+projection_options	default: 64 accepted updates,24 halvings,2^-24 gradient tolerance; adverse:1 update,0 halvings
+result_bytes_per_request	72 native device/CPU result; 44 additional host source bytes in Python plus descriptors/options/wrappers
