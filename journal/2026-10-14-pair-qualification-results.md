@@ -23,3 +23,12 @@ P1001 6.920 ms;1,823 survivors. CPU1wins small; cold setup favors CPU. Host mask
 conversion/decoding dominate cached GPU costs. Published full scopes/ranges,
 CUDA payloads and shared-host limitations; no whole-CAD or intersection claim.
 Preparing README/roadmap publication and commit-preserving PR18 merge.
+
+PR18 merged with all ten substantive feature commits preserved, merge
+`e6e87ed9370d2418a3b1ef2b9345fd7a3cc3cbca`. Feature branch retained; issue17
+closed. Public README contains actual mask and timing graphics. At the
+operator's latest direction, issue19 and docs/RETURN_PASS.md queue GPU setup/
+residency and integration polish AFTER the broad-pass big rocks. The next
+implementation theme remains intersections. No optimization code or additional
+profiling campaign was started. Aligning the owned execution checkout with main
+preserves private logs/builds, SDK/source archives and protected prior binaries.
