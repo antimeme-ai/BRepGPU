@@ -1,0 +1,16 @@
+field	value
+shape	plate
+backend	cuda
+device	0
+requested_cpu_workers	1
+resolution	33
+origin_hex	0x0.0p+0 0x0.0p+0 0x0.0p+0
+scale_hex	0x1.0000000000000p+0
+body_id	1
+revision	1
+selected_face_ids	all
+candidate_rows	10890
+evaluated_rows	10712
+query_upload_bytes_cuda	214240
+jet_status_download_bytes_cuda	814112
+body_tables_upload_bytes	0

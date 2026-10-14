@@ -1,0 +1,16 @@
+field	value
+shape	cylinder
+backend	cuda
+device	1
+requested_cpu_workers	1
+resolution	17
+origin_hex	0x0.0p+0 0x0.0p+0 0x0.0p+0
+scale_hex	0x1.0000000000000p+0
+body_id	1
+revision	1
+selected_face_ids	all
+candidate_rows	1734
+evaluated_rows	1550
+query_upload_bytes_cuda	31000
+jet_status_download_bytes_cuda	117800
+body_tables_upload_bytes	0
