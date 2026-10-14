@@ -58,13 +58,14 @@ For 65,536 coarse cylinder queries with Bernstein bounds, each P100 takes about
 **35 ms resident versus 1.26 s on CPU24: 36×**, or **29–30× including native
 query upload, download and consumption**. Seven samples; all rows meet the gap.
 These repeated targets align with tree boundaries; finer off-grid cases remain
-unresolved at depth8. [354 completed comparisons and methods](results/discovery-2026-10-14/REPORT.md).
-The remaining scalar field continues in a follow-up.
+unresolved at depth8. [444 completed CPU1/CPU24/P100 comparisons and methods](results/discovery-2026-10-14/REPORT.md).
 [Qualification receipts](results/discovery-2026-10-14/QUALIFICATION.md) ·
 [Caller, TSVs and graphics](docs/DISCOVERY_CLOUD.md) ·
 [Reviewed design](docs/ITERATION_3_DESIGN.md).
 
 ![Discovery performance and achieved precision](results/discovery-2026-10-14/figures/bound-methods.svg)
+
+![Scalar, multicore CPU and both-P100 resident discovery across batch sizes](results/discovery-2026-10-14/figures/resident-discovery.svg)
 
 ```sh
 PYTHONPATH=python python3 examples/discover_cloud.py --backend cpu \
