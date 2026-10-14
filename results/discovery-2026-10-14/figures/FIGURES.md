@@ -1,0 +1,5 @@
+# Discovery figure and comparison scope
+
+Owned SVGs read retained native summaries, with no smoothing or extrapolation. Seven recorded samples are required. Timing compares one complete requested budget/tolerance condition; method panels reject mixed conditions within each corpus. Comparisons pair CPU24 and a P100 by corpus, mode, depth, count, visits, refinements, squared tolerance and named phase. Attained gap populations, coverage and widths are retained alongside each ratio; equal requested conditions do not imply identical attained precision.
+
+Estimated hierarchy reuse calls compare the positive difference of independent hierarchy-build/upload medians with the saving per separately timed operation. This is a hierarchy-only conditional estimate, excluding first use, patch setup and other application costs. Independent medians are not additive measured calls; a row without operation savings has no break-even. Resident estimates additionally assume reused resident query buffers and exclude download/consumption; host-to-host estimates include a new query snapshot, download and native consumption each call.

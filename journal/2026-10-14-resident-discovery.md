@@ -109,3 +109,18 @@
   cylinder/axis corpora to the measured study; their exact analytic squared
   distances need at most 32 significant numerator bits. Retain alignment and
   repeated-input scope in published precision interpretations.
+- Completed and independently reviewed 354 seven-sample native comparisons:
+  CPU24/both-P100 common field, all-four-backend depth sweeps and controlled
+  CPU24/P100 off-grid field. Published retained samples, summaries, histograms
+  and owned SVGs. Coarse aligned Bernstein cylinder N65536 gives 36.14–36.20x
+  resident and 29.30–30.09x cached-host ratios versus the owned CPU24 baseline;
+  off-grid precision and shared-host/first-use limits are explicit.
+- Started a data copy without awaiting its completion before the initial
+  scalar off-grid timing field. Preserved the full original run privately,
+  excluded all six initial CPU1 cases before publication, and ran controlled
+  replacement cases. The main scalar field continues serially afterward;
+  no compiler, qualification or copy runs alongside these trials.
+- Operator explicitly requested merging now and continuing afterward. Merge
+  the qualified operation and completed evidence through PR #10 while the
+  remaining scalar measurements continue in a follow-up branch. Issue #8
+  stays open for that final measurement deliverable; preserve all commits.
