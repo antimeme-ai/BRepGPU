@@ -10,6 +10,8 @@ import sys
 import time
 
 ROOT=Path(__file__).resolve().parents[1]
+FOCUSED_SUITES=("test_body","test_projection","test_qualification","test_runtime",
+                "test_pairs","test_discovery_modes")
 
 
 def main(args):
@@ -22,14 +24,17 @@ def main(args):
     private.mkdir(parents=True)
     rows=[]
     for key,backend,device,threads,pattern in (
-            ("cpu1-all", "cpu",0,1,"test_*.py"),
+            ("cpu1-focused", "cpu",0,1,"focused-families"),
             ("cpu24-pairs", "cpu",0,24,"test_pairs.py"),
-            ("p100-0-all", "cuda",0,1,"test_*.py"),
-            ("p100-1-all", "cuda",1,1,"test_*.py")):
-        env=dict(os.environ,PYTHONPATH=str(ROOT/"python"),BREPGPU_LIBRARY=str(args.core.resolve()),
+            ("p100-0-focused", "cuda",0,1,"focused-families"),
+            ("p100-1-focused", "cuda",1,1,"focused-families")):
+        if args.cuda_only and backend=="cpu":
+            continue
+        env=dict(os.environ,PYTHONPATH=str(ROOT/"python")+os.pathsep+str(ROOT/"tests"),BREPGPU_LIBRARY=str(args.core.resolve()),
                  BREPGPU_TEST_BACKEND=backend,BREPGPU_TEST_DEVICE=str(device),BREPGPU_TEST_THREADS=str(threads),
                  BREPGPU_CUDART=str(args.cudart.resolve()))
-        command=[sys.executable,"-m","unittest","discover","-s","tests","-p",pattern,"-v"]
+        command=([sys.executable,"-m","unittest","-v",*FOCUSED_SUITES] if pattern=="focused-families" else
+                 [sys.executable,"-m","unittest","discover","-s","tests","-p",pattern,"-v"])
         if backend=="cuda":
             command=[str(args.compute_sanitizer.resolve()),"--tool","memcheck","--leak-check","full",
                      "--error-exitcode","86",*command]
@@ -58,6 +63,10 @@ def main(args):
         writer.writerow(("case","backend","device","threads","suite_pattern","tests","skipped",
                          "suite_seconds","process_seconds","device_errors","device_leaked_bytes","status"))
         writer.writerows(rows)
+    with args.output.with_name("suites.tsv").open("w",newline="") as stream:
+        writer=csv.writer(stream,delimiter="\t",lineterminator="\n")
+        writer.writerow(("group","suite"))
+        writer.writerows(("focused-families",suite) for suite in FOCUSED_SUITES)
 
 
 if __name__=="__main__":
@@ -66,4 +75,6 @@ if __name__=="__main__":
     parser.add_argument("--compute-sanitizer",type=Path,required=True)
     parser.add_argument("--cudart",type=Path,required=True)
     parser.add_argument("--output",type=Path,required=True)
+    parser.add_argument("--cuda-only",action="store_true",
+                        help="Run GPU suites when the unchanged CPU suites have already passed")
     main(parser.parse_args())

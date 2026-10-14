@@ -79,6 +79,14 @@ After implementation, run CPU1/CPU24 direct tests, both P100 suites under
 Compute Sanitizer, updated native fault suite and host ASan/UBSan. Because
 registry/plugin source changes, run existing geometry suites on new libraries
 and check actual prior core/plugin compatibility with lazy unsupported behavior.
+The execution scope was refined under independent oracle/runtime review:
+run complete body/projection/jet/runtime/pair suites plus existing focused
+discovery-mode callers on new libraries. Retain prior qualification of unchanged
+deep-cache/global discovery arithmetic; do not repeat that campaign. A broad
+initial regression run completed all83 CPU tests and the13 CPU24 pair tests;
+its GPU continuation was stopped at the unchanged deep-cache case and its
+private log retained. Completed CPU checks are not repeated. This refinement
+changes no product or direct pair check.
 Review runtime code, scene consumer and oracle independently, integrate every
 valid finding. Run a small fleet-only production mutant campaign for closed
 touching, page offset, tail bits and world frame conversion; baseline green

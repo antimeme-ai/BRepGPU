@@ -128,6 +128,7 @@ def render(page, path):
 
 def export_page(page, output):
     source_rows = []
+    patch_rows, control_rows = [], []
     for side, scene in (("left",page.left),("right",page.right)):
         for index, (source, local, world) in enumerate(zip(scene.sources,scene.local_boxes,scene.boxes)):
             frame = source.snapshot.frame
@@ -135,10 +136,18 @@ def export_page(page, output):
                                 source.face_id,source.chart_id,source.patch_slot,source.snapshot.shape,
                                 *map(float.hex,frame.origin),frame.scale.hex(),
                                 *map(float.hex,local),*map(float.hex,world)))
+            patch = source.snapshot.patches[source.patch_slot]
+            patch_rows.append((side,index,patch.degree_u,patch.degree_v,len(patch.controls)//4,
+                               *map(float.hex,patch.uv)))
+            control_rows.extend((side,index,slot//4,*map(float.hex,patch.controls[slot:slot+4]))
+                                for slot in range(0,len(patch.controls),4))
     tsv(output/"sources.tsv", ("side","index","body_id","revision","face_id","chart_id",
         "patch_slot","shape","origin_x_hex","origin_y_hex","origin_z_hex","scale_hex",
         "local_lx_hex","local_ly_hex","local_lz_hex","local_ux_hex","local_uy_hex","local_uz_hex",
         "world_lx_hex","world_ly_hex","world_lz_hex","world_ux_hex","world_uy_hex","world_uz_hex"), source_rows)
+    tsv(output/"patches.tsv",("side","index","degree_u","degree_v","control_count",
+        "source_u0_hex","source_u1_hex","source_v0_hex","source_v1_hex"),patch_rows)
+    tsv(output/"controls.tsv",("side","index","control_slot","ax_hex","ay_hex","az_hex","w_hex"),control_rows)
     (output/"mask.u32le").write_bytes(struct.pack(f"<{len(page.words)}I",*page.words))
     fields = ("total_pairs","start","count","next_start","left_count","right_count",
               "word_count","backend","flags","kernel_ms")
