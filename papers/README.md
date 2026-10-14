@@ -1,5 +1,17 @@
 # BRepGPU research
 
+## Conservative surface-pair beachhead
+
+The [pair design](../docs/PAIR_DISCOVERY_DESIGN.md) and
+[implementation plan](../docs/PAIR_DISCOVERY_PLAN.md) apply
+[broad-phase literature](2026-10-14-pair-literature.md),
+[bibliography](pair-discovery.bib) and independent
+[runtime](2026-10-14-pair-runtime-study.md),
+[topology](2026-10-14-pair-topology-study.md) and
+[geometry oracle](2026-10-14-pair-oracle-study.md) source studies.
+Carrier-box survivors preserve source identity and explicit page coverage;
+they do not establish intersections.
+
 ## First body-level beachhead
 
 The [owned body consumer](../docs/BODY_SAMPLING.md) now connects numerical jets
