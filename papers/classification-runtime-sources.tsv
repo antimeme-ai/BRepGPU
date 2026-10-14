@@ -1,0 +1,3 @@
+filename	source_url	sha256	acquired	content
+shewchuk-robust-predicates-1997.pdf	https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf	5f047fd41666e53f6015497f68e42152e3a9d8d04556ab27f8b6fc92c74117d7	2026-10-14	Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates
+yap-robust-geometric-computation-2004.pdf	https://cs.nyu.edu/exact/doc/handbook03.pdf	0a4acc86a1247b5353cf76280969cfdd3331806e332b3d7bf88b0690403fafd0	2026-10-14	Robust Geometric Computation author chapter

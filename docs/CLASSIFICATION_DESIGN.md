@@ -40,7 +40,8 @@ retained left/right FaceRefs, `carrier_relation` (`coplanar`, `parallel_disjoint
 `transverse`), intersection dimension -1/0/1/2, `relation`
 (`disjoint`, `touch`, `crossing`, `overlap`, `coincident`), `same_domain` and
 `normal_relation` (`same`, `opposite`, `orthogonal`). Vertices are exact rational
-world coordinates with exact left and right UV coordinates on the original
+`ContactVertex(position, left_uv, right_uv)` values with exact left and right
+UV coordinates on the original
 single rectangular charts. Empty has no vertices; point one; segment its two
 lexicographically ordered endpoints; area four corners in left-chart positive
 parameter orientation (not a Boolean coedge orientation). The complete closed
@@ -71,6 +72,8 @@ interior of both rectangles; otherwise `touch`. A transverse singleton is
 opposing coplanar normals do not alter closed-set coincidence. Normal relation
 comes from oriented original U×V and face orientation. Equality uses exact
 rational values, with no tolerance welding or rounded sampled evidence.
+`same_domain` is false for empty or transverse results; it means equality of
+the complete closed face sets, not equality of their intersected subdomains.
 
 ## Ownership and failure
 
