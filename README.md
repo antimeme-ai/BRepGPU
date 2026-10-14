@@ -2,6 +2,14 @@
 
 **Building a GPU boundary representation kernel, one useful operation at a time.**
 
+We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
+independently qualified beachhead in each major theme, then return to strengthen
+it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
+cover body data, integration, curves/trims, meshing, pair discovery, intersections,
+classification, arrangements, solid operations, features and GPU topology.
+The next design unit connects the delivered numerical stages to an owned body
+snapshot and a part-level sampling/normal caller.
+
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
 target is NVIDIA P100: FP64 geometry on CUDA 12, with an owned implementation.
