@@ -8,7 +8,9 @@ it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth
 cover body data, integration, curves/trims, meshing, pair discovery, intersections,
 classification, arrangements, solid operations, features and GPU topology.
 Body snapshots, part-level sampling/normals and conservative surface-pair
-discovery are now delivered. Intersection initialization/representation is next.
+discovery are delivered, along with complete analytic face intersections and
+their coupled spatial/two-UV representations. Arrangements, GPU adjacency and
+narrow interchange remain broad-pass themes.
 [GPU setup/residency and integration notes](docs/RETURN_PASS.md) are queued
 after the broad-pass big rocks.
 
@@ -31,6 +33,10 @@ An owned body consumer now samples **boxes, cylinders and a plate with one
 through-hole**, retaining shared boundaries, trim loops, chart identity and
 oriented normals. CPU body/trim/normal work uses the existing native evaluator.
 
+Exact CPU face sections now return circles, clipped arcs, generator segments,
+tangencies and isolated contacts for the supported planar/cylindrical body
+family. A CPU/CUDA consumer evaluates both source surfaces along those curves.
+
 The repository also retains a CPU modeling benchmark of NVIDIA's
 [USD BRep / SMLib](https://github.com/NVIDIA-Omniverse/usd-brep) and a reproduced
 tessellation failure. Those reference measurements are separate from the owned
@@ -41,12 +47,51 @@ BRepGPU evaluator.
 [Resident projection API](docs/ITERATION_2.md) ·
 [Automatic discovery API](docs/ITERATION_3.md) ·
 [Surface-pair API](docs/PAIR_DISCOVERY.md) ·
+[Analytic face intersections](docs/INTERSECTIONS.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Exact sections and both surface representations
+
+One request constructs the complete intersection of two supported CLOSED faces.
+Exact algebra retains trim contacts, boundary curves, seams and connected
+components; chart occurrences share explicit physical span IDs. This is CPU
+construction, followed by a measured two-sided CPU/P100 consumer.
+
+![Actual P100 four-arc section with spatial and both UV representations](results/intersections-2026-10-14/caller/p100-0-clipped/section.svg)
+
+CPU1/CPU24 and both P100s passed **17 direct tests per backend**, including
+irrational endpoints, subnormal near-tangency, generators/points, extreme
+frames, actual source provenance and cleanup failures. Both cards ran under
+Compute Sanitizer with **zero errors/leaks**; five production mutants were
+caught. All **1,040 exported paired samples / 2,080 native rows** passed
+independent original-control, graph, request, binary-source and SVG checks.
+
+For **32,776 supplied native rows**, P100 evaluation host spans take
+**0.11–0.13 ms versus 1.9–2.0 ms CPU24: about 15–17.5×**. Full reused consumers
+take **2.3–2.5 seconds on every backend**; CPU row construction and exact grades
+dominate, so **no complete-consumer speedup is established**. Exact component
+construction is 13–20 ms; preparing 16,388 exact sample candidates costs 27–32 s.
+These are separate timing scopes. GPU setup/residency and bulk native consumption
+remain [round-two notes](docs/RETURN_PASS.md) after broad-pass big rocks.
+
+![Complete two-sided consumer medians and ranges](results/intersections-2026-10-14/matrix/costs.svg)
+
+```sh
+PYTHONPATH=python python3 examples/intersect_faces.py --recipe clipped \
+  --backend cuda --device 0 --library-path build/pair-release/libbrepgpu.so \
+  --output-directory results/local-section
+```
+
+[API and scope](docs/INTERSECTIONS.md) ·
+[Exact qualification and matched CPU/P100 costs](results/intersections-2026-10-14/REPORT.md) ·
+[Research and bibliography](papers/README.md#analytic-intersection-beachhead) ·
+[Journal](journal/) · [Return-pass research notes](papers/2026-10-14-intersection-round2-notes.md).
+General SSI, imported/tilted surfaces, arrangements and Booleans remain future.
 
 ## Resident surface-pair shortlist
 

@@ -54,8 +54,8 @@ Each row is a theme, not one oversized implementation assignment. Rows naming
 several operations are delivered as separate conceptual units. In particular,
 extrusion/revolution do not imply fillet or offset support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
-Numerical geometry, single-patch bounds, pair culling and the narrow body/trim/chart consumer
-are delivered. The remaining
+Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/chart
+consumer and complete analytic plane/wall intersections are delivered. The remaining
 beachheads are proposed; each needs its own researched design, reviewed plan,
 implementation and qualification.
 
@@ -89,8 +89,13 @@ CPU24. That performance opportunity goes into the return pass. Conservative
 surface-pair discovery is now [delivered](../results/pairs-2026-10-14/REPORT.md):
 879,840 chart pairs reduce to 1,823 survivors; complete cached shortlist medians
 are 9.63 ms CPU24 versus 6.92–7.78 ms P100. CPU1 wins tiny cases and cold setup
-favors CPU. The next uncovered unit is intersection initialization and spatial/
-UV representation on the existing analytic corpus. At the operator's explicit
+favors CPU. Complete analytic closed plane/wall intersections are now
+[delivered](../results/intersections-2026-10-14/REPORT.md), with exact components,
+spatial/bothUV maps and a qualified CPU/P100 consumer. Native large-row evaluation
+is about15–17.5 times faster on P100, while full consumption remains CPU bound
+at2.3–2.5s and exact request preparation costs27–32s. Continue uncovered
+arrangement/classification, GPU adjacency and narrow interchange beachheads;
+broader SSI or integration tuning does not displace them. At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane
 and do not replace the theme sequence.

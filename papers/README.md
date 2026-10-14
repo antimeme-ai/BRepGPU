@@ -1,5 +1,31 @@
 # BRepGPU research
 
+## Analytic intersection beachhead
+
+The [finite-face design](../docs/INTERSECTION_DESIGN.md) joins independent
+[geometry/topology](2026-10-14-intersection-topology-study.md),
+[oracle](2026-10-14-intersection-oracle-study.md), and
+[runtime](2026-10-14-intersection-runtime-study.md) studies. Primary references
+include pinned OCCT/SISL sources, Dokken's intersection thesis and algebraic
+curve topology/lifting work; [source catalog](intersection-runtime-sources.tsv),
+[BibTeX](intersection-runtime.bib), and
+[oracle sources](intersection-oracle-sources.tsv) retain exact read scopes.
+Research selects complete closed plane/wall intersections and coupled spatial/
+two-UV representations; GPU curve sampling is a separate placement claim.
+[Return-pass notes](2026-10-14-intersection-round2-notes.md) retain broader
+geometry and integration ideas without starting the deferred optimization lane.
+The [delivered API](../docs/INTERSECTIONS.md) and
+[actual qualification/costs](../results/intersections-2026-10-14/REPORT.md)
+include seventeen direct tests on CPU/bothP100s, five production mutants,
+four exported callers and sixteen repeated comparison cases. Reviews retain
+[independent core truth](2026-10-14-intersection-code-oracle-review.md),
+[runtime](2026-10-14-intersection-core-runtime-review.md),
+[consumer](2026-10-14-intersection-sampler-topology-review.md),
+[oracle topology](2026-10-14-intersection-oracle-topology-review.md),
+[oracle runtime](2026-10-14-intersection-oracle-runtime-review.md),
+[serialized artifacts](2026-10-14-intersection-artifact-topology-review.md) and
+[performance](2026-10-14-intersection-performance-runtime-review.md).
+
 ## Deferred integration return pass
 
 At the operator's direction, [GPU setup, residency and integration polish](../docs/RETURN_PASS.md)

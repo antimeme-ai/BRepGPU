@@ -220,6 +220,11 @@ class BodySnapshot:
         edge = self.edges[_slot(edge_slot, len(self.edges))]
         return self.curves[edge.curve_slot].evaluate(t)
 
+    def intersect_faces(self, face_id, other, other_face_id):
+        """Construct a complete supported closed-face section, on CPU."""
+        from .intersections import FaceRef, intersect_faces
+        return intersect_faces(FaceRef(self, face_id), FaceRef(other, other_face_id))
+
 
 def _namespace():
     global _next_body_id

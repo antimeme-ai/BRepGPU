@@ -1,0 +1,13 @@
+metric	value
+components	4
+pieces	4
+spans	4
+events	8
+circles	0
+arcs	4
+segments	0
+points	0
+count	16388
+evaluated_count	32776
+max_position_error	8.852212930184468e-17
+max_pair_error	1.1102230246251565e-16
