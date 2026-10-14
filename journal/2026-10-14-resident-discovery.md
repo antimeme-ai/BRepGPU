@@ -38,3 +38,20 @@
   absent create_hierarchy operation (one test, 0.018 seconds). Its exact nonzero
   original-point distance will attack a false rounded-XYZ upper certificate.
   Canonical ABI3 declarations now permit numerical/runtime implementation.
+- Integrated CPU hierarchy/query and native numerical checks on the qualified
+  target. Corrected the new core alias-helper range-for syntax during its first
+  build. The exact constant-third case passed on CPU and each P100; the direct
+  native numerical/environment/cap/moment check passed. Initial CUDA resource
+  output reports 254 registers, 448-byte stack and zero spills for discovery;
+  the existing projection kernel remains 166 registers/224-byte stack.
+- First independent CPU qualification passed 103 cases/309 rows, all three
+  modes, and 11,415 actual exported nodes with zero certificate/geometry
+  violations. An exploratory N32 matrix completed 84 native cases across CPU1,
+  CPU24 and both P100s, checking every bracket against exact dyadic analytic
+  minima; these single-sample timings are private pilots, not published speedup
+  evidence. Full repeated comparisons follow complete qualification/review.
+- Ran the new native retained-parent fault scenario against the still-old model:
+  it failed at hierarchy setup because the model had no ABI3 capability. This
+  is a genuine missing-seam red, not a claimed product retention defect. The
+  runtime owner then extended the existing model's hierarchy/query/result and
+  factory paths, preserving its earlier failure machinery.
