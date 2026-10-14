@@ -100,6 +100,13 @@ shutdown and recovery outcomes rather than hiding costs at process exit.
   consumer and retained storage are later candidates, preserving complete
   occurrence identity and recoverable cleanup. Transfer differences alone do
   not select a NUMA or PCIe optimization. [Source notes](../papers/2026-10-14-adjacency-round2-notes.md).
+* [Exact classification](../results/classification-2026-10-14/REPORT.md) now
+  delivers CPU material/rectangular-face semantics. Later placement may use
+  certified sign filters and exact fallback, or native region consumers. Its
+  complete large point medians are365–490ms and512 face requests147ms; independent
+  checking is a separate900–1,723ms cost. These are exact construction workloads,
+  not GPU/Boolean speedups. Broader algebraic witnesses and curved contacts are
+  [separately scoped](../papers/2026-10-14-classification-round2-notes.md).
 * The existing off-grid separated-bound proposal remains a numerical return
   experiment; it does not displace an uncovered theme without a blocking need.
 

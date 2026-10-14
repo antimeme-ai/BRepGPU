@@ -53,3 +53,46 @@ only, boundary segment crossing, missing corner, wrong right UV). Each targeted
 healthy baseline and retry passed; Python bytecode writes were disabled to avoid
 same-size mutation cache reuse. Protected native library hashes were unchanged.
 Performance execution is next, serial and without overlapping owned activity.
+
+## Adversarial code review
+
+The complete semantics review accepted product, independent geometry oracle,
+direct tests, caller binding/exports and all seven mutation sites. Runtime review
+found one controller defect: any nonzero process status could earn a mutant kill
+if a failure had already printed. Require exact unittest status1 and a completed
+failures-only footer, rejecting crash/status2/incomplete/error runs. Integrated
+this valid finding locally during the serial cost run; no fleet sync overlaps
+measurement. Repeat the focused mutation campaign with the corrected controller
+after measurement. Product/caller sources are unchanged by this tooling fix.
+
+## Completed cost campaign and corrected mutations
+
+The serial exact CPU caller completed twelve cases: three point sizes across
+three shapes and three repeated contact sizes, one first call/one warmup/five
+repeats per case. All84 outputs (295,092 individual query results) were bound to
+original input and independently qualified outside complete-caller timers.
+Preparation, operation, consumption and qualification times are separately
+published. No owned sync/test/mutation worker overlapped measurement. Eight
+source pins were unchanged across the campaign. Exported36 point witnesses and
+eight contact loci with exact world/bothUV records and source-derived SVG.
+
+The corrected mutation controller then reran all seven targeted baseline/mutant/
+retry groups successfully, with status1 and completed assertions-only summaries
+required for every kill. Final data is mutations-final.tsv; earlier controller
+results are retained only in ignored working context. All five protected native
+library hashes still match the preceding delivery. Artifact and performance
+reviews inspect saved data independently before publication/merge.
+
+## Publish accepted broad-pass delivery
+
+Saved-artifact review accepted every36 exported point records, eight complete
+contact loci with15 vertices/two explicit empty rows, bothUVs/normals/source
+frames and the actual SVG labels/loci. It independently regenerated saved input
+aggregate digests without importing product code; large output tuples remain
+qualified fleet values rather than fully exported public tables. Performance
+review accepted all12cases84runs60repeats and explicit preparation/qualification
+costs. Final report and API, README graphics, roadmap/theme status, research
+index, issue index and active instructions are updated. Python-role and broader
+classification/accelerator ideas remain after the breadth sweep. Publication
+and merge of PR26 preserve the branch and substantive commits; final main fleet
+sync follows without rebuilding or replacing protected native libraries.
