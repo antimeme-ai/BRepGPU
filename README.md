@@ -2,6 +2,14 @@
 
 **Building a GPU boundary representation kernel, one useful operation at a time.**
 
+We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
+independently qualified beachhead in each major theme, then return to strengthen
+it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
+cover body data, integration, curves/trims, meshing, pair discovery, intersections,
+classification, arrangements, solid operations, features and GPU topology.
+The next design unit connects the delivered numerical stages to an owned body
+snapshot and a part-level sampling/normal caller.
+
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
 target is NVIDIA P100: FP64 geometry on CUDA 12, with an owned implementation.
@@ -209,7 +217,7 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | Bounds and geometric queries | Seeded projection and automatic conservative patch discovery delivered; pair/trim queries next | Work queues for irregular geometry |
 | Surface intersections | Curves in 3D and both surfaces' parameter domains | Complete intersection branches and consistent trims |
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
-| Solid assembly and features | Closed solids, then sweeps, fillets and offsets | A progressively broader GPU modeling kernel |
+| Solid assembly and features | Narrow solid operations and independently scoped extrusions, revolutions, fillets and offsets; features can precede Booleans | A progressively broader GPU modeling kernel |
 
 The first implemented prototype supports positive-weight rational
 Bézier patches through bidegree (3,3), with FP64 positions and first/second
