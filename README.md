@@ -257,6 +257,13 @@ The [off-grid extrusion study](papers/2026-10-14-offgrid-separated-bounds-study.
 explains a measured Bernstein relaxation and proposes a tighter separated bound;
 implementation and hardware value remain future work.
 
+The [CUDA mode-specialization experiment](results/discovery-modes-2026-10-14/REPORT.md)
+passed exact geometry and output identity checks. Smaller compiled kernels did
+not meet the measured performance criterion; the qualified dynamic kernel is
+retained. All timings, including reversed-order cases and regressions, are public.
+
+![Selected CUDA specialization comparisons with reversed execution order](results/discovery-modes-2026-10-14/confirmation.svg)
+
 Useful contributions include small analytic fixtures, difficult intersection
 cases, relevant papers, and independently reproducible findings. State what the
 case should produce and how that expectation is known.
