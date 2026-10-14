@@ -1,17 +1,18 @@
 # Automatic conservative discovery on P100
 
-The three-mode operation, exact-qualified caller and **354 completed native
-comparisons** are delivered. The main field covers CPU24 and each P100 at
-N=1,256,4096,65536, seven corpora and three methods. Separate depth sweeps
-include CPU1; the controlled off-grid field currently covers CPU24/both P100s.
-The remaining main scalar CPU field and six replacement scalar off-grid cases
-continue as a follow-up, rather than delaying this qualified delivery.
+The three-mode operation, exact-qualified caller and **444 completed native
+comparisons** are delivered. The main field covers CPU1, CPU24 and each P100 at
+N=1,256,4096,65536, seven corpora and three methods: 336 cases. Separate diagonal
+and axis depth sweeps add 36 and 48 cases; the controlled off-grid field adds
+24. Every repeated native phase retains seven samples after an excluded warm-up;
+first-use and initial/final setup phases retain their single observations.
 
 For **65,536 coarse rational-cylinder queries**, Bernstein mode, depth8 and
 squared tolerance 2^-24, seven-sample native medians are:
 
 | Backend | Resident discovery | Cached-hierarchy host-to-host | Gap-qualified rows |
 | --- | ---: | ---: | ---: |
+| CPU, one worker | 17,398.10 ms | 17,706.57 ms | 65,536 |
 | CPU, 24 requested workers | 1,255.98 ms | 1,235.17 ms | 65,536 |
 | P100, device 0 | 34.75 ms | 41.05 ms | 65,536 |
 | P100, device 1 | 34.70 ms | 42.16 ms | 65,536 |
@@ -57,6 +58,13 @@ compares independent medians. A zero estimated extra hierarchy cost does not
 remove CUDA first use: the large-cylinder cases observed 295/461 ms context
 first-use samples separately. Small Bernstein batches favor CPU24 here:
 N1 takes 0.222 ms versus about 1.81–1.85 ms on a P100.
+The one-worker median is 0.191 ms at N1 and 68.72 ms at N256. At N256,
+CPU24 takes 4.54 ms while the P100s take about 5.90–5.93 ms: multicore CPU
+still wins that case even though each GPU beats the scalar CPU. At N4096,
+both P100s beat both CPU configurations. These crossovers belong to this
+specific method, repeated-target field and retained-hierarchy timing scope.
+At N1, both CPU configurations use one actual worker; CPU24 names the requested
+configuration rather than parallel execution for that single row.
 
 ## Scope and reproduction
 
@@ -85,16 +93,18 @@ supplied separately by the Fraction corpus and actual caller.
 Raw fields:
 [main samples](native-cpu24-gpu/samples.tsv),
 [main summary](native-cpu24-gpu/summary.tsv),
+[scalar main samples](native-cpu1/samples.tsv),
+[scalar main summary](native-cpu1/summary.tsv),
 [off-grid samples](native-offgrid/samples.tsv),
 [off-grid summary](native-offgrid/summary.tsv),
 [diagonal depth sweep](native-depth-diagonal/summary.tsv),
 [axis depth sweep](native-depth-axis/summary.tsv).
 Work histograms accompany each field. All initial scalar off-grid timings were
 excluded conservatively after a data-copy completion was not awaited before
-their start; originals are preserved privately and six controlled replacements
-are running. Later CPU24/GPU samples were after observed copy completion.
-No build, geometry test or data copy runs alongside the replacement/main scalar
-trials. [Source](SOURCE_SHA256SUMS) and [binary identities](BINARY_SHA256SUMS)
+their start; originals are preserved privately and all six controlled replacements
+are now included. The later CPU24/GPU samples were after observed copy completion.
+No owned build, geometry test or data copy ran alongside the replacement/main
+scalar trials. [Source](SOURCE_SHA256SUMS) and [binary identities](BINARY_SHA256SUMS)
 identify the b9903a6 numerical/benchmark checkpoint; subsequent changes here
 are documentation and artifact rendering.
 
@@ -104,7 +114,7 @@ From a qualified build, reproduce the delivered main field with a fresh path:
 python3 benchmarks/discovery/run.py \
   --binary build/discovery-release/brepgpu_discovery_benchmark \
   --output-directory results/local-native-discovery \
-  --cpu-threads 24 --cuda-devices 0,1 --repetitions 7
+  --cpu-threads 1,24 --cuda-devices 0,1 --repetitions 7
 ```
 
 Use `--counts 4096 --corpora cylinder_offgrid,axis_offgrid` for off-grid data;
@@ -113,8 +123,11 @@ Use `--counts 4096 --corpora cylinder_offgrid,axis_offgrid` for off-grid data;
 Those sweep fields use CPU1/CPU24 and both cards. The main depth8 diagonal row
 is retained once in the main field. [Operation/build/caller guide](../../docs/ITERATION_3.md).
 
-The next measured work is shallower sufficient hierarchies and tighter
+The next proposed work is shallower sufficient hierarchies and tighter
 off-grid curved bounds, with setup, memory and achieved precision included.
+The [separated extrusion study](../../papers/2026-10-14-offgrid-separated-bounds-study.md)
+explains the axis relaxation and proposes a tighter bound without claiming
+implemented floating-point precision or performance.
 The discovery kernel currently uses 254 registers, a 448-byte stack and zero
 spills; mode specialization is another candidate to measure. Neither staging
 queues nor a new dependency is assumed to improve this operation.
