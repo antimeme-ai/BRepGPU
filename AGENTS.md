@@ -8,9 +8,11 @@ archived reference instructions for it.
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
 Current phase: implemented owned rational-patch CPU/CUDA evaluator and resident
 seeded box-stationary projection, with independently qualified output on CPU
-and both P100s. See docs/ITERATION_1.md and docs/ITERATION_2.md for usable APIs.
-Conservative bounds/global candidate discovery, intersections and topology remain
-future work.
+and both P100s. The third operation, automatic conservative patch discovery,
+is implemented and undergoing final memory/compatibility/mutation qualification
+and repeated measurement. See docs/ITERATION_1.md, docs/ITERATION_2.md and
+docs/ITERATION_3.md for APIs and their current scope. Intersections, trims and
+topology mutation remain future work.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;
