@@ -101,8 +101,13 @@ a synchronous call: no retained background work after return.
 
 ## ABI5 admission and failure
 
-Versioned descriptor and timings structures carry exact known size and ABI5.
-The public header names element counts for payloads, byte capacities for structs.
+The input descriptor carries canonical struct_size and ABI5. Output ABI-info
+and timings structures are written by the call, with canonical size and ABI5;
+no output initialization is required.
+The public header names exact element counts for payloads and minimum byte
+capacities for structs; larger capacities are accepted. Diagnostic is optional
+only as null with zero capacity. CPU device must be zero; CUDA device is
+nonnegative.
 Payload pointers must be aligned, valid and stable for the call. All output
 arrays and descriptor/timings/diagnostic buffers are nonoverlapping with each
 other and input arrays; input arrays may overlap each other. Checked pointer

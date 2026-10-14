@@ -79,7 +79,8 @@ Native calls receive compact binary arrays; no JSON persistence or IPC.
 Direct tests cover all literal primitive pairs/signs/seams, mixed batches,
 repeated source bodies in separate instances, independently permuted slots,
 empty edges versus empty coedges, degree0/1/2/3, same-face pair and sign conflict,
-high-degree concentration and a multi-level scan (at least 65,537 edges).
+high-degree concentration and a multi-level scan (at least 65,537 edges, with
+uneven nonzero degrees across tile boundaries and empty interior/tail rows).
 Random deterministic incidence models exercise membership and reader independently.
 Malformed source/instance/lineage/sign/range inputs reject before native access.
 Direct C tests verify bad byte/count/range/alias admission leaves payloads
