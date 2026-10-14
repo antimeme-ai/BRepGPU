@@ -20,8 +20,9 @@ not extend Engine lifetime machinery or introduce persistent device sessions.
 A prepared immutable input owns E edge sources, F face sources, C coedge sources,
 and three C-element arrays: edge slot uint32, face slot uint32, orientation int32.
 A typed source is `(instance, body_id, revision, entity_id)`; its containing
-edge/face/coedge array supplies the entity kind. Entity IDs are positive uint64;
+edge/face/coedge array supplies the entity kind. Body IDs, revisions and entity IDs are positive uint64;
 instance is a uint64 batch occurrence, distinct from geometric entity identity.
+Each instance maps to exactly one body/revision across all source tables.
 All source keys within a kind are unique. Every coedge references an edge and a
 face with the same instance/body/revision. No coordinate or pointer defines a
 reference. Source identity stays on CPU; the GPU receives only slots/signs.
@@ -56,9 +57,9 @@ The reader runs after fill and reads those rows. It emits:
 | unused (0) | degree 0 | none |
 | boundary (1) | degree 1 | invalid |
 | paired (2) | degree 2, opposite signs, different faces | other coedge and its face |
-| seam (3) | degree 2, opposite signs, same face | other coedge and same face |
+| same-face pair (3; seam for qualified bodies) | degree 2, opposite signs, same face | other coedge and same face |
 | orientation conflict (4) | degree 2, equal signs | invalid |
-| radial (5) | degree greater than 2 | invalid: no unique mate |
+| multiple uses (5; no radial order promised) | degree greater than 2 | invalid: no unique mate |
 
 All unassigned mate/neighbor entries are UINT32_MAX. Degree>2 retains complete
 membership rather than truncating to two. A seam preserves distinct coedge IDs
@@ -87,12 +88,13 @@ uses atomic cursors plus offsets. A post-fill reader examines each edge row and
 writes at most its two unique mate assignments; initial sentinels cover other
 rows. All work is O(E+C), including high-degree rows. No CPU block-total readback,
 quadratic per-row sort or dependency scan primitive is used. Single-stream
-ordering separates count, scan, fill and reader. Empty input still returns the
-single zero offset and no kernels requiring a zero-sized launch.
+ordering separates count, scan, fill and reader. E=0 returns one zero offset; C=0 with E>0 returns E+1 zero offsets, unused
+edge kinds and empty membership/reader arrays. No zero-sized kernel is launched.
 
 The CUDA device is selected explicitly and the previous device restored on all
 paths. Backend/runtime availability is reported, with no silent CPU fallback.
-All allocations/stream resources are reclaimed on success/failure. A cleanup or
+Every resource receives a cleanup attempt on success/failure; runtime cleanup
+errors can prevent reclamation and are reported without publication. A cleanup or
 device-restore error prevents successful publication. Primary failure wins when
 cleanup also fails, with diagnostic cleanup information where feasible. This is
 a synchronous call: no retained background work after return.
@@ -106,6 +108,8 @@ arrays and descriptor/timings/diagnostic buffers are nonoverlapping with each
 other and input arrays; input arrays may overlap each other. Checked pointer
 extent arithmetic rejects wraparound before accesses. Native count/extent,
 backend/device/thread and slot/sign validation precedes payload output writes.
+Structural extent/alias admission precedes any diagnostic write. An unsafe
+diagnostic destination receives no write; the status still reports rejection.
 Preflight rejection leaves payload outputs untouched. Runtime failure can leave
 partial outputs: callers discard every destination, and Python never returns a
 partial result. Timings are published only after successful cleanup. Diagnostic
@@ -121,16 +125,20 @@ operation retains no borrowed pointer beyond its synchronous duration.
 
 A separate oracle enumerates original coedges into typed edge-key dictionaries,
 then derives kinds and pair relationships directly from source records; it never
-repeats native prefix/count/fill. Literal primitive expectations establish box,
-cylinder and hole-plate degrees and seam roles. Storage permutation, row-order
+repeats native prefix/count/fill. Literal primitive expectations establish the complete signed edge/coedge/face
+source relation, plus retained original loop/UV provenance for box, cylinder
+and hole plate; degrees and seams alone are insufficient. The oracle decodes
+actual returned binary arrays independently of product result-reader methods. Storage permutation, row-order
 freedom, high-degree and disconnected fixtures test identity and incidence;
 invalid native extents/ranges/aliases/signs test preflight no-writes. Native host
 sanitizers and both-P100 Compute Sanitizer attack memory faults. Direct production
-mutants target lost occurrences, wrong references, seam deduplication, signs and
-reader mate/face errors; only assertion failures earn kills.
+mutants include actual CUDA builder and CUDA reader changes, alongside CPU and
+wrapper changes targeting lost occurrences, wrong references, seam deduplication,
+signs and mate/face errors; only assertion failures earn kills.
 
 Benchmark serial fresh processes for CPU1/CPU24/P1000/P1001, small canonical
-bodies and larger repeated batches. Keep input packing and independent oracle
+bodies and larger repeated batches, including a measured globally shuffled
+coedge assembly. Keep input packing and independent oracle
 costs separate. Report cold load/context initialization, native admission,
 allocation, upload, count, scan, fill, reader, download and cleanup, native total,
 Python publication and full caller wall. Native phase clocks are synchronized
