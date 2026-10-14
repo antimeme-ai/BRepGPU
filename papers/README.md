@@ -1,5 +1,32 @@
 # BRepGPU research
 
+## GPU edge-use adjacency beachhead
+
+The [owned CSR/reader API](../docs/ADJACENCY.md) follows independent
+[topology](2026-10-14-adjacency-topology-study.md),
+[runtime/scan](2026-10-14-adjacency-runtime-study.md), and
+[oracle](2026-10-14-adjacency-oracle-study.md) studies. Primary inputs include
+OCCT occurrence/seam semantics, Truck compression and Blelloch/Harris/Merrill
+parallel scan and graph traversal literature. [BibTeX](adjacency-runtime.bib)
+and [acquired-paper catalog](adjacency-runtime-sources.tsv) retain reading scope.
+
+The [design](../docs/ADJACENCY_DESIGN.md) and [plan](../docs/ADJACENCY_PLAN.md)
+passed separate topology/runtime/oracle reviews before the direct cylinder red.
+Code reviews examine [native ownership](2026-10-14-adjacency-native-runtime-code-review.md),
+[scan/topology](2026-10-14-adjacency-native-topology-code-review.md),
+[typed interface](2026-10-14-adjacency-interface-code-review.md),
+[independent truth](2026-10-14-adjacency-oracle-code-review.md),
+[actual consumer/costs](2026-10-14-adjacency-caller-code-review.md), and
+[qualification/mutants](2026-10-14-adjacency-qualification-code-review.md).
+[Saved caller review](2026-10-14-adjacency-caller-artifact-review.md) independently
+checks 120 exported occurrences and diagram labels. The
+[measured results](../results/adjacency-2026-10-14/REPORT.md) retain all24 matched
+CPU/P100 cases and separate cold/native/typed-consumer costs.
+[Runtime](2026-10-14-adjacency-performance-runtime-review.md) and
+[topology](2026-10-14-adjacency-performance-topology-review.md) reviews accept the
+bounded claims. The [return-pass notes](2026-10-14-adjacency-round2-notes.md) retain later native
+consumption, residency, scan and broader topology ideas without starting tuning.
+
 ## Analytic intersection beachhead
 
 The [finite-face design](../docs/INTERSECTION_DESIGN.md) joins independent

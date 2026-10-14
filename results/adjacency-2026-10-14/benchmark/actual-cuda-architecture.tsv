@@ -1,0 +1,6 @@
+field	value
+cmake_global_cached_architecture	52
+cmake_topology_target_architecture	60-real
+compiled_generate_code	--generate-code=arch=compute_60,code=[sm_60]
+cuobjdump_embedded_elf	libbrepgpu_topology.1.sm_60.cubin
+measured_library_sha256	37ff97b5586dfdf869e828657a44ab2c40a029e2c02468e1f8aa4c1c7e1a3900

@@ -146,3 +146,6 @@ uses literal body loops plus a source-relation model, not CPU/GPU parity.
 
 The [reviewed design](ADJACENCY_DESIGN.md), [plan](ADJACENCY_PLAN.md), research
 and journals retain algorithm choices, adversarial findings and their resolutions.
+
+[Actual qualification, 24 matched cases and complete cost scopes](../results/adjacency-2026-10-14/REPORT.md)
+retain cold setup, independent validation and full CPU/P100 traversal costs.
