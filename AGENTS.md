@@ -17,6 +17,14 @@ beachhead is also delivered: immutable canonical box/cylinder/one-hole-plate
 snapshots, exact CPU trim labels and a CPU/CUDA sampling/normal consumer.
 See docs/BODY_SAMPLING.md and results/body-2026-10-14/REPORT.md. General trims,
 imported bodies, intersections, topology mutation and GPU topology remain future.
+The next breadth-first beachhead, resident conservative surface-pair discovery,
+is also implemented and qualified: CPU common-world carrier bounds, optional
+ABI4 CPU/CUDA mask pages and immutable typed source mapping. See
+docs/PAIR_DISCOVERY.md and results/pairs-2026-10-14/REPORT.md. All-pairs survivors
+are not intersections; cold setup and CPU word conversion remain measured costs.
+Keep the broad-first sequence. The operator explicitly defers GPU lifetime/
+residency reuse, session integration and polish until AFTER the broad-pass big
+rocks. Record opportunities in docs/RETURN_PASS.md; no active tuning lane.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;

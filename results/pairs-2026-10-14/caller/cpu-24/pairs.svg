@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 760">
+<rect width="900" height="760" fill="#101923"/>
+<g font-family="sans-serif">
+<text x="28" y="40" fill="#edf4fc" font-size="25">BRepGPU · conservative surface pairs</text>
+<text x="28" y="72" fill="#a9bed0" font-size="15">Common-world carrier bounds → resident pair mask → typed chart shortlist</text>
+<text x="28" y="107" fill="#58c9e7" font-size="19">43 survivors / 784 examined pairs</text>
+<text x="28" y="134" fill="#a9bed0" font-size="14">28 × 28 charts · full-domain True · drawing first 28 × 28</text>
+<rect x="285.0" y="160.0" width="448.0" height="448.0" fill="#223344"/>
+<rect x="317.000" y="160.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 2: body 1 face 1 chart 1 / body 5 face 3 chart 3</title></rect>
+<rect x="333.000" y="160.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 3: body 1 face 1 chart 1 / body 5 face 3 chart 4</title></rect>
+<rect x="349.000" y="160.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 4: body 1 face 1 chart 1 / body 5 face 3 chart 5</title></rect>
+<rect x="365.000" y="160.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 5: body 1 face 1 chart 1 / body 5 face 3 chart 6</title></rect>
+<rect x="413.000" y="256.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 176: body 2 face 1 chart 1 / body 6 face 3 chart 3</title></rect>
+<rect x="461.000" y="256.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 179: body 2 face 1 chart 1 / body 6 face 6 chart 6</title></rect>
+<rect x="397.000" y="288.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 231: body 2 face 3 chart 3 / body 6 face 2 chart 2</title></rect>
+<rect x="461.000" y="288.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 235: body 2 face 3 chart 3 / body 6 face 6 chart 6</title></rect>
+<rect x="397.000" y="304.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 259: body 2 face 3 chart 4 / body 6 face 2 chart 2</title></rect>
+<rect x="461.000" y="304.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 263: body 2 face 3 chart 4 / body 6 face 6 chart 6</title></rect>
+<rect x="397.000" y="320.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 287: body 2 face 3 chart 5 / body 6 face 2 chart 2</title></rect>
+<rect x="413.000" y="320.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 288: body 2 face 3 chart 5 / body 6 face 3 chart 3</title></rect>
+<rect x="461.000" y="320.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 291: body 2 face 3 chart 5 / body 6 face 6 chart 6</title></rect>
+<rect x="397.000" y="336.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 315: body 2 face 3 chart 6 / body 6 face 2 chart 2</title></rect>
+<rect x="413.000" y="336.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 316: body 2 face 3 chart 6 / body 6 face 3 chart 3</title></rect>
+<rect x="461.000" y="336.000" width="16.000" height="16.000" fill="#f4c878"><title>pair 319: body 2 face 3 chart 6 / body 6 face 6 chart 6</title></rect>
+<rect x="573.000" y="352.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 354: body 3 face 1 chart 1 / body 7 face 3 chart 3</title></rect>
+<rect x="621.000" y="352.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 357: body 3 face 1 chart 1 / body 7 face 6 chart 6</title></rect>
+<rect x="557.000" y="400.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 437: body 3 face 4 chart 4 / body 7 face 2 chart 2</title></rect>
+<rect x="621.000" y="400.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 441: body 3 face 4 chart 4 / body 7 face 6 chart 6</title></rect>
+<rect x="557.000" y="416.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 465: body 3 face 5 chart 5 / body 7 face 2 chart 2</title></rect>
+<rect x="573.000" y="416.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 466: body 3 face 5 chart 5 / body 7 face 3 chart 3</title></rect>
+<rect x="557.000" y="448.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 521: body 3 face 7 chart 7 / body 7 face 2 chart 2</title></rect>
+<rect x="557.000" y="464.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 549: body 3 face 7 chart 8 / body 7 face 2 chart 2</title></rect>
+<rect x="557.000" y="480.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 577: body 3 face 7 chart 9 / body 7 face 2 chart 2</title></rect>
+<rect x="557.000" y="496.000" width="16.000" height="16.000" fill="#b697ed"><title>pair 605: body 3 face 7 chart 10 / body 7 face 2 chart 2</title></rect>
+<rect x="605.000" y="512.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 636: body 4 face 1 chart 1 / body 7 face 5 chart 5</title></rect>
+<rect x="669.000" y="512.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 640: body 4 face 1 chart 1 / body 8 face 3 chart 3</title></rect>
+<rect x="685.000" y="512.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 641: body 4 face 1 chart 1 / body 8 face 3 chart 4</title></rect>
+<rect x="701.000" y="512.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 642: body 4 face 1 chart 1 / body 8 face 3 chart 5</title></rect>
+<rect x="717.000" y="512.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 643: body 4 face 1 chart 1 / body 8 face 3 chart 6</title></rect>
+<rect x="605.000" y="528.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 664: body 4 face 2 chart 2 / body 7 face 5 chart 5</title></rect>
+<rect x="605.000" y="544.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 692: body 4 face 3 chart 3 / body 7 face 5 chart 5</title></rect>
+<rect x="605.000" y="560.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 720: body 4 face 4 chart 4 / body 7 face 5 chart 5</title></rect>
+<rect x="653.000" y="560.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 723: body 4 face 4 chart 4 / body 8 face 2 chart 2</title></rect>
+<rect x="669.000" y="560.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 724: body 4 face 4 chart 4 / body 8 face 3 chart 3</title></rect>
+<rect x="685.000" y="560.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 725: body 4 face 4 chart 4 / body 8 face 3 chart 4</title></rect>
+<rect x="653.000" y="576.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 751: body 4 face 5 chart 5 / body 8 face 2 chart 2</title></rect>
+<rect x="669.000" y="576.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 752: body 4 face 5 chart 5 / body 8 face 3 chart 3</title></rect>
+<rect x="685.000" y="576.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 753: body 4 face 5 chart 5 / body 8 face 3 chart 4</title></rect>
+<rect x="701.000" y="576.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 754: body 4 face 5 chart 5 / body 8 face 3 chart 5</title></rect>
+<rect x="717.000" y="576.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 755: body 4 face 5 chart 5 / body 8 face 3 chart 6</title></rect>
+<rect x="605.000" y="592.000" width="16.000" height="16.000" fill="#58c9e7"><title>pair 776: body 4 face 6 chart 6 / body 7 face 5 chart 5</title></rect>
+<path d="M285.0,160.000 H733.000" stroke="#101923" stroke-width="1.5"/>
+<text x="28" y="173.000" fill="#edf4fc" font-size="13">left body 1 · box</text>
+<path d="M285.0,256.000 H733.000" stroke="#101923" stroke-width="1.5"/>
+<text x="28" y="269.000" fill="#edf4fc" font-size="13">left body 2 · cylinder</text>
+<path d="M285.0,352.000 H733.000" stroke="#101923" stroke-width="1.5"/>
+<text x="28" y="365.000" fill="#edf4fc" font-size="13">left body 3 · plate</text>
+<path d="M285.0,512.000 H733.000" stroke="#101923" stroke-width="1.5"/>
+<text x="28" y="525.000" fill="#edf4fc" font-size="13">left body 4 · box</text>
+<path d="M285.000,160.0 V608.000" stroke="#101923" stroke-width="1.5"/>
+<path d="M381.000,160.0 V608.000" stroke="#101923" stroke-width="1.5"/>
+<path d="M541.000,160.0 V608.000" stroke="#101923" stroke-width="1.5"/>
+<path d="M637.000,160.0 V608.000" stroke="#101923" stroke-width="1.5"/>
+<text x="28" y="672" fill="#a9bed0" font-size="13">Columns: right bodies 5:cylinder, 6:plate, 7:box, 8:cylinder</text>
+<text x="28" y="699" fill="#edf4fc" font-size="15">Colored cells survive closed-box culling. Dark cells are excluded carrier pairs.</text>
+<text x="28" y="725" fill="#a9bed0" font-size="14">Touching stays. Hole and cap false positives stay. Survivors do not establish intersections.</text>
+<text x="28" y="747" fill="#a9bed0" font-size="12">CPU bounds/world conversion and shortlist decoding · native CPU or P100 mask · no topology upload</text>
+</g></svg>
