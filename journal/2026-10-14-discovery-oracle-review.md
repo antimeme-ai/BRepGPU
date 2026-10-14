@@ -22,3 +22,14 @@ explicitly reserve exact original-UV upper qualification for the Fraction oracle
 the long-double corruption allowance does not relax native global bracket or gap
 comparisons. Appended final source hashes and dispositions to the report. No new
 execution claim or product edit; integration owns the target test matrix.
+
+Reviewed the additional `cylinder_offgrid`/`axis_offgrid` native corpora. Odd/64
+parameters avoid both level 4 leaf boundaries and centers at hierarchy depth 8.
+Re-derived generated target/radius/distance formulas as exact integer-over-power2
+values: squared-distance numerator has at most 32 bits, comfortably below the
+53-bit binary64 significand. Expanded-map recognition is correct; no source
+review blocker. Recorded distinct-versus-repeated targets and the limitation of
+aligned precision evidence in the review paper. Integration owns actual off-grid
+measurements; arbitrary-target UNRESOLVED results still satisfy the conservative
+contract when their intervals contain truth. No product changes or local native
+execution were performed.

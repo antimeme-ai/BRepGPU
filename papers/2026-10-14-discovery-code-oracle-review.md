@@ -211,3 +211,49 @@ of work without adopting a dependency or adding a mirrored solver.
 The added analytic map and distance checks execute inside `consume`, so they are
 included in `cached_hierarchy_host_to_host` and excluded from `resident_discover`
 and prepared-download scopes. Source review found no new timing-scope ambiguity.
+
+## Off-grid native fixture extension re-review
+
+Reviewed `benchmarks/discovery/fixtures.hpp` SHA-256
+`813ccb0063782a0886be2a55807a71bab3252e66284ff9991b5c8404a8276735`.
+The additional named corpora `cylinder_offgrid` and `axis_offgrid` are correctly
+recognized by both control generation and independent expanded point evaluation.
+No product arithmetic changed. The existing common comparison corpora remain
+separate from this precision-study extension.
+
+For cylinder_offgrid, let m=2(i mod 32)+1, n=2(floor(i/32) mod 32)+1, k=8+(i mod 4).
+Then s=m/64, t=n/64, lambda=k/8, and the generated binary64 inputs are exactly
+
+```
+Xx = k(4096-m²)/2^15
+Xy = km/2^8
+Xz = n/64
+R  = k(4096+m²)/2^15
+d*² = [k(4096+m²)-2^15]²/2^30.
+```
+
+Target/radius numerators use at most 17 bits, the radial-gap numerator at most 16
+bits, and the squared numerator at most 32 bits. Intermediate generated arithmetic
+is therefore exact in
+binary64, and d*² remains an exactly representable minimum for the actual supplied
+inputs. The angle lies inside the admitted quarter circle, height inside [0,1],
+and maximum target y is less than 2.71, so target admission remains valid.
+Axis_offgrid uses (0,0,n/64) and exact d*²=1. The updated analytic point method
+evaluates the same original rational cylinder for both names.
+
+At depth 8 with alternating u/v subdivision, both parameter levels are 4: leaf
+boundaries are multiples of4/64 and centers are (4j+2)/64. Odd/64 coordinates are
+neither, making these corpora an intentional off-grid check of the originally
+aligned study. The `_offgrid` names accurately describe that relationship; no
+literal midpoint claim is made. One 1024-row cycle contains 1024 distinct cylinder
+angle/height pairs with lambda linked to the angle index. Axis targets have only
+32 distinct heights because angle is immaterial. N4096 repeats four cycles; a
+larger N is an amortized throughput study, not more independent geometry cases.
+
+Integration reported the arbitrary-target 1024-row cylinder and polynomial clouds
+were UNRESOLVED for Bernstein depth8, while coarse aligned native targets reported
+GAP. This is consistent with the valid conservative fixed-depth contract and
+does not establish a geometry defect: unresolved brackets still require exact
+containment. It prevents general precision claims from the aligned corpus alone.
+Off-grid target execution and gap/width/timing statistics remain integration work;
+this source re-review makes no claim about their future observed outcomes.

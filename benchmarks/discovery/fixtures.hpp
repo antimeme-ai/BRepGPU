@@ -15,7 +15,7 @@ struct Fixture {
     std::vector<double> controls,targets,truth;
     std::vector<uint32_t> slots;
     std::array<long double,3> point(long double s,long double t) const {
-        if(corpus=="cylinder"||corpus=="axis"||corpus=="axis_midpoint"||corpus=="capped") {
+        if(corpus=="cylinder"||corpus=="cylinder_offgrid"||corpus=="axis"||corpus=="axis_offgrid"||corpus=="axis_midpoint"||corpus=="capped") {
             const long double d=1+s*s;return {(1-s*s)/d,2*s/d,t};
         }
         if(corpus=="parabolic"||corpus=="twins") {const long double a=2*s-1;return {a,t,a*a};}
@@ -28,7 +28,7 @@ struct Fixture {
         patch.flags=BG_PATCH_LINEAGE|BG_PATCH_FRAME;patch.body_id=1;
         patch.entity_id=1;patch.revision=1;patch.chart_id=1;patch.scale=1;
         patch.uv[1]=patch.uv[3]=1;
-        const bool cylinder=name=="cylinder"||name=="axis"||name=="axis_midpoint"||name=="capped";
+        const bool cylinder=name=="cylinder"||name=="cylinder_offgrid"||name=="axis"||name=="axis_offgrid"||name=="axis_midpoint"||name=="capped";
         const bool parabola=name=="parabolic"||name=="twins";
         if(!cylinder&&!parabola&&name!="plane"&&name!="diagonal"&&name!="diagonal3")
             throw std::runtime_error("unknown discovery corpus");
@@ -43,10 +43,12 @@ struct Fixture {
             controls.insert(controls.end(),{x,y,z,w});
         }
         for(uint64_t i=0;i<n;++i) {
-            const double s=(1.+i%15)/16,t=(1.+(i*7)%15)/16;
+            const bool offgrid=name=="cylinder_offgrid"||name=="axis_offgrid";
+            const double s=offgrid?(2*(i%32)+1)/64.:(1.+i%15)/16;
+            const double t=offgrid?(2*((i/32)%32)+1)/64.:(1.+(i*7)%15)/16;
             double x=s,y=t,z=.5,d=.25;
             if(cylinder) {
-                if(name=="axis"||name=="axis_midpoint"){x=y=0;z=name=="axis_midpoint"?.5:t;d=1;}
+                if(name=="axis"||name=="axis_offgrid"||name=="axis_midpoint"){x=y=0;z=name=="axis_midpoint"?.5:t;d=1;}
                 else {const double lambda=1.+(i%4)/8.;x=lambda*(1-s*s);y=2*lambda*s;z=t;
                     // ||X_xy||=lambda*(1+s²) exactly, and its angle is on
                     // the admitted quarter-circle. True radial gap is r-1.

@@ -51,3 +51,12 @@ No numerical geometry blocker was found. Parent is adding native benchmark
 exact GAP-width and expanded analytic candidate sanity checks; exact UV upper
 certificates remain the separate Fraction standalone/caller mechanism.
 Full public/raw/sanitizer outcomes are pending root execution.
+
+Parent subsequently reported both P100 full58-method public memory-check
+runs passed with0 errors and0 leaks. All9 production mutants were killed.
+The23 actual compatibility combinations passed77,280 evaluator component
+checks and34 discovery attempts. CPU ASAN standalone exact qualification
+also passed309 rows. These outcomes are parent-run execution evidence;
+this lane performed no native jobs locally. The additive analytic-cloud
+caller and its qualification option are described in
+journal/2026-10-14-discovery-cloud-caller.md; caller execution remains pending.
