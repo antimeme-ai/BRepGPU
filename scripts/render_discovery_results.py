@@ -93,7 +93,9 @@ def timing(rows, output, mode=2, corpus="cylinder"):
         content += text(x, bottom + 24, f'{n:,}', 12, '#a9bed0', 'middle')
     content += text(90, 108, 'milliseconds · log scale', 12, '#a9bed0')
     content += text((left + right) / 2, bottom + 49, 'queries · log scale', 13, '#a9bed0', 'middle')
-    for index, (backend, color) in enumerate(COLORS.items()):
+    series = [(backend, color) for backend, color in COLORS.items()
+              if any(label(r) == backend for r in selected)]
+    for index, (backend, color) in enumerate(series):
         batch = sorted([r for r in selected if label(r) == backend], key=lambda r: int(r['count']))
         if len(batch) != len(counts):
             raise ValueError(f'incomplete series {backend}')

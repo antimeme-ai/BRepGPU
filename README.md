@@ -54,11 +54,17 @@ All three methods passed **309 exact-input rows and 11,415 exported nodes per
 backend**. Each P100 passed the full 58-test suite under Compute Sanitizer with
 zero errors and zero leaked device allocations. Actual older binaries remain
 compatible, and direct geometry checks caught nine production numerical mutants.
-Repeated native timing comparisons, including off-grid precision cases, are in
-progress; no discovery speedup is claimed yet.
+For 65,536 coarse cylinder queries with Bernstein bounds, each P100 takes about
+**35 ms resident versus 1.26 s on CPU24: 36×**, or **29–30× including native
+query upload, download and consumption**. Seven samples; all rows meet the gap.
+These repeated targets align with tree boundaries; finer off-grid cases remain
+unresolved at depth8. [354 completed comparisons and methods](results/discovery-2026-10-14/REPORT.md).
+The remaining scalar field continues in a follow-up.
 [Qualification receipts](results/discovery-2026-10-14/QUALIFICATION.md) ·
 [Caller, TSVs and graphics](docs/DISCOVERY_CLOUD.md) ·
 [Reviewed design](docs/ITERATION_3_DESIGN.md).
+
+![Discovery performance and achieved precision](results/discovery-2026-10-14/figures/bound-methods.svg)
 
 ```sh
 PYTHONPATH=python python3 examples/discover_cloud.py --backend cpu \

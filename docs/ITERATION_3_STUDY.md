@@ -5,6 +5,14 @@ resident projector and explicitly requested acquisition/study of Wafer's
 GPU-mode repository. Product code follows the source studies, reviewed design
 and reviewed implementation plan.
 
+This study led to the [reviewed design](ITERATION_3_DESIGN.md),
+[accepted plan](ITERATION_3_PLAN.md) and implemented
+[three-mode resident discovery operation](ITERATION_3.md).
+[Direct CPU/both-P100 qualification](../results/discovery-2026-10-14/QUALIFICATION.md)
+and the exact-qualified point-cloud caller are published. Repeated native
+comparisons are in progress; the original research findings below retain their
+study scope rather than claiming measured performance.
+
 The next useful capability is to locate promising parts of supported carriers
 without supplied seeds. Conservative subdivision/bounds must preserve original
 patch and UV identity and exclude a region only when its entire exact surface
@@ -74,18 +82,23 @@ not support our GP100 target; the source study records current and original
 release support. Existing CUDA-event/host timers and compiler/binary inspection
 remain the usable measurement path.
 
-## Decisions still needed for the reviewed design
+## Decisions made after this study
 
-Resolve fixed hierarchy depth/cache admission, CPU arithmetic environment
-rejection versus save/restore, visit and refinement budgets, output capacity,
-coverage fields and whether the first API offers a squared-gap completion
-criterion. The numerical lane proposes total binary depth 8 initially; this is
-a resource choice, not an accuracy guarantee. The oracle lane also identifies
-closed-radius filtering as a useful operation on the same hierarchy. Keep its
-predicate distinct from nearest-preserving candidate exclusion.
+The reviewed implementation uses complete depth8 CPU-built dyadic trees by
+default, with depths0..12 and checked full-cache admission. It rejects unsupported
+actual CPU worker arithmetic environments without changing them. Separate visit
+and refinement budgets preserve an original-root lower fallback when capped;
+the additive ABI3 returns eight doubles, six integer slabs, independent coverage
+and precision flags, and an explicit squared-gap criterion.
 
-Adversarial design review and then implementation-plan review precede product
-code. No new API, bounds qualification or speedup is claimed by this synthesis.
+The operator's computational-geometry literature request added two owned modes
+beside AABB: 26-DOP correlated support slabs and cached rational Bernstein
+objective coefficients. Their [strong-bound design study](../papers/2026-10-14-discovery-strong-bounds-design.md)
+and [independent oracle study](../papers/2026-10-14-strong-bounds-oracle-study.md)
+record the sources and admitted assumptions. Actual finer clouds exposed an
+alignment-sensitive precision advantage in coarse dyadic benchmark sites;
+off-grid comparisons are part of the measured study. Closed-radius filtering
+remains a useful later operation with its own predicate contract.
 
 The existing degree/weight/local-frame envelope and shared CPU/CUDA/Python
 boundary are the starting point. Keep packed entity identities and original UV
@@ -95,5 +108,6 @@ and unresolved populations when measuring value. Owned C++17/CUDA and Python
 remain the default; studying Wafer or another reference does not adopt it.
 
 [Issue #8](https://github.com/antimeme-ai/BRepGPU/issues/8) tracks this delivery.
-Work proceeds on feat/conservative-discovery with coherent pushed checkpoints
-and commit-preserving PR merges for complete study and product milestones.
+The completed study was merged through PR #9 on feat/conservative-discovery;
+product delivery proceeds on feat/resident-discovery through PR #10. Coherent
+pushed checkpoints and commit-preserving merges retain both histories.
