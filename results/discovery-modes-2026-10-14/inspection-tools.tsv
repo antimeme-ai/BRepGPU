@@ -1,0 +1,3 @@
+component	version	primary_url	archive_bytes	archive_sha256
+cuda_cuobjdump	12.8.90	https://developer.download.nvidia.com/compute/cuda/redist/cuda_cuobjdump/linux-x86_64/cuda_cuobjdump-linux-x86_64-12.8.90-archive.tar.xz	207644	dbf41355a0f7a8aa491c1839a6c6ff8df02cdb6c6eefd66360543616c1b4980f
+cuda_nvdisasm	12.8.90	https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvdisasm/linux-x86_64/cuda_nvdisasm-linux-x86_64-12.8.90-archive.tar.xz	5085152	8ac63f4079c47707ec958af3a97ceeb18194e16827a2766058f5872f6c3412ae

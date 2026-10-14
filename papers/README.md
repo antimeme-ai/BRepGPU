@@ -115,3 +115,14 @@ with a separated height bound. [Bibliography](offgrid-bounds.bib),
 [exact algebra](offgrid-bounds-exact-algebra.tsv) accompany it. This is a proposed
 numerical strengthening; its floating-point implementation and hardware value
 remain unmeasured.
+
+## CUDA mode specialization experiment
+
+The [design](2026-10-14-discovery-cuda-mode-specialization-design.md) and
+[reviewed implementation plan](../docs/CUDA_DISCOVERY_MODE_PLAN.md) led to three
+mode-specific kernels using unchanged shared arithmetic. The
+[completed experiment](../results/discovery-modes-2026-10-14/REPORT.md) retains
+exact/raw-output qualification, compiled resource observations and complete
+matched/reversed measurements. It did not meet the performance criterion;
+the original dynamic kernel remains the product. Candidate source is preserved
+at its recorded commit rather than selected from register counts alone.
