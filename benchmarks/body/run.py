@@ -17,6 +17,8 @@ from brepgpu.body_oracles import qualify_batch
 
 REUSED_PHASES = ("gather_ms", "query_ms", "evaluate_ms", "download_ms", "convert_ms",
                  "normal_scatter_ms", "child_cleanup_ms", "reused_wall_ms", "actual_reused_caller_ms")
+SINGLE_PHASES = ("body_prepare_ms", "request_prepare_ms", "cold_engine_ms", "cold_patchset_ms",
+                 "cold_cleanup_ms", "cold_wall_ms", "initial_qualification_ms")
 
 
 def tsv(path, header, rows):
@@ -151,17 +153,21 @@ def controller(args):
                 metadata = read_pairs(case/"input.tsv")
                 with (case/"raw.tsv").open(newline="") as stream:
                     raw = list(csv.DictReader(stream, delimiter="\t"))
-                phases = {}
+                phases, iterations = {}, {}
                 for row in raw:
                     duration = float(row["milliseconds"])
                     if duration < 0 or not duration < float("inf"):
                         raise ValueError("invalid measured duration")
                     phases.setdefault(row["phase"], []).append(duration)
+                    iterations.setdefault(row["phase"], []).append(int(row["iteration"]))
                     all_rows.append((key, shape, resolution, backend, device, threads, metadata["candidates"],
                                      metadata["evaluated"], row["phase"], row["iteration"], row["milliseconds"]))
+                if set(phases) != set(REUSED_PHASES+SINGLE_PHASES):
+                    raise ValueError("measured phase set differs from the case contract")
                 for phase, values in phases.items():
                     samples = 5 if phase in REUSED_PHASES else 1
-                    if len(values) != samples:
+                    expected_iterations = set(range(5)) if phase in REUSED_PHASES else {-1}
+                    if len(values) != samples or set(iterations[phase]) != expected_iterations:
                         raise ValueError(f"unexpected sample count for {key}:{phase}")
                     summary.append(dict(case=key, shape=shape, resolution=resolution, backend=backend,
                                         device=device, threads=threads, candidates=metadata["candidates"],

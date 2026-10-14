@@ -46,3 +46,11 @@ three-body/adversarial suite and code reviews remain pending at this checkpoint.
 The runnable caller and serial timing driver are implemented; the primary
 reused measurement wraps the returned sample call externally, distinguishing
 it from internal phases ending through child cleanup.
+
+Final fleet qualification: CPU1 and CPU24 each passed all nine direct tests;
+both P100s each passed the same suite under Compute Sanitizer with zero errors
+and zero leaked device allocations. One-shot cleanup injections restore the
+real wrapper methods afterward, leaving no artificial destructor errors. The
+body, sampler, independent oracle and actual-caller source reviews accepted the
+corrected implementation. Raw operational logs remain in ignored context/body;
+public numerical outcomes are in results/body-2026-10-14/qualification.tsv.

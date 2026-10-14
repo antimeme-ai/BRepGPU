@@ -1,0 +1,5 @@
+backend	device	requested_cpu_workers	tests	status	compute_sanitizer_errors	leaked_device_bytes	elapsed_seconds
+cpu	0	1	9	pass	not-run	not-run	2.897
+cpu	0	24	9	pass	not-run	not-run	3.188
+cuda	0	1	9	pass	0	0	4.441
+cuda	1	1	9	pass	0	0	5.526
