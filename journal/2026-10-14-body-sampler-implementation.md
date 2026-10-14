@@ -50,3 +50,8 @@ while the outer child also closes. Attribute/string/note failures cannot replace
 the primary. Shared adapter/native files remain unchanged. Local verification
 is AST/source inspection only; the coordinator owns focused green and the
 subsequent CPU/P100 corpus.
+
+The coordinator reports the final nine-test suite passes on CPU1 and CPU24,
+and all nine tests pass on each P100 under Compute Sanitizer with zero errors
+and leaks, including the BS-C1 actual-wrapper regression. These are fleet
+integration outcomes reported by the coordinator, not local execution.

@@ -42,6 +42,7 @@ def render_samples(batch, path, label):
         '<defs><marker id="normal" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4" fill="#f4c878"/></marker></defs>',
         '<text x="28" y="40" fill="#edf4fc" font-family="sans-serif" font-size="24">BRepGPU · body samples and normals</text>',
         f'<text x="28" y="68" fill="#a9bed0" font-family="sans-serif" font-size="15">{html.escape(label)} · {body.shape} · {len(body.faces)} faces / {len(body.charts)} charts</text>',
+        '<g transform="translate(40,31.5) scale(.9)">',
     ]
     for i, row in enumerate(admitted):
         if i % stride:
@@ -65,6 +66,7 @@ def render_samples(batch, path, label):
         fragments.append(f'<path d="M{x0:.3f},{y0:.3f} L{x1:.3f},{y1:.3f}" stroke="#f4c878" stroke-width="1" marker-end="url(#normal)"/>')
     rejected = batch.count-len(admitted)
     fragments.extend((
+        '</g>',
         f'<text x="28" y="562" fill="#edf4fc" font-family="sans-serif" font-size="16">{len(admitted):,} evaluated / {batch.count:,} candidates · {rejected:,} excluded or invalid</text>',
         '<text x="28" y="590" fill="#a9bed0" font-family="sans-serif" font-size="14">Cyan: planar samples · green: cylindrical wall · gold: oriented normals</text>',
         '<text x="28" y="614" fill="#a9bed0" font-family="sans-serif" font-size="14">Point output, thinned for display. Gray: CPU-owned boundaries. No mesh/chord claim.</text>',

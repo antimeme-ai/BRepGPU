@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 720">
+<rect width="850" height="720" fill="#101923"/>
+<text x="28" y="38" fill="#edf4fc" font-family="sans-serif" font-size="23">BRepGPU · complete reused body sampling</text>
+<text x="28" y="65" fill="#a9bed0" font-family="sans-serif" font-size="14">Resolution 65 · five calls per case · retained body, grid, engine and patch set</text>
+<text x="28" y="118" fill="#edf4fc" font-family="sans-serif" font-size="14">box · CPU1</text>
+<rect x="205" y="103" width="182.218" height="22" rx="3" fill="#f4c878"><title>512.340648–569.341533 ms; evaluated 25350 / 25350</title></rect>
+<path d="M380.775,114 H400.331" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="119" fill="#edf4fc" font-family="sans-serif" font-size="14">531.120 ms</text>
+<text x="28" y="161" fill="#edf4fc" font-family="sans-serif" font-size="14">box · CPU24</text>
+<rect x="205" y="146" width="176.645" height="22" rx="3" fill="#f4c878"><title>496.956744–519.975475 ms; evaluated 25350 / 25350</title></rect>
+<path d="M375.497,157 H383.395" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="162" fill="#edf4fc" font-family="sans-serif" font-size="14">514.876 ms</text>
+<text x="28" y="204" fill="#edf4fc" font-family="sans-serif" font-size="14">box · P100 0</text>
+<rect x="205" y="189" width="177.666" height="22" rx="3" fill="#58c9e7"><title>507.407223–545.649480 ms; evaluated 25350 / 25350</title></rect>
+<path d="M379.083,200 H392.203" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="205" fill="#edf4fc" font-family="sans-serif" font-size="14">517.851 ms</text>
+<text x="28" y="247" fill="#edf4fc" font-family="sans-serif" font-size="14">box · P100 1</text>
+<rect x="205" y="232" width="175.415" height="22" rx="3" fill="#58c9e7"><title>509.918570–832.241587 ms; evaluated 25350 / 25350</title></rect>
+<path d="M379.944,243 H490.528" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="248" fill="#edf4fc" font-family="sans-serif" font-size="14">511.290 ms</text>
+<text x="28" y="290" fill="#edf4fc" font-family="sans-serif" font-size="14">cylinder · CPU1</text>
+<rect x="205" y="275" width="166.696" height="22" rx="3" fill="#f4c878"><title>451.779282–545.202713 ms; evaluated 23318 / 25350</title></rect>
+<path d="M359.998,286 H392.050" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="291" fill="#edf4fc" font-family="sans-serif" font-size="14">485.877 ms</text>
+<text x="28" y="333" fill="#edf4fc" font-family="sans-serif" font-size="14">cylinder · CPU24</text>
+<rect x="205" y="318" width="164.750" height="22" rx="3" fill="#f4c878"><title>467.855611–497.319800 ms; evaluated 23318 / 25350</title></rect>
+<path d="M365.513,329 H375.622" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="334" fill="#edf4fc" font-family="sans-serif" font-size="14">480.205 ms</text>
+<text x="28" y="376" fill="#edf4fc" font-family="sans-serif" font-size="14">cylinder · P100 0</text>
+<rect x="205" y="361" width="169.495" height="22" rx="3" fill="#58c9e7"><title>487.475853–653.539508 ms; evaluated 23318 / 25350</title></rect>
+<path d="M372.245,372 H429.218" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="377" fill="#edf4fc" font-family="sans-serif" font-size="14">494.034 ms</text>
+<text x="28" y="419" fill="#edf4fc" font-family="sans-serif" font-size="14">cylinder · P100 1</text>
+<rect x="205" y="404" width="163.515" height="22" rx="3" fill="#58c9e7"><title>474.729464–501.981283 ms; evaluated 23318 / 25350</title></rect>
+<path d="M367.871,415 H377.221" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="420" fill="#edf4fc" font-family="sans-serif" font-size="14">476.605 ms</text>
+<text x="28" y="462" fill="#edf4fc" font-family="sans-serif" font-size="14">plate · CPU1</text>
+<rect x="205" y="447" width="322.553" height="22" rx="3" fill="#f4c878"><title>809.172623–1253.342211 ms; evaluated 41536 / 42250</title></rect>
+<path d="M482.613,458 H635.000" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="463" fill="#edf4fc" font-family="sans-serif" font-size="14">940.162 ms</text>
+<text x="28" y="505" fill="#edf4fc" font-family="sans-serif" font-size="14">plate · CPU24</text>
+<rect x="205" y="490" width="292.526" height="22" rx="3" fill="#f4c878"><title>831.452636–871.110548 ms; evaluated 41536 / 42250</title></rect>
+<path d="M490.257,501 H503.863" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="506" fill="#edf4fc" font-family="sans-serif" font-size="14">852.639 ms</text>
+<text x="28" y="548" fill="#edf4fc" font-family="sans-serif" font-size="14">plate · P100 0</text>
+<rect x="205" y="533" width="299.780" height="22" rx="3" fill="#58c9e7"><title>842.441522–918.853265 ms; evaluated 41536 / 42250</title></rect>
+<path d="M494.027,544 H520.243" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="549" fill="#edf4fc" font-family="sans-serif" font-size="14">873.782 ms</text>
+<text x="28" y="591" fill="#edf4fc" font-family="sans-serif" font-size="14">plate · P100 1</text>
+<rect x="205" y="576" width="301.099" height="22" rx="3" fill="#58c9e7"><title>835.464662–920.216348 ms; evaluated 41536 / 42250</title></rect>
+<path d="M491.633,587 H520.710" stroke="#edf4fc" stroke-width="2"/>
+<text x="665" y="592" fill="#edf4fc" font-family="sans-serif" font-size="14">877.630 ms</text>
+<text x="28" y="656" fill="#a9bed0" font-family="sans-serif" font-size="14">Includes query packing/upload, native jets, download/provenance, CPU conversion/normals and cleanup.</text>
+<text x="28" y="682" fill="#a9bed0" font-family="sans-serif" font-size="14">Grid/classification preparation, first use, qualification and export are reported separately.</text>
+<text x="28" y="706" fill="#a9bed0" font-family="sans-serif" font-size="14">Shared host; range marks min/max. No mesh, Boolean or GPU topology speedup is implied.</text>
+</svg>
