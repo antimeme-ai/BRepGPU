@@ -12,7 +12,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"examples"))
-from discover_pairs import make_inputs, prepare_inputs, milliseconds, tsv
+from discover_pairs import engine_scope, prepare_inputs, milliseconds, tsv
 from brepgpu import Engine
 from brepgpu.pair_scene import PairDiscovery
 from brepgpu.pair_oracles import qualify_scene, qualify_page
@@ -26,8 +26,8 @@ def worker(args):
     singles = list(setup)
     start = time.perf_counter()
     raw = []
-    with Engine(backend=args.backend,device=args.device,threads=args.threads,
-                library_path=args.library_path,plugin_path=args.plugin_path) as engine:
+    with engine_scope(Engine(backend=args.backend,device=args.device,threads=args.threads,
+                library_path=args.library_path,plugin_path=args.plugin_path)) as engine:
         singles.append(("cold_engine_ms",milliseconds(start)))
         start = time.perf_counter()
         with PairDiscovery(engine,left,right) as discovery:
@@ -105,9 +105,10 @@ def controller(args):
     output.mkdir(parents=True,exist_ok=False)
     private = ROOT/"context"/"pair"/("matrix-"+str(time.time_ns()))
     private.mkdir(parents=True)
-    sources = ["native/runtime.cpp","native/cuda_backend.cu","native/pair_math.hpp",
+    sources = ["CMakeLists.txt","native/runtime.cpp","native/cuda_backend.cu","native/pair_math.hpp",
                "include/brepgpu_pairs.h","native/pair_backend_api.h",
-               "python/brepgpu/__init__.py","python/brepgpu/pair_scene.py",
+               "python/brepgpu/__init__.py","python/brepgpu/body.py","python/brepgpu/pair_scene.py",
+               "native/discovery_cpu.cpp","native/discovery_cpu.h","native/discovery_math.hpp",
                "python/brepgpu/pair_oracles.py","examples/discover_pairs.py","benchmarks/pairs/run.py"]
     # Include owned implementation fragments if the native owner uses them.
     sources.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT/"native").glob("pair*.inc")))

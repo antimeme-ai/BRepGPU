@@ -87,7 +87,12 @@ if(BREPGPU_ENABLE_TEST_HOOKS)
       discovery-diagnostic-alias discovery-restore-failure hierarchy-upload-failure
       discovery-query-allocation-failure discovery-extension-refusal discovery-extension-base
       discovery-extension-size discovery-extension-transient discovery-extension-fatal
-      discovery-extension-fatal-ok discovery-extension-fatal-unsupported discovery-environment)
+      discovery-extension-fatal-ok discovery-extension-fatal-unsupported discovery-environment
+      pair-parent-close pair-admission-close pair-index-publication-oom-fatal-cleanup
+      pair-page-publication-oom-fatal-cleanup pair-mask-download-fatal pair-index-download-fatal
+      evaluation-poison-pairs pair-upload-failure pair-restore-failure pair-extension-refusal
+      pair-extension-base pair-extension-size pair-extension-transient pair-extension-fatal
+      pair-extension-fatal-ok pair-extension-fatal-unsupported pair-alias-extents pair-environment)
     add_test(NAME runtime-${scenario} COMMAND brepgpu_runtime_faults ${scenario} $<TARGET_FILE:brepgpu_fault_backend>)
     set_tests_properties(runtime-${scenario} PROPERTIES TIMEOUT 30)
   endforeach()

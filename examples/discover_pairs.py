@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Actual body-chart broad-phase caller; all output is owned TSV/binary/SVG."""
 import argparse
+from contextlib import contextmanager
 import csv
 import math
 from pathlib import Path
@@ -15,6 +16,26 @@ from brepgpu.pair_oracles import qualify_scene, qualify_page
 
 def milliseconds(start):
     return 1000*(time.perf_counter()-start)
+
+
+@contextmanager
+def engine_scope(engine):
+    """Preserve a caller's primary failure across engine cleanup, including interrupts."""
+    try:
+        yield engine
+    except BaseException as primary:
+        try:
+            engine.close()
+        except BaseException as cleanup:
+            try:
+                primary.brepgpu_cleanup_error = cleanup
+                if hasattr(primary,"add_note"):
+                    primary.add_note("Pair caller engine cleanup also failed: "+str(cleanup))
+            except BaseException:
+                pass
+        raise
+    else:
+        engine.close()
 
 
 def tsv(path, header, rows):
@@ -49,7 +70,7 @@ def prepare_inputs(size, library_path=None):
     left_bodies, right_bodies = make_inputs(size)
     body_ms = milliseconds(start)
     start = time.perf_counter()
-    with Engine(backend="cpu", threads=1, library_path=library_path) as cpu:
+    with engine_scope(Engine(backend="cpu", threads=1, library_path=library_path)) as cpu:
         left = prepare_scene(cpu, left_bodies)
         right = prepare_scene(cpu, right_bodies)
     return left, right, (("body_prepare_ms", body_ms),
@@ -73,7 +94,7 @@ def render(page, path):
              '<text x="28" y="40" fill="#edf4fc" font-size="25">BRepGPU · conservative surface pairs</text>',
              '<text x="28" y="72" fill="#a9bed0" font-size="15">Common-world carrier bounds → resident pair mask → typed chart shortlist</text>',
              f'<text x="28" y="107" fill="#58c9e7" font-size="19">{len(survivors):,} survivors / {page.info.count:,} examined pairs</text>',
-             f'<text x="28" y="134" fill="#a9bed0" font-size="14">{nleft} left charts × {nright} right charts · full-domain flag {bool(page.info.flags & 2)}</text>',
+             f'<text x="28" y="134" fill="#a9bed0" font-size="14">{nleft} × {nright} charts · full-domain {bool(page.info.flags & 2)} · drawing first {shown_left} × {shown_right}</text>',
              f'<rect x="{x0}" y="{y0}" width="{shown_right*pitch}" height="{shown_left*pitch}" fill="#223344"/>']
     for flat, ls, rs in survivors:
         li, ri = divmod(flat,nright)
@@ -96,7 +117,8 @@ def render(page, path):
             parts.append(f'<path d="M{x:.3f},{y0} V{y0+shown_left*pitch:.3f}" stroke="#101923" stroke-width="1.5"/>')
             right_groups.append(f'{source.snapshot.body_id}:{source.snapshot.shape}')
             previous = source.snapshot.body_id
-    parts.extend((f'<text x="28" y="672" fill="#a9bed0" font-size="13">Columns: right bodies {", ".join(right_groups)}</text>',
+    group_label = ", ".join(right_groups[:6]) + (" … full identities in sources.tsv" if len(right_groups)>6 else "")
+    parts.extend((f'<text x="28" y="672" fill="#a9bed0" font-size="13">Columns: right bodies {group_label}</text>',
                   '<text x="28" y="699" fill="#edf4fc" font-size="15">Colored cells survive closed-box culling. Dark cells are excluded carrier pairs.</text>',
                   '<text x="28" y="725" fill="#a9bed0" font-size="14">Touching stays. Hole and cap false positives stay. Survivors do not establish intersections.</text>',
                   '<text x="28" y="747" fill="#a9bed0" font-size="12">CPU bounds/world conversion and shortlist decoding · native CPU or P100 mask · no topology upload</text>',
@@ -135,8 +157,8 @@ def main(args):
     left,right,setup = prepare_inputs(args.size,args.library_path)
     phases = list(setup)
     start = time.perf_counter()
-    with Engine(backend=args.backend,device=args.device,threads=args.threads,profile=args.profile,
-                library_path=args.library_path,plugin_path=args.plugin_path) as engine:
+    with engine_scope(Engine(backend=args.backend,device=args.device,threads=args.threads,profile=args.profile,
+                library_path=args.library_path,plugin_path=args.plugin_path)) as engine:
         phases.append(("cold_engine_ms",milliseconds(start)))
         start = time.perf_counter()
         with PairDiscovery(engine,left,right) as discovery:
