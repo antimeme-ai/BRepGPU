@@ -22,8 +22,10 @@ close. Closing a context prevents further operations, as in existing APIs.
 `prepare_scene(cpu_engine, bodies, face_ids=None)` builds an owned `PairScene`
 from the existing canonical factory snapshots. Require a CPU engine and exact
 `BodySnapshot` values; reject duplicate bodies and duplicate/unknown selected
-face IDs. Copy bounded input iterables before allocation; cap admitted charts
-at 65,536. Selection preserves body order and canonical chart order. Empty
+face keys. `face_ids` contains `(body_id, face_id)` pairs, never bare IDs:
+entity IDs are typed and local to a body. Bound body and selected-key iterables
+at 65,536 entries each while copying; cap admitted charts at 65,536 before
+control/hierarchy allocation. Selection preserves body order and canonical chart order. Empty
 body/face selection is valid. Each source record retains its exact immutable
 snapshot, source patch slot, typed face ID and chart ID. Scene construction is
 factory-only; external arbitrary scene records are unsupported.
@@ -97,8 +99,9 @@ diagnostics. Other creator failures zero a valid disjoint handle destination.
 Borrowed memory is stable for the synchronous call. Backend copy failure
 invalidates host destinations; failure cannot publish an all-zero success page.
 
-Optional CUDA v4 table has base-v1 pointer plus five callbacks: index upload,
-index close, page discovery, page close and word download. Its static factory
+Optional CUDA v4 table has base-v1 pointer plus six callbacks: index upload,
+index close, actual resident index download, page discovery, page close and word
+download (72 bytes including version/size). Its static factory
 matches the exact existing base pointer and exact table size; no v2/v3 coupling.
 Lazy missing/refused v4 is stable unsupported for pair operations only. Fatal
 and transient failures are not cached as capability refusal. Reuse existing
