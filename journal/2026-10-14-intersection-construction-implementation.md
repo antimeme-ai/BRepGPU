@@ -35,3 +35,9 @@ retain active source-boundary annotations on their singleton domains.
 Sampler and oracle owners received the actual API and review targets. Further
 qualification, independent code review and corrections remain pending; one
 circle green is not a claim of full supported-family qualification.
+
+Independent runtime source review correctly narrowed the FP claim: integer
+quantization itself is exact, but CPython float decoding/extraction is qualified
+under round-to-nearest with gradual underflow. Corrected the module/quantization
+comments to match that declared environment. No arbitrary DAZ/FTZ support or
+new FP guard/decoder is introduced in this pass.

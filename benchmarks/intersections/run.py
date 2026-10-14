@@ -11,11 +11,16 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
+SETUP_PHASES = frozenset(("body_preparation_ms","exact_construction_ms","request_preparation_ms",
+    "cold_engine_ms","geometry_setup_ms","cold_first_sample_ms","cold_to_first_batch_ms",
+    "initial_independent_qualification_ms","sampler_cleanup_ms","engine_cleanup_ms"))
+REUSED_PHASES = frozenset(("gather_ms","query_ms","evaluate_ms","download_ms","convert_ms",
+    "world_scatter_ms","grade_ms","child_cleanup_ms","reused_wall_ms","actual_sample_caller_ms"))
 sys.path.insert(0,str(ROOT/"examples"))
 from intersect_faces import make_inputs, engine_scope, milliseconds, tsv
 from brepgpu import Engine
 from brepgpu.intersection_sampling import prepare_samples, IntersectionSampler
-from brepgpu.intersection_oracles import qualify_result, recipe_counts, qualify_batch
+from brepgpu.intersection_oracles import recipe_counts, qualify_batch
 
 
 def worker(args):
@@ -44,9 +49,8 @@ def worker(args):
             setup.append(("cold_first_sample_ms",milliseconds(start)))
             setup.append(("cold_to_first_batch_ms",milliseconds(cold)))
             start = time.perf_counter()
-            quality = qualify_result(result)
+            quality = qualify_batch(first,request)
             quality.update(recipe_counts(result,args.recipe))
-            quality.update(qualify_batch(first))
             setup.append(("initial_independent_qualification_ms",milliseconds(start)))
             sampler.sample(request)  # One excluded warmup, no event profile.
             for iteration in range(5):
@@ -108,13 +112,21 @@ def controller(args):
     private.mkdir(parents=True)
     sources = ("python/brepgpu/body.py","python/brepgpu/intersections.py",
         "python/brepgpu/intersection_sampling.py","python/brepgpu/intersection_oracles.py",
-        "python/brepgpu/__init__.py","examples/intersect_faces.py","benchmarks/intersections/run.py")
+        "python/brepgpu/__init__.py","python/brepgpu/body_oracles.py",
+        "python/brepgpu/pair_scene.py","python/brepgpu/pair_oracles.py",
+        "examples/discover_pairs.py","examples/intersect_faces.py","benchmarks/intersections/run.py")
+    source_paths = tuple(ROOT/name for name in sources)
+    initial_sources = tuple(hashlib.sha256(path.read_bytes()).hexdigest() for path in source_paths)
     tsv(output/"sources.tsv",("source","sha256"),
-        ((name,hashlib.sha256((ROOT/name).read_bytes()).hexdigest()) for name in sources))
+        zip(sources,initial_sources))
     core = args.library_path.resolve()
     plugin = (args.plugin_path or core.parent/"libbrepgpu_cuda.so").resolve()
-    tsv(output/"binaries.tsv",("binary","sha256"),
-        ((name,hashlib.sha256(path.read_bytes()).hexdigest()) for name,path in (("core",core),("cuda_plugin",plugin))))
+    initial_binaries = tuple(hashlib.sha256(path.read_bytes()).hexdigest() for path in (core,plugin))
+    tsv(output/"binaries.tsv",("binary","sha256"),zip(("core","cuda_plugin"),initial_binaries))
+    def unchanged():
+        if initial_sources != tuple(hashlib.sha256(path.read_bytes()).hexdigest() for path in source_paths) \
+                or initial_binaries != tuple(hashlib.sha256(path.read_bytes()).hexdigest() for path in (core,plugin)):
+            raise RuntimeError("measured source or binary changed during campaign")
     identity_fields = ("recipe","resolution","backend","device","threads","components","pieces","candidate_samples","native_rows")
     raw,summary = [],[]
     for recipe in ("circle","clipped"):
@@ -125,27 +137,52 @@ def controller(args):
                 command = [sys.executable,str(Path(__file__).resolve()),"--worker","--recipe",recipe,
                     "--resolution",str(resolution),"--backend",backend,"--device",str(device),"--threads",str(threads),
                     "--library-path",str(core),"--plugin-path",str(plugin),"--output-directory",str(case)]
+                unchanged()
                 completed = subprocess.run(command,capture_output=True,text=True,check=False)
+                unchanged()
                 (private/(key+"-stdout.txt")).write_text(completed.stdout)
                 (private/(key+"-stderr.txt")).write_text(completed.stderr)
                 if completed.returncode:
                     raise RuntimeError(f"consumer case {key} failed; private logs retained")
                 with (case/"input.tsv").open(newline="") as stream:
-                    fields = {row["field"]:row["value"] for row in csv.DictReader(stream,delimiter="\t")}
+                    inputs = list(csv.DictReader(stream,delimiter="\t"))
+                fields = {row["field"]:row["value"] for row in inputs}
+                if len(fields) != len(inputs):
+                    raise RuntimeError("duplicate input field: "+key)
+                expected_inputs = dict(recipe=recipe,resolution=str(resolution),backend=backend,
+                    device=str(device),threads=str(threads),components=str(1 if recipe=="circle" else 4),
+                    pieces="4",candidate_samples=str(4*resolution),native_rows=str(8*resolution),
+                    repeats="5",profile="0",cuda_geometry_upload_bytes=str(976 if backend=="cuda" else 0),
+                    cuda_query_upload_bytes=str(160*resolution if backend=="cuda" else 0),
+                    cuda_position_status_download_bytes=str(224*resolution if backend=="cuda" else 0),
+                    host_source_descriptor_bytes="680",host_source_slot_uv_bytes=str(160*resolution),topology_upload_bytes="0")
+                if fields != expected_inputs:
+                    raise RuntimeError("case metadata differs from requested qualified scope: "+key)
                 identity = {name:fields[name] for name in identity_fields}
                 with (case/"raw.tsv").open(newline="") as stream:
                     measurements = list(csv.DictReader(stream,delimiter="\t"))
-                phases = {}
+                phases,seen = {},set()
                 for row in measurements:
+                    iteration = int(row["iteration"])
+                    permitted = SETUP_PHASES if iteration == -1 else REUSED_PHASES
+                    pair = (row["phase"],iteration)
+                    if iteration not in (-1,0,1,2,3,4) or row["phase"] not in permitted or pair in seen:
+                        raise RuntimeError("duplicate or unexpected phase/iteration: "+key)
+                    seen.add(pair)
                     duration = float(row["milliseconds"])
                     if not 0 <= duration < float("inf"):
                         raise RuntimeError("nonfinite or negative measurement")
                     raw.append({**identity,**row})
                     phases.setdefault(row["phase"],[]).append(duration)
+                expected_rows = {(phase,-1) for phase in SETUP_PHASES} | \
+                                {(phase,i) for phase in REUSED_PHASES for i in range(5)}
+                if seen != expected_rows:
+                    raise RuntimeError("incomplete measurement phases: "+key)
                 for phase,values in phases.items():
                     summary.append({**identity,"phase":phase,"samples":len(values),
                         "median_ms":statistics.median(values),"min_ms":min(values),"max_ms":max(values)})
                 print(completed.stdout.strip(),flush=True)
+    unchanged()
     tsv(output/"raw.tsv",(*identity_fields,"phase","iteration","milliseconds"),
         ((r[name] for name in (*identity_fields,"phase","iteration","milliseconds")) for r in raw))
     tsv(output/"summary.tsv",(*identity_fields,"phase","samples","median_ms","min_ms","max_ms"),

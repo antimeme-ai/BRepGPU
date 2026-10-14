@@ -2,6 +2,7 @@
 """Complete supported face sections and a two-sided CPU/CUDA sample consumer."""
 import argparse
 import csv
+import hashlib
 from pathlib import Path
 import struct
 import time
@@ -11,7 +12,7 @@ from brepgpu.body import Frame, make_body
 from brepgpu.pair_scene import PairDiscovery, prepare_scene
 from brepgpu.pair_oracles import qualify_scene, qualify_page
 from brepgpu.intersection_sampling import IntersectionSampler, prepare_samples
-from brepgpu.intersection_oracles import qualify_result, recipe_counts, qualify_batch
+from brepgpu.intersection_oracles import recipe_counts, qualify_batch
 from discover_pairs import engine_scope, milliseconds, tsv
 
 
@@ -25,6 +26,19 @@ def make_inputs(recipe):
 
 def scalar(value):
     return str(value.a), str(value.b), str(value.d)
+
+
+def manifest_values(core,plugin):
+    root = Path(__file__).resolve().parents[1]
+    sources = ("python/brepgpu/__init__.py","python/brepgpu/body.py","python/brepgpu/body_oracles.py",
+        "python/brepgpu/intersections.py","python/brepgpu/intersection_sampling.py",
+        "python/brepgpu/intersection_oracles.py","python/brepgpu/pair_scene.py",
+        "python/brepgpu/pair_oracles.py","examples/discover_pairs.py","examples/intersect_faces.py")
+    source_rows = tuple((name,hashlib.sha256((root/name).read_bytes()).hexdigest()) for name in sources)
+    plugin = plugin or core.parent/"libbrepgpu_cuda.so"
+    binary_rows = tuple((name,hashlib.sha256(path.read_bytes()).hexdigest())
+                        for name,path in (("core",core),("cuda_plugin",plugin)))
+    return source_rows,binary_rows
 
 
 def export_result(result, output):
@@ -64,7 +78,7 @@ def export_result(result, output):
     tsv(output/"controls.tsv",("side","original_slot","control_slot","ax_hex","ay_hex","az_hex","w_hex"),controls)
 
 
-def export_batch(batch, output):
+def export_batch(batch, request, output):
     rows = []
     for i,r in enumerate(batch.rows):
         refs = tuple(v for coordinate in r.reference_position for v in scalar(coordinate))
@@ -82,6 +96,15 @@ def export_batch(batch, output):
         (output/filename).write_bytes(getattr(batch,field))
     tsv(output/"native-sources.tsv",("dense_slot","side","original_slot"),
         ((i,*source) for i,source in enumerate(batch.dense_sources)))
+    tsv(output/"request.tsv",("index","piece_id","component_id","span_id","location",
+        "parameter_a","parameter_b","parameter_d",
+        "left_u_a","left_u_b","left_u_d","left_v_a","left_v_b","left_v_d",
+        "right_u_a","right_u_b","right_u_d","right_v_a","right_v_b","right_v_d",
+        "reference_x_a","reference_x_b","reference_x_d","reference_y_a","reference_y_b","reference_y_d",
+        "reference_z_a","reference_z_b","reference_z_d"),
+        ((i,c.piece_id,c.component_id,c.span_id,c.location,*scalar(c.parameter),
+          *(v for coordinate in (*c.left_uv,*c.right_uv,*c.reference_position) for v in scalar(coordinate)))
+         for i,c in enumerate(request.candidates)))
 
 
 def render(batch, output, recipe, backend, device):
@@ -136,6 +159,9 @@ def main(args):
     whole = time.perf_counter()
     phases = []
     start = time.perf_counter()
+    identities = manifest_values(args.library_path,args.plugin_path)
+    phases.append(("identity_read_ms",milliseconds(start)))
+    start = time.perf_counter()
     plane,wall = make_inputs(args.recipe)
     phases.append(("body_preparation_ms",milliseconds(start)))
     start = time.perf_counter()
@@ -166,9 +192,8 @@ def main(args):
         result = plane.intersect_faces(1,wall,3)
         phases.append(("exact_construction_ms",milliseconds(start)))
         start = time.perf_counter()
-        quality.update(qualify_result(result))
         quality.update(recipe_counts(result,args.recipe))
-        phases.append(("result_qualification_ms",milliseconds(start)))
+        phases.append(("literal_recipe_qualification_ms",milliseconds(start)))
         start = time.perf_counter()
         request = prepare_samples(result,args.resolution)
         phases.append(("request_preparation_ms",milliseconds(start)))
@@ -180,7 +205,7 @@ def main(args):
             phases.append(("actual_sample_caller_ms",milliseconds(start)))
             phases.extend(batch.timings)
             start = time.perf_counter()
-            quality.update(qualify_batch(batch))
+            quality.update(qualify_batch(batch,request))
             phases.append(("sample_qualification_ms",milliseconds(start)))
             cleanup = time.perf_counter()
         phases.append(("sampler_cleanup_ms",milliseconds(cleanup)))
@@ -188,7 +213,7 @@ def main(args):
     phases.append(("engine_cleanup_ms",milliseconds(cleanup)))
     start = time.perf_counter()
     export_result(result,output)
-    export_batch(batch,output)
+    export_batch(batch,request,output)
     (output/"pair-mask.u32le").write_bytes(struct.pack(f"<{len(page.words)}I",*page.words))
     tsv(output/"pair-page.tsv",("field","value"),
         ((name,getattr(page.info,name)) for name in
@@ -197,9 +222,6 @@ def main(args):
         ((side,i,*map(float.hex,box)) for side,boxes in (("left",actual_left),("right",actual_right))
          for i,box in enumerate(boxes)))
     render(batch,output,args.recipe,args.backend,args.device)
-    phases.append(("export_ms",milliseconds(start)))
-    phases.append(("actual_whole_caller_ms",milliseconds(whole)))
-    tsv(output/"timings.tsv",("phase","milliseconds"),phases)
     tsv(output/"quality.tsv",("metric","value"),quality.items())
     tsv(output/"input.tsv",("field","value"),(("recipe",args.recipe),("resolution",args.resolution),
         ("backend",args.backend),("device",args.device),("threads",args.threads),
@@ -212,6 +234,14 @@ def main(args):
         ("cuda_pair_mask_download_bytes",4 if args.backend=="cuda" else 0),
         ("cuda_pair_bounds_download_bytes",240 if args.backend=="cuda" else 0),
         ("topology_upload_bytes",0)))
+    if identities != manifest_values(args.library_path,args.plugin_path):
+        raise RuntimeError("caller sources or binaries changed during the operation")
+    tsv(output/"code.tsv",("source","sha256"),identities[0])
+    tsv(output/"binaries.tsv",("binary","sha256"),identities[1])
+    phases.append(("export_ms",milliseconds(start)))
+    # Final timing-file write/console publication are outside this measured span.
+    phases.append(("actual_whole_caller_ms",milliseconds(whole)))
+    tsv(output/"timings.tsv",("phase","milliseconds"),phases)
     print(f"{args.recipe} {args.backend}:{args.device}: {len(result.components)} components, "
           f"{len(result.pieces)} occurrences, {batch.count} samples, {2*batch.count} native rows")
 
