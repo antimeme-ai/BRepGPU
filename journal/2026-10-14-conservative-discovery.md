@@ -11,3 +11,14 @@
   primary-source identification, pinned acquisition and actual-code study to
   the resident-execution lane, while the other bounds studies continue.
   No dependency/tool adoption or external-script execution is inferred.
+- Acquired and read the full Aila/Laine 2009 traversal paper and 2012
+  Fermi/Kepler addendum. Recorded primary URLs, intact PDF sizes/hashes and
+  architecture-dependent scheduling lessons; no measured P100 inference.
+- Integrated completed numerical, oracle, runtime and Wafer/GPU MODE studies.
+  Appended the central reference-restoration manifest, bibliography/read-scope
+  links and acquisition gaps. Independent source review confirmed the tutorial
+  shared-window, changed-input timing and duplicate multi-device work findings.
+- Synthesized the recommended next design: CPU-built outward subpatch hierarchy,
+  resident named-patch candidate discovery, exact-input witness enclosure and
+  squared-distance brackets with complete domain accounting through caps.
+  Design and plan reviews still precede implementation; no product code changed.
