@@ -15,6 +15,14 @@ are the existing closed rectangle, disk and rectangle-minus-open-disk. The
 wall is its closed finite-height cylindrical surface with four rational charts.
 Coordinates are interpreted as exact binary64 rationals, including subnormals.
 
+The body-facing convenience operation is
+`snapshot.intersect_faces(face_id, other_snapshot, other_face_id)`. It constructs
+the two FaceRefs and delegates to the same complete operation. Actual callers
+can use existing snapshots without rebuilding their source selection. Its
+first direct red calls the missing method on healthy existing body/evaluator
+objects, then expects the complete known circle; no placeholder implementation
+or manufactured import failure is needed.
+
 The operation returns every connected component of the two CLOSED face domains:
 circles, clipped arcs, generator segments and isolated points. A tangent
 generator remains a segment if its finite domain has positive height. An
@@ -57,6 +65,27 @@ constraints, and incidences. Boundary-coincident constraints are recorded on
 pieces. Canonical CCW circle/increasing-height line direction is not a coedge
 orientation. Boolean arrangements and topology mutation are later work.
 
+Concrete records: result.left/right FaceRef; components(id, kind, closed,
+tangent, piece_ids); pieces(id, component_id, span_id, kind, left_slot, right_slot,
+lo, hi, spatial_map, left_map, right_map); events(id, constraints, joins,
+incidences). Slots refer to ORIGINAL snapshot charts. ExactMap exposes ascending
+power numerator tuples and its own common positive denominator tuple, with
+Scalar coefficients, and evaluates exact values. Spatial/UV dimensions are
+3/2/2; these three maps need not share a denominator. Piece.position/left_uv/right_uv
+evaluate these maps on its common parameter domain. Point pieces have lo==hi
+and a single 'point' incidence, never a self-loop or fabricated edge. Wall
+quadrant comes from its original chart; atlas lift is quadrant+native u.
+IntersectionSet construction is factory-only. Explicit APIs name geometry
+and representational subdivisions; they do not imply persistent B-rep topology.
+
+span_id groups overlapping chart occurrences of one geometric span. Physical
+graph degree and component closedness use each grouped span once, not each raw
+piece occurrence. A seam/cardinal generator's two occurrences share span_id and
+the same endpoint events; they remain one open segment, never a two-edge cycle.
+Isolated point occurrences share a point span and contribute no graph edge.
+Ordinary horizontal interval pieces each have one span; joins connect spans.
+Event incidences remain occurrence-specific so both source lifts survive.
+
 ## Horizontal planes
 
 For plane z=h and wall center(cx,cy), radius R and height[z0,z1], h outside the
@@ -80,14 +109,17 @@ constraint admits the whole curve on that boundary and is recorded as such.
 
 Enumerate all roots in [0,1], add 0/1, exactly sort/deduplicate. Check each event
 itself and one exact rational witness in every root-free open interval. Signs
-are constant on these intervals because all roots were enumerated. Merge
-adjacent admitted intervals in a chart; retain admitted events with no admitted
+are constant on these intervals because all roots were enumerated. Keep pieces
+split at every admitted constraint root, including a trim tangency inside an
+otherwise connected arc. Components join these pieces without losing the
+named degree-two trim event. Retain admitted events with no admitted
 neighbor as isolated points. This is polynomial cell decomposition, not a
 sampling heuristic. Coincident roots from different constraints share an event.
 
 Connect pieces at known atlas joins. a=4 and a=0 are one physical seam event
 with distinct UV occurrences. A full circle is one closed component with four
-pieces. An arc crossing the seam is one ordered component, not two arcs. Trim
+pieces absent additional trim events, and more when those events require
+subdivision. An arc crossing the seam is one ordered component, not two arcs. Trim
 events and chart joins are exact symbolic incidences, never proximity welding.
 
 ## Vertical planes
@@ -103,6 +135,11 @@ those occurrences represent one physical component. Each occurrence has its
 own coupled spatial and two UV maps, with common height parameter. Segment
 endpoints are shared exact events across occurrences. Source wall orientation
 (inner plate wall versus outer cylinder wall) remains source metadata.
+
+Boundary constraints include both source domains: a horizontal circle at wall
+z0/z1 is on that entire axial boundary; a generator on a planar lateral bound
+is boundary-coincident; clipped height endpoints name every active planar/wall
+constraint. Chart joins alone are representation subdivisions, not trim edges.
 
 ## Two-sided consumer
 
@@ -121,13 +158,26 @@ Interior samples use rational witnesses inside an inward dyadic interval, so
 evaluating maps needs at most one radical field. Failure to find an interior
 window within the sampling precision cap raises SamplingPrecisionError and
 does not damage the already complete exact result. Point occurrences contribute
-one row. Cap total candidates so 2*N fits the existing query resource contract.
+one output candidate and two native rows. Resolution is 2..4097 per non-point
+piece; the total candidate cap is 2^19. Inward-window refinement is capped at
+4096 binary subdivisions; exceeding it raises SamplingPrecisionError before
+native work. Prepared candidates are only exact endpoints and rational interior
+values, avoiding mixed radical fields. Generic map arithmetic may reject a
+mixed-field parameter; the sampler does not generate one. Requests are
+factory-only and copied into recursively immutable owned values.
 
 Componentwise world error target is 2^-36 against the exact curve position and
 between the two source positions. Existing local order-zero target is 2^-40;
 maximum Frame scale is four. The bound includes UV rounding, affine conversion
 and both-side evaluation; the independent oracle must attack this derivation,
-especially near tangency and tiny intervals. Construction does not use it.
+especially near tangency and tiny intervals. Circle XY component derivatives
+are <=2R<=2, planar world spans <=6 and height spans <=4. Nearest UV error on
+[0,1] is <=2^-54; affine conversion slack <=2^-48 and two scaled local position
+budgets total 2^-37, leaving room under 2^-36. The sampler directly checks finite
+actual outputs, each position against the exact curve and their pairwise
+component differences before publication. SamplingArithmeticError fails the
+whole batch if a grade exceeds the bound; empirical evaluator qualification
+does not substitute for these direct model checks. Construction uses no bound.
 
 All child resources close on BaseException, preserving an active primary error
 and attaching cleanup failures. A cleanup failure on success fails the whole
