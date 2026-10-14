@@ -1,0 +1,5 @@
+event_id	constraints	joins	incidences
+0		right:atlas:0/4	0:lo,3:hi
+1		right:atlas:1	0:hi,1:lo
+2		right:atlas:2	1:hi,2:lo
+3		right:atlas:3	2:hi,3:lo
