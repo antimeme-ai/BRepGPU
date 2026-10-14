@@ -271,6 +271,43 @@ class Engine(_Resource):
         if not isinstance(queries,QuerySet):raise BgError(BG_INVALID_HANDLE,message="expected query set")
         return _create_resource(self,Result,"bg1_evaluate",queries.handle,_integer(order,32,"order"))
 
+    def _pairs_ready(self):
+        if getattr(self,"_pairs_configured",False):return
+        try:_declare_pairs(self._lib)
+        except AttributeError as error:raise BgError(BG_UNSUPPORTED,message="native core has no pair extension") from error
+        info=PairAbiInfo()
+        code=self._lib.bg4_pair_abi_info(C.byref(info),C.sizeof(info))
+        names=("abi_version","struct_size","box_size","options_size","index_info_size",
+               "page_info_size","diagnostic_size","double_size","integer_size","handle_size")
+        expected=(4,40,C.sizeof(PairBox),C.sizeof(PairOptionsDesc),C.sizeof(PairIndexInfo),C.sizeof(PairPageInfo),C.sizeof(Diagnostic),8,4,8)
+        if code or tuple(getattr(info,name) for name in names)!=expected:
+            raise BgError(BG_UNSUPPORTED,message="native pair ABI does not match this adapter")
+        self._pairs_configured=True
+    def create_pair_index(self,boxes):
+        if not self.handle:raise BgError(BG_INVALID_HANDLE,message="engine is closed")
+        self._pairs_ready()
+        records=[]
+        for index,row in enumerate(boxes):
+            if index>=BG_PAIR_MAX_INDEX_COUNT:raise ValueError("pair index exceeds item cap")
+            values=[]
+            for axis,value in enumerate(row):
+                if axis>=6:raise ValueError("pair box must contain six values")
+                values.append(float(value))
+            if len(values)!=6:raise ValueError("pair box must contain six values")
+            records.append(tuple(values))
+        payload=(PairBox*len(records))()
+        for i,row in enumerate(records):payload[i].lower[:]=row[:3];payload[i].upper[:]=row[3:]
+        return _create_resource(self,PairIndex,"bg4_create_pair_index",self.handle,
+                                payload if records else None,len(records),C.sizeof(payload))
+    def discover_pairs(self,left,right,start=0,max_pairs=1048576):
+        if not isinstance(left,PairIndex) or not isinstance(right,PairIndex):
+            raise BgError(BG_INVALID_HANDLE,message="expected two pair indexes")
+        self._check(left);self._check(right);self._pairs_ready()
+        desc=PairOptionsDesc();desc.start=_integer(start,64,"pair start")
+        desc.max_pairs=_integer(max_pairs,32,"max pairs")
+        if not 1<=desc.max_pairs<=BG_PAIR_MAX_PAIRS:raise ValueError("max pairs outside 1..1048576")
+        return _create_resource(self,PairPage,"bg4_discover_pairs",left.handle,right.handle,C.byref(desc),C.sizeof(desc))
+
     def _projection_ready(self):
         if getattr(self,"_projection_configured",False):return
         try:_declare_projection(self._lib)
@@ -613,3 +650,57 @@ class DiscoveryBatch:
         failures=[(i,int(status)) for i,status in enumerate(self.statuses) if status!=BG_DISC_GAP_SATISFIED or not(self.flags[i]&BG_DISC_GAP)]
         if failures:raise QueryError(failures)
         return self
+
+
+BG_PAIR_ABI_VERSION=4
+BG_PAIR_MAX_INDEX_COUNT=65536
+BG_PAIR_MAX_PAIRS=1048576
+BG_PAIR_REACHED_END,BG_PAIR_FULL_DOMAIN,BG_PAIR_PROFILED=1,2,4
+class _PairVersioned(C.Structure):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.abi_version=BG_PAIR_ABI_VERSION;self.struct_size=C.sizeof(type(self))
+class PairBox(C.Structure):
+    _fields_=[("lower",C.c_double*3),("upper",C.c_double*3)]
+class PairOptionsDesc(_PairVersioned):
+    _fields_=[("abi_version",C.c_uint32),("struct_size",C.c_uint32),("start",C.c_uint64),
+              ("max_pairs",C.c_uint32),("flags",C.c_uint32)]
+class PairIndexInfo(_PairVersioned):
+    _fields_=[("abi_version",C.c_uint32),("struct_size",C.c_uint32),("count",C.c_uint64),
+              ("backend",C.c_uint32),("reserved",C.c_uint32)]
+class PairPageInfo(_PairVersioned):
+    _fields_=[("abi_version",C.c_uint32),("struct_size",C.c_uint32)]
+    _fields_ += [(name,C.c_uint64) for name in ("total_pairs","start","count","next_start","left_count","right_count","word_count")]
+    _fields_ += [("backend",C.c_uint32),("flags",C.c_uint32),("kernel_ms",C.c_double)]
+class PairAbiInfo(_PairVersioned):
+    _fields_=[(name,C.c_uint32) for name in ("abi_version","struct_size","box_size","options_size",
+             "index_info_size","page_info_size","diagnostic_size","double_size","integer_size","handle_size")]
+def _declare_pairs(lib):
+    H,U,D=C.c_uint64,C.c_uint64,C.POINTER(Diagnostic)
+    B,I=C.POINTER(PairBox),C.POINTER(C.c_uint32)
+    specs={
+        "bg4_pair_abi_info":[C.POINTER(PairAbiInfo),U],
+        "bg4_create_pair_index":[H,B,U,U,C.POINTER(H),D,U],
+        "bg4_pair_index_info":[H,C.POINTER(PairIndexInfo),U,D,U],
+        "bg4_pair_index_download":[H,B,U,U,D,U],
+        "bg4_discover_pairs":[H,H,C.POINTER(PairOptionsDesc),U,C.POINTER(H),D,U],
+        "bg4_pair_page_info":[H,C.POINTER(PairPageInfo),U,D,U],
+        "bg4_pair_page_download":[H,I,U,U,D,U],
+    }
+    for name,args in specs.items():function=getattr(lib,name);function.argtypes=args;function.restype=C.c_uint32
+class PairIndex(_Resource):
+    def info(self):
+        out=PairIndexInfo();_invoke(self._engine._lib,"bg4_pair_index_info",self.handle,C.byref(out),C.sizeof(out));return out
+    def download(self):
+        info=self.info();data=(PairBox*info.count)()
+        _invoke(self._engine._lib,"bg4_pair_index_download",self.handle,data if info.count else None,info.count,C.sizeof(data))
+        return tuple(tuple(box.lower)+tuple(box.upper) for box in data)
+class PairPage(_Resource):
+    def info(self):
+        out=PairPageInfo();_invoke(self._engine._lib,"bg4_pair_page_info",self.handle,C.byref(out),C.sizeof(out));return out
+    def download(self):
+        info=self.info();words=array("I",[0])*info.word_count
+        _invoke(self._engine._lib,"bg4_pair_page_download",self.handle,_pointer(words,C.c_uint32),len(words),len(words)*4)
+        return PairPageBatch(info,words)
+class PairPageBatch:
+    def __init__(self,info,words):self.info,self.words=info,words
