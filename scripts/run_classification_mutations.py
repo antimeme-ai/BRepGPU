@@ -5,6 +5,7 @@ import csv
 import hashlib
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -68,7 +69,9 @@ def main(args):
             elapsed = time.perf_counter()-started
             (tree/(phase+'.log')).write_text(run.stdout)
             if phase == 'mutant':
-                if run.returncode == 0 or 'FAIL:' not in run.stdout or 'AssertionError' not in run.stdout or 'ERROR:' in run.stdout:
+                if (run.returncode != 1 or 'FAIL:' not in run.stdout or
+                        'AssertionError' not in run.stdout or 'ERROR:' in run.stdout or
+                        not re.search(r'^FAILED \(failures=[1-9][0-9]*\)$', run.stdout, re.MULTILINE)):
                     print(run.stdout[-3500:], flush=True)
                     raise AssertionError('mutation lacks a direct geometry assertion kill: '+name)
                 outcome = 'ASSERTION_KILLED'

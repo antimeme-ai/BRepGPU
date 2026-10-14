@@ -1,5 +1,34 @@
 # BRepGPU research
 
+## Exact material and finite-face classification
+
+The bounded [CPU design](../docs/CLASSIFICATION_DESIGN.md) and
+[whole-unit plan](../docs/CLASSIFICATION_PLAN.md) follow three independent
+[semantics](2026-10-14-classification-semantics-study.md),
+[arithmetic/runtime](2026-10-14-classification-runtime-study.md) and
+[oracle](2026-10-14-classification-oracles-study.md) studies. Primary inputs
+include Shewchuk/Yap exact geometric computation, official CGAL closed versus
+regularized set semantics, and pinned OCCT classifier source. Reference study
+selects no dependency. [Core bibliography](classification.bib),
+[runtime bibliography](classification-runtime.bib),
+[PDF catalog](classification-runtime-sources.tsv), and
+[semantics bibliography](classification-semantics.bib) retain sources/read scope.
+
+Three design and three plan reviews precede the recorded healthy existing body
+caller and absent classification-entry red. Reviews retain
+[complete geometry/identity/oracle code](2026-10-14-classification-code-semantics-review.md),
+[actual caller and costs](2026-10-14-classification-caller-review.md) and
+[focused mutants](2026-10-14-classification-mutation-review.md).
+[Saved artifact review](2026-10-14-classification-artifact-review.md) checks
+36 exact points, eight complete contact loci and actual SVG content.
+[Performance review](2026-10-14-classification-performance-review.md) accepts
+all twelve cases and explicit outside-wall qualification costs in the
+[published results](../results/classification-2026-10-14/REPORT.md).
+[Return-pass notes](2026-10-14-classification-round2-notes.md) keep broader
+algebraic/curved contact and accelerator placement after the broad pass.
+The operator's separate [Python-role investigation](2026-10-14-python-role-return-pass.md)
+also waits until the breadth sweep is finished.
+
 ## GPU edge-use adjacency beachhead
 
 The [owned CSR/reader API](../docs/ADJACENCY.md) follows independent
