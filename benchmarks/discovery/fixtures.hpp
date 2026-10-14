@@ -14,6 +14,15 @@ struct Fixture {
     bg_patch_desc patch{};
     std::vector<double> controls,targets,truth;
     std::vector<uint32_t> slots;
+    std::array<long double,3> point(long double s,long double t) const {
+        if(corpus=="cylinder"||corpus=="axis"||corpus=="axis_midpoint"||corpus=="capped") {
+            const long double d=1+s*s;return {(1-s*s)/d,2*s/d,t};
+        }
+        if(corpus=="parabolic"||corpus=="twins") {const long double a=2*s-1;return {a,t,a*a};}
+        if(corpus=="diagonal")return {s,s,t};
+        if(corpus=="diagonal3")return {s-.5L,t-.5L,1-s-t};
+        return {s,t,0};
+    }
     explicit Fixture(uint64_t n,const std::string& name):corpus(name),targets(3*n),truth(n),slots(n,0) {
         patch.abi_version=BG_ABI_VERSION;patch.struct_size=sizeof patch;
         patch.flags=BG_PATCH_LINEAGE|BG_PATCH_FRAME;patch.body_id=1;

@@ -31,6 +31,14 @@ struct Stats {
     double sum_gap=0,max_gap=0;
     std::map<uint32_t,uint64_t> visit_histogram,refinement_histogram;
 };
+bool exact_gap_within(double upper,double lower,double tolerance) {
+    // Knuth two-sum with b=-lower: sum+error is the exact binary-input
+    // difference under the admitted RN/gradual-underflow environment. Distinct
+    // representable sum/tolerance order is decisive; equality uses residual.
+    const double b=-lower,sum=upper+b,virtual_b=sum-upper;
+    const double error=(upper-(sum-virtual_b))+(b-virtual_b);
+    return sum<tolerance||(sum==tolerance&&error<=0);
+}
 Stats consume(const Fixture& f,const Outputs& o,const bg_discovery_options& options) {
     const uint64_t n=f.slots.size();Stats s;
     for(uint64_t i=0;i<n;++i) {
@@ -45,6 +53,26 @@ Stats consume(const Fixture& f,const Outputs& o,const bg_discovery_options& opti
         if(l<0||l>truth||truth>u)throw std::runtime_error("bracket misses exact analytic minimum at row "+std::to_string(i));
         const bool gap=(o.flags[i]&BG_DISC_GAP)!=0;
         if(gap!=(o.statuses[i]==BG_DISC_GAP_SATISFIED))throw std::runtime_error("gap status/flag mismatch");
+        if(gap&&!exact_gap_within(u,l,options.tolerance_squared))throw std::runtime_error("false reported squared-gap success");
+        // Expanded analytic maps are independent of both product evaluators.
+        // These checks detect wrong UV/XYZ/distance consumption. Their model
+        // arithmetic allowance does not certify the original-UV upper: exact
+        // Fraction qualification/caller checks that separate inequality.
+        const auto point=f.point(o.fields[i],o.fields[n+i]);
+        constexpr long double point_allowance=0x1p-40L;
+        long double candidate_distance=0,descriptive_allowance=0;
+        for(unsigned axis=0;axis<3;++axis){
+            if(std::abs(point[axis]-static_cast<long double>(o.fields[(2+axis)*n+i]))>point_allowance)
+                throw std::runtime_error("display point disagrees with analytic returned UV");
+            const long double residual=point[axis]-f.targets[3*i+axis];candidate_distance+=residual*residual;
+            descriptive_allowance+=2*std::abs(residual)*point_allowance+point_allowance*point_allowance;
+        }
+        const long double model_allowance=512*std::numeric_limits<long double>::epsilon()*std::max(1.L,candidate_distance);
+        if(candidate_distance>static_cast<long double>(u)+model_allowance)
+            throw std::runtime_error("upper contradicts analytic candidate beyond model arithmetic allowance");
+        descriptive_allowance+=64*std::numeric_limits<double>::epsilon()*std::max(1.L,candidate_distance)+model_allowance;
+        if(std::abs(candidate_distance-static_cast<long double>(o.fields[5*n+i]))>descriptive_allowance)
+            throw std::runtime_error("descriptive distance disagrees with analytic candidate");
         if((o.flags[i]&BG_DISC_VISIT_LIMIT)&&(o.flags[i]&BG_DISC_COVERAGE_COMPLETE))throw std::runtime_error("false completed traversal");
         if(!o.visits[i]||o.visits[i]>options.max_visits||o.refinements[i]>options.max_refinements
             ||o.evaluations[i]>1+833*o.refinements[i]||o.pruned[i]>o.visits[i])throw std::runtime_error("work cap/counter mismatch");
