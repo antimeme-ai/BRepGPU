@@ -4,6 +4,7 @@ Body classification, gathering, frame conversion, normals and scatter are host
 work. The borrowed Engine evaluates the admitted untrimmed carrier parameters.
 """
 from array import array
+from contextlib import contextmanager
 from dataclasses import dataclass
 import math
 import operator
@@ -27,6 +28,29 @@ def _snapshot(value):
 
 def _elapsed(start):
     return 1000. * (time.perf_counter() - start)
+
+
+@contextmanager
+def _child_scope(resource):
+    """Consume a child without letting cleanup replace an active failure."""
+    try:
+        yield resource
+    except BaseException as primary:
+        try:
+            resource.close()
+        except BaseException as cleanup:
+            try:
+                primary.brepgpu_cleanup_error = cleanup
+                if hasattr(primary, "add_note"):
+                    primary.add_note("Body sampling child cleanup also failed: " + str(cleanup))
+            except BaseException:
+                # Attribute, formatting and note failures are secondary too.
+                pass
+        raise
+    else:
+        # A cleanup failure without an active primary is the operation failure.
+        # The enclosing child scope still closes its own resource.
+        resource.close()
 
 
 @dataclass(frozen=True)
@@ -306,10 +330,10 @@ class BodySampler:
                                  for value in (request.candidates[i].u, request.candidates[i].v)))
         gather_ms = _elapsed(start)
         start = time.perf_counter()
-        with self._engine.create_query_set(patches, slots, parameters) as queries:
+        with _child_scope(self._engine.create_query_set(patches, slots, parameters)) as queries:
             query_ms = _elapsed(start)
             start = time.perf_counter()
-            with self._engine.evaluate(queries, order=1) as result:
+            with _child_scope(self._engine.evaluate(queries, order=1)) as result:
                 evaluate_ms = _elapsed(start)
                 start = time.perf_counter()
                 local = result.download()
