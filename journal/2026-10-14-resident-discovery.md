@@ -55,3 +55,8 @@
   is a genuine missing-seam red, not a claimed product retention defect. The
   runtime owner then extended the existing model's hierarchy/query/result and
   factory paths, preserving its earlier failure machinery.
+- Independent first qualification also passed on both explicitly selected
+  P100s: each processed the same 309 rows and checked all 11,415 actual exported
+  nodes/cache enclosures with zero violations. Full public/raw ABI, guarded
+  modeled failures, preserved-binary compatibility, sanitizer and independent
+  code review remain required before declaring the operation delivered.

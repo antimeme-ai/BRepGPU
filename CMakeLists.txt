@@ -6,7 +6,7 @@ option(BREPGPU_ENABLE_SANITIZERS "Enable native host ASan/UBSan" OFF)
 option(BREPGPU_ENABLE_TEST_HOOKS "Build guarded runtime fault/admission tooling" OFF)
 find_package(Threads REQUIRED)
 
-add_library(brepgpu SHARED native/runtime.cpp native/evaluator_cpu.cpp native/projection_cpu.cpp)
+add_library(brepgpu SHARED native/runtime.cpp native/evaluator_cpu.cpp native/projection_cpu.cpp native/discovery_cpu.cpp)
 target_include_directories(brepgpu PUBLIC include PRIVATE native)
 target_compile_features(brepgpu PUBLIC cxx_std_17)
 target_compile_options(brepgpu PRIVATE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off)
@@ -22,6 +22,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/projection/benchmark.cpp")
   target_link_libraries(brepgpu_projection_benchmark PRIVATE brepgpu)
   target_compile_options(brepgpu_projection_benchmark PRIVATE -fno-fast-math -ffp-contract=off)
   set_target_properties(brepgpu_projection_benchmark PROPERTIES BUILD_RPATH "$ORIGIN")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/discovery/benchmark.cpp")
+  add_executable(brepgpu_discovery_benchmark benchmarks/discovery/benchmark.cpp)
+  target_link_libraries(brepgpu_discovery_benchmark PRIVATE brepgpu)
+  target_compile_options(brepgpu_discovery_benchmark PRIVATE -fno-fast-math -ffp-contract=off)
+  set_target_properties(brepgpu_discovery_benchmark PROPERTIES BUILD_RPATH "$ORIGIN")
 endif()
 
 if(BREPGPU_ENABLE_CUDA)
@@ -62,11 +69,25 @@ if(BREPGPU_ENABLE_TEST_HOOKS)
   target_link_libraries(brepgpu_projection_mathcheck PRIVATE brepgpu)
   target_compile_options(brepgpu_projection_mathcheck PRIVATE -fno-fast-math -ffp-contract=off)
   add_test(NAME projection-native-math COMMAND brepgpu_projection_mathcheck)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/native/discovery_check.cpp")
+    add_executable(brepgpu_discovery_mathcheck native/discovery_check.cpp)
+    target_include_directories(brepgpu_discovery_mathcheck PRIVATE native)
+    target_link_libraries(brepgpu_discovery_mathcheck PRIVATE brepgpu)
+    target_compile_options(brepgpu_discovery_mathcheck PRIVATE -fno-fast-math -ffp-contract=off)
+    add_test(NAME discovery-native-math COMMAND brepgpu_discovery_mathcheck)
+  endif()
   foreach(scenario admission-close publication-oom publication-oom-fatal-cleanup cleanup-fatal download-fatal restore-failure
       projection-admission-close projection-parent-close projection-publication-oom-fatal-cleanup
       projection-download-fatal projection-diagnostic-alias evaluation-poison-projection projection-restore-failure projection-extension-refusal
       projection-extension-base projection-extension-size projection-extension-transient
-      projection-extension-fatal projection-extension-fatal-ok projection-extension-fatal-unsupported)
+      projection-extension-fatal projection-extension-fatal-ok projection-extension-fatal-unsupported
+      discovery-parent-close discovery-admission-close discovery-publication-oom-fatal-cleanup
+      hierarchy-publication-oom-fatal-cleanup discovery-query-publication-oom-fatal-cleanup
+      discovery-download-fatal hierarchy-download-fatal hierarchy-bound-download-fatal
+      discovery-diagnostic-alias discovery-restore-failure hierarchy-upload-failure
+      discovery-query-allocation-failure discovery-extension-refusal discovery-extension-base
+      discovery-extension-size discovery-extension-transient discovery-extension-fatal
+      discovery-extension-fatal-ok discovery-extension-fatal-unsupported discovery-environment)
     add_test(NAME runtime-${scenario} COMMAND brepgpu_runtime_faults ${scenario} $<TARGET_FILE:brepgpu_fault_backend>)
     set_tests_properties(runtime-${scenario} PROPERTIES TIMEOUT 30)
   endforeach()
