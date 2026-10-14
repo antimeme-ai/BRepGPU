@@ -48,3 +48,13 @@ skip for CUDA behavior) and104 qualification cases. Re-read integrated work
 histograms, local condition wording and attempt-all BaseException caller
 cleanup; C1–C3 resolved, no remaining source-review blocker. Syntax checks pass;
 final supported-host runs remain with the integrator.
+
+The integrator reported final current-source green: 43 public cases on each
+P100 without skips; CPU passing with 2 explicit device-only skips; 104 projection
+qualifier cases on all 3 backends with 0 violations; both matching CUDA memory
+checks with 0 errors/leaked bytes/allocations. Native 21-case CTest passed Release
+and ASan; CPU 24-worker, 4096-request six-corpus benchmark passed ASan. Constructor,
+post-native-return interrupt and diagnostic-alias corrections passed their
+direct target cases. Appended these outcomes to the caller review disposition.
+Caller/benchmark integration milestone is `b4cc5f6`. This independent unit is
+complete; compatibility/performance matrix/publication remain integrator-owned.
