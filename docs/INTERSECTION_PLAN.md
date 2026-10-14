@@ -110,6 +110,13 @@ their CPU preparation belongs in request prep, not GPU evaluation. Result/
 request/source identity checks happen before publication. Initial independent
 qualification remains outside reused benchmark timing.
 
+Batch also retains actual source_descriptors (136*P bytes), native_slots
+(8*N candidate bytes), native_uv (32*N bytes) and dense_sources tuples
+(side0or1, original_slot). These are immutable owned copies of the existing
+downloaded source buffers after checks, enabling independent source qualification
+and concrete exports. Empty no-query batches have all four artifacts empty;
+they do not fabricate native provenance. No new native call or ABI is needed.
+
 ## Publication and return pass
 
 Publish design/reviews, direct red, construction, consumer/oracles, qualification
