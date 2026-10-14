@@ -348,5 +348,51 @@ class IntersectionTests(unittest.TestCase):
         self.assertEqual(len(sampling.prepare_samples(circle,3).candidates),12)
 
 
+    def test_sampling_consumes_generators_points_and_framed_faces(self):
+        from brepgpu import Engine
+        from brepgpu.body import Frame,make_body
+        from brepgpu.intersection_sampling import prepare_samples,IntersectionSampler
+        from brepgpu.intersection_oracles import qualify_batch,equal,Value
+        wall=make_body("cylinder")
+        # Literal complete counts are distinct from original-source map and
+        # actual native consumption grades below. No constructor supplies truth.
+        cases=(
+            ("irrational_x",make_body("box",Frame((-.625,0.,0.),1.)),5,wall,(2,2,2,4),"segment",False,True),
+            ("irrational_y",make_body("box",Frame((0.,-.625,0.),1.)),4,wall,(2,2,2,4),"segment",False,False),
+            ("cardinal",make_body("box",Frame((-.75,0.,0.),1.)),5,wall,(2,4,2,4),"segment",False,False),
+            ("carrier_tangent",make_body("box",Frame((-.5,0.,0.),1.)),5,wall,(1,2,1,2),"segment",True,False),
+            ("height_point",make_body("box",Frame((-.5,0.,1.),1.)),5,wall,(1,2,1,1),"point",True,False),
+            ("trim_point",make_body("cylinder",Frame((0.,0.,-.5),1.)),1,
+             make_body("cylinder",Frame((.5,0.,0.),1.)),(1,2,1,1),"point",False,False),
+            ("max_frame",make_body("box",Frame((13.5,16.,16.),4.)),5,
+             make_body("cylinder",Frame((16.,16.,16.),4.)),(2,2,2,4),"segment",False,True))
+        with Engine(**engine_arguments()) as engine:
+            for name,plane,face,cylinder,counts,kind,tangent,reverse in cases:
+                for swapped in ((False,True) if reverse else (False,)):
+                    with self.subTest(case=name,swapped=swapped):
+                        result=cylinder.intersect_faces(3,plane,face) if swapped else plane.intersect_faces(face,cylinder,3)
+                        self.assertEqual((len(result.components),len(result.pieces),
+                                          len({p.span_id for p in result.pieces}),len(result.events)),counts)
+                        self.assertTrue(all(c.kind==kind and c.tangent==tangent and not c.closed for c in result.components))
+                        if name in ("irrational_x","irrational_y"):
+                            varying_axis=1 if name=="irrational_x" else 0
+                            actual=[p.spatial_map.numerators[varying_axis][0] for p in result.pieces]
+                            self.assertTrue(any(equal(v,Value(0,Fraction(1,8),3)) for v in actual))
+                            self.assertTrue(any(equal(v,Value(0,Fraction(-1,8),3)) for v in actual))
+                        elif name=="max_frame":
+                            actual=[p.spatial_map.numerators[1][0] for p in result.pieces]
+                            self.assertTrue(any(equal(v,Value(16,Fraction(1,2),3)) for v in actual))
+                            self.assertTrue(any(equal(v,Value(16,Fraction(-1,2),3)) for v in actual))
+                        request=prepare_samples(result,3)
+                        with IntersectionSampler(engine,result) as sampler:batch=sampler.sample(request)
+                        metrics=qualify_batch(batch,request)
+                        expected_candidates=counts[1]*(1 if kind=="point" else 3)
+                        self.assertEqual((metrics["count"],metrics["evaluated_count"]),
+                                         (expected_candidates,2*expected_candidates))
+                        self.assertTrue(all(row.left_status==row.right_status==0 for row in batch.rows))
+        # Large transformed actual metadata/model remains readable after close.
+        qualify_batch(batch,request)
+
+
 if __name__ == "__main__":
     unittest.main()

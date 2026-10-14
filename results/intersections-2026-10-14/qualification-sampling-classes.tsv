@@ -1,0 +1,5 @@
+case	backend	device	threads	suites	tests	skipped	suite_seconds	process_seconds	device_errors	device_leaked_bytes	status
+cpu1-sampling-classes	cpu	0	1	test_intersections.IntersectionTests.test_sampling_consumes_generators_points_and_framed_faces	1	0	1.357	1.4472319369670004	not-run	not-run	PASS
+cpu24-sampling-classes	cpu	0	24	test_intersections.IntersectionTests.test_sampling_consumes_generators_points_and_framed_faces	1	0	1.054	1.1296827590558678	not-run	not-run	PASS
+p100-0-sampling-classes	cuda	0	1	test_intersections.IntersectionTests.test_sampling_consumes_generators_points_and_framed_faces	1	0	1.368	1.5514675079612061	0	0	PASS
+p100-1-sampling-classes	cuda	1	1	test_intersections.IntersectionTests.test_sampling_consumes_generators_points_and_framed_faces	1	0	1.857	2.0237937630154192	0	0	PASS

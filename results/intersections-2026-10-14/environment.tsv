@@ -1,0 +1,11 @@
+field	value
+python	3.12.3
+system	Linux
+machine	x86_64
+libc	glibc 2.39
+cpu	2 x Xeon E5-2697 v2; 24 physical / 48 logical
+gpu	2 x Tesla P100 PCIe 16 GB; sm_60
+cuda_toolchain	12.8.1; preserved pair-release
+round_mode_code	0
+subnormal_multiply_bits	0100000000000000
+shared_host	yes

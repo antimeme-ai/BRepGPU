@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Four direct production-geometry mutants, isolated on the Linux fleet."""
+"""Five direct production-geometry mutants, isolated on the Linux fleet."""
 import argparse
 import csv
 import hashlib

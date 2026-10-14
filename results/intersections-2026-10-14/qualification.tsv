@@ -1,0 +1,5 @@
+case	backend	device	threads	suites	tests	skipped	suite_seconds	process_seconds	device_errors	device_leaked_bytes	status
+cpu1-new-and-regression	cpu	0	1	test_intersections,test_body,test_pairs	38	1	6.503	6.641453819000162	not-run	not-run	PASS
+cpu24-intersections	cpu	0	24	test_intersections	16	0	3.284	3.3621180689660832	not-run	not-run	PASS
+p100-0-intersections	cuda	0	1	test_intersections	16	0	4.834	4.9525007179472595	0	0	PASS
+p100-1-intersections	cuda	1	1	test_intersections	16	0	7.377	7.546626343973912	0	0	PASS
