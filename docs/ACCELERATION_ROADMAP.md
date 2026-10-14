@@ -43,18 +43,21 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Predicates, contacts and region classification | Analytic crossing/touching/disjoint fixtures and a planar overlap case with declared coincidence/contact semantics | Correct classification against exact analytic truth; ambiguity remains explicit | General tangent contacts, near-coincidence and adaptive predicate machinery |
 | Face arrangements and topology construction | Split a planar trimmed face with supported intersection arcs; construct ordered regions and shared event identities on CPU | Region membership, holes, loop orientation and shared incidence, without coordinate-only welding | General curved arrangements and more complex event graphs |
 | Solid operations and history | One supported box-minus-through-cylinder Boolean, assembled on CPU using owned events/arrangements | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
-| Feature construction | An owned extrusion and revolution of supported profiles; separate narrow circular fillet and analytic offset fixtures | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
+| Feature construction | Construct an extrusion and revolution of supported profiles; separately construct a declared circular fillet and analytic offset | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
 | GPU topology and residency | Count/scan/fill of one established packed adjacency construction, with an actual downstream reader | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
 
 Each row is a theme, not one oversized implementation assignment. Rows naming
 several operations are delivered as separate conceptual units. In particular,
 extrusion/revolution do not imply fillet or offset support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
+Numerical geometry and single-patch bounds are delivered. The remaining
+beachheads are proposed; each needs its own researched design, reviewed plan,
+implementation and qualification.
 
 ## First pass across the themes
 
-Begin with the body snapshot and sampling/normal caller, then the smallest
-curve/trim/chart operation it needs. Advance conservative pair discovery and
+Begin with the body snapshot, its required curve/trim/chart semantics and the
+sampling/normal caller as one integrated design unit. Advance conservative pair discovery and
 the narrow reference adapter independently when their input contracts are
 ready. Meshing, analytic intersection and feature fixtures can then use the
 same owned geometry without waiting for a general importer or Boolean engine.
@@ -92,7 +95,7 @@ flowchart LR
     B --> P[Conservative pair discovery]
     B --> F[Feature construction]
     B --> C[Contact and region classification]
-    R[Narrow reference adapter] --> B
+    R[Narrow reference adapter] -. Optional qualified input .-> B
     P --> I[Supported intersection components]
     I --> A[Face arrangements]
     C --> A
