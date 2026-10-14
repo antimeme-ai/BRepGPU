@@ -29,3 +29,24 @@ output remains. Both scopes must be labeled explicitly in results.
 Local checks are source/AST only; no product import/run, native execution,
 tests/builds, fleet work, Git mutation or new agent. Independent tests and actual
 CPU/CUDA integration/qualification remain with their owners.
+
+Integration reported the initial actual box mixed-admitted/invalid-row test is
+green after the recorded missing-module red. This is the first fleet checkpoint,
+not a claim that the complete body corpus or CPU/CUDA matrix has been qualified.
+
+Independent sampler review found BS-C1: the shared native resource context
+manager catches Exception only and adds unguarded notes. A child cleanup
+KeyboardInterrupt/SystemExit could therefore replace an active sampling error.
+The coordinator executed the actual-wrapper direct regression before this fix:
+chosen ArithmeticError from download was replaced by result KeyboardInterrupt,
+then query SystemExit, even though both native handles were consumed. The test
+failed its expected primary-error assertion on the fleet.
+
+Implemented a small sampler-owned child scope for the query and result only.
+It catches BaseException during close, attaches cleanup information inside a
+guard and re-raises the exact active primary. Nested unwinding still attempts
+both closes; without an active primary, the first cleanup failure propagates
+while the outer child also closes. Attribute/string/note failures cannot replace
+the primary. Shared adapter/native files remain unchanged. Local verification
+is AST/source inspection only; the coordinator owns focused green and the
+subsequent CPU/P100 corpus.

@@ -283,6 +283,16 @@ def qualify_snapshot(snapshot):
             and all(isinstance(name, str) and isinstance(payload, bytes) for name, payload in snapshot.packed_tables),
             "packed tables are not owned immutable bytes")
     qualify_tables(snapshot)
+    if snapshot.shape == "cylinder":
+        vertices = ((F(1, 4), F(0), -F(1, 2)), (F(1, 4), F(0), F(1, 2)))
+    else:
+        corners = ((-F(3, 4), -F(3, 4)), (F(3, 4), -F(3, 4)),
+                   (F(3, 4), F(3, 4)), (-F(3, 4), F(3, 4)))
+        vertices = tuple((x, y, z) for z in (-F(1, 2), F(1, 2)) for x, y in corners)
+        if snapshot.shape == "plate":
+            vertices += ((F(1, 4), F(0), -F(1, 2)), (F(1, 4), F(0), F(1, 2)))
+    require(tuple(tuple(map(exact, v.position)) for v in snapshot.vertices) == vertices,
+            "canonical vertex positions differ")
     for slot, chart in enumerate(snapshot.charts):
         require(0 <= chart.face_slot < len(snapshot.faces), "chart face outside table")
         face = snapshot.faces[chart.face_slot]
@@ -290,6 +300,19 @@ def qualify_snapshot(snapshot):
         patch = chart.patch
         require(isinstance(patch.controls, tuple), "patch controls are not frozen")
         require((patch.degree_u, patch.degree_v) == ((2, 1) if face.name == "wall" else (1, 1)), "wrong carrier degree")
+        if face.name == "wall":
+            expected_controls = []
+            for ax, ay, weight in ((F(1, 4), F(0), F(1)),
+                                   (F(1, 4), F(1, 4), F(1)),
+                                   (F(0), F(1, 2), F(2))):
+                ax, ay = rotate(ax, ay, chart.quadrant)
+                for z in (-F(1, 2), F(1, 2)):
+                    expected_controls.extend((ax, ay, z*weight, weight))
+        else:
+            expected_controls = [coordinate for u in (0, 1) for v in (0, 1)
+                                 for coordinate in (*body_geometry(snapshot, slot, u, v)[0], F(1))]
+        require(tuple(map(exact, patch.controls)) == tuple(expected_controls),
+                "actual homogeneous carrier net differs from the canonical analytic surface")
         require(patch.origin == snapshot.frame.origin and patch.scale == snapshot.frame.scale, "patch frame differs")
         lineage = patch.lineage
         require(lineage is not None and (lineage.body_id, lineage.entity_kind, lineage.entity_id,
@@ -343,6 +366,10 @@ def qualify_snapshot(snapshot):
             starts = [uv_endpoint(c.uv_map, F(0) if c.orientation == 1 else F(1)) for c in uses]
             ends = [uv_endpoint(c.uv_map, F(1) if c.orientation == 1 else F(0)) for c in uses]
             require(all(end == starts[(i+1) % len(starts)] for i, end in enumerate(ends)), "ordered UV loop does not close")
+            if not loop.hole and expected_kind in ("rectangle", "rectangle_hole", "cylinder"):
+                width = 4 if expected_kind == "cylinder" else 1
+                require(len(uses) == 4 and set(starts) == {(0, 0), (width, 0), (width, 1), (0, 1)},
+                        "outer loop does not bound the declared trim domain")
             if len(uses) == 1 and uses[0].uv_map.kind == "circle_plane":
                 winding = uses[0].orientation
             else:
@@ -391,7 +418,9 @@ def qualify_batch(batch):
             error = abs(exact(actual)-expected); max_normal = max(max_normal, error)
             require(error <= NORMAL_LIMIT, "oriented unit normal exceeds analytic target")
     require(batch.evaluated_count == stats["accepted"], "evaluated/gather count differs")
-    require(isinstance(batch.timings, tuple) and len({name for name, _ in batch.timings}) == len(batch.timings)
+    phases = ("gather_ms", "query_ms", "evaluate_ms", "download_ms", "convert_ms",
+              "normal_scatter_ms", "child_cleanup_ms", "reused_wall_ms")
+    require(isinstance(batch.timings, tuple) and tuple(name for name, _ in batch.timings) == phases
             and all(isinstance(name, str) and math.isfinite(ms) and ms >= 0 for name, ms in batch.timings), "invalid immutable timing records")
     stats["max_position_error"], stats["max_normal_error"] = float(max_position), float(max_normal)
     return stats
