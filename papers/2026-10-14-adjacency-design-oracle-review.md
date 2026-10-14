@@ -83,5 +83,9 @@ specific sites after the relevant code exists.
   general session manager, editing/history or deferred bulk integration is
   needed to establish this beachhead.
 
-Disposition pending root's design amendments. No current product defect is
-alleged; these are missing qualification and benchmark requirements.
+Disposition: accepted after root added complete literal signed-use/source and
+loop/UV provenance checks with independent binary decoding; an explicitly
+measured globally shuffled assembly; and actual CUDA builder/reader mutants.
+The implementation plan supplies concrete matched sizes and trial scopes.
+No current product defect is alleged; these were missing qualification and
+benchmark requirements.
