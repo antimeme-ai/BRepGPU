@@ -11,8 +11,9 @@ Body snapshots, part-level sampling/normals and conservative surface-pair
 discovery are delivered, along with complete analytic face intersections and
 their coupled spatial/two-UV representations. GPU edge-use adjacency and its
 mate/face-neighbor reader are delivered too. Exact material classification and
-finite rectangular-face contacts are delivered on CPU. Arrangements, trim-aware
-meshing and narrow interchange remain broad-pass themes.
+finite rectangular-face contacts and complete bounded planar arrangements are
+delivered on CPU. Trim-aware meshing and narrow interchange remain broad-pass
+themes alongside solid operations and features.
 [GPU setup/residency and integration notes](docs/RETURN_PASS.md) are queued
 after the broad-pass big rocks.
 That return pass also investigates whether Python belongs in the delivered
@@ -55,12 +56,31 @@ BRepGPU evaluator.
 [Analytic face intersections](docs/INTERSECTIONS.md) ·
 [GPU adjacency and mate reader](docs/ADJACENCY.md) ·
 [Exact material and face contact](docs/CLASSIFICATION.md) ·
+[Exact planar arrangements](docs/ARRANGEMENTS.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Planar arrangements: exact regions, holes and shared boundaries
+
+Rectangular faces now split into complete regions using axial cuts and separated
+interior circle sections. Every region has ordered outer/hole loops, shared
+opposite edge uses, exact source parameters and closed-region lookup. Each
+circle stays one closed edge while retaining all four original source pieces.
+
+![Actual region loops and source-derived geometry for five complete arrangements](results/arrangements-2026-10-14/caller/arrangements.svg)
+
+The large CPU case emits **1,088 bounded regions and 4,352 opposed uses**.
+Median construction takes **471ms**; construction plus every graph/curve/region
+reader takes **2.40s**. Independent checking is a separate **10.57s** cost.
+Qualification passed **72 tests** with one existing GPU-only skip and **eight
+assertion-killed mutants**. Full exact graphs and source maps are exported for
+all five recipes. GPU construction, general circle overlay and Boolean assembly
+remain separate work.
+[API](docs/ARRANGEMENTS.md) · [Full results and scope](results/arrangements-2026-10-14/REPORT.md)
 
 ## Exact material regions and finite-face contact
 

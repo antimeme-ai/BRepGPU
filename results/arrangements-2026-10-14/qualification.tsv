@@ -1,0 +1,4 @@
+case	placement	tests	skips	test_seconds	result
+healthy-exact-sources-new-entry-red	CPU exact	1	0	0.064	EXPECTED_ABSENT_ENTRY_ATTRIBUTE_ERROR
+first-arrangement-entry-green	CPU exact	1	0	0.084	PASS
+arrangement-and-prior-classifier-body-pair-section-adjacency	CPU1 and exact CPU	72	1	12.881	PASS

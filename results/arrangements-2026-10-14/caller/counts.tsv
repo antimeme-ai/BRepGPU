@@ -1,0 +1,6 @@
+case	vertices	edges	uses	loops	regions	circles	location_queries	edge_reader_queries
+bare	4	4	8	2	2	0	9	12
+single	5	5	10	4	3	1	11	21
+mixed	12	15	30	11	8	3	23	63
+many-holes	68	68	136	130	66	64	137	588
+grid32	1153	2176	4352	1153	1089	64	2245	6912

@@ -88,3 +88,40 @@ negative use orientation. Every healthy baseline and retry passed. Controller
 review accepts exact unittest status1/completed failures-only summaries with
 no import/crash/error credit, no bytecode reuse and unchanged five protected
 native library hashes. Serial full callers/costs follow final code review.
+
+## Serial caller completion
+
+All five actual recipes completed one first call, one warmup and five repeats:
+35 independently qualified arrangements,25 repeated complete walls. Large32×32
+plus64circles actually emits1,088bounded regions,1,153vertices,2,176edges and
+4,352opposed uses. Median construction471.046ms; complete construction+allreaders
+2,400.587ms [2,327.950,2,605.276], mostly1,866.881ms exact geometry consumption.
+Independent complete checking is10,570.279ms median outside that wall. The64-hole
+case constructs397.822ms and consumes complete2,091.441ms; check9,786.943ms.
+Complete preparation890.424/922.280ms includes source sections870.681/898.272ms.
+Eleven source pins remain unchanged across the serial campaign; no owned sync/
+test/mutant worker overlapped. Full final graph/source/control/map/event/region/
+query tables and source-reader SVG are saved for all five recipes (about2.1MB).
+Read back raw/statistics and literal counts. Independent saved-artifact and
+performance/semantic result review follow; no new optimization work starts.
+
+## Final independent artifacts and publication
+
+Saved artifact review accepted all five full graphs:1,242vertices,2,268edges,
+4,536uses,1,300loops,1,168regions,132circles and2,425locations. All13,200source
+coefficient rows match original circle/target/wall formulas. Independent saved
+coefficient-to-pixel evaluation reproduces all2,268SVGedge paths and1,163region
+paths including every hole. Performance review recomputed35rows/25repeats and
+30phase summaries; all eleven source pins match, all eight mutation triples
+have healthy0/assertion1/retry0 statuses, and five protected hashes agree.
+
+All three final result/artifact/cost reviews accept the report with no findings.
+Clarified mathematical closed cell = closed rectangle minus OPEN disk interiors;
+closed disk regions share their circle boundaries. This is documentation of the
+implemented/tested semantics, not a source change or material-removal operation.
+Updated README source-derived graphics, API/design/plan/results, roadmap/theme
+status, topology documentation, active instructions, research/issue indexes and
+round-two notes. Next uncovered work is trim-aware meshing/narrow interchange,
+then solid/features; generalized arrangements and native/GPU readers/Python-role
+investigation stay after the breadth sweep. Publish and merge preserving all
+meaningful feature commits/branch, then sync clean main to the owned fleet.
