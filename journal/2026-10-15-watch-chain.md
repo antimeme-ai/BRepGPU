@@ -18,3 +18,16 @@ cap-hole meshing by a guaranteed visible bridge plus exact ear clipping. Wrote
 WATCH_CHAIN_DESIGN for adversarial review. The watch is an original schematic
 assembly of actual modeled parts, with nonfunctional teeth/spring/kinematics
 limits explicit and no anisotropic presentation deformation.
+
+All design perspectives accepted. Clarified composed root dispositions include
+deleted roots and complete original profile/cutter inventory; intrinsic t stays
+separate from traversal. Wrote bounded implementation plan. Geometry owns full
+cut/source/map/history/mesh invariant; independent oracle owns actual truth/tests;
+visual owner owns real parts/render/caller. No source widening for aesthetics.
+
+All three plan reviews accepted. Oracle captured genuine missing-feature_bore
+red with two initial actual-chain tests before production existed (the expanded
+final suite will be stated separately). Geometry and visual owners began their
+respective bounded implementation units; oracle owner finishes independent
+truth/tests. Root serializes fleet qualification and actual caller, with no
+local product execution or extra certification campaign. Issue56 tracks work.

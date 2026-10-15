@@ -58,10 +58,11 @@ visible bridge from its rightmost point to a maximum-X outer vertex; exact
 hole-aware triangulation is being studied, with original shared physical indices
 and complete positive boundary-chain checks.
 
-Primary horology/reference study and geometry/oracle review are retained in
-papers/2026-10-15-watch-visual-study.md,
-papers/2026-10-15-watch-chain-geometry.md and
-papers/2026-10-15-watch-chain-oracles.md as they complete. Those studies inform
+Primary [horology/visual study](../papers/2026-10-15-watch-visual-study.md),
+[geometry study/review](../papers/2026-10-15-watch-chain-geometry.md) and
+[independent oracle study](../papers/2026-10-15-watch-chain-oracles.md) are retained
+with the [reviewed source-chain design](WATCH_CHAIN_DESIGN.md) and
+[bounded plan](WATCH_CHAIN_PLAN.md). Those studies inform
 our owned design and select no new dependency.
 
 ## Testing and stopping

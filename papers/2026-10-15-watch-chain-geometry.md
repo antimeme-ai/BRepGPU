@@ -160,3 +160,48 @@ suite on fleet. Run the actual watch caller, inspect its returned meshes and
 source/history tables, publish geometry/render timing scopes separately, review
 and stop. No mutation campaign, extra certificate layer, release badge, broad
 numerical/GPU rerun or inferred alpha qualification belongs to this unit.
+
+## Independent design review
+
+Read `docs/WATCH_CHAIN_DESIGN.md` against the owned sources and this study.
+Accepted for the stated analytic family. The added same-Z-origin restriction
+is explicit and still admits the selected watch-like parts; off-center XY
+supports, source wall V interval, complete counts and original carrier retention
+are correct. Maximal-X bridge visibility follows directly from strict disk
+containment and convexity, and avoids side-boundary subdivision. The design
+correctly distinguishes occurrence duplicates from physical vertex identity,
+chord-domain coverage from analytic material membership, and actual extrusion
+ancestry from same-kind name substitution. The direct exact/rounded boundary-chain
+mechanism attacks the real completeness claim without a second certificate.
+
+Implementation must retain the design's full 3–32-vertex admitted family, handle
+bridge-endpoint duplicates as occurrences, and preserve both cutter seam uses.
+No design defect or selected dependency identified. No product code/execution.
+
+## Independent implementation-plan review
+
+Read `docs/WATCH_CHAIN_PLAN.md` and checked dependency ordering against design.
+Accepted: independent source/model oracle and genuine fleet missing-API red
+precede production; one geometry owner retains the whole source/cut/map/mesh
+invariant; independent actual-output review and one compatibility run precede
+the visual caller/publication. The plan keeps measured work disjoint from tests
+and keeps appearance from enlarging the geometry claim. No second certificate,
+new dependency or unbounded qualification campaign is introduced.
+
+Coordinated concrete append layout with the oracle owner: retain all original
+feature entity IDs/slots. Append lower/upper anchors 2N+1/2N+2; lower/upper rings
+3N+1/3N+2 and seam3N+3; hole loopsN+3/N+4 and wallloopN+5; hole uses6N+1/6N+2,
+then wall U0-seam+, upper-ring+, U4-seam−, lower-ring−. Append wallfaceN+3 and
+its four original quarter chartsN+3 throughN+6. New ring/hole/wall-rim births
+name actual feature cap face and cutter wall face; anchors additionally name
+actual cutter seam. They have no ambiguous single source map for multiple
+parents. Retained edges/coedges use source_range[0,1], retained/modified feature
+faces/charts source_uv[0,1]². Cropped cutter seam/range and wall/UV band retain
+original owners; reversed cutter occurrences carry orientation−1.
+
+Immediate history reuses existing owned Boolean records. Composed root records
+also reuse HistoryRecord: paths containing any generated step are births;
+other paths are images, with modified status if any image step was modified.
+No images means deleted even if births survive. Path steps retain actual object
+identity. Implementation remains gated on root authorization after all reviews
+and the fleet red observation.
