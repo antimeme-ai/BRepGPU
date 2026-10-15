@@ -35,3 +35,15 @@ important admitted boundaries. The stop condition is concrete and appropriate.
 Read-only `curve_bound=Fraction(0)` and `quarter_segments=0` are acceptable
 compatibility descriptions for existing mesh readers; no subdivision argument
 or implied curved approximation is introduced. No open design finding.
+
+## Implementation plan review — accepted
+
+Read `docs/EXTRUSION_MESH_PLAN.md`. Dependency order is appropriate: direct
+independent model and genuine API-missing red, product implementation/green,
+actual code review, one affected compatibility pass and actual indexed/history
+callers. The explicit global rounded support checks and complete source/UV/domain
+obligations address distinct geometry faults. Three fresh repeats per small
+caller establish scoped observed costs without a performance campaign. Existing
+export readers are reused without broad API widening; no curved/tessellation
+quality claim is attached to flat faces. No open plan finding. Proceed with the
+bounded implementation and directly relevant tests, then stop as specified.
