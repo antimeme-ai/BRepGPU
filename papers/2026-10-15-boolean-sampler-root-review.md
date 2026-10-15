@@ -16,3 +16,12 @@ cases. No raw jets are retained or stronger derivative accuracy claimed; the
 independent oracle qualifies output positions/normals under explicit limits.
 Fleet green is pending the CPU constructor dependency; source acceptance is not
 an execution result. Native binaries are unchanged.
+
+Fleet integration correction: the initial sampler incorrectly demanded a finite
+kernel_ms without respecting optional profiling. include/brepgpu.h specifies
+NaN unless BG_RESULT_PROFILED is set. The owner corrected the check to admit only
+known flags0/1 and require NaN when unprofiled, finite nonnegative timing when
+profiled. Root re-read the header/runtime field publication and corrected code;
+accepted. Actual CPU1/CPU24 runs then passed all8 direct sampler tests in0.517/
+0.529s. This finding was caught by the real native caller rather than hidden by
+a mock. P100 placement qualification follows separately.

@@ -63,10 +63,57 @@ def graph_rows(label,body):
         yield from tree(label+'/'+name,getattr(body,name))
 
 
+
+def render(result,batch,out):
+    """Display actual native samples and exact boundary curves; no result mesher."""
+    solid=result.solid;origin=solid.frame.origin;scale=solid.frame.scale
+    def project(point):
+        x,y,z=((float(p)-o)/scale for p,o in zip(point,origin))
+        return 300+235*(x-y)*.76,270+235*((x+y)*.27-z*.9)
+    parts=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 520">',
+        '<rect width="980" height="520" fill="#101923"/>',
+        '<g font-family="sans-serif" fill="#e6eff7">',
+        '<text x="28" y="38" font-size="24">BRepGPU · owned through-bore Boolean</text>',
+        f'<text x="28" y="64" font-size="14" fill="#a9bed0">CPU construction · {batch.backend} sampling/adjacency consumer · original source carriers</text>']
+    points=[]
+    for row in batch.rows:
+        if row.native_status==-1:continue
+        if sum(a*b for a,b in zip(row.normal,(1,1,1.4)))<=0:continue
+        x,y=project(row.position)
+        points.append((row.position[0]+row.position[1]+row.position[2],x,y,row.face_id))
+    for _,x,y,face in sorted(points):
+        color='#5ecfe2' if face==7 else '#7699b4'
+        parts.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="1.35" fill="{color}" opacity=".55"/>')
+    for edge in solid.edges:
+        curve=solid.curves[edge.curve_slot]
+        count=128 if curve.kind=='circle' else 1
+        points=[project(solid.edge_point(edge.id,F(k,count))) for k in range(count+1)]
+        path=' '.join(('M' if k==0 else 'L')+f'{x:.3f},{y:.3f}' for k,(x,y) in enumerate(points))
+        color='#62d7e7' if curve.kind=='circle' else '#efc47e' if edge.id==15 else '#95aabe'
+        parts.append(f'<path d="{path}" stroke="{color}" fill="none" stroke-width="1.8" opacity=".85"/>')
+    lines=(('ONE CLOSED GENUS-ONE SHELL', '#62d7e7'),
+           ('7 faces / 15 edges / 30 distinct uses','#e6eff7'),
+           ('Two annular caps + reversed cutter wall','#a9bed0'),
+           ('COMPLETE INPUT → OUTPUT HISTORY','#efc47e'),
+           ('85 source entities / 81 output origins','#e6eff7'),
+           ('58 retained · 13 modified · 14 deleted','#a9bed0'),
+           ('10 generated from exact source events','#a9bed0'))
+    for i,(text,color) in enumerate(lines):
+        y=150+36*i+(20 if i>=3 else 0)
+        parts.append(f'<text x="574" y="{y}" font-size="15" fill="{color}">{text}</text>')
+    parts.extend(('<text x="28" y="478" font-size="13" fill="#a9bed0">Exact source-derived boundary wireframe + admitted native surface samples; display study, no result tessellation.</text>',
+                  '<text x="28" y="500" font-size="13" fill="#a9bed0">Cyan: generated rims / inward wall. Gold: cropped source seam with two distinct same-face uses.</text>',
+                  '</g></svg>'))
+    (out/'through-bore.svg').write_text('\n'.join(parts)+'\n')
+
+
 def execute(args):
     require(sys.platform=='linux','product geometry executes on the fleet')
     require(2<=args.grid<=65,'caller grid must be in 2..65')
     pins=tuple((name,hashlib.sha256((ROOT/name).read_bytes()).hexdigest()) for name in SOURCES)
+    planned_native=(Path(args.library_path).resolve(),Path(args.topology_library).resolve())
+    if args.backend=='cuda':planned_native+=(planned_native[0].with_name('libbrepgpu_cuda.so'),)
+    native_before=tuple((path.name,hashlib.sha256(path.read_bytes()).hexdigest()) for path in planned_native)
     started=time.perf_counter_ns()
     origin,scale=RECIPES[args.recipe]
     left=make_body('box',Frame(origin,scale))
@@ -130,7 +177,9 @@ def execute(args):
     qualification_ms=(time.perf_counter_ns()-qualification_start)/1e6
     native_paths=(core,Path(args.topology_library))
     if args.backend=='cuda':native_paths+=(core.with_name('libbrepgpu_cuda.so'),)
+    require(tuple(path.resolve() for path in native_paths)==planned_native,'loaded native paths differ from pinned request')
     native_pins=tuple((path.name,hashlib.sha256(path.read_bytes()).hexdigest()) for path in native_paths)
+    require(native_pins==native_before,'native library changed during operation')
     out=args.output_directory;out.mkdir(parents=True,exist_ok=False)
     artifact_start=time.perf_counter_ns()
     tsv(out/'recipe.tsv',('field','value'),(('recipe',args.recipe),('backend',args.backend),('device',args.device),
@@ -147,6 +196,13 @@ def execute(args):
         for label,body in (('left',left),('right',right),('output',solid)):
             yield from graph_rows(label,body)
     tsv(out/'graph.tsv',('path','type','value'),graph())
+    tsv(out/'operand-tables.tsv',('operand','table','bytes','sha256'),
+        ((label,name,len(data),hashlib.sha256(data).hexdigest())
+         for label,body in (('left',left),('right',right)) for name,data in body.packed_tables))
+    for name in ('coedge_edges','coedge_faces','orientations'):
+        (out/(name+('.i32le' if name=='orientations' else '.u32le'))).write_bytes(getattr(topology,name))
+    for name in ('offsets','members','kinds','mates','neighbors'):
+        (out/(name+'.u32le')).write_bytes(getattr(adjacency,name))
     tsv(out/'sections.tsv',('path','type','value'),tree('sections',result.sections))
     tsv(out/'arrangements.tsv',('path','type','value'),tree('arrangements',result.arrangements))
     tsv(out/'selections.tsv',('path','type','value'),tree('selections',result.selections))
@@ -160,6 +216,7 @@ def execute(args):
         ((row.index,row.patch_slot,row.face_id,row.chart_id,row.u.hex(),row.v.hex(),row.trim,row.native_status,*row.position,*row.normal) for row in batch.rows))
     tsv(out/'adjacency-edges.tsv',('slot','edge_id','kind','coedge_ids'),edge_rows)
     tsv(out/'adjacency-uses.tsv',('slot','coedge_id','mate_id','neighbor_face_id'),use_rows)
+    render(result,batch,out)
     tsv(out/'costs.tsv',('phase','wall_ms'),(('operand_preparation_outside',operand_ms),*stages,
         *((f'construction/{name}',value) for name,value in result.timings),
         *((f'sampling/{name}',value) for name,value in batch.timings),

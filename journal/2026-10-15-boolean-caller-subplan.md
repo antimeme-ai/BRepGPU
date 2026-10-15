@@ -37,3 +37,12 @@ Caller/controller/reference sources now written after recorded fleet red. Static
 AST parsing passed without importing/running product code locally. Root reviewed
 the independent sampler unit; no blocking source findings. Its fleet integration
 waits for construction source readiness. No new native binaries or dependencies.
+
+Runtime caller review found two valid optional-reference weaknesses before
+execution. Original first-eight samples per face clustered on grid boundary rows;
+replace with deterministically spread INTERIOR rows across every face. Validate
+reference bounds are exactly2×3 finite values before comparing, so zip cannot
+hide malformed dimensions. Implemented both; reference has actual edge witnesses
+plus56 spread face-interior samples at the normal grid. No timer/lifetime/export
+blocker was found. Added source-derived wireframe/native sample display after
+qualification; no mesh support is implied.
