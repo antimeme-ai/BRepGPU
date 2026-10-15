@@ -78,3 +78,29 @@ period failure cases. Source owner owns the shared module, adapter and existing
 qualification caller; reference owner owns consuming prepared query files.
 Include native/source_uv in existing source pins. Whole V4 remains gated on
 focused green/code review and actual complete original source/query export.
+
+## Authored red before production
+
+The existing reference box/cylinder STEP includes explicit SURFACE_CURVE/PCURVE
+representations, so it does not exercise this source gap. The first test attempt
+correctly exposed that fixture mismatch: extraction succeeded, then the original
+geometry oracle rejected unsupported SURFACE_CURVE wrapper ID139. Retained that
+initial run; it is not evidence of a missing-PC failure.
+
+Added separate authored `tests/fixtures/source-uv.step`: same box/cylinder and
+source topology/product IDs, with all15 EDGE_CURVE references pointing directly
+to the existing spatial basis curve of their SURFACE_CURVE/SEAM_CURVE wrapper.
+The original reference fixture and its NVIDIA tests stay intact. Unreferenced
+2D records are retained; no source geometry, units or topology is fabricated.
+
+The corrected fleet command `PYTHONPATH=python python3 -m unittest discover
+-s tests -p test_source_uv.py -v` is genuinely RED before any production code:
+original cylinder coedge400 has missing recovered UV; the optional query CLI is
+absent; the new literal octant native fixture entry is absent. Three methods,
+0.115s, two failures/one missing-entry error. The ignored
+`context/om10-source-uv-direct-spatial-red.txt` retains the exact output.
+The tests check existing raw original coefficient/assembly oracles, independent
+original C(t)/S(UV) evaluation, deterministic BGSRC bytes, V4 query presence and
+literal spherical octant curves/analytic surface. Negative native fixture modes
+must actually mutate native input and traverse production guards; mode-name
+refusal in the fixture would not establish the failure claim.
