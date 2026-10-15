@@ -1,0 +1,4 @@
+case	profile_vertices	mesh_vertices	triangles	physical_edges	coedge_uses	world_tolerance	error_bound
+triangle	3	6	8	9	18	1/1048576	0/1
+chamfer	6	12	20	18	36	1/1048576	0/1
+many16	16	32	60	48	96	1/1048576	0/1

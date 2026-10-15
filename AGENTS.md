@@ -127,8 +127,19 @@ Read docs/CUT_MESHING.md and results/cut-mesh-2026-10-15/REPORT.md. Twelve direc
 methods and46 affected compatibility methods pass; four first actual callers are
 independently qualified, with24 full-output correspondences. Refined unit528
 triangles takes220.970ms median mesh+indexed/history consumption; Boolean,
-qualification/export are separate. No GPU mesher, feature-result meshing,
-composable chain, runtime rewrite or external alpha completion is implied.
+qualification/export are separate. No GPU mesher, composable chain, runtime
+rewrite or external alpha completion is implied.
+The next feature-result connection is delivered: extrusion_meshing.tessellate
+and ExtrusionResult.tessellate mesh actual convex-profile results, preserving
+source trims/controls/UV/history. Exact planar geometry has zero approximation;
+actual rounded vertices and convex-prism embedding determine the error budget.
+Read docs/EXTRUSION_MESHING.md and results/extrusion-mesh-2026-10-15/REPORT.md.
+Ten direct methods and one48-method affected compatibility run passed; three
+actual callers passed. The operator explicitly requests rigorous relevant tests
+and stopping before certification grows: no mutation campaign, broad numerical/
+GPU reruns, second coverage mechanism or extra certificate layer for this unit.
+Operation composition, external adapters, runtime/Python study and owned NCSX
+geometry remain. These narrow result meshes do not establish general feature support.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

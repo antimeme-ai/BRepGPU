@@ -237,6 +237,10 @@ class ExtrusionResult:
 
     def __init__(self,*args,**kwargs):raise TypeError('ExtrusionResult is factory-only; use extrude')
 
+    def tessellate(self, *, tolerance):
+        from .extrusion_meshing import tessellate
+        return tessellate(self, tolerance=tolerance)
+
 
 _TABLES=(('vertex','vertices'),('edge','edges'),('coedge','coedges'),('loop','loops'),('face','faces'),('chart','charts'))
 _T=(F(0),F(1),F(0))
