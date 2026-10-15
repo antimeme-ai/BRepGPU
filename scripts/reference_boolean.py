@@ -42,6 +42,8 @@ def execute(args):
     volume=result.volume(relative_accuracy=1e-8)
     manifold=result.is_manifold_solid()
     bounds=tuple(tuple(float(x) for x in p) for p in result.bounding_box(tight=True))
+    require(len(bounds)==2 and all(len(p)==3 for p in bounds) and
+            all(math.isfinite(x) for p in bounds for x in p),'invalid reference bounds shape/values')
     after=(box.volume(relative_accuracy=1e-8),cutter.volume(relative_accuracy=1e-8))
     require(before==after,'reference copy inputs changed')
     expected=(9-math.pi)/4*scale**3
@@ -58,14 +60,18 @@ def execute(args):
     for row in csv.DictReader((case/'edge-points.tsv').open(),delimiter='\t'):
         point=tuple(float(Fraction(row[axis])) for axis in 'xyz')
         points.append(('owned_exact_edge',row['edge_id']+':'+row['t'],point))
-    # Also compare actual admitted carrier samples from all result faces.
-    face_counts={}
+    # Spread native interior representatives across each face, not the first
+    # grid rows (which mostly repeat outer-edge and seam witnesses).
+    interior={}
     for row in csv.DictReader((case/'samples.tsv').open(),delimiter='\t'):
-        if row['native_status']=='-1':continue
-        face=row['face'];count=face_counts.get(face,0)
-        if count<8:
-            points.append(('owned_native_sample',row['index'],tuple(float(row[axis]) for axis in 'xyz')))
-            face_counts[face]=count+1
+        if row['native_status']=='-1' or row['trim']!='1':continue
+        interior.setdefault(row['face'],[]).append(row)
+    require(set(interior)=={str(i) for i in range(1,8)},'native interior witnesses do not cover all seven faces')
+    for face,rows in sorted(interior.items()):
+        n=min(8,len(rows))
+        for i in range(n):
+            row=rows[(2*i+1)*len(rows)//(2*n)]
+            points.append(('owned_native_face_interior',row['index'],tuple(float(row[axis]) for axis in 'xyz')))
     start=time.perf_counter_ns();queries=[]
     for kind,key,point in points:
         closest,distance=sm.get_closest_point(result,point)

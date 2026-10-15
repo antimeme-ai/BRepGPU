@@ -119,7 +119,9 @@ def _check(jets, request, slots, uv, backend, *, converted):
             info.order != 1 or info.terms != 3 or
             info.abi_version != BG_ABI_VERSION or info.struct_size != C.sizeof(info) or
             info.patch_count != len(patches) or info.backend != backend or
-            not math.isfinite(info.kernel_ms) or info.kernel_ms < 0 or
+            info.flags not in (0, 1) or
+            not ((math.isfinite(info.kernel_ms) and info.kernel_ms >= 0)
+                 if info.flags else math.isnan(info.kernel_ms)) or
             jets._converted is not converted or len(jets.data) != 9 * count or
             len(jets.statuses) != count or len(jets._descriptors) != len(patches) or
             len(jets._slots) != count or len(jets._uv) != 2 * count):

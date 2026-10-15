@@ -57,7 +57,7 @@ No carrier refitting or hidden UV renormalization occurs.
 
 History covers every original vertex/edge/coedge/loop/face/chart with a typed
 `EntityKey(body_id,revision,kind,entity_id)` and status: 58 retained, 13 modified,
-14 deleted. All81 output entities have reverse origins, including10 generated
+14 deleted. All 81 output entities have reverse origins, including 10 generated
 entities. New rims jointly name the actual box cap and cutter wall, section
 pieces/events and cap arrangement uses. New rim anchors also name the original
 cutter seam. The cropped seam has original t[.25,.75]; orientation is a separate
@@ -70,7 +70,7 @@ on the material boundary; points inside the bore are exterior even on a cap
 plane. `solid.classify(slot,u,v)` returns existing trim constants and preserves
 exact Fraction parameters. `edge_point(edge_id,t)` returns exact world XYZ and
 `coedge_uv(coedge_id,t)` exact source atlas UV for intrinsic edge traversal;
-IDs are1-based and patch slots0-based.
+IDs are 1-based and patch slots 0-based.
 
 Sampling copies candidates to actual binary64 before exact trim classification.
 For example cap UV(5/6,1/2) as exact Fractions is a boundary point, while its
@@ -80,7 +80,7 @@ rows, trim labels, native status−1 and NaN vectors; they are not evaluated. Th
 consumer checks native counts, query bits, source descriptors/lineage, backend
 and statuses, then converts first jets and orients normals. Children close per
 call; the caller owns the borrowed Engine. Independent accepted sample limits
-are per-component world position2^-36 and oriented unit normal2^-30, relative to
+are per-component world position 2^-36 and oriented unit normal 2^-30, relative to
 the original carrier at actual submitted UV, not CPU parity.
 
 `solid.topology_input()` emits existing `TopologyInput` with typed sources and
@@ -98,7 +98,7 @@ PYTHONPATH=python python3 benchmarks/boolean/run.py \
   --output-directory results/local-through-bore-costs
 ```
 
-Use `--backend cuda --device 0` or1 for the P100 consumers. Source preparation,
+Use `--backend cuda --device 0` or 1 for the P100 consumers. Source preparation,
 CPU construction, exact graph/history reading, request setup, Engine and native
 sampling/adjacency costs, cleanup, independent checking and artifact writes have
 explicit timing scopes. The optional `scripts/reference_boolean.py` runs with
