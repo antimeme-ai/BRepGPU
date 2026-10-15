@@ -1,0 +1,24 @@
+field	value
+recipe	chamfer
+backend	cuda
+device	0
+threads	1
+grid	9
+profile_body	1
+output_body	2
+vertices	6
+origin_x_hex	0x1.0000000000000p+1
+origin_y_hex	-0x1.8000000000000p+1
+origin_z_hex	0x1.0000000000000p+0
+scale_hex	0x1.0000000000000p-1
+profile_area	15/32
+world_volume_rational	0
+world_volume_pi_coefficient	15/256
+observed_backend	cuda
+observed_device	0
+samples	1944
+evaluated_samples	1944
+checksum	-370.7944098839727
+construction	owned CPU full positive local-Y revolution
+native_consumers	first jets/oriented normals and adjacency
+mesher	not implemented
