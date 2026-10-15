@@ -337,3 +337,62 @@ for existing owned recoveries and a separate narrowly corrected query copy.
 Deterministic source bytes exclude timings; existing qualification/report hashes
 bind one optional query export, while raw NVIDIA import remains unchanged.
 Sent final ACCEPT to root/source owner and remain available for code review.
+
+Started read-only raw source-UV code review while the owner completes its query
+phase. Found missing support-alias preflight, pointer-only edge keys, directed
+instead of geometric endpoint tolerances at projection, and missing final
+retained-PC/face-state checks. The owner is integrating those findings. Located
+edge identity and the storage alias key differ: the latter uses edge TShape,
+surface handle and relative support location. Also caught a FaceState member
+initialization-order error before execution: Surface(f,location) wrote location
+before its constructor because of declaration order. Sent the narrow fix.
+Inspected selected FixSeam/FixShifted and direct storage callees for root's
+working-WireData concern: they do not replace or reorder original edge slots,
+and a fresh null-context Load does not apply a replacement map. No extra wire
+guard is needed for those exact calls. No CAD/tests/product edits by this lane;
+full code acceptance waits for the complete source/query implementation.
+
+Actual source preparation later stopped at the adapter's complete-use check on
+a reversed cylindrical face. Independently read WireExplorer Init/Next: it uses
+face-composed seam slots and strict chart-space endpoint connectivity, so a
+period-wrong slot can omit uses despite passing original-word/C-S probes. The
+selected ShapeAnalysis_Edge/FixShifted helpers ignore face orientation, while
+CheckSeam/ReplacePCurve explicitly use FORWARD. Told root/source owner that
+SetFace(REVERSED) alone cannot repair that convention mismatch; proposed only a
+temporary explicitly mapped local-forward fixer traversal for investigation.
+Original source word and complete-use guard stay unchanged. Recorded source
+facts in the selected-method review. No actual diagnostic execution by this lane.
+
+Reviewed query pole topology and paired branch replacement. The seam replacement
+uses edge-orientation XOR face-orientation to select its stored slot, matching
+BRep_Tool's composed lookup and BRep_Builder's explicit paired storage. Found
+a concrete reversed-face topology error in pole-wire insertion: code reversed
+the child before Add, but TopoDS_Builder::Add already computes relative parent
+orientation/location. Sent owner/root the double-reversal finding and confirmed
+the need to check the actual final face's original-use cycle modulo only declared
+analytic pole connectors; geometry-handle/endpoint guards cannot detect a lost
+or reversed face wire. The local-forward temporary fixer view now written in
+raw code fits the selected helper convention after the owner's genuine reversed
+cylinder red. Review lane made no code edits and ran no CAD.
+
+Final reread confirmed raw located identities/storage alias checks, geometric
+endpoint tolerances, immediate/final source guards and safe OCCT projection
+calls. Query branch replacement, parent-relative wire insertion and copied-wire
+mapping are coherent after fixes. The new actual-face quotient checker retains
+the original physical word and proves declared connector geometry, but initially
+did not check its actual neighboring uses. Sent the narrow remaining finding:
+require each actual connector between its declared incoming/outgoing uses, so a
+misplaced connector cannot disappear harmlessly during quotient comparison.
+Also noted the adapter had not yet emitted query correction counts/perturbation/
+connector diagnostics retained in memory. Numerical out-of-domain metric review
+remains assigned to source/oracle owners. No additional test campaign here.
+
+Final native code review ACCEPT after rereading the last changes. The actual
+connector's preceding/following wire edges now match its declared original joint
+by located identity and orientation before the analytic-pole quotient is allowed.
+The adapter emits original source-linked connector rows, correction counts and
+separately named raw/query residual and query UV-metric maxima to stdout, keeping
+deterministic BGSRC bytes unchanged. Root accepted the scoped numerical amendment
+with its other reviewers. No remaining native preservation/topology/selected-call
+or adapter finding; existing owner-run focused checks suffice for this review.
+Actual whole extraction/query qualification and target rendering remain separate.

@@ -83,8 +83,15 @@ entire directed physical vertex chain, including closing pair, by original
 vertex identity. Compare the complete ordered original EDGE_CURVE/ORIENTED_EDGE
 word, orientation and multiplicity too; seams can share both endpoint vertices.
 Every native use must retain its original ORIENTED_EDGE owner. No chained=false fallback, edge omission, reorder, merge or
-coordinate welding. Work with a forward-oriented local face view as required
-by FixSeam; retain the original face orientation on the prepared shape.
+coordinate welding. Keep the original face-composed source word for all source/final readback.
+For the selected fixer only, derive its local-FORWARD working view: when the
+original face is REVERSED, reverse the temporary wire, which composes every
+edge orientation and reverses the sequence through WireData. ShapeAnalysis_Edge
+PCurve intentionally delegates by surface/location and ignores face orientation;
+CheckSeam/ReplacePCurve also normalize FORWARD. Merely passing a REVERSED face
+would not correct that convention. The temporary slots map by exact full-word
+reverse+orientation to original ORIENTED_EDGE owners. No source wire is reordered
+or modified. Retain the original face orientation on the prepared shape.
 
 Use a fresh projector per face, deterministic original wire order, fixed
 projection precision1e-7mm and documented default pole adjustment mode1. Its endpoint cache is deliberate per-face state; it must not leak between
@@ -197,9 +204,23 @@ physical topology, original parameter intervals, orientations or tolerances.
   B-spline endpoint editing described below for poles. A line becomes a
   degree1 B-spline on its original interval. Retain both seam slots. An
   unsupported representation fails explicitly. Bound the UV change by the
-  actual positive-basis endpoint/control perturbation, then bound its world
-  effect using the retained source-carrier derivative bound; require at most
+  actual positive-basis endpoint/control perturbation, then measure it with the retained source natural-domain derivative metric
+  (a world bound only for wholly in-domain paths, as qualified below); require at most
   tolerance_mm/8 (.000625mm for the watch) and recheck finite source residuals.
+
+The per-use admission budget accumulates every successive metric-weighted UV
+change by triangle inequality and stays≤tolerance_mm/8; reporting a maximum
+individual edit would miss combined column/joint/domain/pole changes. Name it
+`max_query_uv_metric_mm`, the original-natural-domain metric-weighted UV gate.
+For endpoint/control paths wholly inside that rectangle, the derivative hull
+also bounds the composed world displacement. It does **not** bound arbitrary
+OCCT extrapolation outside the original domain. In a typed column recovery the
+new pcurve reconstructs the proved original LINE/column; an outside foreign guide
+is only branch/provenance data, not valid original-domain source geometry.
+Generic128ULP outside endpoint correction retains its numerical scope plus the
+final in-domain finite C(t)/S(queryUV) checks, with no extrapolation theorem.
+Raw and corrected finite correspondence maxima are reported separately. The
+owned raw-source mesher's geometry/approximation contracts remain unchanged.
 
 After these explicit query corrections, require the finite nonperiodic query
 representation inside its original natural domain. The generic128ULP global
@@ -255,6 +276,7 @@ PreparedSourceUV prepare_source_uv(original_solid, original_face_bindings,
 PreparedSourceUV.shape()                 // detached raw projected-PC solid
 PreparedSourceUV.mapped(original_shape)  // original→raw-PC copy binding
 PreparedSourceUV.query_shape()           // optional derived query solid
+PreparedSourceUV.query_mapped(original) // original→query binding, rebuilt wires too
 PreparedSourceUV.stats()                 // counts, finite probe maxima, time
 PreparedSourceUV.chart_connectors()      // source-linked singular occurrences
 ```

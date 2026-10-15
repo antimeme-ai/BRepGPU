@@ -1,5 +1,8 @@
 // Owned source extraction into BGSRC001. OCCT translates STEP and reconstructs
 // UV curves; product sampling, triangulation and rendering are not performed.
+#include "source_uv.hpp"
+#include <BinTools.hxx>
+#include <filesystem>
 #include <STEPCAFControl_Reader.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPConstruct_Tool.hxx>
@@ -215,8 +218,16 @@ struct StyleData{
 };
 
 int main(int argc,char** argv){
-  if(argc!=3){std::cerr<<"usage: brepgpu-step-source INPUT.stp OUTPUT.bgsource\n";return 2;}
+  if(argc<3){std::cerr<<"usage: brepgpu-step-source INPUT.stp OUTPUT.bgsource [--query-brep-dir NEWDIR] [--source-residual-mm VALUE] [--tolerance-mm VALUE]\n";return 2;}
   try{
+    brepgpu::SourceUVOptions uv_options;std::string query_directory;
+    for(int i=3;i<argc;i+=2){if(i+1==argc)throw std::runtime_error("source option missing value");std::string key=argv[i];
+      if(key=="--query-brep-dir")query_directory=argv[i+1];
+      else if(key=="--source-residual-mm")uv_options.source_residual_mm=std::stod(argv[i+1]);
+      else if(key=="--tolerance-mm")uv_options.tolerance_mm=std::stod(argv[i+1]);
+      else throw std::runtime_error("unknown source option "+key);}
+    uv_options.prepare_query=!query_directory.empty();if(uv_options.prepare_query&&!std::filesystem::create_directory(query_directory))throw std::runtime_error("query output directory already exists");
+    double source_uv_seconds=0,query_uv_seconds=0;U source_uv_projected=0,source_uv_seams=0,query_columns=0,query_endpoints=0,query_connectors=0;double source_uv_max_residual=0,query_max_residual=0,query_max_uv_metric=0;
     std::ifstream file(argv[1],std::ios::binary);if(!file)throw std::runtime_error("cannot read source");
     std::vector<unsigned char> input((std::istreambuf_iterator<char>(file)),{});if(input.empty()||input.size()>U(1)<<30)throw std::runtime_error("invalid source file size");auto digest=sha256(input);
     STEPCAFControl_Reader reader;reader.SetNameMode(true);reader.SetColorMode(true);reader.SetMatMode(true);reader.SetPropsMode(true);
@@ -298,16 +309,31 @@ int main(int argc,char** argv){
     IDs roots;for(auto& p:products)if(!children.count(id(p)))roots.push_back(id(p));if(roots.size()!=1)throw std::runtime_error("ambiguous source root");
     std::set<U> seen_vertices,seen_edges,seen_curves,seen_surfaces;U nfaces=0,nloops=0,ncoedges=0,degenerate=0,not_same=0;unsigned max_pcurve_degree=0;
     for(auto& pair:raw_solids){U si=pair.first;auto raw=pair.second;IDs fs,es,vs;std::set<U> unique_edges,unique_vertices;
+      std::vector<brepgpu::SourceUVFace> uv_faces;
+      for(int fi=1;fi<=raw->Outer()->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(raw->Outer()->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced UV source face");
+        brepgpu::SourceUVFace face;face.id=id(rf);face.carrier_id=id(rf->FaceGeometry());face.face=TopoDS::Face(result(rf));auto forward_face=face.face;
+        std::vector<TopoDS_Wire> wires;for(TopExp_Explorer w(forward_face,TopAbs_WIRE);w.More();w.Next())wires.push_back(TopoDS::Wire(w.Current()));
+        for(int bi=1;bi<=rf->NbBounds();++bi){auto bound=rf->BoundsValue(bi);auto loop=Handle(StepShape_EdgeLoop)::DownCast(bound->Bound());if(loop.IsNull())throw std::runtime_error("non-edge UV source loop");brepgpu::SourceUVLoop binding;binding.id=id(loop);
+          for(int position=1;position<=loop->NbEdgeList();++position){int ei=bound->Orientation()?position:loop->NbEdgeList()+1-position;auto oe=loop->EdgeListValue(ei);auto re=Handle(StepShape_EdgeCurve)::DownCast(oe->EdgeElement());bool forward=oe->Orientation()==bound->Orientation();brepgpu::SourceUVUse use;use.id=id(oe);use.edge_id=id(re);use.edge=TopoDS::Edge(result(re));use.edge.Orientation((forward==re->SameSense())?TopAbs_FORWARD:TopAbs_REVERSED);auto va=forward?re->EdgeStart():re->EdgeEnd(),vb=forward?re->EdgeEnd():re->EdgeStart();use.start_id=id(va);use.end_id=id(vb);use.start=TopoDS::Vertex(result(va));use.end=TopoDS::Vertex(result(vb));binding.uses.push_back(use);}
+          std::vector<std::size_t> matches;for(std::size_t wi=0;wi<wires.size();++wi){std::vector<TopoDS_Edge> uses;for(TopExp_Explorer e(wires[wi],TopAbs_EDGE);e.More();e.Next())uses.push_back(TopoDS::Edge(e.Current()));if(uses.size()!=binding.uses.size())continue;bool okay=true;for(auto& edge:uses)if(std::none_of(binding.uses.begin(),binding.uses.end(),[&](const brepgpu::SourceUVUse& use){return edge.IsSame(use.edge);}))okay=false;if(okay)matches.push_back(wi);}if(matches.size()!=1)throw std::runtime_error("ambiguous original wire UV binding at face "+std::to_string(face.id));binding.wire=wires[matches[0]];wires.erase(wires.begin()+matches[0]);face.loops.push_back(binding);
+        }if(!wires.empty())throw std::runtime_error("unowned native wire before UV preparation");uv_faces.push_back(face);
+      }
+      auto prepared=brepgpu::prepare_source_uv(solids.at(si),uv_faces,uv_options);
+      auto source_result=[&](const Handle(Standard_Transient)& e){return prepared.mapped(result(e));};solids.at(si)=prepared.raw_shape;
+      source_uv_seconds+=prepared.stats.projection_seconds;query_uv_seconds+=prepared.stats.query_seconds;source_uv_projected+=prepared.stats.projected_edges;source_uv_max_residual=std::max(source_uv_max_residual,prepared.stats.max_residual_mm);source_uv_seams+=prepared.stats.seam_pairs;query_columns+=prepared.stats.query_column_edges;query_endpoints+=prepared.stats.query_joint_endpoints;query_connectors+=prepared.stats.query_connectors;query_max_residual=std::max(query_max_residual,prepared.stats.max_query_residual_mm);query_max_uv_metric=std::max(query_max_uv_metric,prepared.stats.max_query_uv_metric_mm);
+      for(const auto& c:prepared.connectors)std::cout<<"source_query_connector\t"<<si<<'\t'<<c.face_id<<'\t'<<c.loop_id<<'\t'<<c.vertex_id<<'\t'<<c.incoming_id<<'\t'<<c.outgoing_id<<'\t'<<std::setprecision(17)<<c.u0<<'\t'<<c.v0<<'\t'<<c.u1<<'\t'<<c.v1<<"\n";
+      if(uv_options.prepare_query){auto path=std::filesystem::path(query_directory)/("definition-"+std::to_string(si)+".brep");if(!BinTools::Write(prepared.query_shape,path.string().c_str(),false,false,BinTools_FormatVersion_VERSION_4))throw std::runtime_error("query BRep write failed");}
+
       if(!BRepCheck_Analyzer(solids.at(si)).IsValid()){
         Bytes w;w.u32(1);w.u32(0);w.text("reference_shape_check");w.ids({si});w.text("OCCT imported solid validity check is non-green; independent geometry qualification remains required");tables["DIAGS___"].push_back(w);
       }
       GProp_GProps volume;BRepGProp::VolumeProperties(solids.at(si),volume);std::cout<<"reference_volume\t"<<si<<"\t"<<std::setprecision(17)<<volume.Mass()<<"\n";
-      for(int fi=1;fi<=raw->Outer()->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(raw->Outer()->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced source face");U fid=id(rf);fs.push_back(fid);++nfaces;auto f=TopoDS::Face(result(rf));TopLoc_Location fl;auto surf=BRep_Tool::Surface(f,fl);if(!fl.IsIdentity())surf=Handle(Geom_Surface)::DownCast(surf->Transformed(fl.Transformation()));
+      for(int fi=1;fi<=raw->Outer()->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(raw->Outer()->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced source face");U fid=id(rf);fs.push_back(fid);++nfaces;auto f=TopoDS::Face(source_result(rf));TopLoc_Location fl;auto surf=BRep_Tool::Surface(f,fl);if(!fl.IsIdentity())surf=Handle(Geom_Surface)::DownCast(surf->Transformed(fl.Transformation()));
         std::vector<unsigned> raw_wire_counts;std::multiset<U> raw_edge_uses;
         std::map<U,TopoDS_Edge> face_edges,actual_face_edges;
         std::map<U,TopoDS_Vertex> face_vertices;
         for(int bi=1;bi<=rf->NbBounds();++bi){auto loop=Handle(StepShape_EdgeLoop)::DownCast(rf->BoundsValue(bi)->Bound());if(loop.IsNull())throw std::runtime_error("non-edge source loop");
-          for(int j=1;j<=loop->NbEdgeList();++j){auto re=Handle(StepShape_EdgeCurve)::DownCast(loop->EdgeListValue(j)->EdgeElement());if(re.IsNull())throw std::runtime_error("non-curve source edge");face_edges[id(re)]=TopoDS::Edge(result(re));face_vertices[id(re->EdgeStart())]=TopoDS::Vertex(result(re->EdgeStart()));face_vertices[id(re->EdgeEnd())]=TopoDS::Vertex(result(re->EdgeEnd()));}}
+          for(int j=1;j<=loop->NbEdgeList();++j){auto re=Handle(StepShape_EdgeCurve)::DownCast(loop->EdgeListValue(j)->EdgeElement());if(re.IsNull())throw std::runtime_error("non-curve source edge");face_edges[id(re)]=TopoDS::Edge(source_result(re));face_vertices[id(re->EdgeStart())]=TopoDS::Vertex(source_result(re->EdgeStart()));face_vertices[id(re->EdgeEnd())]=TopoDS::Vertex(source_result(re->EdgeEnd()));}}
         auto match_actual_edge=[&](const TopoDS_Edge& actual,bool emit)->U{
           for(auto& candidate:face_edges)if(actual.IsSame(candidate.second)){actual_face_edges[candidate.first]=actual;return candidate.first;}
           TopLoc_Location al;double af=0,az=0;auto ac=BRep_Tool::Curve(actual,al,af,az);
@@ -346,11 +372,11 @@ int main(int argc,char** argv){
         IDs ls;
         for(int bi=1;bi<=rf->NbBounds();++bi){auto bound=rf->BoundsValue(bi);auto loop=Handle(StepShape_EdgeLoop)::DownCast(bound->Bound());if(loop.IsNull())throw std::runtime_error("non-edge source loop");U lid=id(loop);ls.push_back(lid);++nloops;IDs cs;
           raw_wire_counts.push_back(loop->NbEdgeList());
-          for(int position=1;position<=loop->NbEdgeList();++position){int ei=bound->Orientation()?position:loop->NbEdgeList()+1-position;auto oe=loop->EdgeListValue(ei);auto re=Handle(StepShape_EdgeCurve)::DownCast(oe->EdgeElement());if(re.IsNull())throw std::runtime_error("non-curve source edge");U eid=id(re),cid=id(oe);cs.push_back(cid);++ncoedges;auto e=TopoDS::Edge(result(re));unique_edges.insert(eid);raw_edge_uses.insert(eid);face_edges[eid]=e;
+          for(int position=1;position<=loop->NbEdgeList();++position){int ei=bound->Orientation()?position:loop->NbEdgeList()+1-position;auto oe=loop->EdgeListValue(ei);auto re=Handle(StepShape_EdgeCurve)::DownCast(oe->EdgeElement());if(re.IsNull())throw std::runtime_error("non-curve source edge");U eid=id(re),cid=id(oe);cs.push_back(cid);++ncoedges;auto e=TopoDS::Edge(source_result(re));unique_edges.insert(eid);raw_edge_uses.insert(eid);face_edges[eid]=e;
             auto start=re->EdgeStart(),end=re->EdgeEnd();U va=id(start),vb=id(end);unique_vertices.insert(va);unique_vertices.insert(vb);
             for(auto vp:{start,end}){U vi=id(vp);if(seen_vertices.insert(vi).second){
               auto rv=Handle(StepShape_VertexPoint)::DownCast(vp);if(rv.IsNull())throw std::runtime_error("non-point source vertex");auto rp=Handle(StepGeom_CartesianPoint)::DownCast(rv->VertexGeometry());if(rp.IsNull()||rp->NbCoordinates()!=3)throw std::runtime_error("non-Cartesian source vertex");
-              auto v=TopoDS::Vertex(result(vp));auto p=BRep_Tool::Pnt(v);gp_Pnt original(rp->CoordinatesValue(1)*source_units_mm,rp->CoordinatesValue(2)*source_units_mm,rp->CoordinatesValue(3)*source_units_mm);double displacement=p.Distance(original);max_vertex_displacement=std::max(max_vertex_displacement,displacement);
+              auto v=TopoDS::Vertex(source_result(vp));auto p=BRep_Tool::Pnt(v);gp_Pnt original(rp->CoordinatesValue(1)*source_units_mm,rp->CoordinatesValue(2)*source_units_mm,rp->CoordinatesValue(3)*source_units_mm);double displacement=p.Distance(original);max_vertex_displacement=std::max(max_vertex_displacement,displacement);
               if(displacement>0){Bytes diag;diag.u32(1);diag.u32(0);diag.text("translated_vertex_displacement");diag.ids({vi,id(rp)});diag.text("source-to-translated displacement mm="+std::to_string(displacement));tables["DIAGS___"].push_back(diag);}
               Bytes w;w.u64(vi);w.doubles({original.X(),original.Y(),original.Z()});w.f64(BRep_Tool::Tolerance(v));tables["VERTICES"].push_back(w);
             }}
@@ -358,7 +384,7 @@ int main(int argc,char** argv){
             if(!ec.IsNull()&&!el.IsIdentity())ec=Handle(Geom_Curve)::DownCast(ec->Transformed(el.Transformation()));
             double ta=re->SameSense()?first:last,tb=re->SameSense()?last:first;
             if(va!=vb&&!ec.IsNull()){
-              auto p=BRep_Tool::Pnt(TopoDS::Vertex(result(start)));
+              auto p=BRep_Tool::Pnt(TopoDS::Vertex(source_result(start)));
               if(ec->Value(ta).Distance(p)>BRep_Tool::Tolerance(e)&&ec->Value(tb).SquareDistance(p)<ec->Value(ta).SquareDistance(p))
                 throw std::runtime_error("translated edge parameter mapping contradicts original SameSense at edge "+std::to_string(eid));
             }
@@ -384,7 +410,7 @@ int main(int argc,char** argv){
             if(match){++raw_count;translated_edge_uses.insert(match);}
           }
           for(BRepTools_WireExplorer ordered(wire,f);ordered.More();ordered.Next())++ordered_count;
-          if(actual_count!=ordered_count)throw std::runtime_error("translated wire traversal omitted occurrences at face "+std::to_string(fid));translated_wire_counts.push_back(raw_count);
+          if(actual_count!=ordered_count){std::cerr<<"wire_uv_failure face "<<fid<<" face_orientation "<<f.Orientation()<<" actual "<<actual_count<<" ordered "<<ordered_count<<"\n";for(auto& item:actual_face_edges){auto edge=item.second;for(auto orientation:{TopAbs_FORWARD,TopAbs_REVERSED}){edge.Orientation(orientation);double a,b;auto pc=BRep_Tool::CurveOnSurface(edge,f,a,b);if(!pc.IsNull()){auto p=pc->Value(a),q=pc->Value(b);std::cerr<<std::setprecision(17)<<"wire_uv_edge "<<item.first<<" orientation "<<orientation<<" t "<<a<<","<<b<<" UV "<<p.X()<<","<<p.Y()<<" "<<q.X()<<","<<q.Y()<<"\n";}}}throw std::runtime_error("translated wire traversal omitted occurrences at face "+std::to_string(fid));}translated_wire_counts.push_back(raw_count);
         }
         std::sort(raw_wire_counts.begin(),raw_wire_counts.end());std::sort(translated_wire_counts.begin(),translated_wire_counts.end());
         if(raw_wire_counts!=translated_wire_counts||raw_edge_uses!=translated_edge_uses)throw std::runtime_error("source-to-translated topology changed at face "+std::to_string(fid));
@@ -393,7 +419,8 @@ int main(int argc,char** argv){
       es.assign(unique_edges.begin(),unique_edges.end());vs.assign(unique_vertices.begin(),unique_vertices.end());Bytes w;w.u64(si);w.u64(solid_products.at(si));w.ids(fs);w.ids(es);w.ids(vs);tables["SOLIDS__"].push_back(w);
     }
     for(auto& s:styles)tables["STYLES__"].push_back(s.second.bytes());
-    Bytes meta;meta.text("OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; owned STEP source adapter v2; shape-processing=none; set-after-read; asserted-before-and-after-transfer");tables["META____"].push_back(meta);
+    Bytes meta;meta.text("OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; owned STEP source adapter v3; explicit-uv-projector; original-t; shape-processing=none; set-after-read; asserted-before-and-after-transfer");tables["META____"].push_back(meta);
+    std::cout<<"source_uv_seconds\t"<<std::setprecision(17)<<source_uv_seconds<<"\nquery_uv_seconds\t"<<query_uv_seconds<<"\nsource_uv_projected_edges\t"<<source_uv_projected<<"\nsource_uv_max_residual_mm\t"<<source_uv_max_residual<<"\nsource_uv_seam_pairs\t"<<source_uv_seams<<"\nsource_query_column_edges\t"<<query_columns<<"\nsource_query_endpoint_edits\t"<<query_endpoints<<"\nsource_query_connectors\t"<<query_connectors<<"\nsource_query_max_residual_mm\t"<<query_max_residual<<"\nsource_query_max_uv_metric_mm\t"<<query_max_uv_metric<<"\n";
     const std::vector<std::string> tags={"META____","PRODUCTS","SOLIDS__","USAGES__","VERTICES","EDGES___","COEDGES_","LOOPS___","FACES___","CARRIERS","CURVES__","STYLES__","DIAGS___"};Bytes body;
     for(auto& tag:tags){Bytes section;for(auto& row:tables[tag])section.row(row);body.raw(tag);body.u64(tables[tag].size());body.u64(section.v.size());body.v.insert(body.v.end(),section.v.begin(),section.v.end());}
     Bytes out;out.raw("BGSRC001");out.u32(1);out.u32(0);out.v.insert(out.v.end(),digest.begin(),digest.end());out.f64(source_units_mm);out.f64(uncertainty*source_units_mm);out.u64(roots[0]);out.u32(tags.size());out.u32(0);out.u64(88+body.v.size());out.v.insert(out.v.end(),body.v.begin(),body.v.end());

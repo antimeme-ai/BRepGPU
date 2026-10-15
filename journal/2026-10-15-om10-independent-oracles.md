@@ -396,3 +396,41 @@ positive-basis UV perturbations into world budgets. Query files are bound to
 the existing completed qualification inputs; raw NVIDIA neutral import pays
 none of this owned/query preparation. Revised design/subplan ACCEPT. No UV
 implementation, new test campaign or actual watch execution in this review.
+
+Initial read-only raw-core review found that the17-point sampling formula
+could compute its final point as `a+(b-a)`, missing the exact retained endpoint
+under cancellation. Requested explicit saved endpoints. Whole-basis line/spline
+period checks and separate original-t interval readback match the design;
+raw correspondence intentionally leaves source-grounded natural-domain recovery
+reachable. Query correction code was still an explicit unimplemented failure,
+so this was an interim review rather than final implementation acceptance.
+
+Query-helper review confirmed a cumulative-budget gap: an admitted source
+column replacement can move an endpoint0.0004mm and the canonical source-vertex
+edit another0.0004mm. Each passes the0.000625mm allocation while their total
+does not. Required per-original-use cumulative world-step bounds and a maximum
+cumulative statistic. Also found adjacent nonprovider LINE recovery outside the
+written non-LINE family and generic interior-control domain clipping outside
+the agreed endpoint-only grade; root required retaining the narrow admissions.
+The rational derivative hull formula itself is sound on its natural rectangle.
+Raw guides outside that rectangle need honest metric/finite-residual wording,
+not an unsupported claim about universal extrapolated-surface displacement.
+These findings went to owner/root before final code acceptance; no execution
+campaign or new extrapolation machinery was introduced.
+
+Reread the corrections: directed orientation selects closed-edge parameter
+ends, per-use QueryBudget charges column/endpoint/domain edits cumulatively,
+nonprovider LINE neighbors are excluded, and natural-domain control recovery
+is endpoint-only. These address the concrete implementation findings. Pole
+inverse and recentered positive rational derivative formulas have no further
+math finding in the admitted scope; final source-unit acceptance still awaits
+the owner's completed native fixtures and honest outside-domain metric scope.
+
+Final narrow query-math ACCEPT after reading the concrete scope amendment and
+renamed `max_query_uv_metric_mm` statistic. The cumulative natural-domain metric
+gate remains unchanged; derivative world bounds apply only to in-domain paths.
+Typed columns reconstruct original source LINE geometry; outside foreign guides
+remain branch/provenance data. Generic outside endpoints retain128ULP plus
+final in-domain finite C/S checks, without an extrapolation theorem. Separate
+raw/query residual maxima preserve that distinction. This accepts the reviewed
+math and guards, not the still-pending complete source extraction or watch run.

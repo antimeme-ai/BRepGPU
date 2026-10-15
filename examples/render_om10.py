@@ -31,7 +31,7 @@ def tsv(path, header, rows):
 
 def pin_files():
     files = tuple((ROOT/'python/brepgpu').glob('imported_*.py'))
-    files += tuple((ROOT/'native/om10').glob('*'))+tuple((ROOT/'native/step_source').glob('*'))
+    files += tuple((ROOT/'native/om10').glob('*'))+tuple((ROOT/'native/step_source').glob('*'))+tuple((ROOT/'native/source_uv').glob('*'))
     files += (ROOT/'examples/om10_scene.py', ROOT/'examples/render_om10.py')
     files += tuple(ROOT/p for p in ('native/evaluator.hpp', 'native/backend_api.h', 'include/brepgpu.h',
                                     'python/brepgpu/interchange_oracles.py'))
@@ -142,7 +142,8 @@ def main(args):
         binary_source = output/'source.bgsource'
         start = time.perf_counter()
         with (output/'adapter.tsv').open('w') as log:
-            subprocess.run((str(args.adapter.resolve()), str(step), str(binary_source)), stdout=log, check=True)
+            subprocess.run((str(args.adapter.resolve()), str(step), str(binary_source),
+                '--source-residual-mm', str(args.source_residual), '--tolerance-mm', str(args.tolerance)), stdout=log, check=True)
         times.append(('foreign_cpu_step_translation', time.perf_counter()-start))
     else:
         binary_source = args.source.resolve()
