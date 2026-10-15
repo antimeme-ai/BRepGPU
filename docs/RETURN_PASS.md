@@ -337,3 +337,28 @@ actual consumer cost for the runtime/language study rather than tuning it now.
 Feature preparation, independent checking and export are separate. Direct tests,
 one affected compatibility run and actual caller review completed; no additional
 campaign is scheduled. Further feature families and a real operation chain remain.
+
+## Actual modeling chain and openwork watch study
+
+The first [actual extrusion/bore/mesh chain](FEATURE_BORE.md) is delivered with
+original source Frames, real cap-hole domains and ordered immediate/extrusion
+Origin paths. The [watch study](../results/watch-2026-10-15/REPORT.md) constructs158
+separate solids,23 pierced, with3,152 vertices and5,764 triangles. No template
+reuse or GPU call participates. It supplements the fixed NCSX comparison scene.
+
+One final CPU caller measured construction8.719s, mesh4.868s and indexed/actual
+history consumption6.581s (enclosing useful wall20.168s). Independent checks29.501s,
+part export6.600s and CPU oblique/top display10.017/10.292s are separate;
+fullcaller76.674s includes them. Timings are a single shared-host observation,
+with explicit overlaps/exclusions in the report; no scaling/speedup estimate.
+
+Source/history reads already exceed meshing in this scene. This is concrete
+input for the requested Python/native-role and runtime-ownership study: retain
+map/domain/occurrence identity while comparing bulk typed reads and actual
+complete fresh/reused workflows. No bulk-reader rewrite, GPU setup tuning,
+native migration or cache was selected here. Further modeling work may need
+multiple holes, nonconvex profiles, interacting cuts and compound bridges;
+functional tooth forms, clearances, springs and kinematics need their own actual
+contracts.17 direct methods,58 affected CPU compatibility methods and all158
+actual mesh qualifiers passed, followed by source/output/image review. Stop
+without an additional campaign; external alpha qualification remains incomplete.

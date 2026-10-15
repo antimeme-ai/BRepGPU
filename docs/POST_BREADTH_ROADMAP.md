@@ -12,9 +12,12 @@ The operator authorized proceeding. The first bounded unit of B is now
 mesh, preserving original cutter frames/UV, source history and shared boundaries.
 The canonical mesher remains factory-only; the new dedicated API consumes the
 actual retained result. The first feature-result connection, [actual convex extrusion meshing](EXTRUSION_MESHING.md),
-is also delivered. One operation chain, external adapters, runtime/Python study
-and owned NCSX geometry remain next-tranche work; further feature families are
-separate units.
+is also delivered. The first [actual composition chain](FEATURE_BORE.md) now
+consumes that extrusion, constructs a strictly interior axial bore, and meshes
+the result with ordered ancestry back to the original profile and actual cutter.
+The [watch-inspired assembly](WATCH_TARGET.md) is its concrete visual consumer.
+External adapters, runtime/Python study and owned NCSX geometry remain
+next-tranche work; further feature families are separate units.
 No language/dependency or alpha scope change was made.
 
 ## What the first pass established
@@ -30,7 +33,8 @@ CPU-constructed solids do not imply GPU solid construction.
 
 Typed immutable identity, source parameters and occurrence multiplicity are a
 substantive foundation. The topology work avoids pointer-defined identity; it
-does not yet provide a general editor, persistent naming or composable history.
+does not yet provide a general editor or persistent naming. The first bounded
+extrusion/bore composition now preserves actual ordered source-history steps.
 Each delivered operation retains its declared narrow input family. The canonical
 mesher admits factory BodySnapshot values; the separate through-bore result
 mesher now admits its actual CutResult. Arbitrary feature/Boolean results remain
@@ -59,7 +63,7 @@ now eligible for selection; that does not select every recorded optimization.
 | Deferred area | Actual remaining work | Proposed place |
 | --- | --- | --- |
 | Result consumption and meshing | Mesh actual trimmed CutSolid/feature output; current canonical mesher cannot consume it | First connection between existing capabilities |
-| Source maps and history | One operation result becomes a valid next input; compose typed ancestry and map domains | One bounded modeling chain |
+| Source maps and history | First actual extrusion/bore chain delivered; arbitrary edit graphs remain | Further composition selected from a blocked consumer |
 | Python's delivered role | Compare native application/core, optional thin binding and Python orchestration using actual consumers | Study and measured prototype, then architecture decision |
 | GPU setup and residency | Engine/module ownership, separate adjacency contexts, reusable inputs/scratch/output and explicit shutdown/recovery | First retained workflow after ownership design |
 | Host representation and bulk consumption | Exact request generation, material/trim decisions, normals/scatter, typed adjacency/history reads and mask decoding | Relocate only stages identified in the selected complete workflow |
@@ -100,10 +104,13 @@ arrangement and trim provenance. It must read those records rather than relabel
 the output as a canonical plate. Extending B to an extrusion or other feature is
 a separate conceptual delivery, not evidence that a universal mesher exists.
 
-C first studies compatibility of one pair of actual constructors. A possible
-target is a supported extrusion followed by a through-cut, but this is a design
-candidate, not a currently admitted call. Admit a narrow resulting family and
-build its real domains; do not widen a type check to bypass canonical assumptions.
+C's first pair is delivered: actual convex extrusion followed by one strictly
+interior, fully through axial circle. Off-center cuts are admitted, with exact
+support tests, real cap-hole domains and retained original carrier Frames/UVs.
+The watch study uses actual meshes from that chain alongside separate convex
+extrusions. Multiple cuts, nonconvex profiles and a functional watch remain
+outside this delivery. Further pairs must build their real domains rather than
+widen a type check to bypass canonical assumptions.
 Compose maps with explicit owners/domains: revolution quarter coordinates are
 not uniform angles, fillet spine correspondence is not spatial coincidence, and
 offset carrier feet need not lie in the original source trim. Preserve every
@@ -149,5 +156,6 @@ while alpha remains blocked. See [release contract](ALPHA_QUALIFICATION.md).
 Source basis: [return-pass measurements](RETURN_PASS.md), [issue index](../ISSUES.md),
 [Python study brief](../papers/2026-10-14-python-role-return-pass.md), and the
 Boolean/extrusion/revolution/fillet/offset and adjacency round-two notes linked
-there. No product execution, new benchmark, dependency adoption or language
-migration was performed for this stocktake.
+there. The original stocktake performed no product execution or benchmark.
+Subsequent delivered B/C units are linked above; none selected a new dependency
+or language migration.
