@@ -36,3 +36,12 @@ counts/maxima andscene/count/timing scopes; newcomposedPNG also byteidentical
 originalhero. No blocker. Preserveoriginalhero ratherthanclaimingunchangedimage
 isnewgeometry. Meaningfulsourceinstrumentation andmatchedresultcheckpoints pushed
 onfeaturebranch; PRmergepreservescommits andcontinuingissue34remainsopen.
+
+
+PR [#50](https://github.com/antimeme-ai/BRepGPU/pull/50) merged at
+2026-10-15T12:01:28Z as `7b29510ce70709016a805c0324c995a102d70e2f`,
+preserving all three feature commits and the remote feature branch. Local main
+and the fleet checkout both matched this merge with clean worktrees. Issue #34
+remains open for the continuing NCSX engineering target. This final bookkeeping
+commit is synced to both checkouts as the handoff; no geometry work remains in
+progress for this rerun.
