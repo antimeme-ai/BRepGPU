@@ -13,7 +13,15 @@ OCCT/NVIDIA source inform the supported operation; no dependency is adopted.
 All three design and plan reviews accepted after cap orientation, actual-UV
 sampling and explicit output precision/failure contracts were resolved.
 The complete construction/history, independent qualifier and native sampling
-units are being implemented after direct fleet missing-operation reds.
+units followed direct fleet missing-operation reds. [Whole CPU construction
+review](2026-10-15-boolean-construction-root-review.md), [sampler review](2026-10-15-boolean-sampler-root-review.md),
+[independent oracle review](2026-10-15-boolean-oracle-semantics-review.md) and
+[actual caller/reference review](2026-10-15-boolean-caller-runtime-review.md)
+retain concrete findings and dispositions. [API](../docs/BOOLEANS.md) and
+[actual results](../results/boolean-2026-10-15/REPORT.md) cover CPU construction,
+qualified CPU/both-P100 consumers, complete history and foreign boundary witnesses.
+[Return-pass notes](2026-10-15-boolean-round2-notes.md) keep wider geometry,
+source composition, result meshing and accelerator placement after features.
 
 
 ## Reference carrier interchange

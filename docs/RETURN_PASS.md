@@ -166,3 +166,28 @@ medians. GPU context setup252.560/547.433ms and cleanup33.920/108.768ms dominate
 those actual calls; do not add per-phase medians as a complete median. Study
 reuse only after the remaining themes; these are no resident/large-batch results.
 See results/interchange-2026-10-15/REPORT.md. No NCSX render timing was undertaken.
+
+## Owned Boolean/history after the strict through-bore
+
+The first owned CPU Boolean/history and its CPU/P100 native consumers are
+[delivered](../results/boolean-2026-10-15/REPORT.md). Complete fresh-process
+CPU1 medians are174.576–180.908ms across three scaled/translated recipes, versus
+710.412–838.043ms on P1000 and1256.376–1278.801ms on P1001. Each recipe has the
+same2,890candidate/2,712admitted grid and fixed topology; this is no large-model
+or GPU Boolean construction result.
+
+Unit-case Engine setup medians272.909/561.780ms, separate synchronous adjacency
+build246.308/460.278ms and Engine cleanup41.840/84.197ms dominate GPU full calls.
+The adjacency API owns its own per-call device context/setup rather than sharing
+sampling's Engine. These named spans overlap their internal phases, so do not
+add phase medians or attribute the entire span to one CUDA primitive. CPU exact
+request preparation is45–53ms in that unit recipe, native sample normal/scatter
+about46–95ms. Retained native consumers, certified bulk exact decisions and
+compact row/history readers are later candidates for the Python-role study,
+not active optimizations. Preserve exact query bits, source carrier frames,
+all-kind history, source events and recoverable ownership when revisiting.
+
+General/off-axis/partial/contact Booleans, result meshing, persistent naming and
+history composition are distinct later units. See the
+[Boolean round-two notes](../papers/2026-10-15-boolean-round2-notes.md). Complete
+the remaining feature units before starting integration polish or tuning.
