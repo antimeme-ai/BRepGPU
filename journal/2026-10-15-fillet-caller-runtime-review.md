@@ -14,3 +14,7 @@ edge/bodybeforeafterprobes,deepcopy/uniquecopyedge selection,mutatesameworkhandl
 discardstaleselectedhandle; complete fixedcriteria+131witnesses/outcomesexports
 beforefailure. No falseaccuracy/material/history/alpha claim. Finalcaller/reference/
 controller ACCEPTED noopenfinding. No productexecution/sourceedit in this review.
+
+Re-read reference refinement requiring all8actualworldsourcevertices exact in
+binary64, plusboxparameters/worldradius. Selected endpoints bind sameoriginal
+vertices. Accepted withinexisting sameworldcontract, no additionalfinding.

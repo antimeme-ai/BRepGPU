@@ -36,3 +36,18 @@ Notified root, sampler and independent oracle owners immediately when dependency
 was fleet-ready; no active GPU jobs from this lane. Saved API guide. Source-only
 AST parsing locally; all product execution remained on fleet. Await tribunal
 findings, then review independent oracle/tests and actual saved artifacts.
+
+Independent constructor reviewer found bounded-input O1: Map2 materialized an
+arbitrary iterable before checking its fixed arity. Fixed admission to read at
+most7 affine/5 arc coefficients, unknown kind before consumption; Origin parents
+read at most4 and admit1..3. Added generator sentinel witnesses to the existing
+direct method. Eight fleet CPU tests GREEN2.407s after this correction. Root
+reviewed whole constructor and accepted, including exact polynomial maps and
+precise typed history/contact fields. API guide complete; no further source edit.
+
+Completed whole independent fillet oracle+12test source review. Accepted final
+original-source typed checks, complete model/control/word/history/sourceUV/contact
+identities, exact material and actual-float native geometry/normal/ABI5 consumers.
+No blocker or oracle edit. Saved bounded oracle semantics review. Root reports
+actual small CPU caller green and is fetching artifacts for separate saved-data
+review. No native/reference/product job from this lane.
