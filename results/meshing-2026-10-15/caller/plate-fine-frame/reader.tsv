@@ -1,0 +1,13 @@
+metric	value
+vertices	1032
+triangles	2064
+corners	6192
+edge_polylines	15
+edge_parameter_occurrences	1052
+boundary_uses	30
+boundary_parameter_occurrences	2104
+rounded_signed_volume	131.4339838882465
+rounded_triangle_area	186.8495559202782
+physical_boundary_length	80.56628198807745
+source_checksum	7752366
+indexed_buffer_bytes	107328
