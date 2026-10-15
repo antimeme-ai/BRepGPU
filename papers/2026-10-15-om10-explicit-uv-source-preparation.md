@@ -374,3 +374,100 @@ then existing independent original source/placement/assembly qualification and
 the actual old/new geometry/foreign-UV delta. Root decides V4 only after that
 source unit closes. No source data changes, tolerance/cap increase, native image
 or target benchmark is authorized by this design.
+
+## Source chart approximation for conics at a natural boundary (design)
+
+Actual fresh attemptv3 reaches original face170920/carrier4257, definition1791.
+Original edge100412 is ellipse1147 on a nonperiodic clamped cubic tensor carrier.
+Its unconstrained reconstructed guide has interior U about1.000002 outside the
+original U[0,1] domain. Both endpoints have U1. The other three original circle/
+ellipse edges likewise project near the other natural sides. This exceeds the
+numerical128ULP grade and is a distinct source-conversion capability, not a
+reason to widen that grade. The original source has no pcurves.
+
+The selected next candidate is explicitly a bounded SOURCE CHART APPROXIMATION,
+serving both owned raw-source UV and the subsequent query copy. It does not
+change any original3D curve, carrier, vertex, interval, physical edge or use.
+Matching endpoints alone does not prove that a curved original trim is a natural
+surface boundary: a conic can bulge away between its endpoints. The complete
+positive-basis proximity/admission below bounds the selected chart change;
+finite original C/S checks establish their stated finite scope, not a universal
+curve-on-surface or isotopy theorem. Original owned meshing still has to pass its
+independent trim, actual cell and original spatial curve error obligations.
+
+Admission is narrow and deterministic:
+
+* Original supporting carrier is a nonperiodic clamped B-spline in both axes;
+  original spatial curve adaptor identifies a Circle or Ellipse. No original
+  LINE, generic spline, periodic spline or arbitrary trim projection is promoted.
+* Reconstructed guide is an editable nonrational, nonperiodic B-spline over the
+  unchanged original active t interval. Its two active endpoint UVs identify
+  exactly one original global U/V side within the unchanged128ULP numerical
+  endpoint grade. Both original C endpoints and declared geometric endpoint
+  vertices agree with their carrier endpoint positions within the selected
+  source residual. Original directed use/branch identity remains unchanged.
+* At least one guide coefficient escapes that natural domain beyond the
+  numerical grade; this strategy is named separately from numerical recovery.
+  Every guide coefficient is considered. The candidate sets the identified
+  coordinate of every coefficient to that exact ORIGINAL natural side, leaving
+  the other coordinate, degree, knots, multiplicities, weights and original t
+  unchanged. Its other-coordinate coefficient hull must already lie in the
+  original global interval exactly; otherwise this source candidate rejects.
+  Numerical correction in the later query copy cannot admit an invalid raw
+  source candidate.
+  No interior source knot is clamped and there is no pointwise branch switch.
+* The maximum coefficient-coordinate change, multiplied by the retained
+  original natural-domain derivative metric, must be finite and fit tolerance/8.
+  The positive partition of unity bounds the complete fixed-basis UV change.
+  This is a metric-weighted chart admission, not a derivative theorem about an
+  extrapolated original surface outside its natural domain. The whole guide
+  hull must be near the same unique side; endpoint matching does not suffice.
+* The candidate must pass the existing original-t C/S probes at exact saved
+  endpoints and17 points per original spatial knot span, with final UV inside
+  the original domain and residual at most the unchanged source_residual_mm.
+  Failed/ambiguous candidates reject with original face/coedge IDs. No selected
+  tolerance, original geometry or source interval is widened.
+
+The source operation applies only to a newly reconstructed missing pcurve; it
+never rewrites a preexisting input pcurve. The editable guide is copied and
+segmented at the exact original active interval first, preserving original-t
+knots/basis on that interval. The source operation occurs once, before
+attachment and the existing narrow
+seam/period normalization. Those methods and final per-use readback retain the
+selected candidate rather than a stale unconstrained curve. The unconstrained
+construction is retained explicitly as diagnostic provenance: original face/
+coedge, chosen axis/side, original guide coefficient excursion and metric charge,
+and finite original-C/guide-carrier versus original-C/selected-carrier residuals.
+The chosen source pcurve is marked as constrained reconstruction in deterministic
+BGSRC diagnostics; timings remain stdout-only. Subsequent query-copy edits start
+with this per-use metric charge, so cumulative source-chart-plus-query admission
+still fits tolerance/8. The original reference export for NVIDIA remains raw
+NONE-policy geometry; no owned projection cost is imposed on that baseline.
+
+The mature alternatives were studied rather than assumed to constrain output.
+Changing the projector precision to the original retained edge tolerance leaves
+the same outside guide: isAnIsoparametric internally uses Precision::Confusion.
+The explicit-domain GeomProjLib::Curve2d probe returns null for these four edges;
+its implementation also permits initial-UV fallback and unconstrained fitting,
+so bounds are not a final output contract. Neither alternative is adopted.
+
+This conic strategy admits only a single original use of the edge on that
+supporting face. Repeated/seam use is explicitly unsupported for this family;
+its charge and guide provenance therefore belong to exactly that original
+coedge. Existing analytic seam conversion is unchanged. Distinct incident faces
+retain their independently bound source use/PC and are not conflated by physical
+edge identity. This avoids charging only the first of multiple inherited seam
+branches; no multi-use source-chart approximation is claimed.
+
+Read-only original170920 diagnostics evaluate257 original-t samples on each of
+four original uses. Selected constant-side candidates have maximum observed
+C/S residuals8.7536478e-5,3.4654782e-5,4.4364051e-5,2.1239102e-5mm for
+143084–143087 respectively. Unconstrained143084 actually reaches U outside by
+2.1374286e-6, so this is not only a sufficient-control-hull false alarm. Maximum
+whole-coefficient side changes are2.357606e-6,8.074709e-7,3.148823e-4,
+2.040235e-7; original nonrational derivative hulls Lu=.03456325923,
+Lv=.04533651339 give metric charges8.148655e-8,3.660791e-8,1.088336e-5,
+9.249712e-9mm, each below unchanged.000625mm. Each other-coordinate coefficient
+hull is wholly inside its original interval. These are finite diagnostic
+observations and conservative coefficient-metric calculations, not proof of
+exact original natural-boundary identity.

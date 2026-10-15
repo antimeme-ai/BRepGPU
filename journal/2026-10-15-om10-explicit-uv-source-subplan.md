@@ -190,3 +190,32 @@ at170920/carrier4257/coedge143084 on a beyond-grade domain excursion. No source
 snapshot is published. Original ellipse1147 versus cubic tensor boundary
 approximation is the next studied source-conversion case; its new design has
 not yet been selected or implemented. The numerical grade stays unchanged.
+
+### Next bounded source-chart unit (plan, no production change yet)
+
+Actual170920 is a conic/natural-boundary approximation family, not numerical
+control noise. Preserve freshv3/guide probes and original source coefficients.
+Implement only after root/peer review of the source-chart admission in the study.
+One literal tensor-plane/conic fixture should first fail because its small
+original circular bulge projects outside the tensor rectangle; the selected
+natural-side representation must retain literal original C(t)/radius/range,
+complete physical word and original source geometry. Check final selected
+constant-side UV/C–S and diagnostic metric/provenance, and reject a larger bulge
+that exceeds the unchanged allocation/source grade. Reuse the same whole
+preparation and existing use/period/preservation guards; do not add a second
+qualifier. Keep the512ULP LINE fixture failing, since it is not this conic family.
+
+After genuine red, add one shared raw-source conic chart helper, deterministic
+source diagnostics and source-to-query cumulative charge initialization. Run
+existing focused source-UV/source-reader checks plus this direct method, peer
+review, and one fresh actual complete source/query attempt. Full original
+geometry/assembly checks and old/new delta remain required before V4; no mesh,
+watch raster or broad corpus campaign is part of this source unit.
+
+Root, independent math and native reviews ACCEPT the bounded source-chart plan.
+The literal tensor-plane/circular-bulge test genuinely fails before helper code:
+coedge10 unsupported query natural-domain escape,0.017s, retained in
+`context/om10-source-chart-red.txt`. The test requires unchanged original circle
+radius/t/literal C(t), raw and query selected side, full physical word and
+rejection of a larger bulge beyond allocation. Production is unchanged at this
+red checkpoint; implementation follows only this reviewed source approximation.

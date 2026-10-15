@@ -454,3 +454,16 @@ The direct8ULP middle-control case and512ULP rejection target this representatio
 operation. Requested one code/contract alignment: reject periodic input before
 editable's segmentation, matching the newly explicit nonperiodic admission.
 Complete source extraction and independent original geometry remain next gates.
+
+Reviewed the subsequent170920 conic/source-chart design and subplan ACCEPT.
+It is an explicit approximation family rather than a wider128ULP numerical
+grade: one newly missing conic pcurve on a nonperiodic clamped source tensor,
+one use on that face, exact original-t active guide, unique endpoint side and
+whole-control proximity, with other-axis hull exactly in-domain. Positive
+basis bounds the complete UV change; final C/S probes and seeded cumulative
+metric charge remain. Matching source endpoints does not prove the conic
+interior is a natural boundary. The actual257-probe maxima support finite
+correspondence only, not exact boundary/isotopy claims. Original 3D geometry and
+owned edge/cell error obligations remain unchanged. Requested and reviewed the
+explicit no-query-deferral/domain sequencing before acceptance; no new code or
+test campaign in this review lane.

@@ -422,3 +422,13 @@ trim working adaptors and extend/re-time new2D results. Recorded tolerance floor
 100× search-distance allowance, input-TrimmedCurve range behavior and null/error
 scope in papers/2026-10-15-om10-bounded-geomprojlib-review.md. Sent facts to root/
 source owner. No probe, adoption, production change or CAD execution here.
+
+Reviewed the next written conic source-chart approximation design/subplan for
+native parameter/storage/provenance integration. Fixed active original-t basis,
+checked preattachment output and deterministic diagnostics fit the selected
+source stage; numerical argument stays with the independent math reviewer.
+Identified that a once-per-edge helper must not charge only the first of several
+affected seam occurrences. Owner narrowed this new conic family to exactly one
+original edge use on its supporting face, rejecting repeated/seam use and keeping
+existing analytic seams unchanged. Reread that amendment and sent final native
+design/subplan ACCEPT. No code, probes or additional campaign by this lane.
