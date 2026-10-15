@@ -276,3 +276,27 @@ retain query tolerance/integration/carrier-path uncertainty; issue43 remains
 separate. No required community alpha corpus is green. Revisit the theme map,
 external oracle gaps and actual full-caller costs before selecting return-pass
 priorities. This delivery starts no integration/tuning/rewrite or NCSX timing.
+
+
+## NCSX matched rerun after the breadth pass
+
+The user requested an actual NCSX rerun. [Matched current CPU1/P1000 runs](../results/ncsx-rerun-2026-10-15/REPORT.md)
+reproduce original P100 controls,jets,scene and image byte-for-byte; CPU geometry
+pixels match too. The new feature constructors do not participate in this fitted
+carrier display. No aesthetic/source/grid change was made to imply improvement.
+
+Evaluation wrapper measured16.310ms CPU1/1.430ms P1000, while cold native
+setup-through-cleanup is119.862/570.840ms. P100 Engine/native-pin setup279.585ms,
+patch setup91.623ms and query setup112.050ms dominate; each includes existing
+wrapper validation/packing and actual native operations. These are unprofiled
+walls, not isolated CUDA primitive measurements. Reuse is a future scoped workload.
+
+Actual CPU projection/shading/depth raster/encoding/writes take9.479/9.125s;
+independent exact Fraction checks take28.755/28.062s. Fullqualifiedcaller is
+41.024/40.379s, not an established whole-render GPU speedup. Verification cost is
+separate from production display work and cannot be silently dropped from a
+reported wall. One observation per placement supplies no variability estimate;
+original study00 was untimed. Native residency, host packing, CPU display and
+source-to-owned CAD integration remain candidates for separately designed work.
+This requested rerun adds measurement and comparison, without starting tuning
+or changing the Python-role decision.
