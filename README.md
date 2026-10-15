@@ -18,8 +18,16 @@ discovery are delivered, along with complete analytic face intersections and
 their coupled spatial/two-UV representations. GPU edge-use adjacency and its
 mate/face-neighbor reader are delivered too. Exact material classification and
 finite rectangular-face contacts and complete bounded planar arrangements are
-delivered on CPU. Trim-aware meshing and narrow interchange remain broad-pass
-themes alongside solid operations and features.
+delivered on CPU. Complete shared-edge meshes for the canonical box, cylinder
+and holed plate are now delivered too, with exact source construction and bounded
+rounded output. Narrow interchange, solid operations and features remain.
+
+[![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
+
+[Mesh API and source/chord contract](docs/MESHING.md) ·
+[Actual geometry and CPU caller costs](results/meshing-2026-10-15/REPORT.md).
+The continuing trophy subject is [NCSX](docs/NCSX_TROPHY_BRIEF.md), with the
+operator-provided engineering reference pack acquired for comparable iterations.
 [GPU setup/residency and integration notes](docs/RETURN_PASS.md) are queued
 after the broad-pass big rocks.
 That return pass also investigates whether Python belongs in the delivered
@@ -431,6 +439,7 @@ initially be assembled on the CPU while the numerical pipeline develops.
 | --- | --- | --- |
 | Geometry storage and evaluation | Batched FP64 points and derivatives | Shared device representation and CPU reference contracts |
 | Bounds and geometric queries | Seeded projection and automatic conservative patch discovery delivered; pair/trim queries next | Work queues for irregular geometry |
+| Approximation and meshing | Complete shared-edge CPU meshes for canonical box/cylinder/plate, with world error bounds and preserved hole/seam | Wider trim families and native/GPU placement |
 | Surface intersections | Curves in 3D and both surfaces' parameter domains | Complete intersection branches and consistent trims |
 | Face splitting and classification | Boundary pieces selected by Boolean operations | Device topology construction with shared edges |
 | Solid assembly and features | Narrow solid operations and independently scoped extrusions, revolutions, fillets and offsets; features can precede Booleans | A progressively broader GPU modeling kernel |

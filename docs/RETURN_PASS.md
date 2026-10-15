@@ -21,9 +21,8 @@ See the [investigation brief](../papers/2026-10-14-python-role-return-pass.md).
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
 Complete analytic intersection and spatial/bothUV representation, plus the
 GPU edge-use adjacency/mate-reader beachhead, are delivered.
-Classification and bounded planar arrangements are now delivered. Finish
-trim-aware meshing, narrow model
-interchange and the other uncovered themes before this return pass.
+Classification, bounded planar arrangements and complete canonical meshes are now delivered. Finish
+narrow model interchange and the other uncovered themes before this return pass.
 
 ## GPU lifetime and reusable inputs
 
@@ -125,3 +124,20 @@ are not selected dependencies, approved implementations, or an active tuning lan
 
 Source notes: [GPU lifetime](../papers/2026-10-14-gpu-lifetime-reuse-study.md)
 and [scene residency](../papers/2026-10-14-scene-residency-reuse-study.md).
+
+## Meshing after the first complete family
+
+The [canonical mesh unit](MESHING.md) constructs full exact CPU shells and checks
+actual rounded output. Native bulk/GPU placement, general trimmed rational faces,
+arrangement-region triangulation, adaptive quality and wider seam/pole cases are
+future conceptual units. Current corner fans intentionally provide no minimum
+angle/aspect-ratio guarantee. Preserve shared physical vertices, distinct corner/
+coedge occurrences and both exact/chordal domain meanings in every extension.
+
+Fine plate construction plus complete indexed consumption is757.459ms median
+for2,064triangles, with722.285msconstruction and38.534msreader medians; independent
+qualification and export are separate. This records a later placement opportunity,
+not an active Python rewrite/session optimization or demonstrated GPU speedup.
+The continuing NCSX trophy requires actual source geometry beyond the acquired
+engineering PDF/photo references; keep geometry revisions and rendering settings
+constant across comparison images.

@@ -50,8 +50,19 @@ rectangular grids and separated interior circle sections, complete regions,
 holes/twins/exterior, directed original boundary ranges, retained whole source
 maps, exact areas/witnesses and closed-region lookup. See docs/ARRANGEMENTS.md
 and results/arrangements-2026-10-14/REPORT.md. It does not assemble a Boolean or
-perform GPU construction. Continue uncovered trim-aware meshing and interchange
+perform GPU construction. Continue uncovered interchange
 plus solid/feature themes; general clipped/tangent arrangements are later work.
+The complete canonical mesh beachhead is delivered on CPU: exact rational
+box/cylinder/one-hole-plate shells, source-keyed shared boundaries and original
+coedge/chart/seam occurrences, whole chordal-domain coverage and bounded actual
+binary64 output. See docs/MESHING.md and results/meshing-2026-10-15/REPORT.md.
+Straight circular chords approximate the analytic trim; do not claim all triangle
+interiors are exactly material-IN. No GPU mesher or general triangulator is
+established. Continue narrow interchange and uncovered solid/feature themes.
+The operator selected NCSX as the continuing trophy subject; read
+docs/NCSX_TROPHY_BRIEF.md. Acquired material is documentary PDF/photo content,
+not native geometry. Preserve source/revision/camera/lighting between comparison
+images and name changes. Existing synthetic trophies remain historical studies.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;
