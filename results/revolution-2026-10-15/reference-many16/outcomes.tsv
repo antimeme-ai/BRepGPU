@@ -1,0 +1,6 @@
+criterion	passed	observed	limit
+input_curve_preservation	True	True	True
+manifold	True	True	True
+volume	True	2.958469069724856e-08	3.681553890925539e-08
+bounds	True	2.220446049250313e-16	2e-08
+boundary	True	1.4217791915866692e-15	2e-07
