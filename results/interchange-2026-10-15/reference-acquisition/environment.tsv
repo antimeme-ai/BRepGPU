@@ -1,0 +1,6 @@
+field	value
+reference	usd-brep
+version	1.0.0
+python	3.12.3
+script_sha256	17bc3c845bc4a75f3b91909c5d3c8d4683718bbfa8803e3aa5095b1954a38492
+reference_dependency	isolated optional experiment; not imported by owned converter

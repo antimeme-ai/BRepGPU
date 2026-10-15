@@ -1,0 +1,3 @@
+sha256	prim	face_index	ordinal	surface_type	trim_type	loop_count	status	reason	patch_slot	range_umin	range_umax	range_vmin	range_vmax	position_bound	du_bound	dv_bound
+2275457675cc66ee5fa1e805af2db7e717dcccd271e06e2bc72307af6b40d419	/Rational	0	0	BrepSurfaceNurbAPI	general	0	converted		0	-2.0	3.0	4.0	6.0	1/45035996273704960	3/56294995342131200	9/45035996273704960
+2275457675cc66ee5fa1e805af2db7e717dcccd271e06e2bc72307af6b40d419	/Rational	1	1	BrepSurfaceNurbAPI	general	0	converted		1	-2.0	3.0	4.0	6.0	1/45035996273704960	3/56294995342131200	9/45035996273704960
