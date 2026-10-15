@@ -101,3 +101,26 @@ Actual source translation or measured output may require design corrections.
 Study the concrete discrepancy, update the relevant design/subplan and review it,
 then implement and test. Do not replace the whole-movement goal with a fixture,
 silently relax an error criterion or start an unrelated architecture rewrite.
+
+### Nonvisual whole-source backend integration runner
+
+The complete first mesh is expensive. After its current fail-closed run, use a
+fleet utility to retain one freshly built source/mesh/assembly in memory while
+qualifying actual CPU24, P1000 and P1001 outputs. This implements step7 without
+three repeated mesh constructions or any new qualification mechanism.
+
+The runner takes the original private STEP, extracts a fresh source snapshot,
+meshes every definition once and applies the existing independent original,
+mesh and assembly checks. It uses the actual caller's source tables, authored
+layout, materials, complete scene writer and camera/view helpers. The same
+packed assembled/exploded PROJECT_ONLY requests and scene feed each backend in
+separate native processes. Every output's actual source jets, complete placed
+vertices and integer projection are checked with qualify_native_scene against
+the retained original model. No RGBA, PNG or SVG is requested or emitted.
+
+Write existing qualifier metrics and directly measured stage/process walls to
+TSV. Pin production source and selected adapter/native/plugin binaries before
+and after. Reject any stage failure immediately. This is qualification work,
+not a benchmark; repeated complete cold render callers remain fresh STEP calls.
+Review this orchestration before implementation. Do not add a mesh persistence
+format, a second certificate layer or a general backend framework.

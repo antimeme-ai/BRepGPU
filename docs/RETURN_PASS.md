@@ -362,3 +362,25 @@ functional tooth forms, clearances, springs and kinematics need their own actual
 contracts.17 direct methods,58 affected CPU compatibility methods and all158
 actual mesh qualifiers passed, followed by source/output/image review. Stop
 without an additional campaign; external alpha qualification remains incomplete.
+
+## Whole OM10 implementation observations
+
+The supplied real movement is now exercising owned imported-solid meshing;
+complete-source qualification and trophy rendering are still pending. Early
+single-face diagnostics produce80k–399k UV cells on several large carriers.
+The first complete attempt spent about42s sampling original shared edges and
+reached100 of9,162 faces at253s. These are development observations under
+concurrent diagnostics, not quiet benchmark results or an end-to-end estimate.
+
+After complete coverage and actual images, study refinement that uses local
+curvature and triangle shape to reduce unnecessary cells while preserving shared
+boundaries, holes, original UV ownership and the same approximation components.
+Compare it on the actual expensive faces; do not judge by a lower triangle count
+alone. Record the exact-UV versus rounded-native-UV distinction in any rewrite.
+
+CPU STEP translation and owned trim meshing remain common preparation for both
+display backends. A retained owned mesh could remove this work from subsequent
+view/explosion updates, while a fresh source-to-image caller must still report
+it. Native view batches already retain actual geometry symmetrically on CPU and
+GPU. Further mesh persistence, preparation acceleration and language changes
+remain deferred decisions supported by the completed target's measurements.

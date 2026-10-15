@@ -140,3 +140,22 @@ are used independently of all-repeat median timing; no fastest-image search.
 The reviewed source165122 case now passes focused meshing with unchanged5μm
 target, measured native UV rounding bound1.39e-16mm and global-end recovery
 bound4.85e-16mm. Complete-source qualification remains the next gate.
+
+Both independent reviewers accepted the written nonvisual integration-runner
+plan and its implementation. It retains one fresh complete source/mesh in RAM
+while directly qualifying CPU24/P1000/P1001 first jets and both projected poses.
+It uses the existing source/mesh/native oracles and actual caller scene helpers;
+no image or prepared-mesh persistence is introduced. Fixed a review finding:
+include the reused exact spline-oracle helper in source pins. Added effort
+parameters to the runner's input table. Actual whole-mesh failures, rather than
+additional driver tests, still determine when this integration can run.
+
+All-face diagnostics subsequently found cylinder165361 reaching vertex ancestry
+level20 despite a selected free edge still far too long for its error budget.
+Root and independent reviewer accepted metric-resolution stopping instead of
+arithmetic ancestry, with the same20-halving parameter and quality. Review also
+identified possible nontermination at an unattainable fixed-boundary floor;
+the owner therefore adds an explicit finite2^max_refinement created-interior-
+vertex budget per face. Exhaustion fails the whole call. No source is skipped,
+no error criterion or per-face exception is widened. Focused actual/fault checks
+and complete-source qualification follow this correction.
