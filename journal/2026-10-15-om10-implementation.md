@@ -320,3 +320,14 @@ Updated issue60 and ISSUES.md to describe the implemented pipeline and pending
 whole-source qualification/images/measurements. Marked the original gap brief
 as historical with links to the current plan and operational guide. No product
 or binary changed, and no target image or new test campaign ran for these edits.
+
+The continuing diagnostic inventory found a fourth reason: sampled planar
+boundaries167654/167656 intersect. Both reproduce under current unchanged code.
+Stopped the complete V2 run by TERM (exit143) after its200-face checkpoint,
+before any product edit. Retained all partial output privately; it is not a pass.
+Geometry owner studies original circular incidence and a bounded shared
+sampling schedule; independent-oracle owner separately studies the original
+near-tangent curves and pressures the correction. Read and acquired the Jordan
+et al.2014 author preprint; the boundary-topology reading records its assumptions
+and why it does not certify this tolerant source. No implementation selected and
+no actual watch image authorized yet.
