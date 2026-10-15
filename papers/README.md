@@ -1,5 +1,21 @@
 # BRepGPU research
 
+## Owned through-bore Boolean and history
+
+The [design](../docs/BOOLEAN_DESIGN.md) and [plan](../docs/BOOLEAN_PLAN.md) follow
+independent [geometry/history](2026-10-15-boolean-history-semantics-study.md),
+[whole-result oracles](2026-10-15-boolean-history-oracles-study.md) and
+[runtime/source-carrier](2026-10-15-boolean-runtime-study.md) studies.
+Bibliographies: [semantics](boolean-history-semantics.bib),
+[oracles](boolean-history-oracles.bib), [runtime](boolean-runtime.bib).
+Original regularized-set/Boolean literature, exact arrangement work and pinned
+OCCT/NVIDIA source inform the supported operation; no dependency is adopted.
+All three design and plan reviews accepted after cap orientation, actual-UV
+sampling and explicit output precision/failure contracts were resolved.
+The complete construction/history, independent qualifier and native sampling
+units are being implemented after direct fleet missing-operation reds.
+
+
 ## Reference carrier interchange
 
 The [design](../docs/INTERCHANGE_DESIGN.md) and [plan](../docs/INTERCHANGE_PLAN.md)
