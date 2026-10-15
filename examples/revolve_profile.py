@@ -21,7 +21,7 @@ from cut_bore import tsv,require,tree,graph_rows
 ROOT=Path(__file__).resolve().parents[1]
 SOURCES=('examples/revolve_profile.py','examples/cut_bore.py','python/brepgpu/revolution.py',
     'python/brepgpu/revolution_sampling.py','python/brepgpu/revolution_oracles.py',
-    'python/brepgpu/extrusion.py',
+    'python/brepgpu/extrusion.py','python/brepgpu/extrusion_oracles.py',
     'python/brepgpu/boolean.py','python/brepgpu/boolean_sampling.py',
     'python/brepgpu/body.py','python/brepgpu/body_sampling.py','python/brepgpu/body_oracles.py',
     'python/brepgpu/adjacency.py','python/brepgpu/adjacency_oracles.py','python/brepgpu/__init__.py')
