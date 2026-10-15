@@ -1,6 +1,9 @@
 # Geometry trophy candidates
 
-Two reproducible visual studies of the operations implemented so far. Both use
+The continuing goal object is now [NCSX](NCSX_GOAL_OBJECT.md), with a
+source-based P100 study and a preserved scene for future comparisons.
+
+The two earlier reproducible visual studies of the operations implemented so far. Both use
 owned geometry on the fleet, with source inputs and direct geometric checks.
 Download the PNGs for sharing; the saved SVGs include labels at full resolution.
 
