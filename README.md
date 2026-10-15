@@ -32,7 +32,7 @@ actual foreign ASCII USD BRep surfaces into owned CPU/P100 patches with original
 face/chart identities and explicit unsupported outcomes. Trims remain uninterpreted.
 An owned [through-bore Boolean with complete source history](docs/BOOLEANS.md)
 is now delivered. Feature construction is underway: [convex-profile extrusion](docs/EXTRUSION.md)
-is delivered; revolution, fillet and offset remain separate units.
+and [full profile revolution](docs/REVOLUTION.md) are delivered; fillet and offset remain separate units.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -91,12 +91,30 @@ BRepGPU evaluator.
 [Exact planar arrangements](docs/ARRANGEMENTS.md) ·
 [Owned through-bore Boolean and history](docs/BOOLEANS.md) ·
 [Owned convex-profile extrusion](docs/EXTRUSION.md) ·
+[Owned full profile revolution](docs/REVOLUTION.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Feature construction: a full profile revolution
+
+An actual off-axis convex profile now revolves into a closed solid with exact
+rational surfaces, material membership, and complete source history. Each
+original vertex generates a ring; each original edge generates one swept face
+with four rational charts. Physical seams retain two distinct uses on that face.
+
+![Actual 16-edge revolution boundaries and P100-evaluated samples](results/revolution-2026-10-15/costs/many16-cuda-device0-threads1-r1/revolution.svg)
+
+The example has 16 faces, 64 charts and a genus-one shell, with complete ancestry
+from 51 source entities to 208 output origins. CPU constructs the feature;
+CPU/both-P100 consumers evaluate actual geometry, oriented normals and adjacency.
+[API/support](docs/REVOLUTION.md) · [Qualification and costs](results/revolution-2026-10-15/REPORT.md).
+The first foreign triangle agrees on bounds and boundary witnesses; its volume
+comparison remains outside the declared limit and is recorded as a failure.
+Fillet is next, followed by offset.
 
 ## Feature construction: an actual profile extrusion
 
@@ -113,7 +131,7 @@ consumers sample its carriers and read actual adjacency. Independent integer-
 square-root intervals qualify non-axis unit normals; tiny edges and 32-vertex
 profiles have direct fleet cases. [API/support](docs/EXTRUSION.md) ·
 [Qualification, foreign comparisons and complete costs](results/extrusion-2026-10-15/REPORT.md).
-Revolution is next; fillet and offset remain separate feature units.
+Fillet and offset remain separate feature units.
 
 ## Owned solid operations: a through-bore cut with history
 
