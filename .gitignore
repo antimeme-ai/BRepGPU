@@ -7,6 +7,7 @@ toolchains/
 __pycache__/
 *.pyc
 *.pdf
+/om10-00001_20220701_va_01_3.stp
 .DS_Store
 .env
 .env.*

@@ -2,6 +2,14 @@
 
 2026-10-15. Scope: acquire and read primary sources for a real movement, distinguish a technical data package from service illustrations, and identify an honest first part. No product code, rendering, tests, account creation or dependency adoption occurred. Original PDFs remain ignored under `papers/pdfs/`; acquisition URLs and SHA-256 are in [the manifest](2026-10-15-watch-drawing-acquisitions.tsv). HTML and inspection images remain ignored in `context/watch-drawing-sources/`.
 
+## Subsequent acquisition
+
+After this search, the operator supplied the cataloged OM10 MAN VA01.3 STEP.
+The [actual source study](2026-10-15-om10-step-source-study.md) supersedes the
+search's unacquired-STEP status below. Original bytes are retained privately and
+listed separately in the manifest; the anonymous membership-redirect attempt
+remains historical. A STEP assembly is not a full toleranced manufacturing TDP.
+
 ## Finding
 
 **Openmovement OM10 is the strongest route to a real, documented, reusable movement.** Its public technical sheet already supplies actual gear counts, modules, nominal movement dimensions and the stated license. Its current download index lists STEP assemblies. Those STEP downloads require a member login; the free User tier advertises access to constructions. The assembly itself was **not acquired or inspected**, so this study cannot claim a complete manufacturing TDP, a verified CAD BOM, internal pivot coordinates or all Z heights.

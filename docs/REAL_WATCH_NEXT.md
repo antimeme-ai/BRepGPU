@@ -16,13 +16,13 @@ movement. The public PDF states CC BY-SA3.0. Keep source terms with acquired
 artifacts and inspect each package's actual notices before selecting derived
 geometry for publication.
 
-The [download index](https://openmovement.org/member-downloads/) lists STEP and
-other construction material. The visible STEP link redirects to signup; the
-[free User membership](https://openmovement.org/membership-levels/) advertises
-construction access. The actual CAD/manufacturing package has **not** been
-acquired or inspected. No complete TDP is claimed from an index or filename.
-That account-mediated acquisition is the remaining source step; see
-[acquisition list](../papers/SHOPPING_LIST.md#real-mechanical-watch-sources-2026-10-15).
+The operator has now supplied `om10-00001_20220701_va_01_3.stp`, the cataloged
+MAN VA01.3 construction. Original bytes are retained privately with a recorded
+hash; see the [actual STEP source inventory](../papers/2026-10-15-om10-step-source-study.md).
+It contains named assembly and B-rep records. Source acquisition is resolved for
+this STEP revision; complete manufacturing drawings, original feature history,
+fits and tolerances are not established by the exported assembly. The earlier
+membership redirect remains recorded as a historical acquisition attempt.
 
 The [frumentarius report](../papers/2026-10-15-watch-drawing-source-frumentarius.md)
 compares OM10 with actual ETA6497-1, SellitaSW210-1, MIYOTA9015 and TMI NH35
@@ -33,13 +33,23 @@ the [acquisition manifest](../papers/2026-10-15-watch-drawing-acquisitions.tsv).
 
 ## Next watch milestone: one dimensioned real component
 
-Acquire and inventory one fixed OM10 manual-wind release. Separate what is
-explicitly dimensioned, present only in CAD, inferred from a drawing and absent.
-Check assembly placement, part identities, tolerances and source notices.
-Then choose one fully described bridge or plate component as the next bounded
-modeling consumer. The particular part and prerequisite operation must follow
-the acquired geometry; a candidate name is not a claim that its dimensions are
-already available.
+The supplied release now gives a concrete first candidate: **OM00-00142,
+Bride de fixation**. Its seven-face source describes a thin D-shaped fixing
+clamp with three straight outer sides, an outer semicircle and one complete
+circular bore. Nominal source dimensions are outer radius0.9mm, straight end
+X=2.2mm, bore radius0.6mm and thickness0.3mm; the full outer arc extends to
+X=-0.9mm, making the total nominal width3.1mm. Vertex-only coordinate extrema
+would miss that leftmost point. Three assembly occurrences reuse this part.
+
+This source selects a clearer first geometry milestone than an unspecified
+bridge: thin extrusion of a line-and-arc outline with a real through-bore,
+retaining original source entities/assembly placement and bounded mesh output.
+General nonconvex sketches and multiple cuts are not required by this component.
+A reviewed design is still needed; no implementation is selected by inventory.
+Treat the source's declared0.01mm geometric uncertainty separately from mesh
+error and manufacturing tolerances. Retain exact original decimal expressions
+and the actual file's perturbations; the nominal dimensions above are a source
+summary, not a replacement for its full records.
 
 An immediate obstacle is already visible in our code: extrusion coordinates
 are on1/256 grid inside±3/4 and height is at least1/4. Therefore thickness divided
@@ -50,9 +60,9 @@ This explains the intentionally sculptural proportions of study01.
 
 Study a source-dimensioned thin-part contract first, including units, exact
 decimal/rational inputs, retained controls and actual binary64 output error.
-The selected part may then require curved/nonconvex outlines, multiple bores or
-pockets; select one complete operation from its actual blocking features and
-review that design before coding. Changing admission checks alone cannot supply
+The fixing clamp needs the thin line-and-arc outline and one bore. Later
+components may require nonconvex outlines, multiple bores or pockets; select
+those operations from their actual blocking features and review before coding. Changing admission checks alone cannot supply
 its missing geometry, topology, maps or mesh.
 
 Deliver that original component's source dimensions → actual owned solid →
@@ -67,8 +77,8 @@ an arbitrary involute replacement would change the source design.
 ## Keep the second breadth pass broad
 
 The first result meshes and actual composition chain are delivered. Avoid
-letting the new watch consume the whole next tranche. While source access is
-resolved, my recommended next engineering lane is the already requested
+letting the new watch consume the whole next tranche. Alongside this concrete
+source target, my recommended next engineering lane is the already requested
 runtime/Python ownership study: the actual watch spends20.168s in useful
 construction/mesh/history work, with6.581s of source/history reading versus
 4.868s meshing. These are measured walls, not an attributed language profile.
