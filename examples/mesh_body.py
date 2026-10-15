@@ -166,9 +166,10 @@ def write_source(directory, body):
          for j in range(len(p.controls)//4)))
 
 
-def mesh_svg(path, mesh, reader):
+def mesh_svg(path, mesh, reader, *, shape=None, namespace="original"):
     """Actual cap triangles and full indexed wire view; no visibility solver."""
     body = mesh.body
+    shape = body.shape if shape is None else shape
     origin, scale = body.frame.origin, body.frame.scale
     points = tuple(tuple((reader.xyz[3*i+a]-origin[a])/scale for a in range(3))
                    for i in range(len(mesh.vertices)))
@@ -179,7 +180,7 @@ def mesh_svg(path, mesh, reader):
     parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="650" viewBox="0 0 1160 650">',
              '<rect width="1160" height="650" rx="18" fill="#101923"/>',
              '<g font-family="monospace" fill="#dce9ed">',
-             f'<text x="30" y="40" font-size="23">BRepGPU / {escape(body.shape)} / complete indexed CPU mesh</text>',
+             f'<text x="30" y="40" font-size="23">BRepGPU / {escape(shape)} / complete indexed CPU mesh</text>',
              '<text x="30" y="72" font-size="13">Exact source topology, rational construction and one shared rounded vertex array</text>',
              '<text x="80" y="112" font-size="16">Actual top-face triangles</text>',
              '<text x="685" y="112" font-size="16">All-face indexed wire view</text>']
@@ -200,16 +201,17 @@ def mesh_svg(path, mesh, reader):
         if edge.edge_id in seam_edges:
             pixels = ' '.join(f'{x:.3f},{y:.3f}' for x,y in (iso(points[j]) for j in edge.vertices))
             parts.append(f'<polyline points="{pixels}" fill="none" stroke="#ffd166" stroke-width="2.6"/>')
-    parts.extend((f'<text x="30" y="570" font-size="15">{len(mesh.vertices)} shared vertices / {len(mesh.triangles)} triangles / {len(mesh.boundary_uses)} original coedge uses</text>',
+    parts.extend((f'<text x="30" y="570" font-size="15">{len(mesh.vertices)} shared vertices / {len(mesh.triangles)} triangles / {len(mesh.boundary_uses)} {escape(namespace)} coedge uses</text>',
                   f'<text x="30" y="600" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; certified total bound {float(mesh.error_bound):.6g}</text>',
-                  '<text x="30" y="632" font-size="12">Colors name original faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>',
+                  f'<text x="30" y="632" font-size="12">Colors name {escape(namespace)} faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>',
                   '</g></svg>'))
     path.write_text('\n'.join(parts)+'\n')
 
 
-def export_mesh(directory, mesh, reader, quality):
-    directory.mkdir()
-    write_source(directory, mesh.body)
+def export_mesh_data(directory, mesh, reader, quality, *, shape=None, namespace="original"):
+    """Export actual mesh records into an existing directory, without source claims."""
+    parameter_name = 'original_parameter' if namespace == 'original' else 'intrinsic_result_parameter'
+    u_name, v_name = ('original_u','original_v') if namespace == 'original' else ('retained_carrier_u','retained_carrier_v')
     tsv(directory/'bounds.tsv', ('field','value'),
         ((name,ratio(getattr(mesh,name))) for name in ('tolerance','curve_bound','rounding_bound','error_bound')))
     tsv(directory/'counts.tsv', ('field','value'),
@@ -224,10 +226,10 @@ def export_mesh(directory, mesh, reader, quality):
     tsv(directory/'corners.tsv', ('triangle','corner','vertex','chart_id','local_u','local_v'),
         ((t.id,i,t.vertices[i],c.chart_id,*(ratio(x) for x in c.uv))
          for t in mesh.triangles for i,c in enumerate(t.corners)))
-    tsv(directory/'edge-polylines.tsv', ('edge_id','point','original_parameter','vertex'),
+    tsv(directory/'edge-polylines.tsv', ('edge_id','point',parameter_name,'vertex'),
         ((e.edge_id,i,ratio(t),v) for e in mesh.edge_polylines for i,(t,v) in enumerate(zip(e.parameters,e.vertices))))
     tsv(directory/'boundary-uses.tsv', ('coedge_id','face_id','edge_id','orientation','point',
-        'original_parameter','vertex','original_u','original_v'),
+        parameter_name,'vertex',u_name,v_name),
         ((u.coedge_id,u.face_id,u.edge_id,u.orientation,i,ratio(t),v,*(ratio(x) for x in uv))
          for u in mesh.boundary_uses for i,(t,v,uv) in enumerate(zip(u.parameters,u.vertices,u.uv))))
     tsv(directory/'qualification.tsv', ('metric','value'), quality.items())
@@ -242,7 +244,13 @@ def export_mesh(directory, mesh, reader, quality):
         for i,face in enumerate(reader.face_ids):
             stream.write('3 '+' '.join(str(x) for x in reader.indices[3*i:3*i+3])+f' {face} '
                          +' '.join(format(x,'.17g') for x in reader.normals[3*i:3*i+3])+'\n')
-    mesh_svg(directory/'mesh.svg',mesh,reader)
+    mesh_svg(directory/'mesh.svg',mesh,reader,shape=shape,namespace=namespace)
+
+
+def export_mesh(directory, mesh, reader, quality):
+    directory.mkdir()
+    write_source(directory, mesh.body)
+    export_mesh_data(directory, mesh, reader, quality)
     (directory/'RECIPE.md').write_text(
         '# Complete canonical CPU triangle mesh\n\n'
         f'{mesh.body.shape}: {len(mesh.vertices)} shared vertices, {len(mesh.triangles)} oriented triangles, '
