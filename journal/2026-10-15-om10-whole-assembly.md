@@ -53,3 +53,10 @@ defaults. Both adversarial reviews ACCEPT and product hashes match the fleet.
 The old diagnostic inventory was stopped with two old-code tasks still active;
 it is partial, not whole-source qualification. Fresh complete integration now
 has priority and must cover every original face before actual target imaging.
+
+Started fresh complete nonvisual V3 after comparing every pinned source/helper
+hash between workspaces; all match. The runner performs fresh original STEP
+translation and retains one complete owned mesh for source/domain/physical and
+CPU24/P1000/P1001 checks. Product/helper/binary code stays unchanged throughout
+the operation. No image output is enabled. Updated draft PR62/issue60 with the
+completed bounded corrections and the still-pending full qualification.
