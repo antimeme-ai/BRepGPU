@@ -140,6 +140,15 @@ and stopping before certification grows: no mutation campaign, broad numerical/
 GPU reruns, second coverage mechanism or extra certificate layer for this unit.
 Operation composition, external adapters, runtime/Python study and owned NCSX
 geometry remain. These narrow result meshes do not establish general feature support.
+The operator selected a mechanical-watch-inspired assembly for the first actual
+profile/extrusion/cut/mesh chain and explicitly requested durable notes. Read
+docs/WATCH_TARGET.md, WATCH_CHAIN_DESIGN.md and WATCH_CHAIN_PLAN.md. The new
+strictly interior axial bore consumes actual ExtrusionResult/cylinder sources;
+immediate/composed ancestry must retain original profile maps and all six kinds.
+Implementation is in progress on feat/watch-modeling-chain. Displayed geometry
+must use actual qualified meshes, with schematic separate tooth pieces disclosed;
+no functional gear train/escapement or general Boolean claim. This supplements
+NCSX. Product/render/tests remain fleet-only and bounded direct checks govern stop.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native
