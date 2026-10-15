@@ -52,7 +52,7 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Numerical geometry | Delivered rational patch jets and seeded projection | Exact-input geometry/derivative and declared stationarity checks | Wider degrees/weights, extraction, solver strength and tuning |
 | Bounds and geometric queries | Delivered seed-free named-patch distance brackets and resident conservative chart-pair culling in a common world frame | Valid brackets; exact original-control/world enclosure and closed-box bit truth over whole carrier domains, explicit page coverage and retained identity | Cross-face trimmed proximity, sparse-scene pruning, off-grid strengthening and traversal scheduling |
 | Body storage and identity | Delivered CPU-built immutable packed box/cylinder/one-hole-plate snapshots and sampling/normal caller | Exact analytic/control identities, typed references, oriented loops, shared edge/coedge occurrences, declared frames and source correspondence | Incremental edits, persistent naming, broader body families and normal/row performance |
-| Model integration and interchange | One qualified reference-to-owned carrier path, with face/chart provenance and explicit unsupported faces; reproducible owned output records | Positions/derivatives agree under the established parameter map; trim preservation is checked separately and never inferred from carrier conversion | General NURBS extraction, wider import/export and cross-session identity |
+| Model integration and interchange | Delivered strict static ASCII USD BRep subset to owned single-span rational carriers, complete original face/use outcomes and reproducible records; trims uninterpreted | Positions/derivatives agree under the established parameter map; trim preservation is checked separately and never inferred from carrier conversion | General NURBS extraction, wider import/export and cross-session identity |
 | Curves, trims and charts | Delivered line/closed-circle boundaries, planar faces with a hole and a cylindrical seam with distinct uses for the canonical body fixtures | Exact submitted-UV trim membership, loop closure and complete spatial-edge/UV identities | General trim curves, additional charts, poles and difficult parameterizations |
 | Approximation and meshing | Delivered exact CPU shared-edge canonical box/cylinder/plate meshes with bounded rounded output | Complete chordal-domain coverage, two-sided world error, preserved hole/seam/source identity and exact/rounded closed manifold embedding | General adaptive rational meshing, quality and native/GPU placement |
 | Surface intersections | Delivered plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
@@ -107,8 +107,7 @@ favors CPU. Complete analytic closed plane/wall intersections are now
 [delivered](../results/intersections-2026-10-14/REPORT.md), with exact components,
 spatial/bothUV maps and a qualified CPU/P100 consumer. Native large-row evaluation
 is about15–17.5 times faster on P100, while full consumption remains CPU bound
-at2.3–2.5s and exact request preparation costs27–32s. Continue the uncovered
-narrow interchange beachhead;
+at2.3–2.5s and exact request preparation costs27–32s. Continue the uncovered solid/history and feature beachheads;
 broader SSI or integration tuning does not displace them. GPU adjacency now
 constructs and reads packed edge-use CSR without pointer-defined identity;
 compaction, editing, resident arrangements and Booleans remain return-pass work.
@@ -118,8 +117,12 @@ all supporting source faces and complete world/bothUV loci. Bounded face
 arrangements are also [delivered](../results/arrangements-2026-10-14/REPORT.md),
 including shared exact circle/line boundaries and complete regions/holes.
 Complete canonical [trim-aware meshing](MESHING.md) is now delivered on CPU.
-Continue narrow interchange and uncovered solid/feature
-themes before broadening or tuning this family.
+The [carrier interchange beachhead](INTERCHANGE.md) is now delivered: actual
+foreign single-span rational surfaces become owned patches with complete source
+face/use identity and explicit unsupported carriers. Exact source/native geometry,
+foreign scalar correspondence and complete CPU/P100 costs are published. Trims
+remain uninterpreted; this does not import a solid or complete general USD/STEP
+exchange. Continue Boolean/history and features before broadening or tuning.
 At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane
@@ -224,6 +227,14 @@ Analytic cylinder angles can differ nonlinearly from NURBS parameters. Preserve
 the actual returned parameterization and its identity, and check positions and
 derivatives before claiming correspondence. General knot extraction and trimmed
 face modeling are later owned capabilities, not implicit iteration-1 promises.
+
+The first [owned reference carrier adapter](INTERCHANGE.md) now reads a strict
+static ASCII subset of actual USD BRep exports, accepting only single clamped
+rational spans within the qualified numerical envelope. A full lexer/type tree
+rejects unsupported scene semantics rather than scraping arrays. No reference
+library is imported by the normal converter. All source faces/uses survive and
+trims remain uninterpreted. General native extraction and additional formats
+remain future work.
 
 ## Programming stack
 

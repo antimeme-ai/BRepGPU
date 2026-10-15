@@ -1,5 +1,26 @@
 # BRepGPU research
 
+## Reference carrier interchange
+
+The [design](../docs/INTERCHANGE_DESIGN.md) and [plan](../docs/INTERCHANGE_PLAN.md)
+follow independent [source semantics](2026-10-15-interchange-semantics-study.md),
+[actual runtime/acquisition](2026-10-15-interchange-runtime-study.md) and
+[geometry/oracle](2026-10-15-interchange-oracles-study.md) studies.
+Bibliographies: [semantics](interchange-semantics.bib),
+[runtime](interchange-runtime.bib), [oracles](interchange-oracles.bib).
+Pinned NVIDIA schema/exporter and primary OpenUSD grammar inform the owned strict
+ASCII subset; no reference library is adopted by the product.
+
+All three design/plan reviews accepted after exact frame-factor/product rounding
+and request binding were made explicit. [Parser review](2026-10-15-interchange-parser-semantics-review.md),
+[converter review](2026-10-15-interchange-converter-oracle-review.md),
+[oracle semantics review](2026-10-15-interchange-oracle-semantics-review.md) and
+[caller/reference review](2026-10-15-interchange-caller-runtime-review.md) retain
+actual code findings and corrections. [Actual results](../results/interchange-2026-10-15/REPORT.md)
+include foreign source/reference comparisons, complete original face outcomes
+and48 CPU/P100 cold callers. Trims remain uninterpreted; broader exchange and
+mandatory community alpha qualification remain future work.
+
 ## NCSX goal object
 
 The [first source-based rendering](../docs/NCSX_GOAL_OBJECT.md) follows the
