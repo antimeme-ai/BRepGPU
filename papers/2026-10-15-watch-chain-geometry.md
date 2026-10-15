@@ -216,3 +216,34 @@ shared-boundary cap/side/wall meshing. Local static AST parsing and whitespace
 check pass. No local product execution and no source/library guard widening.
 Fleet direct green and independent actual-output/code review remain pending;
 root serializes execution with the independent oracle lane.
+
+## Independent watch-caller source review
+
+Root reports 17 direct tests and one 58-test affected CPU compatibility run
+passed, without a production-source fix. Separately read final `watch_scene.py`,
+`render_watch.py`, `watch_display.py`, their existing indexed/history exporters,
+and the independent bore qualifiers. Accepted source/consumer implementation.
+
+Recipes construct actual original lattice profiles and actual source Frames,
+then actual extrusion/cutter/bore results. Wheel lugs, spokes, posts and raised
+stripes are separately inventoried solids; no nonconvex/fused gear or machined
+slot is smuggled into the kernel claim. Display consumes the returned rounded
+world coordinate/index buffers directly, with only orthographic camera projection,
+flat facet shading and depth interpolation. It neither changes thickness nor
+substitutes illustrative surfaces for the actual closed meshes.
+
+The useful consumer reads actual indexed geometry, original source records,
+immediate dispositions and every composed ordered origin step; it retains object
+identity and original root namespaces. Publication exports original profile,
+extrusion, actual cutter controls/tables, final topology/carriers, complete both
+histories, actual mesh corners/boundary uses and part/source-face-indexed PLY.
+Independent mesh qualification additionally qualifies the original extrusion
+and cutter; status success and image appearance are not its geometric oracle.
+
+Timing boundaries name construction, mesh, indexed/history read, independent
+qualification, per-part export, aggregate export and each CPU display separately.
+Their overlapping construct-to-consumed/full enclosures are disclosed. Source
+hashes are checked before and after actual work. No CPU/GPU comparison or speedup
+is inferred; no product/native/GPU code changed for display. No source-review
+finding remains. Saved artifact and actual image inspection are pending the
+root's fleet fetch; this review executed no product or rendering.

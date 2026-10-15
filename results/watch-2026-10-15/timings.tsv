@@ -1,0 +1,11 @@
+scope	milliseconds
+sum_source_and_construction	8718.819377
+sum_mesh	4867.730838
+sum_indexed_and_history_reader	6581.360695
+sum_construct_to_consumed	20167.91091
+sum_independent_qualification	29501.227735
+sum_part_filesystem_export	6600.259816
+assembly_filesystem_export	38.505139
+hero_cpu_display_including_png_svg_writes	10016.952317
+top_cpu_display_including_png_svg_writes	10291.648601
+full_caller_through_final_source_check	76673.736189

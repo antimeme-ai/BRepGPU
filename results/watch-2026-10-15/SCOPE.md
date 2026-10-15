@@ -1,0 +1,7 @@
+# Actual openwork movement study 01
+
+158 separately modeled solids. Every pierced part consumes its actual profile → extrusion → bore → mesh chain and retains immediate and ordered root histories. Every unpierced part is an actual convex extrusion mesh. All distinct actual meshes were independently qualified; world tolerance 1/256. Placement is in original source Frames, with no display geometry transform.
+
+This is an original schematic, nonfunctional watch-inspired assembly. Radial lugs, spokes, posts and raised head stripes are separate solids; they are not fused gears or machined slots. Gear contact, ratios, interference clearance, escapement, springs, kinematics and manufacturing dimensions are not established. No source watch CAD/image was copied.
+
+All construction, meshing, qualification and depth-buffer display run on CPU. No native/CUDA calls, device transfers or GPU rendering. Part timings separate construction, mesh, actual indexed/source-map consumption, independent qualification and export. Construct-to-consumed overlaps its three stages. Render includes PNG encoding and surface/SVG writes; scene-table writes follow that scope. Full wall starts after imports/argument parsing and includes all part work, qualification, files, display and final source-hash check; it excludes final timings/SCOPE writes, process shutdown and standalone SVG composition. One actual assembly run; no speedup or variability claim. External alpha qualification remains incomplete.
