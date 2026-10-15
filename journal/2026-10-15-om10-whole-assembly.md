@@ -60,3 +60,14 @@ translation and retains one complete owned mesh for source/domain/physical and
 CPU24/P1000/P1001 checks. Product/helper/binary code stays unchanged throughout
 the operation. No image output is enabled. Updated draft PR62/issue60 with the
 completed bounded corrections and the still-pending full qualification.
+
+The operator clarified that CPU-only must include the external NVIDIA USD/BRep
+baseline. The owned CPU/P100 comparison alone does not answer that request.
+Continued the independent reference owner on the complete original OM10 source,
+its actual import/tessellation APIs, source/quality correspondence and explicit
+display scopes. Current owned qualification continues unchanged. Reference study
+found an existing isolated usd-brep1.0.0 runtime, native SMLib/USD I/O, and a
+pinned NVIDIA OCCT-to-USD bridge; direct STEP import is not exposed by that
+runtime. The concrete reference path needs source-grounded design/review before
+new adapter code. No foreign triangles have been substituted for product output,
+and no target raster has occurred.
