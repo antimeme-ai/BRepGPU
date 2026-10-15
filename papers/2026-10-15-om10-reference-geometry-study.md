@@ -42,7 +42,7 @@ nearest point. Binary64 input and numerical output remain approximate; fixed
 epsilon expands the barycentric domain. Literal interior/edge/vertex cases and
 the reconstructed nearest point directly check the routine.
 
-The intact acquired PDF is papers/pdfs/eberly-distance-point-triangle.pdf,
+The intact241,821-byte acquired PDF is papers/pdfs/eberly-distance-point-triangle.pdf,
 SHA-2563d1d9eb86abd73a109ad29587d6f10ca6bd215a6d5dba5bc2ecd13546ef58ae6.
 It is ignored literature under its CC BY4.0 notice. Restore with
 `curl -fL https://www.geometrictools.com/Documentation/DistancePoint3Triangle3.pdf -o papers/pdfs/eberly-distance-point-triangle.pdf`.
