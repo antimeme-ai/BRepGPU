@@ -155,9 +155,12 @@ general Boolean claim. It supplements NCSX. Product/render/tests remain fleet-on
 Stop this bounded unit after publication/handoff; no extra certification lane.
 The operator has supplied OM10 MAN VA01.3 STEP. Original bytes remain ignored
 and private; papers/2026-10-15-om10-step-source-study.md records the static source
-inventory. OM00-00142 fixing clamp is a concrete next geometry candidate: thin
-line-and-arc outline with one bore. No STEP importer or new implementation is
-selected; docs/REAL_WATCH_NEXT.md retains the proposed next steps.
+inventory. The operator now requests the whole assembly, followed by exploded
+labels, both CPU-only and GPU-accelerated, with timings in graphics for X. Read
+docs/OM10_ASSEMBLY_DELIVERY.md and the whole-source geometry gap study. The
+clamp is a possible development fixture, not the delivery target. OCCT as an
+isolated source/reference bridge is proposed for discussion; no importer,
+dependency or implementation design is selected yet.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native
