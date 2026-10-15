@@ -80,3 +80,12 @@ indexes point to complete results. Round-two notes retain broader geometry,
 periodic-history constraints, exact host/setup costs and issue43 volume debt.
 Fillet and offset precede deferred integration/Python-role/NCSX timing. Proceed
 to PR merge preserving feature commits, then clean main/fleet handoff.
+
+PR44 merged all eight substantive feature commits at
+684145b1e8a51880b5bc910db0007a2d607c31d6. Issue42 closed; issue43 remains
+open with the foreign volume comparison explicitly non-green. The feature branch
+is retained. Local main and the execution checkout reported that same revision
+with clean tracked files after synchronization; existing build/toolchain/private
+context directories were preserved. This final journal/issue-index checkpoint
+will be synchronized without product changes. Fillet is the next independent
+breadth unit, then offset; no return-pass tuning began.
