@@ -329,3 +329,12 @@ additional R13.6 cylinder173378 passes4096 cells in184.31s. Remaining old cap
 IDs172236/173126 are same thin full-period cone/cylinder source family; complete
 current mesh qualification still covers each. Old full scan has only the three
 studied failure families; no source omissions or target image.
+
+During pinned full V2, the continuing old-code scan found two constructed-
+interior physical-zero failures166487/166587. Parent authorized read-only current
+checks, with no product edits. Both pass existing code:166487 cone1229 has1024
+cells/10.48s;166587 cone1230 has11082 cells/61.39s (6346 boundary UV nodes,
+8.51s Lawson). Latter maximum joint bound0.00373527mm, canonical displacement
+maximum0.000012603mm. Existing connectivity resolves those old slivers; no new
+collapse, precision or source-recovery family. Full V2 remains the all-source
+qualification, and original scan results remain diagnostic failures of old code.
