@@ -1,0 +1,23 @@
+key	value
+source_revision	81436b4f7c655a4099eadadb168b7cc27923e555
+coil_fourier_order	30
+coil_instances	18
+field_periods	3
+coil_segments	64
+pack_half_width_source_units	0.04
+pack_half_depth_source_units	0.06
+section_frame	projected toroidal direction; periodic source tangent
+plasma_phi_segments	36
+plasma_theta_segments	24
+plasma_component	FOCUS plasma boundary; not vacuum vessel
+source_length_units	not declared by raw files
+native_scale	4.0
+backend	cpu
+observed_native_backend_tag	0
+device	0
+patches	5472
+queries	90720
+native_components_per_query	9
+native_status	all BG_OK; finite
+raw_jets_layout	little-endian f64; component-major Sxyz,Suxyz,Svxyz; local normalized
+query_rule	patch-major,u-major/v-fast; i/(nu-1),j/(nv-1)

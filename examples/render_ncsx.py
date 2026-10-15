@@ -8,6 +8,7 @@ import hashlib
 import math
 from pathlib import Path
 import sys
+import time
 
 from brepgpu import Engine, Patch
 from ncsx_display import render
@@ -212,18 +213,33 @@ def tsv(path,header,rows):
 
 def main(args):
     require(sys.platform=='linux','product geometry executes on the fleet')
+    started=previous=time.perf_counter_ns();timings=[]
+    def phase(name):
+        nonlocal previous
+        now=time.perf_counter_ns();timings.append((name,(now-previous)/1e6));previous=now
     out=args.output_directory;out.mkdir(parents=True,exist_ok=False)
     pins=tuple((name,hashlib.sha256((ROOT/name).read_bytes()).hexdigest()) for name in SOURCES)
     rows,modes=load_data();patches,tiles,meta=build(rows,modes)
+    phase('source_pins_load_and_fit')
     slots=array('I',(slot for slot,(_,nu,nv,_) in enumerate(tiles) for _ in range(nu*nv)))
     uv=array('d',(value for _,nu,nv,_ in tiles for i in range(nu) for j in range(nv) for value in (i/(nu-1),j/(nv-1))))
-    with Engine(backend=args.backend,device=args.device) as engine:
+    phase('query_prepare');native_started=time.perf_counter_ns()
+    with Engine(backend=args.backend,device=args.device,threads=args.threads) as engine:
         core_path=Path(engine._lib._name).resolve()
         native_paths=(core_path,)+( (core_path.with_name('libbrepgpu_cuda.so'),) if args.backend=='cuda' else () )
         native_pins=tuple((path.name,hashlib.sha256(path.read_bytes()).hexdigest()) for path in native_paths)
+        phase('engine_setup_and_native_pins')
         with engine.create_patch_set(patches) as ps:
+            phase('patch_setup')
             with engine.create_query_set(ps,slots,uv) as qs:
-                with engine.evaluate(qs,order=1) as result:jets=result.download()
+                phase('query_setup')
+                with engine.evaluate(qs,order=1) as result:
+                    phase('evaluate_sync_wrapper')
+                    jets=result.download();phase('download_and_sources')
+                phase('result_cleanup')
+            phase('query_cleanup')
+        phase('patch_cleanup')
+    phase('engine_cleanup');native_ms=(time.perf_counter_ns()-native_started)/1e6
     require(jets.info.backend==int(args.backend=='cuda') and jets.info.patch_count==len(patches), 'native observed backend/patch ownership mismatch')
     require(jets.info.terms==3 and len(jets.data)==9*len(slots),'native first-jet extent mismatch')
     require(jets.count==len(slots) and jets.order==1 and jets._slots==slots and jets._uv==uv,'native result query binding mismatch')
@@ -235,10 +251,13 @@ def main(args):
                 and tuple(descriptor.uv)==patch.uv and tuple(descriptor.origin)==patch.origin and descriptor.scale==SCALE,'native descriptor mismatch')
         offset+=count
     jets.require_ok();require(all(math.isfinite(x) for x in jets.data),'nonfinite native output')
-    maxima=qualify(patches,tiles,jets);seam=continuity(tiles,meta,jets)
-    coil_fit,plasma_fit,coil_checks,plasma_checks=source_fit(rows,modes,tiles,meta,jets)
+    phase('native_binding_status_finite_checks')
+    maxima=qualify(patches,tiles,jets);phase('exact_arithmetic_qualification')
+    seam=continuity(tiles,meta,jets);phase('seam_checks')
+    coil_fit,plasma_fit,coil_checks,plasma_checks=source_fit(rows,modes,tiles,meta,jets);phase('source_fit_diagnostics')
     points=[mul(jets.vector(0,k),SCALE) for k in range(jets.count)]
     normals=[unit(cross(jets.vector(1,k),jets.vector(2,k))) for k in range(jets.count)]
+    phase('display_point_normal_prepare')
     tsv(out/'controls.tsv',('patch','control','X_hex','Y_hex','Z_hex','W_hex'),((slot,k,*(x.hex() for x in patch.controls[4*k:4*k+4])) for slot,patch in enumerate(patches) for k in range(len(patch.controls)//4)))
     tsv(out/'patches.tsv',('patch','kind','component','segment_or_phi','side_or_theta','base','period','flip','query_start','nu','nv','material','degree_u','degree_v'),((slot,*identity,*tile,patch.degree_u,patch.degree_v) for slot,(identity,tile,patch) in enumerate(zip(meta,tiles,patches,strict=True))))
     tsv(out/'qualification.tsv',('check','maximum','limit_or_units','samples'),(('position',float(maxima[0]),2**-40,jets.count),('du',float(maxima[1]),2**-30,jets.count),('dv',float(maxima[2]),2**-30,jets.count),('seam_position',seam,2**-39,'all neighboring patch boundary samples'),('source_coil_centerline_fit',coil_fit,'original coordinate units; sampled diagnostic only',coil_checks),('source_plasma_fit',plasma_fit,'original coordinate units; sampled diagnostic only',plasma_checks)))
@@ -246,9 +265,17 @@ def main(args):
     tsv(out/'sources.tsv',('path','sha256'),pins)
     tsv(out/'native-libraries.tsv',('file','sha256'),native_pins)
     (out/'jets.f64').write_bytes(jets.data.tobytes())
+    phase('artifact_tables_and_raw_jets')
     render(out/'ncsx.svg',points,normals,tiles,dict(patches=len(patches),samples=jets.count,backend=args.backend,device=args.device))
+    phase('cpu_display_render_and_writes')
     require(pins==tuple((name,hashlib.sha256((ROOT/name).read_bytes()).hexdigest()) for name in SOURCES),'source changed during geometry/render generation')
     require(native_pins==tuple((path.name,hashlib.sha256(path.read_bytes()).hexdigest()) for path in native_paths),'native library changed during scene generation')
+    phase('final_source_native_pin_checks')
+    total_ms=(time.perf_counter_ns()-started)/1e6
+    timings.extend((('native_setup_to_cleanup_wall',native_ms),('full_qualified_caller_wall',total_ms)))
+    tsv(out/'costs.tsv',('phase','wall_ms'),timings)
+    tsv(out/'placement.tsv',('field','value'),(('requested_backend',args.backend),('requested_device',args.device),('requested_threads',args.threads),('observed_native_backend_tag',jets.info.backend)))
+    print(f'full_qualified_caller_ms={total_ms:.6f} native_setup_to_cleanup_ms={native_ms:.6f}',flush=True)
     print(f'patches={len(patches)} samples={jets.count} local_errors={[float(e) for e in maxima]} seam={seam} coil_fit={coil_fit} plasma_fit={plasma_fit}',flush=True)
 
 
@@ -256,5 +283,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--backend',choices=('cpu','cuda'),default='cuda')
     parser.add_argument('--device',type=int,default=0)
+    parser.add_argument('--threads',type=int,default=1)
     parser.add_argument('--output-directory',type=Path,required=True)
     main(parser.parse_args())

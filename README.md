@@ -12,7 +12,9 @@ This first [source-based NCSX study](docs/NCSX_GOAL_OBJECT.md) renders all eight
 modular-coil envelopes and a separately sourced plasma boundary through our P100
 patch evaluator. Coil sections are illustrative; the inner surface is plasma.
 [Scene, sources and reproduction](docs/NCSX_GOAL_OBJECT.md) record the baseline
-for comparable iterations. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
+for comparable iterations. A [matched CPU/P100 rerun](results/ncsx-rerun-2026-10-15/REPORT.md)
+reproduces the image exactly and records evaluation,setup,qualification and CPU
+display costs. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
 remain available.
 
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,

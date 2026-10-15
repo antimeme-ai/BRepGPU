@@ -1,0 +1,3 @@
+comparison	pixels	changed_rgba_pixels	max_channel_difference
+baseline_vs_p1000	2160000	0	0
+p1000_vs_cpu1	2160000	0	0
