@@ -1,0 +1,26 @@
+field	value
+recipe	chamfer
+reference	usd-brep
+version	1.0.0
+manifold	True
+reference_volume	0.18407769395518248
+analytic_pi_volume_float	0.18407769454627693
+analytic_pi_coefficient	15/256
+owned_exact_pi_coefficient	15/256
+overall_pass	True
+volume_pass	True
+bounds_pass	True
+boundary_pass	True
+volume_absolute_error	5.910944511633431e-10
+bounds_absolute_error	4.440892098500626e-16
+boundary_witnesses	108
+max_boundary_distance	1.2609709600486848e-15
+max_boundary_residual	1.2609709600486848e-15
+reference_volume_requested_accuracy	1e-08
+volume_relative_limit	1e-08
+bounds_world_limit	5e-09
+boundary_world_limit	5e-08
+world_endpoint_rounding	exact binary64 endpoints and world-axis base
+input_curves	original domains and3points each unchanged after pure sweep
+material_history	not compared; no public material/history reference adapter established
+alpha	not external corpus qualification

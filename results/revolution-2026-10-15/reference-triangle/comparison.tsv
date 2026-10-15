@@ -1,0 +1,26 @@
+field	value
+recipe	triangle
+reference	usd-brep
+version	1.0.0
+manifold	True
+reference_volume	0.6233075396566397
+analytic_pi_volume_float	0.6233075268108655
+analytic_pi_coefficient	1219/6144
+owned_exact_pi_coefficient	1219/6144
+overall_pass	False
+volume_pass	False
+bounds_pass	True
+boundary_pass	True
+volume_absolute_error	1.2845774111092112e-08
+bounds_absolute_error	1.1102230246251565e-16
+boundary_witnesses	54
+max_boundary_distance	3.1401849173675503e-16
+max_boundary_residual	3.1401849173675503e-16
+reference_volume_requested_accuracy	1e-08
+volume_relative_limit	1e-08
+bounds_world_limit	1e-08
+boundary_world_limit	1e-07
+world_endpoint_rounding	exact binary64 endpoints and world-axis base
+input_curves	original domains and3points each unchanged after pure sweep
+material_history	not compared; no public material/history reference adapter established
+alpha	not external corpus qualification

@@ -81,8 +81,15 @@ P100 sampling and adjacency consumers are independently qualified, including
 integer-sqrt intervals for non-axis unit normals. See docs/EXTRUSION.md and
 results/extrusion-2026-10-15/REPORT.md. Source control/parameter/traversal identity
 remains explicit; no canonical type guard is widened, no GPU construction or
-general result mesher is established. Continue revolution next, then independently
-scoped fillet and offset before integration/tuning.
+general result mesher is established.
+The full off-axis profile revolution is delivered on the same actual XY profile,
+about local positive Y: exact dyadic rational quarters, complete genus-one shell,
+ring edges and distinct same-face seams, sign-aware exact radical material,
+4N modified/9N generated origins with consumed source interiors. CPU/both-P100
+consumers are independently qualified. Read docs/REVOLUTION.md and its result
+report. The optional foreign triangle volume comparison fails its declared limit;
+retain the disagreement explicitly rather than widening tolerance. Continue
+independently scoped fillet, then offset before integration/tuning.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native
