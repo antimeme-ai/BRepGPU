@@ -14,7 +14,12 @@ three-period and stellarator-symmetry transforms to obtain18coils. Coil pack
 width/depth are declared cosmetic choices; no winding-form or conductor-detail
 accuracy is implied. Sample closed offset rails and represent each pack by
 four degree(3,1) Catmull/Hermite surface strips per source segment, n64segments.
-Reuse rail samples/derivatives at boundaries; normalize through a common
+The section frame uses the source toroidal vector(-y,x,0), projected off the
+normalized Fourier tangent, then normalized; its cross product with the tangent
+supplies the other section direction. Reject zero tangent, radial-axis and
+near-zero projected-frame vectors rather than inventing a frame. This analytic
+periodic frame avoids parallel-transport closure machinery. Reuse rail
+samples/derivatives at boundaries; normalize through a common
 power-of-two scale4 identity-origin frame and check every actual control fits
 the native local envelope. All weights are1. Preserve original controls in hex.
 
@@ -26,8 +31,12 @@ ports, support castings, cryostat or a vessel from these plasma coefficients.
 
 Evaluate native first jets on P100 using the existing Engine. Verify actual
 query/count/order/descriptor/parameter binding, success/finite output and exact
-binary64-control polynomial position/first-derivative grades. Native returned
-first jets supply normals. Check periodic patch seams in positions. Source
+binary64-control polynomial position/first-derivative grades2^-40/2^-30 in the
+normalized local control frame. Scientific/source-fit residuals are reported
+separately in original coordinate units after applying scale4. The raw datasets
+do not declare calibrated length units; do not add a meter legend. Native returned
+first jets supply normals. Check periodic patch seams in positions. Adjacent rectangular strips intentionally
+have sharp normal discontinuities. Source
 Fourier-to-interpolant residuals are a separate sampled fitting diagnostic,
 never a global approximation bound or an as-built measurement.
 
