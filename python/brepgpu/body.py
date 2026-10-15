@@ -236,6 +236,12 @@ class BodySnapshot:
         from .intersections import FaceRef
         return contact_faces(FaceRef(self, face_id), FaceRef(other, other_face_id))
 
+    def arrange_face(self, face_id, sections=(), *, u_cuts=(), v_cuts=()):
+        """Build supported exact regions and shared uses on one rectangular face."""
+        from .arrangements import arrange_face
+        from .intersections import FaceRef
+        return arrange_face(FaceRef(self, face_id), sections, u_cuts=u_cuts, v_cuts=v_cuts)
+
 
 def _namespace():
     global _next_body_id
