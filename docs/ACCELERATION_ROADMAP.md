@@ -1,5 +1,10 @@
 # Deliver useful acceleration while building a GPU B-rep kernel
 
+The planned breadth sweep is complete. The [post-breadth stocktake and proposed
+next tranche](POST_BREADTH_ROADMAP.md) distinguish delivered capabilities from
+deferred composition, result meshing, external qualification and runtime work.
+That proposal selects no implementation or shipping-language change.
+
 Alpha requires the applicable [external community qualification](ALPHA_QUALIFICATION.md)
 to pass. Development continues breadth first with incomplete external coverage
 visible; narrow local model tests and selected mutant kills cannot satisfy that

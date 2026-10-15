@@ -33,9 +33,12 @@ rounded output. The [carrier interchange beachhead](docs/INTERCHANGE.md) now rea
 actual foreign ASCII USD BRep surfaces into owned CPU/P100 patches with original
 face/chart identities and explicit unsupported outcomes. Trims remain uninterpreted.
 An owned [through-bore Boolean with complete source history](docs/BOOLEANS.md)
-is now delivered. Feature construction is underway: [convex-profile extrusion](docs/EXTRUSION.md)
+is now delivered. [Convex-profile extrusion](docs/EXTRUSION.md),
 [full profile revolution](docs/REVOLUTION.md), a [complete box-edge fillet](docs/FILLET.md)
 and [signed analytic offset](docs/OFFSET.md) are delivered.
+The planned breadth sweep is complete. The [stocktake and proposed next tranche](docs/POST_BREADTH_ROADMAP.md)
+cover result meshing, composable history, external qualification and measured
+runtime ownership; no language rewrite or general modeling support is implied.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 

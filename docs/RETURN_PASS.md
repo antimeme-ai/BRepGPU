@@ -1,5 +1,12 @@
 # Integration and performance after the broad pass
 
+2026-10-15 status: the planned breadth sweep is complete, and the matched NCSX
+comparison below is delivered. Runtime/language work is now eligible for
+selection. Read the [stocktake and proposed tranche](POST_BREADTH_ROADMAP.md)
+before selecting a unit. Earlier dated notes below preserve the original
+deferral and measured opportunities; they do not reopen completed themes or
+select every recorded optimization.
+
 2026-10-14. The operator explicitly placed setup/teardown, residency reuse and
 making the application pleasant **after the big rocks of the breadth-first
 pass**. Record opportunities now; do not start their implementation or a new
