@@ -3,8 +3,9 @@
 2026-10-15. **Product source accepted after M3 correction.** Read complete
 `python/brepgpu/meshing.py` and the lazy `BodySnapshot.tessellate` adapter against
 the accepted design. No product execution or production edits occurred in this
-review. Independent oracle/test source review is a separate pending step when
-those files are ready; this disposition does not claim fleet green.
+review. Independent oracle/test source review was subsequently completed and
+accepted after O1 typed-field correction; see the separate meshing-oracle
+semantics review. This disposition does not claim fleet green.
 
 ## M3 — source vertex slots were mistaken for IDs
 
