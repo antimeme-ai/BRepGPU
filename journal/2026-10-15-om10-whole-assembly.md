@@ -163,3 +163,13 @@ detached active-hull checks, fixed numerical grade and unchanged retained curves
 Conic selected probes and final query correspondence use the same helper; raw
 guide extension diagnostics remain separate. The new literal method's bounded
 sanitizer build is still running before the next fresh complete source attempt.
+
+The new method passes ASan/UBSan0.042s. Root read the freshv5 completion,
+original geometry/assembly metrics and complete old/new table delta: source
+conversion is closed. Launched a durable fresh whole nonvisualv4 run retaining
+one mesh for CPU24/P1000/P1001 qualification. Production and selected binaries
+stay unchanged during it; no complete mesh/backend pass or watch raster yet.
+Updated PR62 and issue60 to remove the closed source-conversion blocker while
+retaining the unfinished whole qualification, reference runs and publication.
+A read-only frumentarius studies existing mesh costs for deferred notes; it
+starts no second mesh, product change or new test campaign during this run.

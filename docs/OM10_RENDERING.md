@@ -5,14 +5,15 @@ The target is the supplied **Association openmovement OM10 MAN VA01.3**:
 explode the same complete geometry, preserving original names, usage paths,
 rigid transforms, edge/coedge identities and per-face source mapping.
 
-The source-to-display implementation is under qualification. Actual no-processing
-STEP translation exposed missing pcurves; explicit UV preparation now passes
-focused source, seam/pole and numerical-domain tests. A bounded reconstruction
-for the original ellipse versus spline-boundary case at face170920 now passes
-the literal source-chart tests and independent code reviews; a fresh complete
-export remains pending. Complete source conversion, whole-source mesh and
-three-backend integration must pass before actual watch rasterization. Stopped and partial runs are not
-passes. See the [source UV design and current limits](../papers/2026-10-15-om10-explicit-uv-source-preparation.md).
+The source-to-display implementation is under qualification. Fresh explicit UV
+preparation now exports all107 definitions and their unmeshed query copies with
+actual STEP shape processing disabled. Independent checks pass every original
+carrier, spatial curve and assembled placement. Thirteen focused methods and
+the bounded new ASan/UBSan fixture pass; source-chart and numerical recovery
+retain the original geometry, parameters and selected tolerances. The whole
+source mesh and CPU/P100 integration still must pass before actual watch
+rasterization. Stopped and partial runs are not passes. See the
+[source UV design and current limits](../papers/2026-10-15-om10-explicit-uv-source-preparation.md).
 The [reviewed plan](OM10_IMPLEMENTATION_PLAN.md),
 [source/recovery study](../papers/2026-10-15-om10-import-mesh-study.md) and
 [independent-oracle subplan](OM10_ORACLE_SUBPLAN.md) describe those obligations.
