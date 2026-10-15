@@ -341,3 +341,14 @@ are at most about7e-15mm; original vertex residual is0.000185..0.000212mm.
 Recorded papers/2026-10-15-om10-natural-boundary-joint-study.md. No product/oracle
 edit, new recovery selection or broad campaign; owner current-source diagnosis
 and written design remain next.
+
+Owner proposed finite selection between the two retained UV endpoint candidates
+at an admitted natural-V joint, avoiding a generic closest-point solver. Review
+requested original directed joint provenance, explicit knot/boundary admission,
+deterministic source-residual choice and both incident endpoint trim corrections
+before shared sampling. Root also identified a distinct old missing world-bound
+term: original spatial C endpoint to canonical vertex displacement. Confirmed
+with displaced-LINE/plane counterexample where existing cell/UV terms are zero.
+Reviewed measured max-endpoint displacement plus ideal spatial chord as the
+direct correction; no tolerance allowance. Product and oracle edits remain
+pending written plan and source endpoint inventory.
