@@ -1,0 +1,6 @@
+key	value
+purpose	artwork; no timing benchmark
+placement	CPU exact geometry on Linux fleet
+python	3.12.3
+system	Linux
+display	1800x1600; projection x=900+100*(world_x-world_y), y=1000+46*(world_x+world_y)-190*(world_z+display_height)

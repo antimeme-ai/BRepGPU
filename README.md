@@ -2,6 +2,12 @@
 
 **Building a GPU boundary representation kernel, one useful operation at a time.**
 
+[![Orbital reliquary — P100-evaluated rational surfaces](assets/trophies/orbital.png)](docs/TROPHY_GALLERY.md)
+
+Two new [geometry trophy candidates](docs/TROPHY_GALLERY.md): a P100-evaluated
+orbital surface sculpture and an exploded exact arrangement lattice. Runnable
+recipes, original inputs and geometric checks accompany both.
+
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen
 it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
