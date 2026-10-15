@@ -152,3 +152,17 @@ The next actual source/query attempt passes the prior seam and frozen-pole
 cases, exporting definitions1713–1767 before a distinct169982 query-domain
 control escape; no complete source snapshot is published. That numerical
 representation case remains open and is not a watch pass.
+
+After frozen-child correction10focused/reader methods pass0.258s; stronger nested
+ASan/UBSan3methods pass0.169s. Fresh actualv2 exports1713–1767 then rejects
+169982's interior query control. Bounded actual probe finds use138090 control2
+V=.035000000000000017/control9=.035000000000000052 versus originalglobalVmax
+.035000000000000003, max4.86e-17 below128ulp(1). Root/oracle clarify that
+existing owned 'global ends' means carrier domain boundaries at any coedge t,
+not only pcurve endpoint controls. The earlier control-endpoint-only finding
+was incorrect and its restriction is retired. Reviewed amendment: positive
+nonperiodic fixed-basis query controls may move only to ORIGINALGLOBALdomain
+bounds within unchanged128ULP; preserve rawPC/sourceknots/originalt and apply
+cumulative naturalmetric/finalC–S. Add one literal8ULP middlecontrol/512ULP
+negative tensor-plane fixture before production change; no genericprojection or
+extrapolation theorem.
