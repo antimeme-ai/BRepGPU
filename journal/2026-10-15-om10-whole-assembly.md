@@ -42,3 +42,14 @@ revision. Both earlier whole runs remain stopped, with no raster output. The
 private pilot utility has the same prerequisite; native lane changed only its
 description and did not execute it. This documentation correction needs no
 product rebuild or repeated native campaign.
+
+Root reviewed the finite spline endpoint choice and measured original-world
+endpoint chord correction against the written design and both genuine reds.
+Accepted after aligning the selected carrier-to-vertex gate with the design.
+Original source curves, vertices, full intervals and fixed quality remain.
+35 direct mesher methods pass1.487s; seven direct/affected independent methods
+pass0.665s. Actual source face169982 passes62 vertices/60 cells at unchanged
+defaults. Both adversarial reviews ACCEPT and product hashes match the fleet.
+The old diagnostic inventory was stopped with two old-code tasks still active;
+it is partial, not whole-source qualification. Fresh complete integration now
+has priority and must cover every original face before actual target imaging.

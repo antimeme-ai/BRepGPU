@@ -588,7 +588,9 @@ def _spline_boundary_profile(source,coedge,carrier,cache):
     return cache[key]
 
 
-def _spline_boundary_uv(source,coedge,carrier,t,point,seed,cache):
+def _spline_boundary_uv(source,coedge,carrier,t,point,seed,cache,joint_choices=None):
+    if joint_choices and (coedge.id,t) in joint_choices:
+        return joint_choices[(coedge.id,t)],'spline_joint_endpoint_candidate'
     if carrier.kind!=6:return None
     profile=_spline_boundary_profile(source,coedge,carrier,cache)
     if profile is not None:
@@ -934,6 +936,18 @@ class _EdgeBounds:
     uses: tuple
     quality: object
     profiles: dict
+    joint_choices: object = None
+
+    def __post_init__(self):
+        curve=self.source.curve(self.edge.curve_id) if self.edge.curve_id else None
+        self.departures=tuple(_distance(evaluate_curve(curve,t),self.source.vertex(v).xyz) if curve else 0.
+                              for t,v in zip(self.edge.parameter_range,self.edge.vertex_ids))
+        if any(not math.isfinite(d) for d in self.departures):
+            raise ValueError(f'edge {self.edge.id}: nonfinite original spatial endpoint displacement')
+        if max(self.departures)>self.quality.source_residual_mm:
+            raise ValueError(f'edge {self.edge.id}: original spatial endpoint exceeds source residual')
+        if max(self.departures)>self.quality.tolerance_mm/8:
+            raise ValueError(f'edge {self.edge.id}: original spatial endpoint displacement {max(self.departures)} exceeds chord allocation {self.quality.tolerance_mm/8}; vertices={self.edge.vertex_ids}')
 
     def position(self,t):
         if t==self.edge.parameter_range[0]:return self.source.vertex(self.edge.vertex_ids[0]).xyz
@@ -943,7 +957,8 @@ class _EdgeBounds:
     def bound(self,a,b):
         source,edge=self.source,self.edge
         curve=source.curve(edge.curve_id) if edge.curve_id else None
-        result=0. if edge.degenerate else _curve_chord_bound(curve,a,b)
+        departure=max((self.departures[i] for i,t in enumerate(edge.parameter_range) if t in (a,b)),default=0.)
+        result=(0. if edge.degenerate else _curve_chord_bound(curve,a,b))+departure
         for coedge,carrier,metric in self.uses:
             sa=_mapped_parameter(source,edge,coedge,a,carrier,self.quality)
             sb=_mapped_parameter(source,edge,coedge,b,carrier,self.quality)
@@ -957,7 +972,7 @@ class _EdgeBounds:
                 if not math.isfinite(value):return math.inf
                 result=max(result,value)
             else:
-                owned=[_spline_boundary_uv(source,coedge,carrier,t,self.position(t),seed,self.profiles)
+                owned=[_spline_boundary_uv(source,coedge,carrier,t,self.position(t),seed,self.profiles,self.joint_choices)
                        for t,seed in zip((a,b),seeds)]
                 if all(o is not None and o[1]=='spline_boundary_generator' for o in owned):
                     underlying=[_spline_boundary_uv(source,coedge,carrier,t,evaluate_curve(curve,t),seed,self.profiles)[0]
@@ -985,6 +1000,67 @@ def _boundary_intersection(node_loops,points):
             if li==lj and ({a,b}&{c,d}):continue
             if _segments_touch(points[a],points[b],points[c],points[d]):return a,b,c,d
     return None
+
+
+def _spline_endpoint_cell(carrier,uvs):
+    """One existing clamped original chart, near the same natural V boundary."""
+    if carrier.kind!=6:return False
+    if (carrier.mult_u[0],carrier.mult_u[-1])!=(carrier.degrees[0]+1,)*2:return False
+    if (carrier.mult_v[0],carrier.mult_v[-1])!=(carrier.degrees[1]+1,)*2:return False
+    if any(not math.isfinite(x) for uv in uvs for x in uv):return False
+    if any(not carrier.knot_u[0]<=u<=carrier.knot_u[-1] or
+           not carrier.knot_v[0]<=v<=carrier.knot_v[-1] for u,v in uvs):return False
+    if not any(all(a<=uv[0]<=b for uv in uvs) for a,b in zip(carrier.knot_u,carrier.knot_u[1:])):return False
+    grade=128*math.ulp(max(1.,abs(carrier.knot_v[0]),abs(carrier.knot_v[-1])))
+    return any(all(abs(uv[1]-v)<=grade for uv in uvs) for v in (carrier.knot_v[0],carrier.knot_v[-1]))
+
+
+def _prepare_spline_endpoint_choices(source,quality,metric_cache,profiles):
+    choices={};events={};maximum=0.
+    for face in source.faces:
+        carrier=source.carrier(face.carrier_id)
+        if carrier.kind!=6:continue
+        for lid in face.loop_ids:
+            coedges=[source.coedge(i) for i in source.loop(lid).coedge_ids]
+            for incoming,outgoing in zip(coedges,coedges[1:]+coedges[:1]):
+                uses=(incoming,outgoing)
+                if any(c.periodic_shift!=(0,0) or c.parameter_map_kind!=1 for c in uses):continue
+                edges=tuple(source.edge(c.edge_id) for c in uses)
+                if any(not e.same_parameter or not e.curve_id for e in edges):continue
+                indices=(1 if incoming.sense>0 else 0,0 if outgoing.sense>0 else 1)
+                vertices=tuple(e.vertex_ids[i] for e,i in zip(edges,indices))
+                if vertices[0]!=vertices[1]:continue
+                ts=tuple(e.parameter_range[i] for e,i in zip(edges,indices))
+                raw=tuple(evaluate_curve(source.curve(c.curve_id),t) for c,t in zip(uses,ts))
+                uv_scale=max(1.,*(abs(x) for x in carrier.uv_bounds))
+                if _distance(*raw)<=2**-32*uv_scale:continue
+                try:uvs=tuple(_recover_global_uv(carrier,uv) for uv in raw)
+                except ValueError:continue  # Existing source-column or generic rejection owns this case.
+                if not _spline_endpoint_cell(carrier,uvs):continue
+                point=source.vertex(vertices[0]).xyz
+                if any(_spline_boundary_uv(source,c,carrier,t,point,uv,profiles) is not None
+                       for c,t,uv in zip(uses,ts,uvs)):continue
+                positions=tuple(evaluate_curve(source.curve(e.curve_id),t) for e,t in zip(edges,ts))
+                surfaces=tuple(evaluate_carrier(carrier,*uv)[0] for uv in uvs)
+                distances=tuple(_distance(p,point) for p in surfaces)
+                selected=min(range(2),key=lambda i:(distances[i],i))
+                residuals=(distances[selected],*(_distance(p,point) for p in positions),
+                           *(_distance(p,s) for p,s in zip(positions,surfaces)))
+                context=f'face {face.id} loop {lid} coedges {(incoming.id,outgoing.id)} vertex {vertices[0]}'
+                if any(not math.isfinite(r) for r in distances) or any(not math.isfinite(r) or r>quality.source_residual_mm for r in residuals):
+                    raise ValueError(f'{context}: spline joint candidate exceeds source residual')
+                if carrier.id not in metric_cache:metric_cache[carrier.id]=_surface_metric(carrier)
+                metric=metric_cache[carrier.id]
+                perturb=sum(m*abs(a-b) for m,a,b in zip(metric,*uvs))
+                if not math.isfinite(perturb) or perturb>quality.tolerance_mm/8:
+                    raise ValueError(f'{context}: spline joint endpoint perturbation {perturb} exceeds chord allocation {quality.tolerance_mm/8}')
+                chosen=uvs[selected]
+                for coedge,t in zip(uses,ts):
+                    key=(coedge.id,t)
+                    if key in choices and choices[key]!=chosen:raise ValueError(f'{context}: ambiguous endpoint candidate')
+                    choices[key]=chosen
+                events[(lid,incoming.id,outgoing.id)]=chosen;maximum=max(maximum,perturb)
+    return choices,events,maximum
 
 
 _NOMINAL_FRAME_GRADE=128*math.ulp(1.)
@@ -1162,7 +1238,8 @@ def mesh_imported(source,quality=None,*,progress=None):
             'max_plane_inverse_correction_mm':0.0,'max_cone_inverse_correction_mm':0.0,
             'max_cone_generator_line_residual_mm':0.0,'spline_boundary_sample_count':0,
             'foreign_uv_unevaluated_count':0,'max_spline_boundary_u_shift':0.0,'max_spline_boundary_v_shift':0.0,
-            'circle_joint_resampling_count':0,'circle_joint_optional_samples_removed':0,'circle_joint_optional_samples_added':0}
+            'circle_joint_resampling_count':0,'circle_joint_optional_samples_removed':0,'circle_joint_optional_samples_added':0,
+            'spline_joint_candidate_count':0,'max_spline_joint_endpoint_uv_displacement_bound_mm':0.0}
     def make_vertex(definition,xyz,kind,identifier,t=0.0,uv=(0.0,0.0)):
         nonlocal next_key
         if any(not math.isfinite(x) for x in xyz):raise ValueError('nonfinite imported mesh vertex')
@@ -1182,6 +1259,9 @@ def mesh_imported(source,quality=None,*,progress=None):
             for ci in source.loop(li).coedge_ids:
                 coedge=source.coedge(ci);incidents.setdefault(coedge.edge_id,[]).append((coedge,carrier))
                 carrier_edges.setdefault(carrier.id,set()).add(coedge.edge_id)
+    joint_choices,joint_events,joint_shift=_prepare_spline_endpoint_choices(source,quality,metric_cache,profiles)
+    errors['spline_joint_candidate_count']=len(joint_events)
+    errors['max_spline_joint_endpoint_uv_displacement_bound_mm']=joint_shift
     for edge_index,edge in enumerate(source.edges):
         owner=edge_owners[edge.id];uses=incidents.get(edge.id,())
         curve=source.curve(edge.curve_id) if edge.curve_id else None
@@ -1193,7 +1273,7 @@ def mesh_imported(source,quality=None,*,progress=None):
         start,end=edge.parameter_range
         if start==end and not edge.degenerate:raise ValueError(f'edge {edge.id}: zero parameter extent')
         values=_curve_knots_in_edge(source,edge,uses);mandatory[edge.id]=tuple(values)
-        context=_EdgeBounds(source,edge,tuple((co,ca,metric_cache[ca.id]) for co,ca in uses),quality,profiles)
+        context=_EdgeBounds(source,edge,tuple((co,ca,metric_cache[ca.id]) for co,ca in uses),quality,profiles,joint_choices)
         contexts[edge.id]=context;samples=[values[0]];maximum=0.
         def refine(a,b,depth):
             nonlocal maximum
@@ -1245,7 +1325,7 @@ def mesh_imported(source,quality=None,*,progress=None):
                     raw_uv=evaluate_curve(source.curve(coedge.curve_id),s)
                     uv=(raw_uv[0]+coedge.periodic_shift[0]*2*math.pi,
                         raw_uv[1]+coedge.periodic_shift[1]*2*math.pi)
-                    owned=_spline_boundary_uv(source,coedge,carrier,t,record.positions[index],uv,profiles)
+                    owned=_spline_boundary_uv(source,coedge,carrier,t,record.positions[index],uv,profiles,joint_choices)
                     try:recovered=_recover_global_uv(carrier,uv)
                     except ValueError:
                         if owned is None:raise
@@ -1261,10 +1341,12 @@ def mesh_imported(source,quality=None,*,progress=None):
                         errors['max_foreign_pcurve_to_edge_residual_mm']=max(errors['max_foreign_pcurve_to_edge_residual_mm'],raw_residual)
                     recovery_kind='pcurve'
                     if owned is not None:
-                        recovered,recovery_kind=owned;errors['spline_boundary_sample_count']+=1
-                        for axis,label in enumerate(('u','v')):
-                            metric='max_spline_boundary_'+label+'_shift'
-                            errors[metric]=max(errors[metric],abs(float(recovered[axis])-uv[axis]))
+                        recovered,recovery_kind=owned
+                        if recovery_kind.startswith('spline_boundary_'):
+                            errors['spline_boundary_sample_count']+=1
+                            for axis,label in enumerate(('u','v')):
+                                metric='max_spline_boundary_'+label+'_shift'
+                                errors[metric]=max(errors[metric],abs(float(recovered[axis])-uv[axis]))
                     if carrier.kind in (1,2,3):
                         recovered,recovery_kind=_source_uv(source,edge,carrier,t,record.positions[index],recovered,quality,profiles)
                         family={1:'plane',2:'cylinder',3:'cone'}[carrier.kind]
@@ -1286,6 +1368,17 @@ def mesh_imported(source,quality=None,*,progress=None):
             for j,segment in enumerate(coedge_points):
                 following=coedge_points[(j+1)%len(coedge_points)];end=segment[-1];start=following[0]
                 if end.sample_key!=start.sample_key:raise ValueError(f'face {face.id}: disconnected original loop vertex')
+                chosen=joint_events.get((li,end.coedge_id,start.coedge_id))
+                if chosen is not None:
+                    if end.uv!=chosen or start.uv!=chosen:
+                        raise ValueError(f'face {face.id} loop {li}: spline joint endpoint candidate changed')
+                    vertex=vertex_by_key[end.sample_key]
+                    if vertex.source_kind!=1:raise ValueError(f'face {face.id}: spline joint lost original vertex')
+                    def prechoice(o):
+                        return replace(o,uv=_recover_global_uv(carrier,o.pcurve_uv),recovery_kind='pcurve')
+                    joint_recoveries.append(JointRecovery(face.id,li,vertex.source_id,
+                        prechoice(end),prechoice(start),chosen,'spline_joint_endpoint_candidate'))
+                    errors['joint_recovery_count']+=1
                 if carrier.kind==6 and any(o.recovery_kind.startswith('spline_boundary_') for o in (end,start)):
                     if end.uv!=start.uv:raise ValueError(f'face {face.id} loop {li}: source spline boundary joint changes column branch')
                     vertex=vertex_by_key[end.sample_key]

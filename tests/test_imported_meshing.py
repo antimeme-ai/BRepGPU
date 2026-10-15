@@ -137,7 +137,8 @@ class ImportedMeshingTests(unittest.TestCase):
         self.assertEqual(joint.kind,'spline_joint_endpoint_candidate')
         self.assertEqual((joint.source_vertex_id,joint.incoming.coedge_id,joint.outgoing.coedge_id),(51,11,12))
         self.assertEqual(joint.uv,(.45,0.))
-        self.assertEqual(joint.outgoing.pcurve_uv,(.4503,0.))
+        self.assertEqual(joint.outgoing.pcurve_uv,(.45+.0003,0.))
+        self.assertEqual((joint.incoming.source_parameter,joint.outgoing.source_parameter),(1.,0.))
         self.assertGreaterEqual(dict(mesh.error_metrics)['max_edge_chord_bound_mm'],math.hypot(.0003,.0002)-2**-44)
         qualify_domain(tuple(tuple(o.uv for o in loop) for loop in mesh.faces[0].boundary_loops),
                        tuple(tuple(c.uv for c in t.corners) for t in mesh.triangles))
@@ -146,6 +147,29 @@ class ImportedMeshingTests(unittest.TestCase):
         for edge in source.edges:
             record=next(r for r in mesh.edge_samples if r.edge_id==edge.id)
             self.assertEqual((record.parameters[0],record.parameters[-1]),edge.parameter_range)
+            curve=source.curve(edge.curve_id);a,b=curve.controls[:3],curve.controls[4:7]
+            for t,xyz in zip(record.parameters[1:-1],record.positions[1:-1]):
+                self.assertLessEqual(math.dist(xyz,tuple(x+t*(y-x) for x,y in zip(a,b))),2**-44)
+            coedge=next(c for c in source.coedges if c.edge_id==edge.id)
+            expected=tuple(zip(record.parameters[:-1],record.vertex_keys[:-1]))
+            actual=tuple((o.source_parameter,o.sample_key) for loop in mesh.faces[0].boundary_loops
+                         for o in loop if o.coedge_id==coedge.id)
+            self.assertIn(actual,(expected,expected[::-1]))
+
+    def test_spline_joint_scope_rejects_fixed_trim_floor_and_different_original_cells(self):
+        source=spline_endpoint_sheet_fixture(gap=.0008,vertex_offset=0.)
+        vertex=replace(source.vertex(51),xyz=(.4504,0.,0.))
+        source=replace(source,vertices=tuple(vertex if v.id==51 else v for v in source.vertices))
+        with self.assertRaisesRegex(ValueError,'spline joint endpoint perturbation'):
+            mesh_imported(source)
+        source=spline_endpoint_sheet_fixture();carrier=source.carriers[0];k=.45015
+        def controls(a,b):return (a,0.,0.,1.,a,1.,0.,1.,b,0.,0.,1.,b,1.,0.,1.)
+        poles=tuple(x for u in (0.,k,1.) for x in (u,0.,0.,1.,u,1.,0.,1.))
+        split=replace(carrier,knot_u=(0.,k,1.),mult_u=(2,1,2),control_shape=(3,2),controls=poles,
+                      spans=(SurfaceSpan((0.,k,0.,1.),(1,1),controls(0.,k)),
+                             SurfaceSpan((k,1.,0.,1.),(1,1),controls(k,1.))))
+        with self.assertRaisesRegex(ValueError,'nonclosing source UV joint'):
+            mesh_imported(replace(source,carriers=(split,)))
 
     def test_actual_original_curve_endpoint_departure_is_in_world_chord_budget(self):
         source=spline_endpoint_sheet_fixture(gap=0.,vertex_offset=0.)

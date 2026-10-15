@@ -91,6 +91,35 @@ def pierced_prism_source():
 
 
 class ImportedGeometryDirectTests(unittest.TestCase):
+    def test_retained_spline_endpoint_choice_has_direct_source_joint_oracle(self):
+        from tests.test_imported_meshing import spline_endpoint_sheet_fixture
+        from brepgpu.imported_meshing import mesh_imported
+        from brepgpu.imported_oracles import _joint_recovery
+        source=spline_endpoint_sheet_fixture();mesh=mesh_imported(source)
+        face=source.faces[0];joint=mesh.faces[0].joint_recoveries[0]
+        vertices={(v.definition_id,v.physical_key):v for v in mesh.vertices}
+        def check(record):
+            return _joint_recovery(source,face,record,vertices,mesh.quality,2.**-32,{})
+        self.assertEqual(check(joint),(60,11,12))
+        for record,message in (
+                (replace(joint,uv=(.45015,0.)),'invented a new UV'),
+                (replace(joint,uv=joint.outgoing.uv),'minimum retained candidate'),
+                (replace(joint,source_vertex_id=50),'endpoint identity'),
+                (replace(joint,outgoing=replace(joint.outgoing,pcurve_uv=(.45,.01))),
+                 'raw recovered pcurve')):
+            with self.subTest(message=message),self.assertRaisesRegex(AssertionError,message):
+                check(record)
+
+    def test_original_curve_departure_cannot_hide_behind_planar_carrier(self):
+        from brepgpu.imported_meshing import mesh_imported
+        from brepgpu.imported_oracles import qualify_mesh
+        source=pierced_prism_source();mesh=mesh_imported(source)
+        edge=source.edges[0];curve=source.curve(edge.curve_id)
+        shifted=replace(curve,frame=(*curve.frame[:2],curve.frame[2]+.0008,*curve.frame[3:]))
+        wrong=replace(source,curves=tuple(shifted if c.id==curve.id else c for c in source.curves))
+        with self.assertRaisesRegex(AssertionError,'original spatial endpoint departure'):
+            qualify_mesh(replace(mesh,source=wrong))
+
     def test_source_reader_rejects_non_source_bytes(self):
         from brepgpu.imported_source import load_source
         with tempfile.TemporaryDirectory() as directory:

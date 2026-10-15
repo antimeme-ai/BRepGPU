@@ -1104,11 +1104,71 @@ def _spline_vertex_uv(source,face,use,vertex_id,seed,profiles):
     return recovered.pop()
 
 
+def _spline_joint_candidate(source,face,recovery,quality,coordinate_tolerance):
+    """Check the two retained source endpoints; never project or reuse product math."""
+    carrier=source.carrier(face.carrier_id)
+    require(carrier.kind==6,'finite spline endpoint candidate needs original spline carrier')
+    for degree,multiplicities in zip(carrier.degrees,(carrier.mult_u,carrier.mult_v)):
+        require(multiplicities[0]==multiplicities[-1]==degree+1,
+                'spline endpoint candidate requires original clamped chart')
+    occurrences=(recovery.incoming,recovery.outgoing)
+    candidates=tuple(tuple(map(exact,o.uv)) for o in occurrences)
+    for occurrence,uv in zip(occurrences,candidates):
+        use=source.coedge(occurrence.coedge_id);edge=source.edge(use.edge_id)
+        require(use.periodic_shift==(0,0) and use.parameter_map_kind==1 and edge.same_parameter,
+                'spline endpoint candidate changed original chart/identity map')
+        require(all(exact(knots[0])<=value<=exact(knots[-1]) for value,knots in
+                    zip(uv,(carrier.knot_u,carrier.knot_v))),
+                'spline endpoint candidate leaves original knot domain')
+    require(any(exact(lo)<=candidates[0][0]<=exact(hi) and
+                exact(lo)<=candidates[1][0]<=exact(hi)
+                for lo,hi in zip(carrier.knot_u,carrier.knot_u[1:])),
+            'spline endpoint candidates cross original U knot cells')
+    grade=128*math.ulp(max(1.,abs(carrier.knot_v[0]),abs(carrier.knot_v[-1])))
+    require(any(all(abs(uv[1]-exact(endpoint))<=exact(grade) for uv in candidates)
+                for endpoint in (carrier.knot_v[0],carrier.knot_v[-1])),
+            'spline endpoint candidates lack same original natural V boundary')
+    require(math.dist(*[tuple(map(float,uv)) for uv in candidates])>
+            2.**-32*max(1.,*(abs(x) for x in carrier.uv_bounds)),
+            'spline endpoint candidate was not a non-small original joint')
+    chosen=tuple(map(exact,recovery.uv))
+    require(chosen in candidates,'spline endpoint choice invented a new UV')
+    vertex=source.vertex(recovery.source_vertex_id)
+    points=tuple(carrier_jet_float(carrier,*uv)[0] for uv in candidates)
+    residuals=tuple(math.dist(p,vertex.xyz) for p in points)
+    for occurrence,point in zip(occurrences,points):
+        edge=source.edge(occurrence.edge_id)
+        original=curve_point_float(source.curve(edge.curve_id),occurrence.source_parameter)
+        require(math.isfinite(math.dist(point,original)) and
+                math.dist(point,original)<=quality.source_residual_mm+coordinate_tolerance,
+                'spline endpoint raw carrier/curve residual exceeds selected source gate')
+    selected=residuals[candidates.index(chosen)]
+    require(math.isfinite(selected) and selected<=min(residuals)+coordinate_tolerance,
+            'spline endpoint choice did not select a minimum retained candidate')
+    require(selected<=quality.source_residual_mm+coordinate_tolerance,
+            'spline endpoint chosen carrier/vertex residual exceeds selected source gate')
+    selected_point=points[candidates.index(chosen)]
+    require(all(math.dist(p,selected_point)<=quality.tolerance_mm/8+coordinate_tolerance for p in points),
+            'spline endpoint source displacement exceeds trim allocation')
+    return chosen
+
+
+def _source_joint_key(source,loop,use,parameter):
+    edge=source.edge(use.edge_id);index=loop.coedge_ids.index(use.id)
+    start=edge.parameter_range[0 if use.sense>0 else 1]
+    if parameter==start:
+        return loop.id,loop.coedge_ids[(index-1)%len(loop.coedge_ids)],use.id
+    require(parameter==edge.parameter_range[1 if use.sense>0 else 0],
+            'spline original vertex is not a directed source endpoint')
+    return loop.id,use.id,loop.coedge_ids[(index+1)%len(loop.coedge_ids)]
+
+
 def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance,boundary_profiles):
     inverse_kinds = {1:'plane_vertex_inverse',2:'cylinder_vertex_inverse',3:'cone_vertex_inverse',
                      6:'spline_boundary_vertex_inverse'}
     carrier = source.carrier(face.carrier_id)
-    require(recovery.kind == inverse_kinds.get(carrier.kind) and recovery.face_id == face.id and
+    candidate_joint=carrier.kind==6 and recovery.kind=='spline_joint_endpoint_candidate'
+    require((recovery.kind == inverse_kinds.get(carrier.kind) or candidate_joint) and recovery.face_id == face.id and
             recovery.loop_id in face.loop_ids, 'unsupported/foreign original-vertex joint recovery')
     loop = source.loop(recovery.loop_id)
     a,b = recovery.incoming,recovery.outgoing
@@ -1137,6 +1197,8 @@ def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance,b
         endpoint_xyz = curve_point_float(source.curve(edge.curve_id),occurrence.source_parameter)
         require(math.dist(endpoint_xyz,vertex.xyz) <= quality.source_residual_mm,
                 'original joint edge/vertex incidence exceeds selected source residual')
+        if candidate_joint:
+            continue
         expected = (_spline_vertex_uv(source,face,use,vertex.id,shifted[0],boundary_profiles) if carrier.kind == 6
                     else _analytic_inverse(carrier,vertex.xyz,shifted[0]))
         if carrier.kind in (1,6):
@@ -1144,6 +1206,8 @@ def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance,b
         else:
             _near(recovery.uv,expected,coordinate_tolerance,'canonical joint is not original-vertex analytic inverse')
     require(a.sample_key == b.sample_key, 'joint recovery merged different physical source keys')
+    if candidate_joint:
+        _spline_joint_candidate(source,face,recovery,quality,coordinate_tolerance)
     corrected = carrier_jet_float(carrier,*recovery.uv)[0]
     require(math.dist(corrected,vertex.xyz) <= quality.source_residual_mm,
             'corrected original-vertex joint exceeds selected source residual')
@@ -1165,6 +1229,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
     uses = {row.id: row for row in source.coedges}
     vertices = {}
     max_vertex_error = max_uv_error = max_recovery_residual = max_probe_error = 0.
+    max_original_edge_endpoint_departure=0.
     max_rounding_bound, rounding_bounds = 0., {}
     cylinder_recovery_count = joint_recovery_count = 0
     max_foreign_cylinder_residual = 0.
@@ -1208,6 +1273,13 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
         for index, (t, xyz) in enumerate(zip(ts, sample.positions)):
             if index in (0, len(ts)-1):
                 expected = source.vertex(edge.vertex_ids[0 if index == 0 else 1]).xyz
+                if edge.curve_id:
+                    original=curve_point_float(source.curve(edge.curve_id),t)
+                    departure=math.dist(xyz,original)
+                    require(math.isfinite(departure) and departure<=
+                            min(mesh.quality.tolerance_mm/8,mesh.quality.source_residual_mm)+coordinate_tolerance,
+                            'actual original spatial endpoint departure exceeds source/chord allocation')
+                    max_original_edge_endpoint_departure=max(max_original_edge_endpoint_departure,departure)
             elif edge.degenerate:
                 expected = source.vertex(edge.vertex_ids[0]).xyz
             else:
@@ -1231,6 +1303,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
         closures = getattr(domain, 'chart_closures', ())
         closure_parameters = {}
         joint_recoveries = {}
+        candidate_records_seen=set()
         for recovery in getattr(domain,'joint_recoveries',()):
             recovery_key = _joint_recovery(source,face,recovery,vertices,mesh.quality,coordinate_tolerance,boundary_profiles)
             require(recovery_key not in joint_recoveries, 'duplicate original-vertex joint recovery')
@@ -1277,13 +1350,23 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 inverse_kinds = {1:'plane_source_inverse',2:'cylinder_source_inverse',3:'cone_source_inverse'}
                 require(recovery_kind == 'pcurve' or recovery_kind == inverse_kinds.get(carrier.kind) or
                         (carrier.kind == 3 and recovery_kind == 'cone_source_generator') or
-                        (carrier.kind == 6 and recovery_kind in ('spline_boundary_generator','spline_boundary_vertex_inverse')),
+                        (carrier.kind == 6 and recovery_kind in ('spline_boundary_generator','spline_boundary_vertex_inverse',
+                                                                'spline_joint_endpoint_candidate')),
                         'unsupported owned trim recovery kind')
                 if recovery_kind != 'pcurve':
                     physical = vertices.get((face.definition_id,occurrence.sample_key))
                     require(physical is not None and physical.source_kind in (1,2),
                             'owned trim inverse lost original spatial generator')
-                    if recovery_kind == 'spline_boundary_generator':
+                    if recovery_kind == 'spline_joint_endpoint_candidate':
+                        require(physical.source_kind==1 and physical.source_id in edge.vertex_ids,
+                                'spline endpoint candidate is not an original vertex occurrence')
+                        joint_key=_source_joint_key(source,loop,use,occurrence.source_parameter)
+                        require(joint_key in joint_recoveries and
+                                joint_recoveries[joint_key].kind==recovery_kind,
+                                'spline endpoint candidate lost matching original joint record')
+                        recovered=tuple(map(exact,joint_recoveries[joint_key].uv))
+                        candidate_records_seen.add(joint_key)
+                    elif recovery_kind == 'spline_boundary_generator':
                         column = _spline_boundary_profile(source,carrier,use,boundary_profiles)
                         recovered = _spline_column_uv(column,physical.xyz)
                         if physical.source_kind == 1:
@@ -1318,14 +1401,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                         if any(not knots[0] <= value <= knots[-1] for value,knots in zip(expected_uv,(carrier.knot_u,carrier.knot_v))):
                             spline_foreign_outside_count += 1
                         if physical.source_kind == 1:
-                            index = loop.coedge_ids.index(use.id)
-                            start = edge.parameter_range[0 if use.sense > 0 else 1]
-                            if occurrence.source_parameter == start:
-                                joint_key = (loop.id,loop.coedge_ids[(index-1)%len(loop.coedge_ids)],use.id)
-                            else:
-                                require(occurrence.source_parameter == edge.parameter_range[1 if use.sense > 0 else 0],
-                                        'spline original vertex is not a directed source endpoint')
-                                joint_key = (loop.id,use.id,loop.coedge_ids[(index+1)%len(loop.coedge_ids)])
+                            joint_key=_source_joint_key(source,loop,use,occurrence.source_parameter)
                             require(joint_key in joint_recoveries,'owned spline endpoint lost explicit original joint provenance')
                     # A non-small original-vertex joint must retain both raw
                     # endpoint occurrences in original traversal order.
@@ -1471,6 +1547,9 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                         'actual physical interpolation probe exceeds requested tolerance plus numeric comparison grade')
                 max_probe_error = max(max_probe_error, error)
         qualify_domain(tuple(normalized_loops), tuple(triangle_uvs))
+        require(candidate_records_seen=={key for key,row in joint_recoveries.items()
+                                         if row.kind=='spline_joint_endpoint_candidate'},
+                'spline endpoint joint record lost typed original boundary occurrence')
     require(triangle_owners == Counter({i: 1 for i in range(len(mesh.triangles))}),
             'every actual UV cell must belong once to its complete face')
     solid_stats = []
@@ -1485,6 +1564,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 collapsed_uv_cells=collapsed_count, physical_triangles=sum(s['triangles'] for s in solid_stats),
                 solid_eulers=tuple(s['euler'] for s in solid_stats), max_source_vertex_error=max_vertex_error,
                 max_pcurve_uv_error=max_uv_error, max_source_recovery_residual=max_recovery_residual,
+                max_original_edge_endpoint_departure_mm=max_original_edge_endpoint_departure,
                 max_finite_interpolation_probe_error=max_probe_error,
                 max_independent_native_uv_rounding_bound_mm=max_rounding_bound,
                 cylinder_source_inverse_occurrences=cylinder_recovery_count,
