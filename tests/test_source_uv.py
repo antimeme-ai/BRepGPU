@@ -76,6 +76,8 @@ class SourceUVTests(unittest.TestCase):
             rows=[row.split('\t') for row in run.stdout.splitlines()]
             self.assertEqual([row[1:] for row in rows if row[0]=='original_uses'],[['10','11','12','13']])
             self.assertEqual([row[1:] for row in rows if row[0]=='ordered_uses'],[['4']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='input_face_free'],[['0']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='query_face_free'],[['0']])
             for row in rows:
                 if row[0]!='boundary':continue
                 xyz=tuple(map(float,row[3:6]));u,v=map(float,row[6:8])
@@ -91,6 +93,8 @@ class SourceUVTests(unittest.TestCase):
             rows=[row.split('\t') for row in run.stdout.splitlines()]
             self.assertEqual([row[1:] for row in rows if row[0]=='original_uses'],[['12','11','10']])
             self.assertEqual([row[1:] for row in rows if row[0]=='ordered_uses'],[['4']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='input_face_free'],[['0']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='query_face_free'],[['0']])
             connector=[tuple(map(float,row[1:])) for row in rows if row[0]=='connector']
             self.assertEqual(len(connector),1)
             self.assertEqual((connector[0][1],connector[0][3]),(math.pi/2,math.pi/2))
@@ -115,6 +119,8 @@ class SourceUVTests(unittest.TestCase):
             boundary=[row for row in rows if row[0]=='boundary']
             self.assertEqual({int(row[1]) for row in boundary},{10,11,12})
             self.assertEqual(len(boundary),3*17)
+            self.assertEqual([row[1:] for row in rows if row[0]=='input_face_free'],[['0']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='query_face_free'],[['0']])
             for _,use,t,*values in boundary:
                 t=float(t);values=tuple(map(float,values));xyz,uv,actual=values[:3],values[3:5],values[5:]
                 expected={10:(2.5*math.cos(t),2.5*math.sin(t),0.),

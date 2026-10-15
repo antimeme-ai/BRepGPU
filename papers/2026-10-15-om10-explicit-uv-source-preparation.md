@@ -143,7 +143,9 @@ The original nonperiodic B-spline knot rectangle remains the admitted domain.
 Projected pcurve intervals/knots, finite control values and selected branches
 remain explicit foreign data. Probe original C(t) against original S(pcurve(t))
 at17 deterministic samples per active original spatial-knot span, including
-endpoints. Require finite results and measured residual≤selected source limit
+exact saved endpoints. A raw projected UV outside the original natural domain
+uses OCCT's foreign carrier extension for this diagnostic only, not an original
+source-domain evaluation. Final query correspondence probes are in-domain. Require finite results and measured residual≤selected source limit
 (.001mm in the watch caller); preserve maximum and offending IDs. Check native
 same-parameter interval identity; do not set source flags to manufacture it.
 These are finite correspondence probes, not a universal source error certificate.
@@ -257,6 +259,15 @@ and incoming/outgoing use ownership and the canonical endpoint coordinates.
 The original physical-use cycle is unchanged after quotienting only these
 explicit connectors. Reuse the existing singular-connector recognition/proof
 in the source adapter rather than implementing a second pole checker.
+
+Faces inside a detached copied solid are frozen topology children. Temporarily
+set only that query face's Free flag true in an RAII scope around the declared
+wire Remove/Add, then restore the saved flag on success or exception. Do not
+free any original/raw parent or alter source coordinates/tolerances. Native
+TopoDS_Builder::Add explicitly rejects a frozen parent; the same octant nested
+in a shell reproduces that exact failure for both orientations. Final FaceState
+checks the restored flag, and the actual expanded-wire/connector-neighbor check
+still proves the retained original physical word.
 
 This gives OCCT's query face a closed chart boundary and preserves all original
 source records. The owned mesher still retains its positive UV cells and explicit

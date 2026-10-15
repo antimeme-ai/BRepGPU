@@ -132,3 +132,23 @@ This checkpoint establishes the bounded authored capability, not the watch.
 One fresh actual complete source/query export and a bounded native sanitizer
 run are starting. Complete original geometry/assembly and actual source delta
 remain required before full V4 meshing or any target render.
+
+Fresh complete source/query attempt reaches definitions1713–1716 then the first
+pole-bearing1717 and fails without publishing a source snapshot. Same literal
+F/R octants nested in a shell reproduce the actual cause before correction:
+face1/carrier2 Add(query pole wire), parentFree0, TopoDS_FrozenShape,2failures
+in0.022s. Root accepted a narrow RAII query-face mutability scope for wire
+Remove/Add, restoring savedFree even on exception. This changes only detached
+query construction permissions; original/raw objects and all3D/physical word
+contracts remain unchanged. Add actual face Free-state assertions to these same
+fixtures and final FaceState. Native exception type/site now remains in source
+failure messages. Earlier ASan3root-face cases passed0.157s; the final bounded
+sanitizer run must cover these stronger nested fixtures after correction.
+
+The scoped query-face Free-state fix passes the same10direct/affected methods
+in0.258s. The three stronger nested native methods also pass ASan/UBSan in0.169s
+without suppressions. Root reviewed the saved-state scope and exception path.
+The next actual source/query attempt passes the prior seam and frozen-pole
+cases, exporting definitions1713–1767 before a distinct169982 query-domain
+control escape; no complete source snapshot is published. That numerical
+representation case remains open and is not a watch pass.
