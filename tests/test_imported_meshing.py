@@ -72,7 +72,62 @@ def exact_triangle_area(points,triangles):
     return total
 
 
+def tangent_circle_sheet_fixture():
+    """Original three-edge cusp sheet; not a closed-solid qualification fixture."""
+    frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+    inner_angle=.17;radius=1.0625
+    outer_angle=math.asin(math.sin(inner_angle)/radius)
+    xyz=((1.,0.,0.),(math.cos(inner_angle),math.sin(inner_angle),0.),
+         (-.0625+radius*math.cos(outer_angle),radius*math.sin(outer_angle),0.))
+    inner=Curve(101,3,2,frame,(1.,1.),(0.,inner_angle))
+    outer_frame=(-.0625,*frame[1:])
+    outer=Curve(103,3,2,outer_frame,(radius,radius),(0.,outer_angle))
+    line_frame=(*xyz[1],*(b-a for a,b in zip(xyz[1],xyz[2])),0.,0.,0.,0.,0.,0.)
+    connector=Curve(102,3,1,line_frame,(0.,0.),(0.,1.))
+    spatial=(inner,connector,outer)
+    curves=spatial+tuple(replace(c,id=2**63+11+i,dimension=2) for i,c in enumerate(spatial))
+    return ImportedSource('ac'*32,1.,0.,10,'independent nominal internally tangent circle sheet',
+        (Product(10,'tangent circle sheet','fixture',20),),
+        (SolidDefinition(20,10,(30,),(40,41,42),(50,51,52)),),(),
+        tuple(Vertex(50+i,p,1e-7) for i,p in enumerate(xyz)),
+        (Edge(40,(50,51),101,inner.parameter_range,True,True,False,1e-7),
+         Edge(41,(51,52),102,(0.,1.),True,True,False,1e-7),
+         Edge(42,(50,52),103,outer.parameter_range,True,True,False,1e-7)),
+        (Coedge(11,40,60,1,curves[3].id,inner.parameter_range),
+         Coedge(12,41,60,1,curves[4].id,(0.,1.)),
+         Coedge(13,42,60,-1,curves[5].id,outer.parameter_range)),
+        (Loop(60,30,True,(11,12,13)),),(Face(30,20,70,1,(60,),0.),),
+        (Carrier(70,1,frame,(0.,0.),(-2.,2.,-2.,2.)),),curves)
+
+
 class ImportedMeshingTests(unittest.TestCase):
+    def test_original_tangent_circles_get_one_simple_budgeted_shared_schedule(self):
+        from brepgpu.imported_oracles import qualify_domain
+        source=tangent_circle_sheet_fixture();mesh=mesh_imported(source)
+        self.assertGreater(dict(mesh.error_metrics)['circle_joint_resampling_count'],0)
+        qualify_domain(tuple(tuple(o.uv for o in loop) for loop in mesh.faces[0].boundary_loops),
+                       tuple(tuple(c.uv for c in t.corners) for t in mesh.triangles))
+        for edge in source.edges:
+            record=next(r for r in mesh.edge_samples if r.edge_id==edge.id)
+            self.assertEqual((record.parameters[0],record.parameters[-1]),edge.parameter_range)
+            self.assertEqual(record.positions[0],source.vertex(edge.vertex_ids[0]).xyz)
+            self.assertEqual(record.positions[-1],source.vertex(edge.vertex_ids[1]).xyz)
+            self.assertTrue(all(a<b for a,b in zip(record.parameters,record.parameters[1:])))
+            for t,xyz in zip(record.parameters[1:-1],record.positions[1:-1]):
+                if edge.id==40:expected=(math.cos(t),math.sin(t),0.)
+                elif edge.id==42:expected=(-.0625+1.0625*math.cos(t),1.0625*math.sin(t),0.)
+                else:
+                    a,b=(source.vertex(i).xyz for i in edge.vertex_ids)
+                    expected=tuple(x+t*(y-x) for x,y in zip(a,b))
+                self.assertLessEqual(math.dist(xyz,expected),2**-44)
+            coedge=next(c for c in source.coedges if c.edge_id==edge.id)
+            indices=list(range(len(record.parameters)))
+            if coedge.sense<0:indices.reverse()
+            expected=tuple((record.parameters[i],record.vertex_keys[i]) for i in indices[:-1])
+            actual=tuple((o.source_parameter,o.sample_key) for loop in mesh.faces[0].boundary_loops
+                         for o in loop if o.coedge_id==coedge.id)
+            self.assertIn(actual,(expected,expected[::-1]))
+
     def test_canonical_boundary_displacement_is_in_actual_cell_error_budget(self):
         from tests.test_imported_geometry import pierced_prism_source
         source=pierced_prism_source();carrier=source.carriers[0]

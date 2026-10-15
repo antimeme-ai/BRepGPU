@@ -380,3 +380,13 @@ Root/oracle design reviews ACCEPT after explicit nominal-frame grade128ulp(1),
 finite nonnegative translated J, and correction that tiny nominal circle roots
 from saved centers/radii are not full saved-frame parametric intersections.
 Production is authorized after meaningful fleet red; source remains unchanged.
+
+Meaningful fleet red established on an independently authored open planar cusp:
+R1=1, R2=1.0625, center difference exactly.0625, common original endpoint(1,0),
+inner active angle.17, outer endpoint at the same tangent-coordinate height,
+and a straight far-end connector. Current mesh raises exact intersecting sampled
+UV boundary before the result assertion. Direct test checks independent circle/
+line XYZ formulas, complete original ordered coedge sample chains and endpoints,
+and existing independent full polygon coverage. This is an open-sheet source
+construction regression, not a closed-solid qualification claim. Production
+implementation now proceeds under both accepted reviews.
