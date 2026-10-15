@@ -372,3 +372,13 @@ invented/worse UVs, wrong original vertex/raw UV and hidden original LINE
 departure, plus the five existing domain/physical/native integrations. Local and
 fleet source hashes agree. Oracle code/tests are stable for the parent's fresh
 complete retained run; no target rendering or whole-source success is implied.
+
+Reviewed docs/OM10_TWO_VIEW_BENCHMARK_PLAN.md ACCEPT. Two fresh complete CPU24/
+P1000 callers measure the requested assembled-then-exploded workflow without
+four repeated source preparations; per-pose repeated native observations keep
+their narrower scope. Both posters must identify the same shared two-view total,
+with n=1 and no inferred per-pose full time. Review reminders: compare owned
+source snapshot/input metadata as well as scene/request/software pins, retain
+fixed CPU-then-GPU order without claiming flushed OS caches, and copy exact
+192-byte request rows after validating alpha/order. No product or test changes
+in this review lane.

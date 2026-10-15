@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Actual full-task observations and repeated matched native OM10 display.
 
-Four fresh STEP-to-labeled-image calls are single observations. Repeated native
-processes consume their unchanged prepared scene and per-pose requests. Resident
-frame walls have a separately named narrower scope. No stage-median total.
+Two fresh STEP-to-both-labeled-views calls are single observations, in fixed
+CPU24 then P1000 order, without flushing filesystem caches. Repeated native
+processes consume their unchanged prepared scene and exact per-pose requests.
+Resident frame walls have a separately named narrower scope. No stage-median total.
 """
 import argparse
 import csv
@@ -48,56 +49,75 @@ def main(args):
     common = [sys.executable, str(script), '--step', str(args.step.resolve()),
               '--adapter', str(args.adapter.resolve()), '--native', str(args.native.resolve()),
               '--plugin', str(args.plugin.resolve()), '--mode', 'render',
+              '--view', 'both', '--repeat-frames', '1',
               '--width', str(args.width), '--height', str(args.height),
               '--supersample', str(args.supersample), '--tolerance', str(args.tolerance),
               '--source-residual', str(args.source_residual),
               '--azimuth', str(args.azimuth), '--elevation', str(args.elevation)]
     records, outputs, input_hashes, cold_requests, prepared = [], [], {}, {}, {}
+    source_sha256 = hashlib.sha256(args.step.read_bytes()).hexdigest()
+    def full_inputs(output):
+        hashes = tuple(hashlib.sha256((output/p).read_bytes()).hexdigest()
+                       for p in ('source.bgsource', 'scene.bgmesh', 'views.bgview', 'sources.tsv'))
+        metadata = {r['field']: r['value'] for r in read_rows(output/'metadata.tsv')}
+        if (metadata['source_sha256'] != source_sha256 or
+                metadata['owned_source_snapshot_sha256'] != hashes[0] or
+                metadata['frames'] != '2' or metadata['mode'] != 'render'):
+            raise ValueError('full caller source identity/snapshot or two-view render metadata differs')
+        return hashes
     def observations():
         write_rows(args.output/'observations.tsv', ('scope', 'repeat', 'view', 'backend',
             'seconds', 'description'), records)
-    for view_index, view in enumerate(('assembled', 'exploded')):
-        order = (BACKENDS[1], BACKENDS[2])
-        if view_index:
-            order = tuple(reversed(order))
-        for label, backend, threads, device in order:
-            name = f'cold-00-{view}-{label}'
-            output = args.output/name
-            command = common+['--view', view, '--backend', backend, '--threads', str(threads),
-                              '--device', str(device), '--output', str(output)]
-            start = time.perf_counter()
-            with (args.output/(name+'.log')).open('w') as log:
-                subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
-            elapsed = time.perf_counter()-start
-            hashes = tuple(hashlib.sha256((output/p).read_bytes()).hexdigest()
-                           for p in ('scene.bgmesh', 'views.bgview', 'sources.tsv'))
-            if view in input_hashes and input_hashes[view] != hashes:
-                raise ValueError('matched source/scene/view/software inputs changed across full callers')
-            if input_hashes and (hashes[0], hashes[2]) != (next(iter(input_hashes.values()))[0], next(iter(input_hashes.values()))[2]):
-                raise ValueError('assembled/exploded full callers changed source geometry/software')
-            request = (output/'views.bgview').read_bytes()
-            if request[:16] != struct.pack('<8sII', b'BGVIEW01', 1, 1) or len(request) != 208:
-                raise ValueError('full task must emit exactly one actual view request')
-            input_hashes[view] = hashes
-            cold_requests[view] = request[16:]
-            prepared.setdefault(view, output)
-            records.append(('cold_complete_process', 0, view, label, elapsed,
-                            'one observation; fresh STEP through PNG/labeled SVG and interpreter exit'))
-            outputs.append((name, view, label, output.name))
-            observations()
-            print(name, format(elapsed, '.6f'), 's; n=1', flush=True)
+    # Fixed CPU24→P1000 order. These n=1 observations do not establish a
+    # statistical workflow speedup or flushed-cache costs.
+    for label, backend, threads, device in (BACKENDS[1], BACKENDS[2]):
+        name = f'cold-00-both-{label}'
+        output = args.output/name
+        command = common+['--backend', backend, '--threads', str(threads),
+                          '--device', str(device), '--output', str(output)]
+        start = time.perf_counter()
+        with (args.output/(name+'.log')).open('w') as log:
+            subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
+        elapsed = time.perf_counter()-start
+        hashes = full_inputs(output)
+        if input_hashes and hashes != next(iter(input_hashes.values())):
+            raise ValueError('matched original source/snapshot/scene/two-view/software inputs changed')
+        request = (output/'views.bgview').read_bytes()
+        if request[:16] != struct.pack('<8sII', b'BGVIEW01', 1, 2) or len(request) != 408:
+            raise ValueError('full task must emit exactly two actual view requests')
+        for index, view in enumerate(('assembled', 'exploded')):
+            row = request[16+192*index:16+192*(index+1)]
+            if (struct.unpack_from('<d', row, 16)[0] != float(index) or
+                    struct.unpack_from('<I', row, 168)[0] != 0):
+                raise ValueError('full task must render assembled alpha0 then exploded alpha1')
+            if view in cold_requests and cold_requests[view] != row:
+                raise ValueError('actual per-pose requests differ across full callers')
+            cold_requests[view] = row
+        input_hashes[label] = hashes
+        prepared[label] = output
+        records.append(('cold_complete_process', 0, 'both', label, elapsed,
+                        'one shared total; fresh STEP through BOTH PNG/labeled SVG views and exit; '
+                        'fixed CPU24 then P1000 order; filesystem caches not flushed'))
+        outputs.append((name, 'both', label, output.name))
+        observations()
+        print(name, format(elapsed, '.6f'), 's; both views; n=1', flush=True)
+    pose_views = {}
+    for view, row in cold_requests.items():
+        pose_views[view] = args.output/(view+'.bgview')
+        pose_views[view].write_bytes(struct.pack('<8sII', b'BGVIEW01', 1, 1)+row)
     # Pin the actual product sources throughout subsequent native measurements.
-    source_pins = read_rows(prepared['assembled']/'sources.tsv')
+    source_pins = read_rows(prepared['cpu24']/'sources.tsv')
     def check_inputs():
-        for view, output in prepared.items():
-            current = tuple(hashlib.sha256((output/p).read_bytes()).hexdigest()
-                            for p in ('scene.bgmesh', 'views.bgview', 'sources.tsv'))
-            if current != input_hashes[view]:
+        for label, output in prepared.items():
+            if full_inputs(output) != input_hashes[label]:
                 raise ValueError('prepared native scene/view/source inputs changed')
+        for view, path in pose_views.items():
+            if path.read_bytes() != struct.pack('<8sII', b'BGVIEW01', 1, 1)+cold_requests[view]:
+                raise ValueError('copied per-pose request changed')
         if any(hashlib.sha256((ROOT/r['path']).read_bytes()).hexdigest() != r['sha256'] for r in source_pins):
             raise ValueError('actual product source changed during benchmark')
     def native_command(output, label, backend, threads, device, views):
-        command = [str(args.native.resolve()), '--scene', str((prepared['assembled']/'scene.bgmesh').resolve()),
+        command = [str(args.native.resolve()), '--scene', str((prepared['cpu24']/'scene.bgmesh').resolve()),
                    '--views', str(views.resolve()), '--output-directory', str(output.resolve()),
                    '--backend', backend, '--threads', str(threads)]
         if backend == 'cuda':
@@ -111,7 +131,7 @@ def main(args):
                 check_inputs()
                 name = f'native-{repeat:02d}-{view}-{label}'
                 output = args.output/name
-                command = native_command(output, label, backend, threads, device, prepared[view]/'views.bgview')
+                command = native_command(output, label, backend, threads, device, pose_views[view])
                 start = time.perf_counter()
                 with (args.output/(name+'.log')).open('w') as log:
                     subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
