@@ -51,3 +51,13 @@ identities, exact material and actual-float native geometry/normal/ABI5 consumer
 No blocker or oracle edit. Saved bounded oracle semantics review. Root reports
 actual small CPU caller green and is fetching artifacts for separate saved-data
 review. No native/reference/product job from this lane.
+
+Read actual saved smallCPU unit exports via stdlib-only private CSV/binary/XML
+analysis, with no product imports. Accepted all1,976 graph paths,62sourcefates/
+76origins, precise19birth/57imageparents,256history-map and10contact-map reads,
+11material probes and2,023saved actual-float trim labels. Saved control evaluation
+reproduced all1,987 admitted native rows/error maxima; all15ordinary CSR pairs/
+30mate-neighbor readers bind. All15SVG paths and866visible circles match exact
+saved curve/native projection/order/colors. All13 source pins current. Saved
+unit artifact review; diagnostic singleCPUwall kept separate from forthcoming
+campaign/reference claims. No source changes or additional fleet job.
