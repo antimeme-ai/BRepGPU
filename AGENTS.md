@@ -119,7 +119,14 @@ centerlines and a plasma boundary; the original documentary pack has no native
 CAD. Coil-pack sections are illustrative; plasma is not the vacuum vessel.
 Existing P100 first jets supply the displayed geometry and normals, with CPU
 rasterization. Preserve source/revision/camera/lighting between comparison images
-and name changes. Existing synthetic trophies remain historical studies.
+and name changes. Existing synthetic trophies remain historical studies. The post-breadth NCSX rerun
+reproduces all nine P100 scene/native artifacts and the final hero byte-for-byte;
+CPU geometry pixels match too. Read results/ncsx-rerun-2026-10-15/REPORT.md for
+first matched CPU1/P1000 timing scopes: native evaluation16.310/1.430ms versus
+cold native119.862/570.840ms; fullqualifiedcaller41.024/40.379s includes28s exact
+CPU verification and9s CPU display. One observation each, no historical timing
+baseline or whole-render speedup. New feature constructors are not used by this
+fitted-surface scene; geometry/renderer/native binaries remain unchanged.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;
