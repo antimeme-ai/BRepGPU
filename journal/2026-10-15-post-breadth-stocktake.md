@@ -33,3 +33,8 @@ with no blocking findings. Checked all 245 local link targets in the seven
 changed/new documents and Git whitespace checks; all passed. Documentation-only
 work needs no geometry reruns. Publication preserves proposal status and does
 not authorize an implementation, new dependency or scope change.
+
+Merged PR [#51](https://github.com/antimeme-ai/BRepGPU/pull/51) at
+2026-10-15T12:17:49Z as `de85f9cea0f956219a4b2c2d6d16f24f275ef1e0`.
+The feature branch is retained. Local main and the fleet checkout matched the
+merge with clean worktrees; this final journal handoff is synced to both.
