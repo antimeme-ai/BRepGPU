@@ -1,0 +1,2 @@
+slot	degree_u	degree_v	umin_hex	umax_hex	vmin_hex	vmax_hex	origin_x_hex	origin_y_hex	origin_z_hex	scale_hex	body_id	entity_kind	entity_id	revision	chart_id
+0	3	3	0x0.0p+0	0x1.0000000000000p+0	0x0.0p+0	0x1.0000000000000p+0	0x0.0p+0	0x0.0p+0	0x0.0p+0	0x1.0000000000000p+0	1	5	1	1	1

@@ -1,0 +1,2 @@
+sha256	prim	face_index	ordinal	surface_type	trim_type	loop_count	status	reason	patch_slot	range_umin	range_umax	range_vmin	range_vmax	position_bound	du_bound	dv_bound
+54d6e6f8457f6bb6d967389ed2c801c63d8bdf25f7fd33c8fa286e3c33250c4b	/World/Brep0	0	0	BrepSurfaceNurbAPI	general	1	converted		0	0.0	1.0	0.0	1.0	0	0	0

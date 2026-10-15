@@ -1,0 +1,29 @@
+#usda 1.0
+# Owned literal carrier fixture; not a complete trimmed B-rep.
+def BrepArray "Rational"
+{
+    uniform token[] face:surfaceType = ["BrepSurfaceNurbAPI", "BrepSurfaceNurbAPI"]
+    uniform token[] face:trimType = ["general", "general"]
+    uniform uint[] face:loopCount = [0, 0]
+    uniform double2[] face:range = [(-2, 4), (3, 6), (-2, 4), (3, 6)]
+    uniform uint[] faceuse:faceIndex = [0, 1, 1, 0]
+    uniform token[] faceuse:orientationType = ["same", "opposite", "same", "opposite"]
+    uniform uint[] brep:surface:nurb:uOrder = [3, 3]
+    uniform uint[] brep:surface:nurb:vOrder = [4, 4]
+    uniform uint[] brep:surface:nurb:uVertexCount = [3, 3]
+    uniform uint[] brep:surface:nurb:vVertexCount = [4, 4]
+    uniform double[] brep:surface:nurb:uKnots = [-2, -2, -2, 3, 3, 3, -2, -2, -2, 3, 3, 3]
+    uniform double[] brep:surface:nurb:vKnots = [4, 4, 4, 4, 6, 6, 6, 6, 4, 4, 4, 4, 6, 6, 6, 6]
+    uniform point3d[] brep:surface:nurb:controlVertices = [
+        (0, 0, 0.1), (0.02, 0.125, 0.17), (0.01, 0.25, 0.2), (0, 0.375, 0.3125),
+        (0.25, 0, 0.15), (0.275, 0.125, 0.22), (0.25, 0.25, 0.375), (0.2, 0.375, 0.421875),
+        (0.5, 0, 0.2), (0.475, 0.125, 0.3), (0.525, 0.25, 0.40625), (0.5, 0.375, 0.53125),
+        (0, 0, 0.1), (0.02, 0.125, 0.17), (0.01, 0.25, 0.2), (0, 0.375, 0.3125),
+        (0.25, 0, 0.15), (0.275, 0.125, 0.22), (0.25, 0.25, 0.375), (0.2, 0.375, 0.421875),
+        (0.5, 0, 0.2), (0.475, 0.125, 0.3), (0.525, 0.25, 0.40625), (0.5, 0.375, 0.53125)
+    ]
+    uniform double[] brep:surface:nurb:weights = [
+        1, 1.125, 1.25, 1.375, 1.0625, 1.1875, 1.3125, 1.4375, 1.125, 1.25, 1.375, 1.5,
+        1, 1.125, 1.25, 1.375, 1.0625, 1.1875, 1.3125, 1.4375, 1.125, 1.25, 1.375, 1.5
+    ]
+}

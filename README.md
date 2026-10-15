@@ -27,7 +27,10 @@ mate/face-neighbor reader are delivered too. Exact material classification and
 finite rectangular-face contacts and complete bounded planar arrangements are
 delivered on CPU. Complete shared-edge meshes for the canonical box, cylinder
 and holed plate are now delivered too, with exact source construction and bounded
-rounded output. Narrow interchange, solid operations and features remain.
+rounded output. The [carrier interchange beachhead](docs/INTERCHANGE.md) now reads
+actual foreign ASCII USD BRep surfaces into owned CPU/P100 patches with original
+face/chart identities and explicit unsupported outcomes. Trims remain uninterpreted.
+Solid operations/history and features remain.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -205,7 +208,8 @@ PYTHONPATH=python python3 examples/intersect_faces.py --recipe clipped \
 [Exact qualification and matched CPU/P100 costs](results/intersections-2026-10-14/REPORT.md) ·
 [Research and bibliography](papers/README.md#analytic-intersection-beachhead) ·
 [Journal](journal/) · [Return-pass research notes](papers/2026-10-14-intersection-round2-notes.md).
-General SSI, imported/tilted surfaces, arrangements and Booleans remain future.
+General SSI, imported/tilted intersection inputs and Boolean assembly remain
+future; the exact planar arrangement beachhead is a separate delivered operation.
 
 ## Resident surface-pair shortlist
 
@@ -460,8 +464,23 @@ tangent contacts, periodic seams and coincident surfaces enter the design early.
 
 The [first design](docs/ITERATION_1_DESIGN.md) specifies the local coordinate
 and weight envelope, finite-corpus error grades, input ownership and failure
-contracts. General NURBS span extraction and imported-model adapters remain
-future work.
+contracts. The [narrow carrier adapter](docs/INTERCHANGE.md) now reads actual
+single-span ASCII USD BRep records with source provenance. General NURBS span
+extraction, imported trims/solids and wider interchange remain future work.
+
+## Import supported reference carriers
+
+```sh
+PYTHONPATH=python python3 examples/import_carriers.py \
+  --input data/interchange/mouse.usda --backend cuda --device 0 \
+  --library-path build/pair-release/libbrepgpu.so \
+  --output-directory results/local-interchange/mouse
+```
+
+[Scope and CPU commands](docs/INTERCHANGE.md) ·
+[Foreign source, actual reference comparisons and complete costs](results/interchange-2026-10-15/REPORT.md).
+This converts two of the foreign model's four NURBS carriers; the multispans are
+explicitly unsupported and every trim remains uninterpreted. No new dependency.
 
 ## Run the CPU baseline
 

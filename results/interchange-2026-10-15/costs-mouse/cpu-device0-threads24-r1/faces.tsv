@@ -1,0 +1,5 @@
+sha256	prim	face_index	ordinal	surface_type	trim_type	loop_count	status	reason	patch_slot	range_umin	range_umax	range_vmin	range_vmax	position_bound	du_bound	dv_bound
+0fedf1649d094ad38adb14095ddd0fef888016c80245ef488d66b70db1b4d39d	/World/mouse	0	0	BrepSurfaceNurbAPI	general	1	unsupported	multiple spans or non-Bezier control count		0.0	11.15419580309991	0.0	15.97234071195468	0	0	0
+0fedf1649d094ad38adb14095ddd0fef888016c80245ef488d66b70db1b4d39d	/World/mouse	1	1	BrepSurfaceNurbAPI	general	1	converted		0	0.0	6.044749683231338	0.0	2.566025062287801	0	0	0
+0fedf1649d094ad38adb14095ddd0fef888016c80245ef488d66b70db1b4d39d	/World/mouse	2	2	BrepSurfaceNurbAPI	general	1	converted		1	0.0	8.0	0.0	13.0	0	0	0
+0fedf1649d094ad38adb14095ddd0fef888016c80245ef488d66b70db1b4d39d	/World/mouse	3	3	BrepSurfaceNurbAPI	general	1	unsupported	multiple spans or non-Bezier control count		0.0	29.01020273569565	0.0	4.075460448547599	0	0	0

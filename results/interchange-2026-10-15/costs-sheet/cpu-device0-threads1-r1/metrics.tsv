@@ -1,0 +1,17 @@
+field	value
+converted_faces	1
+faces	1
+invalid_queries	0
+max_local_du_error	1/9007199254740992
+max_local_dv_error	1/9007199254740992
+max_local_partial_error	1/9007199254740992
+max_local_position_error	1575/73786976294838206464
+max_source_du_budget	1/1073741824
+max_source_du_error	1/9007199254740992
+max_source_dv_budget	1/1073741824
+max_source_dv_error	1/9007199254740992
+max_source_position_budget	1/1099511627776
+max_source_position_error	1575/73786976294838206464
+queries	289
+successful_queries	289
+unsupported_faces	0
