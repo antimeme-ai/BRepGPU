@@ -56,11 +56,14 @@ def execute(args):
     owned=F(recipe['world_volume_pi_coefficient'])
     require(F(recipe['world_volume_rational'])==0 and owned==coefficient and coefficient>0,'owned exact pi-volume differs from original radial first moment')
     expected=math.pi*float(coefficient)
-    require(manifold and math.isfinite(volume) and abs(volume-float(expected))<=1e-8*float(expected),'reference volume/manifold differs')
+    require(math.isfinite(volume),'nonfinite returned reference volume')
+    volume_error=abs(volume-expected);volume_limit=1e-8*expected
     radius=max(p[0] for p in points)
     boundtruth=(tuple(o+scale*x for o,x in zip(origin,(-radius,min(p[1] for p in points),-radius))),
                 tuple(o+scale*x for o,x in zip(origin,(radius,max(p[1] for p in points),radius))))
-    require(max(abs(a-float(b)) for p,q in zip(bounds,boundtruth) for a,b in zip(p,q))<=1e-8*float(scale),'reference bounds differ')
+    require(all(lo<=hi for lo,hi in zip(*bounds)),'inverted returned reference bounds')
+    bounds_error=max(abs(a-float(b)) for p,q in zip(bounds,boundtruth) for a,b in zip(p,q))
+    bounds_limit=1e-8*float(scale)
     measure_ms=(time.perf_counter_ns()-start)/1e6
     witnesses=[]
     for row in csv.DictReader((case/'edge-points.tsv').open(),delimiter='\t'):
@@ -82,14 +85,22 @@ def execute(args):
         closest,d=sm.get_closest_point(body,point);closest=tuple(float(x) for x in closest);d=float(d)
         require(len(closest)==3,'invalid reference closest point extent')
         residual=math.dist(point,closest)
-        require(all(math.isfinite(x) for x in (*closest,d,residual)) and d>=0 and max(d,residual)<=1e-7*float(scale),'reference boundary differs')
+        require(all(math.isfinite(x) for x in (*closest,d,residual)) and d>=0,'invalid returned reference boundary query')
         queries.append((kind,key,*point,*closest,d,residual))
     query_ms=(time.perf_counter_ns()-start)/1e6
+    boundary_error=max(max(q[-2:]) for q in queries);boundary_limit=1e-7*float(scale)
+    outcomes=(('input_curve_preservation',True,True,True),('manifold',manifold,manifold,True),
+        ('volume',volume_error<=volume_limit,volume_error,volume_limit),
+        ('bounds',bounds_error<=bounds_limit,bounds_error,bounds_limit),
+        ('boundary',boundary_error<=boundary_limit,boundary_error,boundary_limit))
+    overall=all(row[1] for row in outcomes)
+    tsv(out/'outcomes.tsv',('criterion','passed','observed','limit'),outcomes)
     tsv(out/'comparison.tsv',('field','value'),(('recipe',recipe['recipe']),('reference','usd-brep'),('version',importlib.metadata.version('usd-brep')),
         ('manifold',manifold),('reference_volume',volume),('analytic_pi_volume_float',expected),('analytic_pi_coefficient',coefficient),('owned_exact_pi_coefficient',owned),
-        ('volume_absolute_error',abs(volume-float(expected))),('boundary_witnesses',len(queries)),
+        ('overall_pass',overall),('volume_pass',volume_error<=volume_limit),('bounds_pass',bounds_error<=bounds_limit),
+        ('boundary_pass',boundary_error<=boundary_limit),('volume_absolute_error',volume_error),('bounds_absolute_error',bounds_error),('boundary_witnesses',len(queries)),
         ('max_boundary_distance',max(q[-2] for q in queries)),('max_boundary_residual',max(q[-1] for q in queries)),
-        ('volume_relative_limit',1e-8),('boundary_world_limit',1e-7*float(scale)),('world_endpoint_rounding','exact binary64 endpoints and world-axis base'),
+        ('reference_volume_requested_accuracy',1e-8),('volume_relative_limit',1e-8),('bounds_world_limit',bounds_limit),('boundary_world_limit',boundary_limit),('world_endpoint_rounding','exact binary64 endpoints and world-axis base'),
         ('input_curves','original domains and3points each unchanged after pure sweep'),
         ('material_history','not compared; no public material/history reference adapter established'),('alpha','not external corpus qualification')))
     tsv(out/'world-endpoints.tsv',('vertex_id','x_exact','y_exact','z_exact','x_hex','y_hex','z_hex'),
@@ -102,7 +113,8 @@ def execute(args):
         ('reference_rotational_sweep',sweep_ms),('reference_input_preservation_and_measure',measure_ms),('reference_boundary_queries',query_ms)))
     tsv(out/'sources.tsv',('path','sha256'),(('scripts/reference_revolution.py',hashlib.sha256(Path(__file__).read_bytes()).hexdigest()),
         *((name,hashlib.sha256((case/name).read_bytes()).hexdigest()) for name in ('recipe.tsv','quality.tsv','profile-points.tsv','edge-points.tsv','samples.tsv'))))
-    print(f'reference {recipe["recipe"]}: volume_error={abs(volume-float(expected)):.3g} boundary_max={max(q[-1] for q in queries):.3g} witnesses={len(queries)}',flush=True)
+    print(f'reference {recipe["recipe"]}: overall_pass={overall} volume_error={volume_error:.3g} boundary_max={boundary_error:.3g} witnesses={len(queries)}',flush=True)
+    require(overall,'reference comparison failed: '+', '.join(name for name,passed,_,_ in outcomes if not passed))
 
 
 if __name__=='__main__':
