@@ -1,0 +1,177 @@
+path	type	value
+selections	tuple_length	13
+selections/0	record	Selection
+selections/0/side	str	box
+selections/0/face_id	int	2
+selections/0/kind	str	cap_region
+selections/0/region	int	1
+selections/0/domain	none	
+selections/0/witness	tuple_length	3
+selections/0/witness/0	rational	-21/4
+selections/0/witness/1	rational	2
+selections/0/witness/2	rational	-2
+selections/0/label	str	exterior
+selections/0/keep	bool	True
+selections/0/orientation	int	1
+selections/1	record	Selection
+selections/1/side	str	box
+selections/1/face_id	int	2
+selections/1/kind	str	cap_region
+selections/1/region	int	2
+selections/1/domain	none	
+selections/1/witness	tuple_length	3
+selections/1/witness/0	rational	-4
+selections/1/witness/1	rational	2
+selections/1/witness/2	rational	-2
+selections/1/label	str	interior
+selections/1/keep	bool	False
+selections/1/orientation	int	1
+selections/2	record	Selection
+selections/2/side	str	box
+selections/2/face_id	int	1
+selections/2/kind	str	cap_region
+selections/2/region	int	1
+selections/2/domain	none	
+selections/2/witness	tuple_length	3
+selections/2/witness/0	rational	-21/4
+selections/2/witness/1	rational	2
+selections/2/witness/2	rational	0
+selections/2/label	str	exterior
+selections/2/keep	bool	True
+selections/2/orientation	int	1
+selections/3	record	Selection
+selections/3/side	str	box
+selections/3/face_id	int	1
+selections/3/kind	str	cap_region
+selections/3/region	int	2
+selections/3/domain	none	
+selections/3/witness	tuple_length	3
+selections/3/witness/0	rational	-4
+selections/3/witness/1	rational	2
+selections/3/witness/2	rational	0
+selections/3/label	str	interior
+selections/3/keep	bool	False
+selections/3/orientation	int	1
+selections/4	record	Selection
+selections/4/side	str	box
+selections/4/face_id	int	3
+selections/4/kind	str	side
+selections/4/region	none	
+selections/4/domain	none	
+selections/4/witness	tuple_length	3
+selections/4/witness/0	rational	-4
+selections/4/witness/1	rational	1/2
+selections/4/witness/2	rational	-1
+selections/4/label	str	exterior
+selections/4/keep	bool	True
+selections/4/orientation	int	1
+selections/5	record	Selection
+selections/5/side	str	box
+selections/5/face_id	int	4
+selections/5/kind	str	side
+selections/5/region	none	
+selections/5/domain	none	
+selections/5/witness	tuple_length	3
+selections/5/witness/0	rational	-4
+selections/5/witness/1	rational	7/2
+selections/5/witness/2	rational	-1
+selections/5/label	str	exterior
+selections/5/keep	bool	True
+selections/5/orientation	int	1
+selections/6	record	Selection
+selections/6/side	str	box
+selections/6/face_id	int	5
+selections/6/kind	str	side
+selections/6/region	none	
+selections/6/domain	none	
+selections/6/witness	tuple_length	3
+selections/6/witness/0	rational	-5/2
+selections/6/witness/1	rational	2
+selections/6/witness/2	rational	-1
+selections/6/label	str	exterior
+selections/6/keep	bool	True
+selections/6/orientation	int	1
+selections/7	record	Selection
+selections/7/side	str	box
+selections/7/face_id	int	6
+selections/7/kind	str	side
+selections/7/region	none	
+selections/7/domain	none	
+selections/7/witness	tuple_length	3
+selections/7/witness/0	rational	-11/2
+selections/7/witness/1	rational	2
+selections/7/witness/2	rational	-1
+selections/7/label	str	exterior
+selections/7/keep	bool	True
+selections/7/orientation	int	1
+selections/8	record	Selection
+selections/8/side	str	cutter
+selections/8/face_id	int	3
+selections/8/kind	str	wall_band
+selections/8/region	none	
+selections/8/domain	tuple_length	2
+selections/8/domain/0	rational	0
+selections/8/domain/1	rational	1/4
+selections/8/witness	tuple_length	3
+selections/8/witness/0	rational	-17/5
+selections/8/witness/1	rational	14/5
+selections/8/witness/2	rational	-5/2
+selections/8/label	str	exterior
+selections/8/keep	bool	False
+selections/8/orientation	int	1
+selections/9	record	Selection
+selections/9/side	str	cutter
+selections/9/face_id	int	3
+selections/9/kind	str	wall_band
+selections/9/region	none	
+selections/9/domain	tuple_length	2
+selections/9/domain/0	rational	1/4
+selections/9/domain/1	rational	3/4
+selections/9/witness	tuple_length	3
+selections/9/witness/0	rational	-17/5
+selections/9/witness/1	rational	14/5
+selections/9/witness/2	rational	-1
+selections/9/label	str	interior
+selections/9/keep	bool	True
+selections/9/orientation	int	-1
+selections/10	record	Selection
+selections/10/side	str	cutter
+selections/10/face_id	int	3
+selections/10/kind	str	wall_band
+selections/10/region	none	
+selections/10/domain	tuple_length	2
+selections/10/domain/0	rational	3/4
+selections/10/domain/1	rational	1
+selections/10/witness	tuple_length	3
+selections/10/witness/0	rational	-17/5
+selections/10/witness/1	rational	14/5
+selections/10/witness/2	rational	1/2
+selections/10/label	str	exterior
+selections/10/keep	bool	False
+selections/10/orientation	int	1
+selections/11	record	Selection
+selections/11/side	str	cutter
+selections/11/face_id	int	1
+selections/11/kind	str	cutter_cap
+selections/11/region	none	
+selections/11/domain	none	
+selections/11/witness	tuple_length	3
+selections/11/witness/0	rational	-4
+selections/11/witness/1	rational	2
+selections/11/witness/2	rational	1
+selections/11/label	str	exterior
+selections/11/keep	bool	False
+selections/11/orientation	int	1
+selections/12	record	Selection
+selections/12/side	str	cutter
+selections/12/face_id	int	2
+selections/12/kind	str	cutter_cap
+selections/12/region	none	
+selections/12/domain	none	
+selections/12/witness	tuple_length	3
+selections/12/witness/0	rational	-4
+selections/12/witness/1	rational	2
+selections/12/witness/2	rational	-3
+selections/12/label	str	exterior
+selections/12/keep	bool	False
+selections/12/orientation	int	1

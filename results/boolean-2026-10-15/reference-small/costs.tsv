@@ -1,0 +1,6 @@
+phase	wall_ms
+reference_import	54.874147
+reference_construct_operands	6.717465
+reference_copy_and_difference	5.819712
+reference_measures_and_input_preservation	36.053983
+reference_scalar_boundary_queries	6.426867
