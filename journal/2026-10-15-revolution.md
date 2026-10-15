@@ -22,3 +22,13 @@ The implementation plan now assigns complete construction/history, independent
 truth and request/lifetime units; their owners review it before tests/caller.
 Existing execution checkout was clean at the preceding main handoff; all five
 native core/CUDA/topology hashes are recorded privately for final comparison.
+
+All three implementation-plan reviews accepted. First direct27method test suite
+and actual source-driven caller were synchronized before production modules.
+The fleet's existing native body passed its literal position/status prerequisite;
+all27 new methods then failed on missing revolution modules, and the real caller
+failed on the missing revolution constructor. Private raw red log retained.
+The complete geometry, sampler and independent-oracle owners are released to
+implement. Caller review found timed history reads only looked up records;
+root added actual exact affine source/periodic map evaluation and original
+profile boundary reads inside the useful wall, with retained map-reader export.
