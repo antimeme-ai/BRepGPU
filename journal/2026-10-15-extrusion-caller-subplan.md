@@ -30,3 +30,10 @@ All design/plan reviews accepted. Actual fleet caller red: healthy existing box
 six-face prerequisite passed; requested examples/extrude_profile.py --help failed
 exit2 because that executable does not yet exist. No environment/native failure.
 Implementation follows this direct missing-caller red.
+
+Wrote caller/controller/reference after actual red and AST-parsed them without
+local product imports. Three actual grid profiles have3/6/16 source vertices.
+Reused owned TSV/tree utilities with source pins; native controls/source metadata
+and original exact points are fully exported. Reference uses public actual
+Curve.parameter_range/evaluate and linear_sweep API from pinned source. Root
+sampler source review accepted; integrated greens wait for CPU construction.
