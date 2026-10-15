@@ -24,3 +24,10 @@ fans, full exact Gram inverse, shared original vertex/edge/coedge records and
 rounded global convex-product guard. All10 direct methods passed first green in
 4.661s. No product fix required. Code/caller review and one affected compatibility
 run follow, then the three actual caller cases. No new test layer is scheduled.
+
+Actual code/oracle/test/caller review accepted without blockers. The one affected
+compatibility run passed all48 methods in32.507s. It covers existing extrusion,
+construction/sampling and canonical/cut meshing. No broad numerical or GPU run.
+Changed only the inherited SVG wording 'certified total bound' to 'total error
+bound'; no extra test needed for this caption. The three serial actual callers
+are the remaining planned execution, after which tests stop absent a real finding.

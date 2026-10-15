@@ -16,3 +16,10 @@ Private command output is retained in context/extrusion-mesh/red.txt. No skips,
 proxy/fallback or geometry execution on the workstation. A local shell variable
 capture used zsh's readonly `status` name after the completed remote run; read the
 retained actual log directly, with no test rerun.
+
+Reviewed actual production against the independent checker and read the retained
+fleet green: all10 direct methods passed in4.661s. No open code/test finding.
+The scope-specific source/history, full-domain, float-output, type/lifetime and
+failure obligations are met. No additional tests/runs requested; compatibility
+and actual callers remain with the parent. Accepted the exact rho0/tiny-positive-
+Fraction path sourcewise: no float conversion or minimum tolerance exists.
