@@ -1,5 +1,21 @@
 # BRepGPU research
 
+## External oracles and alpha qualification
+
+The operator requires [external community qualification before alpha](../docs/ALPHA_QUALIFICATION.md),
+while allowing incomplete/red suites during development. Our current gap is
+executable community replay and independent-kernel comparison of actual owned outputs.
+
+- [OCCT suite study](2026-10-14-external-occt-suite-study.md): 21,006 static DRAW case
+  registrations, 40 groups; data availability, strong and weak assertions, source
+  inventory and [bibliography](external-occt.bib). Counts are inventory, not executed passes.
+- [CGAL exact oracle study](2026-10-14-external-cgal-oracle-study.md): pinned circular
+  geometry/arrangement tests, semantic comparison design, real registration gaps,
+  build costs and [bibliography](external-cgal-oracle.bib). No dependency adopted.
+- [Independent oracle audit](2026-10-14-alpha-oracle-audit.md): existing model
+  strengths, correlated blind spots, selected-mutant limits and exchange/input
+  corpus roles. No universal complete public B-rep answer oracle was established.
+
 ## Exact planar arrangements
 
 The [complete mixed-line/circle design](../docs/ARRANGEMENT_DESIGN.md) and

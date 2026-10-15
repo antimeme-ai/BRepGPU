@@ -1,5 +1,11 @@
 # Deliver useful acceleration while building a GPU B-rep kernel
 
+Alpha requires the applicable [external community qualification](ALPHA_QUALIFICATION.md)
+to pass. Development continues breadth first with incomplete external coverage
+visible; narrow local model tests and selected mutant kills cannot satisfy that
+release gate. Community replay and independent-kernel adapters remain open.
+
+
 Design direction, updated 2026-10-14. The operator selected an intentional
 breadth-first pass: establish a working beachhead in each major theme before
 returning to deepen individual capabilities. Scope is narrow; correctness is
