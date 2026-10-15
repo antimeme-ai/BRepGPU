@@ -396,3 +396,12 @@ deterministic BGSRC bytes unchanged. Root accepted the scoped numerical amendmen
 with its other reviewers. No remaining native preservation/topology/selected-call
 or adapter finding; existing owner-run focused checks suffice for this review.
 Actual whole extraction/query qualification and target rendering remain separate.
+
+Owner's actual source/query export then reached a nested spherical face and
+failed with TopoDS_FrozenShape during declared pole-wire insertion. The same
+authored forward/reversed octants nested under a shell reproduced parentFree0.
+Read selected Free/Builder methods: Free is a TShape state bit; Add/Remove need
+the parent editable. Accepted a scoped saved-Free/temporary-true/restoration guard
+only on the detached query child face around both topology calls, with a final
+saved-Free check. Original/raw geometry is never opened for editing. Code review
+of that narrow correction follows its implementation; no added campaign here.

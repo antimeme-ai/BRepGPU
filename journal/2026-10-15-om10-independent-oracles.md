@@ -434,3 +434,16 @@ remain branch/provenance data. Generic outside endpoints retain128ULP plus
 final in-domain finite C/S checks, without an extrapolation theorem. Separate
 raw/query residual maxima preserve that distinction. This accepts the reviewed
 math and guards, not the still-pending complete source extraction or watch run.
+
+Actual query export later failed169982 on an interior pcurve control just
+outside a global carrier-domain edge. Rereading `_recover_global_uv` corrected
+our earlier interpretation: its global endpoints are the carrier's min/max
+knots at any curve parameter, not only first/last pcurve controls. My earlier
+curve-control-end restriction was incorrect. Clipping any positive-basis control
+within the same128ULP global grade gives a uniform per-axis UV perturbation
+bounded by the largest control shift and a final contained hull. This query
+coefficient operation is not literally pointwise clipping, since evaluation
+and clipping do not commute. Requested an explicit written representation
+amendment retaining original parameter/basis, cumulative metric charge and final
+in-domain finite C/S checks; no numerical grade expansion or interior carrier
+knot clipping. No new execution campaign in this review lane.
