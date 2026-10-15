@@ -405,3 +405,20 @@ the parent editable. Accepted a scoped saved-Free/temporary-true/restoration gua
 only on the detached query child face around both topology calls, with a final
 saved-Free check. Original/raw geometry is never opened for editing. Code review
 of that narrow correction follows its implementation; no added campaign here.
+
+Reread the implemented QueryFaceEdit correction and accepted it: saved-Free is
+restored by its noncopyable RAII guard across Remove/Add and exceptional exits,
+and FaceState checks restoration. The literal forward/reversed pole fixtures
+now own their faces under shells and expose both original/query Free0. Root read
+the existing focused and nested sanitizer greens; no further run requested.
+The subsequent natural-domain amendment remains a separate numerical unit.
+
+At root/source owner's request, traced the explicit-bound GeomProjLib::Curve2d
+path and B-spline polar projection callees for the next actual ellipse/carrier
+gap. Bounds guide adaptor/Extrema searches but do not constrain the final fit:
+failed improvement returns the original initial UV, and fitting/smoothing has
+no rectangle check. Source3D objects/ranges remain unchanged, but pole paths can
+trim working adaptors and extend/re-time new2D results. Recorded tolerance floors,
+100× search-distance allowance, input-TrimmedCurve range behavior and null/error
+scope in papers/2026-10-15-om10-bounded-geomprojlib-review.md. Sent facts to root/
+source owner. No probe, adoption, production change or CAD execution here.
