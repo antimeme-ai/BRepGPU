@@ -25,3 +25,9 @@ All three implementation-plan reviews accepted without blockers. Independent
 oracle owner now writes tests before production exists; caller owner implements
 the distinct complete consumer/export unit. Parent will run genuine fleet red,
 then implement the complete constructor and lazy adapter. No new dependencies.
+
+Actual production constructor and CutResult adapter followed genuine absent-API
+red. First direct fleet green: all12 methods passed in20.765s, covering actual
+whole-domain/source/rounded truth and deliberately altered real outputs. No
+production semantic fixes were needed in that first run. Source/code review is
+in progress before compatibility/cost execution. Native libraries unchanged.

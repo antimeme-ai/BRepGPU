@@ -329,6 +329,11 @@ class CutResult:
     def __init__(self,*args,**kwargs):
         raise TypeError('CutResult construction is factory-only; use difference')
 
+    def tessellate(self, *, tolerance, max_quarter_segments=256):
+        from .cut_meshing import tessellate
+        return tessellate(self, tolerance=tolerance,
+                          max_quarter_segments=max_quarter_segments)
+
 
 _TABLES = (('vertex','vertices'),('edge','edges'),('coedge','coedges'),
            ('loop','loops'),('face','faces'),('chart','charts'))
