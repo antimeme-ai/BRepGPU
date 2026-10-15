@@ -1,0 +1,7 @@
+id	url	version_or_pin	access	use
+official-current-tests	https://occt3d.com/dev/doc/overview/html/occt_contribution__tests.html	8.0.1	browsed 2026-10-14	current official automated testing guide
+official-current-draw	https://dev.opencascade.org/doc/overview/html/occt_user_guides__test_harness.html	current official page	browsed 2026-10-14	DRAW command harness and loading
+pinned-source	https://github.com/Open-Cascade-SAS/OCCT/blob/b8f597c677811d1f9f4d8a97f5ae2825c0353a42/dox/contribution/tests/tests.md	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	actual local quarantined source read	all corpus semantics and source examples; full readings catalog separate
+public-dataset	https://github.com/Open-Cascade-SAS/OCCT/releases/download/V7_9_0_beta1/opencascade-dataset-7.9.0.tar.xz	7.9.0 dataset used by pinned8.0.1CI	HEAD200 bytes98739184; not downloaded	official public fixture acquisition candidate; completeness/hash not yet established
+release	https://github.com/Open-Cascade-SAS/OCCT/releases/tag/V8_0_1	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	browsed 2026-10-14	maintenance release and test migration context
+deprecated-wiki	https://github.com/Open-Cascade-SAS/OCCT/wiki/tests	deprecated live wiki	browsed 2026-10-14	explicitly replaced by current official/pinned documentation
