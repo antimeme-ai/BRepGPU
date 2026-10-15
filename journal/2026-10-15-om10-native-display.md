@@ -189,3 +189,23 @@ processes, and explicit input/output hash and scoped timing manifests. Local AST
 inspection passed; the utility was not executed or synced to the fleet. Product,
 helper and binary files remain unchanged. Actual raster still waits for root's
 explicit complete V2 PASS and review of this utility.
+
+Root accepted the private pilot utility after static review. While nonvisual V2
+continues, reviewed README, previous watch/NCSX reports, gallery, artwork license
+and current OM10 compositor. Recommended assembled/exploded PNG+SVG artwork in
+assets/om10 with the existing source-derived license, a compact result report
+retaining all observed times, BOM/explosion/source mappings, geometry summaries
+and source/binary pins, and a README OM10 section preceding the schematic watch.
+NCSX remains the continuing goal. Original CAD, operational native snapshots,
+large raw image/jet/ID buffers and process logs remain private.
+
+Static presentation risks: at mobile feed scale, current 16px callouts,20px times
+and15px credit on2400px posters become too small to read. Full-resolution gallery
+artwork and brief accompanying text should carry actual counts, native median
+versus full-task n1 scopes, and source credit; an actual-pixel detail crop can
+supplement the two full poses. Existing source-linked labels choose at most12
+visible root groups, while all166 parts remain in the BOM, so captions must not
+imply166 individually labeled components. Long source names and leader crossings
+still require the already planned real-image inspection. The old SHARE_ON_X
+draft incorrectly says the GPU evaluator is merely proposed and must be replaced
+before sharing. No actual target execution or product changes for this review.
