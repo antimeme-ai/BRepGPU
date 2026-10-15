@@ -1,5 +1,25 @@
 # BRepGPU research
 
+## Signed analytic offsets and sharp joins
+
+The [design](../docs/OFFSET_DESIGN.md) and [reviewed plan](../docs/OFFSET_PLAN.md)
+follow independent [geometry/history](2026-10-15-offset-semantics-study.md),
+[whole-feature truth](2026-10-15-offset-oracles-study.md) and
+[runtime/reference](2026-10-15-offset-runtime-study.md) studies.
+Bibliographies: [semantics](offset-semantics.bib), [oracles](offset-oracles.bib),
+[runtime](offset-runtime.bib). Original Rossignac/Requicha solid-offset definitions,
+Patrikalakis/Maekawa/Cho normal-offset singularities and actual OCCT/Truck/NVIDIA
+sources distinguish sharp carrier intersections from outward Euclidean dilation.
+The selected signed cylinder family keeps exact rational controls and exposes
+normal feet on original carrier extensions with separate square/trim membership.
+[Optional acquisition gap](offset-semantics-SHOPPING_LIST.md) remains explicit.
+All three design/plan reviews accepted before 28 actual missing-operation fleet
+reds and the real caller red. [Sampler source review](2026-10-15-offset-sampler-root-review.md)
+and [caller/reference review](2026-10-15-offset-caller-runtime-review.md) retain
+actual numerical, ownership and timing-scope contracts. Original OCCT offset
+case parameters and missing runners/adapters are recorded without claiming replay.
+No dependency is adopted; required external alpha qualification remains non-green.
+
 ## Complete source-edge box fillet
 
 The [design](../docs/FILLET_DESIGN.md) and [reviewed plan](../docs/FILLET_PLAN.md)
