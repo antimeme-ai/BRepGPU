@@ -223,3 +223,15 @@ Both scripts' CLI help checks passed on the fleet after syncing those scripts
 only. No benchmark/raster ran, and no qualification-pinned product/helper/native
 file or binary changed. Root diff review and complete nonvisual PASS plus pilot
 acceptance remain required before actual measurement.
+
+The operator additionally requires the genuine NVIDIA USD/BRep CPU baseline.
+Studied the current native display gap and proposed an isolated reference-only
+raw indexed-mesh CPU executable in
+papers/2026-10-15-om10-reference-display-study.md. Explicit BGREFM01 XYZ/normals
+replace carrier input; unchanged projection/setup/coverage/shading math and a
+matching multithread tile schedule supply common owned display. No fake carriers,
+owned/OCCT triangle substitution, product refactor or viewer-as-kernel claim.
+Reference owner confirmed definition-local NVIDIA geometry and actual per-corner
+normal availability; position/normal precision and returned polygon triangulation
+still need the actual API/extraction contract resolved. Wrote design and bounded
+candidate sequence for root review only; no new source, build, test or render.
