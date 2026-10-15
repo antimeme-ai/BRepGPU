@@ -3,9 +3,9 @@ from dataclasses import replace
 import math
 import unittest
 
-from brepgpu.imported_source import (Curve,Carrier,SurfaceSpan,ZERO_FRAME,ImportedSource,
+from brepgpu.imported_source import (Curve,CurveSpan,Carrier,SurfaceSpan,ZERO_FRAME,ImportedSource,
     Product,SolidDefinition,Vertex,Edge,Coedge,Loop,Face)
-from brepgpu.imported_meshing import evaluate_curve,evaluate_carrier,_triangulate,_orient,_surface_error,_positive_midpoint,_recover_global_uv,_uv_rounding_bound,_guard_carrier_refinement,MeshQuality,mesh_imported
+from brepgpu.imported_meshing import evaluate_curve,evaluate_carrier,_triangulate,_orient,_surface_error,_positive_midpoint,_recover_global_uv,_uv_rounding_bound,_guard_carrier_refinement,_cylinder_uv,_curve_derivative_bounds,_cylinder_trim_bound,_curve_interval_span,MeshQuality,mesh_imported
 
 
 def sphere_cap_fixture():
@@ -164,6 +164,45 @@ class ImportedMeshingTests(unittest.TestCase):
             _guard_carrier_refinement(1.,16.,20,2**20)
         with self.assertRaisesRegex(ValueError,'invalid carrier refinement metric'):
             _guard_carrier_refinement(1.,math.inf,20,0)
+
+    def test_original_cylinder_inverse_retains_branch_and_rejects_ambiguity(self):
+        frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+        cylinder=Carrier(1,2,frame,(2.,0.),(0.,4*math.pi,-1.,1.))
+        uv=_cylinder_uv(cylinder,(0.,2.,.25),(5*math.pi/2,.3))
+        self.assertEqual(uv,(5*math.pi/2,.25))
+        skew=replace(cylinder,frame=(0.,0.,0.,2.,0.,0.,1.,1.,0.,.5,0.,-3.))
+        point=evaluate_carrier(skew,.7,.2)[0]
+        actual=_cylinder_uv(skew,point,(.7,.2))
+        self.assertAlmostEqual(actual[0],.7,places=15);self.assertAlmostEqual(actual[1],.2,places=15)
+        with self.assertRaisesRegex(ValueError,'axis ambiguity'):_cylinder_uv(cylinder,(0.,0.,0.),(0.,0.))
+        with self.assertRaisesRegex(ValueError,'branch ambiguity'):_cylinder_uv(cylinder,(2.,0.,0.),(math.pi,0.))
+
+    def test_original_degree_five_derivative_bounds_and_cylinder_trim(self):
+        controls=tuple(v for i in range(6) for v in (float(i==5),0.,0.,1.))
+        curve=Curve(1,3,4,ZERO_FRAME,(0.,0.),(0.,1.),5,controls=controls)
+        self.assertEqual(_curve_derivative_bounds(curve,0.,1.),(5.,20.))
+        self.assertEqual(_curve_derivative_bounds(curve,0.,.5),(5./16,2.5))
+        frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+        cylinder=Carrier(2,2,frame,(2.,0.),(0.,2*math.pi,-1.,1.))
+        circle=Curve(3,3,2,frame,(2.,2.),(0.,2*math.pi))
+        a,b=0.,.01;pa,pb=evaluate_curve(circle,a),evaluate_curve(circle,b)
+        bound=_cylinder_trim_bound(circle,cylinder,a,b,(a,0.),(b,0.),pa,pb,(4.,1.))
+        self.assertGreater(bound,0.)
+        self.assertLess(bound,.001)
+        # A full turn cannot be justified by a single local inverse interval.
+        self.assertEqual(_cylinder_trim_bound(circle,cylinder,0.,2*math.pi,(0.,0.),(2*math.pi,0.),pa,pa,(4.,1.)),math.inf)
+        # Same XYZ on an incompatible source lift cannot pass branch continuity.
+        self.assertEqual(_cylinder_trim_bound(circle,cylinder,a,b,(a,0.),(b+2*math.pi,0.),pa,pb,(4.,1.)),math.inf)
+
+    def test_adjacent_double_interval_selects_containing_original_curve_span(self):
+        left=CurveSpan((0.,1.),1,(0.,0.,0.,1.,1.,0.,0.,1.))
+        right=CurveSpan((1.,2.),1,(1.,0.,0.,1.,2.,1.,0.,1.))
+        curve=Curve(1,3,5,ZERO_FRAME,(0.,0.),(0.,2.),1,spans=(left,right))
+        a,b=1.,math.nextafter(1.,math.inf)
+        self.assertEqual((a+b)/2,a)
+        self.assertIs(_curve_interval_span(curve,a,b),right)
+        with self.assertRaisesRegex(ValueError,'crosses original spans'):
+            _curve_interval_span(curve,.5,1.5)
 
     def test_original_sphere_pole_needs_generated_chart_connector(self):
         mesh=mesh_imported(sphere_cap_fixture(),MeshQuality(tolerance_mm=.05))

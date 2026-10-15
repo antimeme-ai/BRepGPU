@@ -5,7 +5,7 @@ identity are separate, including periodic seams and singular chart quotients.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fractions import Fraction
 import math
 from pathlib import Path
@@ -66,6 +66,7 @@ class BoundaryOccurrence:
     uv: tuple
     pcurve_parameter: float
     pcurve_uv: tuple = ()
+    recovery_kind: str = 'pcurve'
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,7 @@ class FaceMesh:
     boundary_loops: tuple
     triangle_indices: tuple
     chart_closures: tuple = ()
+    joint_recoveries: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,17 @@ class ChartClosure:
     outgoing_coedge_id: int
     uv_start: tuple
     uv_end: tuple
+    kind: str
+
+
+@dataclass(frozen=True)
+class JointRecovery:
+    face_id: int
+    loop_id: int
+    source_vertex_id: int
+    incoming: BoundaryOccurrence
+    outgoing: BoundaryOccurrence
+    uv: tuple
     kind: str
 
 
@@ -228,9 +241,16 @@ def _recover(control):
 def _curve_span(curve,t):
     for span in curve.spans:
         a,b=span.parameter_range
-        if a-1e-12*max(1,abs(a)) <= t <= b+1e-12*max(1,abs(b)):
+        if a <= t <= b:
             return span
     raise ValueError(f'curve {curve.id}: parameter {t} outside source spans')
+
+
+def _curve_interval_span(curve,a,b):
+    lo,hi=sorted((a,b))
+    for span in curve.spans:
+        if span.parameter_range[0]<=lo<hi<=span.parameter_range[1]:return span
+    raise ValueError(f'curve {curve.id}: interval crosses original spans: {a},{b}')
 
 
 def evaluate_curve(curve,t):
@@ -295,6 +315,72 @@ def evaluate_carrier(carrier,u,v):
     raise ValueError('unsupported carrier')
 
 
+def _cylinder_coordinates(carrier,point):
+    if carrier.kind!=2 or carrier.radii[0]<=0:raise ValueError('regular original cylinder required')
+    delta=_sub(point,carrier.frame[:3]);axes=[carrier.frame[i:i+3] for i in (3,6,9)]
+    determinant=_dot(axes[0],_cross(axes[1],axes[2]))
+    if not math.isfinite(determinant) or determinant==0:raise ValueError('singular original analytic frame')
+    covectors=[_scale(_cross(axes[1],axes[2]),1/determinant),
+               _scale(_cross(axes[2],axes[0]),1/determinant),
+               _scale(_cross(axes[0],axes[1]),1/determinant)]
+    return tuple(_dot(delta,covector) for covector in covectors),covectors
+
+
+def _cylinder_uv(carrier,point,seed):
+    local,_=_cylinder_coordinates(carrier,point)
+    if not all(math.isfinite(x) for x in local) or math.hypot(*local[:2])==0:
+        raise ValueError('cylinder inverse axis ambiguity')
+    angle=math.atan2(local[1],local[0]);period=2*math.pi
+    u=angle+math.floor((seed[0]-angle)/period+.5)*period
+    grade=32*math.ulp(max(1.,abs(u),abs(seed[0])))
+    if abs(u-seed[0])>=math.pi-grade:raise ValueError('cylinder inverse branch ambiguity')
+    return u,local[2]
+
+
+def _curve_derivative_bounds(curve,a,b):
+    """Uniform original-t speed and acceleration, no arc parameter remapping."""
+    if curve.dimension!=3:raise ValueError('spatial curve derivative bounds required')
+    if curve.kind==1:return _norm(curve.frame[3:6]),0.
+    if curve.kind in (2,3):
+        bound=math.hypot(curve.radii[0]*_norm(curve.frame[3:6]),curve.radii[1]*_norm(curve.frame[6:9]))
+        return bound,bound
+    lo,hi=min(a,b),max(a,b)
+    if hi<=lo:raise ValueError('positive original curve interval required')
+    if curve.kind==4:
+        controls=_restrict_controls(_control_rows(curve.controls,3),lo,hi)
+        degree=curve.degree
+    else:
+        span=_curve_interval_span(curve,lo,hi);sa,sb=span.parameter_range
+        controls=_restrict_controls(_control_rows(span.controls,3),(lo-sa)/(sb-sa),(hi-sa)/(sb-sa))
+        degree=span.degree
+    w=min(h[3] for h in controls);an=max(_norm(h[:3]) for h in controls)
+    first=[_scale(_sub(y,x),degree/(hi-lo)) for x,y in zip(controls,controls[1:])]
+    second=[_scale(_sub(y,x),(degree-1)/(hi-lo)) for x,y in zip(first,first[1:])]
+    a1=max((_norm(h[:3]) for h in first),default=0.);w1=max((abs(h[3]) for h in first),default=0.)
+    a2=max((_norm(h[:3]) for h in second),default=0.);w2=max((abs(h[3]) for h in second),default=0.)
+    return a1/w+an*w1/w**2,a2/w+(2*a1*w1+an*w2)/w**2+2*an*w1*w1/w**3
+
+
+def _cylinder_trim_bound(curve,carrier,a,b,seed_a,seed_b,xyz_a,xyz_b,metric):
+    speed,acceleration=_curve_derivative_bounds(curve,a,b);dt=abs(b-a)
+    if not math.isfinite(speed+acceleration):return math.inf
+    midpoint=evaluate_curve(curve,(a+b)/2);q,cov=_cylinder_coordinates(carrier,midpoint)
+    xx,yy,xy=_dot(cov[0],cov[0]),_dot(cov[1],cov[1]),_dot(cov[0],cov[1])
+    op=math.sqrt((xx+yy+math.hypot(xx-yy,2*xy))/2)
+    b1,b2=op*speed,op*acceleration;rho=math.hypot(*q[:2])-b1*dt/2
+    if not math.isfinite(rho) or rho<=0:return math.inf
+    variation=b1*dt/rho
+    if variation>=math.pi:return math.inf
+    ca,cb=evaluate_curve(curve,a),evaluate_curve(curve,b)
+    ua,ub=_cylinder_uv(carrier,ca,seed_a),_cylinder_uv(carrier,cb,seed_b)
+    grade=64*math.ulp(max(1.,abs(ua[0]),abs(ub[0])))
+    if abs(ub[0]-ua[0])>variation+grade:return math.inf
+    va,vb=_cylinder_uv(carrier,xyz_a,seed_a),_cylinder_uv(carrier,xyz_b,seed_b)
+    endpoint=max(sum(metric[i]*abs(x[i]-y[i]) for i in range(2)) for x,y in ((ua,va),(ub,vb)))
+    u2=b2/rho+2*b1*b1/rho**2;v2=_norm(cov[2])*acceleration
+    return (metric[0]*u2+metric[1]*v2)*dt*dt/8+endpoint
+
+
 def _recover_global_uv(carrier,uv):
     """Bounded recovery of foreign UV only at original spline global ends."""
     if carrier.kind!=6:return tuple(uv)
@@ -356,7 +442,7 @@ def _curve_chord_bound(curve,a,b):
     if curve.kind==4:
         controls=_restrict_controls(_control_rows(curve.controls,curve.dimension),min(a,b),max(a,b))
     else:
-        span=_curve_span(curve,(a+b)/2);lo,hi=span.parameter_range
+        span=_curve_interval_span(curve,a,b);lo,hi=span.parameter_range
         if min(a,b)<lo-1e-12 or max(a,b)>hi+1e-12:
             return math.inf
         controls=_restrict_controls(_control_rows(span.controls,curve.dimension),
@@ -525,6 +611,9 @@ def _curve_knots_in_edge(source,edge,incidents):
         c=source.curve(edge.curve_id)
         result.update(t for t in c.knots if lo<t<hi)
     for coedge,carrier in incidents:
+        # Owned cylinder UV depends on the ORIGINAL spatial curve. Foreign
+        # branch-guide knot artifacts do not constrain that derived trim.
+        if carrier.kind==2:continue
         pc=source.curve(coedge.curve_id)
         if coedge.parameter_map_kind==1:result.update(t for t in pc.knots if lo<t<hi)
         elif coedge.parameter_map_kind==2:
@@ -548,9 +637,11 @@ def mesh_imported(source,quality=None,*,progress=None):
     carrier_slots={c.id:i for i,c in enumerate(source.carriers)}
     metric_cache={};derivative_cache={};next_key=1
     errors={'max_edge_chord_bound_mm':0.0,'max_source_endpoint_residual_mm':0.0,
-            'max_raw_pcurve_to_edge_residual_mm':0.0,'max_source_joint_gap_mm':0.0,
+            'max_foreign_pcurve_to_edge_residual_mm':0.0,'max_source_joint_gap_mm':0.0,
             'max_surface_interpolation_bound_mm':0.0,'max_native_uv_rounding_bound_mm':0.0,
-            'foreign_uv_recovery_count':0,'max_foreign_uv_recovery_shift_mm':0.0}
+            'foreign_uv_recovery_count':0,'max_foreign_uv_recovery_shift_mm':0.0,
+            'cylinder_inverse_sample_count':0,'joint_recovery_count':0,
+            'max_cylinder_inverse_correction_mm':0.0,'max_corrected_surface_to_edge_residual_mm':0.0}
     def make_vertex(definition,xyz,kind,identifier,t=0.0,uv=(0.0,0.0)):
         nonlocal next_key
         if any(not math.isfinite(x) for x in xyz):raise ValueError('nonfinite imported mesh vertex')
@@ -578,14 +669,25 @@ def mesh_imported(source,quality=None,*,progress=None):
         start,end=edge.parameter_range
         if start==end and not edge.degenerate:raise ValueError(f'edge {edge.id}: zero parameter extent')
         values=_curve_knots_in_edge(source,edge,uses)
+        def position(t):
+            if t==start:return source.vertex(edge.vertex_ids[0]).xyz
+            if t==end:return source.vertex(edge.vertex_ids[1]).xyz
+            return evaluate_curve(curve,t)
         def bound(a,b):
             result=0.0 if edge.degenerate else _curve_chord_bound(curve,a,b)
             for coedge,carrier in uses:
                 sa=_mapped_parameter(source,edge,coedge,a,carrier,quality)
                 sb=_mapped_parameter(source,edge,coedge,b,carrier,quality)
-                uv_error=_curve_chord_bound(source.curve(coedge.curve_id),sa,sb)
                 mu,mv=metric_cache[carrier.id]
-                result=max(result,uv_error*math.hypot(mu,mv))
+                if carrier.kind==2:
+                    if curve is None:raise ValueError('cylinder inverse requires original spatial curve')
+                    pc=source.curve(coedge.curve_id)
+                    seeds=[evaluate_curve(pc,t) for t in (sa,sb)]
+                    seeds=[(uv[0]+coedge.periodic_shift[0]*2*math.pi,uv[1]) for uv in seeds]
+                    result=max(result,_cylinder_trim_bound(curve,carrier,a,b,*seeds,position(a),position(b),(mu,mv)))
+                else:
+                    uv_error=_curve_chord_bound(source.curve(coedge.curve_id),sa,sb)
+                    result=max(result,uv_error*math.hypot(mu,mv))
             return result
         samples=[values[0]]
         def refine(a,b,depth):
@@ -596,7 +698,7 @@ def mesh_imported(source,quality=None,*,progress=None):
             if depth>=quality.max_refinement or len(samples)>=quality.max_edge_samples:
                 raise ValueError(f'edge {edge.id}: chord refinement exhausted')
             mid=(a+b)/2
-            if mid in (a,b):raise ValueError('edge parameter subdivision exhausted binary64')
+            if mid in (a,b):raise ValueError(f'edge {edge.id}: parameter subdivision exhausted binary64; interval={(a,b)!r} bound={accepted_bound!r} source_curve={(curve.id,curve.kind) if curve else None!r} uses={tuple((co.id,ca.id,ca.kind) for co,ca in uses)!r}')
             refine(a,mid,depth+1);refine(mid,b,depth+1)
         for a,b in zip(values,values[1:]):refine(a,b,0)
         if len(samples)>quality.max_edge_samples:raise ValueError('source edge exceeds sample budget')
@@ -618,7 +720,7 @@ def mesh_imported(source,quality=None,*,progress=None):
     sampled=time.perf_counter()
     for face_index,face in enumerate(source.faces):
         carrier=source.carrier(face.carrier_id);slot=carrier_slots[carrier.id]
-        boundaries=[];chart_closures=[]
+        boundaries=[];chart_closures=[];joint_recoveries=[]
         for li in face.loop_ids:
             loop=source.loop(li);occurrences=[];coedge_points=[]
             for ci in loop.coedge_ids:
@@ -637,17 +739,43 @@ def mesh_imported(source,quality=None,*,progress=None):
                         shift=mu*abs(recovered[0]-uv[0])+mv*abs(recovered[1]-uv[1])
                         errors['foreign_uv_recovery_count']+=1
                         errors['max_foreign_uv_recovery_shift_mm']=max(errors['max_foreign_uv_recovery_shift_mm'],shift)
+                    raw_point=evaluate_carrier(carrier,*recovered)[0]
+                    raw_residual=_distance(raw_point,record.positions[index])
+                    errors['max_foreign_pcurve_to_edge_residual_mm']=max(errors['max_foreign_pcurve_to_edge_residual_mm'],raw_residual)
+                    recovery_kind='pcurve'
+                    if carrier.kind==2:
+                        recovered=_cylinder_uv(carrier,record.positions[index],recovered)
+                        recovery_kind='cylinder_source_inverse'
+                        errors['cylinder_inverse_sample_count']+=1
+                        correction=_distance(raw_point,evaluate_carrier(carrier,*recovered)[0])
+                        errors['max_cylinder_inverse_correction_mm']=max(errors['max_cylinder_inverse_correction_mm'],correction)
                     uv=recovered
                     residual=_distance(evaluate_carrier(carrier,*uv)[0],record.positions[index])
-                    errors['max_raw_pcurve_to_edge_residual_mm']=max(errors['max_raw_pcurve_to_edge_residual_mm'],residual)
+                    errors['max_corrected_surface_to_edge_residual_mm']=max(errors['max_corrected_surface_to_edge_residual_mm'],residual)
                     if residual>quality.source_residual_mm:
-                        raise ValueError(f'face {face.id} coedge {ci}: source recovery residual {residual:.17g} exceeds {quality.source_residual_mm}; t={t!r} s={s!r} rawUV={raw_uv!r} UV={uv!r} xyz={record.positions[index]!r} carrier={(carrier.id,carrier.kind,carrier.radii)!r}')
-                    segment.append(BoundaryOccurrence(ci,edge.id,record.vertex_keys[index],t,uv,s,raw_uv))
+                        raise ValueError(f'face {face.id} coedge {ci}: corrected source recovery residual {residual:.17g} exceeds {quality.source_residual_mm}; t={t!r} s={s!r} rawUV={raw_uv!r} UV={uv!r} xyz={record.positions[index]!r} carrier={(carrier.id,carrier.kind,carrier.radii)!r}')
+                    segment.append(BoundaryOccurrence(ci,edge.id,record.vertex_keys[index],t,uv,s,raw_uv,recovery_kind))
                 coedge_points.append(segment)
             for j,segment in enumerate(coedge_points):
                 following=coedge_points[(j+1)%len(coedge_points)];end=segment[-1];start=following[0]
                 if end.sample_key!=start.sample_key:raise ValueError(f'face {face.id}: disconnected original loop vertex')
-                occurrences.extend(segment[:-1])
+                if carrier.kind==2:
+                    def foreign(o):
+                        use=source.coedge(o.coedge_id)
+                        return replace(o,uv=(o.pcurve_uv[0]+use.periodic_shift[0]*2*math.pi,o.pcurve_uv[1]),recovery_kind='pcurve')
+                    incoming,outgoing=foreign(end),foreign(start)
+                    uv_scale=max(1.,*(abs(x) for x in carrier.uv_bounds))
+                    if _distance(incoming.uv,outgoing.uv)>2**-32*uv_scale:
+                        vertex=vertex_by_key[end.sample_key]
+                        if vertex.source_kind!=1:raise ValueError('cylinder joint lacks original vertex')
+                        if abs(incoming.uv[0]-outgoing.uv[0])>=math.pi:raise ValueError('cylinder joint changes chart branch')
+                        canonical=_cylinder_uv(carrier,vertex.xyz,outgoing.uv)
+                        if _distance(evaluate_carrier(carrier,*canonical)[0],vertex.xyz)>quality.source_residual_mm:
+                            raise ValueError('cylinder canonical joint exceeds source residual')
+                        segment[-1]=replace(end,uv=canonical);following[0]=replace(start,uv=canonical)
+                        joint_recoveries.append(JointRecovery(face.id,li,vertex.source_id,incoming,outgoing,canonical,'cylinder_vertex_inverse'))
+                        errors['joint_recovery_count']+=1
+                        end,start=segment[-1],following[0]
                 if end.uv!=start.uv:
                     gap=_distance(evaluate_carrier(carrier,*end.uv)[0],evaluate_carrier(carrier,*start.uv)[0])
                     errors['max_source_joint_gap_mm']=max(errors['max_source_joint_gap_mm'],gap)
@@ -666,7 +794,6 @@ def mesh_imported(source,quality=None,*,progress=None):
                             expected=_add(carrier.frame[:3],_scale(carrier.frame[9:12],apex*math.cos(carrier.radii[1])))
                             if _distance(expected,vertex.xyz)<=2**-32:singular='cone_apex'
                     if singular:
-                        occurrences.append(end)
                         chart_closures.append(ChartClosure(face.id,li,vertex.source_id,end.coedge_id,start.coedge_id,end.uv,start.uv,singular))
                     else:
                         uv_scale=max(1.,*(abs(x) for x in carrier.uv_bounds))
@@ -676,6 +803,10 @@ def mesh_imported(source,quality=None,*,progress=None):
                         # identity. Its tiny foreign pcurve endpoint discrepancy
                         # is retained by each point's raw pcurve_uv; the chosen
                         # polygon corner is the outgoing original start value.
+            closure_incoming={c.incoming_coedge_id for c in chart_closures if c.loop_id==li}
+            for segment in coedge_points:
+                occurrences.extend(segment[:-1])
+                if segment[-1].coedge_id in closure_incoming:occurrences.append(segment[-1])
             if len(occurrences)<3:raise ValueError(f'face {face.id}: fewer than three UV boundary occurrences')
             # Normalize source loop traversal to the positive polygonal domain.
             # This changes traversal only, never physical/source identity.
@@ -791,12 +922,12 @@ def mesh_imported(source,quality=None,*,progress=None):
             xyz=tuple(vertex_by_key[k].xyz for k in physical)
             if not collapsed:
                 area=_cross(_sub(xyz[1],xyz[0]),_sub(xyz[2],xyz[0]))
-                if _norm(area)==0:raise ValueError(f'face {face.id}: zero physical triangle area')
+                if _norm(area)==0:raise ValueError(f'face {face.id}: zero physical triangle area; UV={uvs!r} XYZ={xyz!r} generators={tuple((vertex_by_key[k].source_kind,vertex_by_key[k].source_id,vertex_by_key[k].source_parameter) for k in physical)!r}')
             # UV cells/physical key order follow positive carrier orientation;
             # outward physical orientation additionally applies the face sign.
             indices.append(len(triangles))
             triangles.append(MeshTriangle(face.id,physical,tuple(MeshCorner(uv,slot,face.orientation) for uv in uvs),collapsed))
-        face_meshes.append(FaceMesh(face.id,tuple(boundary_loops),tuple(indices),tuple(chart_closures)))
+        face_meshes.append(FaceMesh(face.id,tuple(boundary_loops),tuple(indices),tuple(chart_closures),tuple(joint_recoveries)))
         if progress is not None and (face_index+1)%100==0:progress('faces',face_index+1,len(source.faces),face.id)
     if (2*errors['max_edge_chord_bound_mm']+errors['max_surface_interpolation_bound_mm']
             +errors['max_native_uv_rounding_bound_mm']>quality.tolerance_mm):

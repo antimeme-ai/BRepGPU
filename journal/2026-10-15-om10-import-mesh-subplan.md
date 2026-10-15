@@ -159,3 +159,38 @@ Default20 therefore admits20 metric halvings and1,048,576 interior constructions
 no approximation tolerance, source face, or quality allocation is relaxed.
 Budget failure rejects the complete mesh. Direct metric-floor and work-cap
 faults plus original165361 are the immediate tests before the complete rerun.
+
+Cylinder-boundary amendment accepted by root and independent oracle: original
+source C(t)/vertex-driven analytic inverse, explicit branch/provenance and
+JointRecovery records, original-t control/analytic derivative bounds for owned
+UV chords, positive radial interval proof and endpoint-incidence perturbation.
+First implement direct inverse/axis/branch/degree-five derivative bound fixtures;
+then original165500/165590, then retained whole-source/native qualification.
+Raw foreign UV may exceed0.001mm; corrected original source residual may not.
+
+Cylinder recovery direct16 methods pass; original165500 now7834 UV cells with
+two original-vertex joint recoveries and corrected residual3.44e-14mm; original
+165590 now330 cells with raw foreign residual0.00661018mm and corrected source
+residual0.0001409593mm. Root found the analytic frame projection assumed
+orthogonality beyond reader admission; use the actual cross-product dual basis
+instead, retaining original axes and indirect frames. The diagnostic all-face
+scan now accepts a rotation index: it still visits every face exactly once but
+can prioritize the unexplored tail before repeating expensive early source
+faces under new owned recovery. This changes no deliverable source coverage.
+
+A later cylinder diagnostic exposed a retained foreign-knot constraint: source
+spatial curve2436 has ordinary C1 knots, but the foreign pcurve has slightly
+offset knot values. After owned cylinder inversion these foreign guide knots
+are not product trim geometry. Exclude them from that cylinder occurrence's
+mandatory edge cuts, retaining every original spatial knot and every knot still
+needed by another incident raw-pcurve carrier. No original source topology or
+curve representation is omitted.
+
+Cylinder checkpoint:17 focused methods pass in0.990s, including actual dual
+frame inversion and adjacent-double source interval ownership. Original166811
+now meshes to14218 positive UV cells in2.914s after excluding foreign-only guide
+knots; corrected source residual3.5747e-5mm. No physical collapse exemption was
+introduced. Replaced old four-worker diagnostic scan with eight workers on the
+current code, visiting source indices3000..end then0..2999, every face once.
+Complete-source and native qualification remain pending, with known plane/cone
+recovery work under study. No target rendering has occurred.

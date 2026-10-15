@@ -152,3 +152,23 @@ bound. Exact UV chain coverage and physical nonzero-area/incidence obligations
 continue unchanged. Recovered foreign pcurve overhang may be corrected only at
 original carrier global endpoints with an explicit numeric grade and world
 residual, preserving raw recovered UV; original interior knots are never snapped.
+
+## Original cylindrical trim recovery
+
+The actual foreign UV line on face165590 misses original C(t) by up to a
+measured .00661mm, although original C(t) is within a measured .000141mm of the
+original cylinder. Scalar reparameterization cannot repair the foreign line.
+The reviewed owned recovery therefore inverts original cylinder coordinates
+from original spatial C(t) samples (and original vertices at joint endpoints),
+retaining raw foreign UV/parameters with explicit recovery_kind.
+
+Independent checks evaluate raw pcurves, then separately derive original-axis
+atan2/height from retained original physical generators, preserve the nearest
+same period branch, and require corrected world residual within unchanged
+source_residual_mm. Only cylinder_source_inverse bypasses the former numeric
+UV-close grade. Explicit JointRecovery metadata must retain both original
+incident endpoint occurrences in original loop order, their physical identity
+and parameters, original endpoint incidence, and canonical original-vertex UV.
+Non-small raw joints require that metadata. All exact domain, physical solid
+and native input/jet/placement checks continue unchanged. Foreign residuals
+remain diagnostics; they are not confused with corrected source residuals.
