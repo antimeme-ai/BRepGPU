@@ -30,7 +30,8 @@ and holed plate are now delivered too, with exact source construction and bounde
 rounded output. The [carrier interchange beachhead](docs/INTERCHANGE.md) now reads
 actual foreign ASCII USD BRep surfaces into owned CPU/P100 patches with original
 face/chart identities and explicit unsupported outcomes. Trims remain uninterpreted.
-Solid operations/history and features remain.
+An owned [through-bore Boolean with complete source history](docs/BOOLEANS.md)
+is now delivered. Feature construction is the remaining broad-pass theme.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -87,12 +88,31 @@ BRepGPU evaluator.
 [GPU adjacency and mate reader](docs/ADJACENCY.md) ·
 [Exact material and face contact](docs/CLASSIFICATION.md) ·
 [Exact planar arrangements](docs/ARRANGEMENTS.md) ·
+[Owned through-bore Boolean and history](docs/BOOLEANS.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Owned solid operations: a through-bore cut with history
+
+A box minus a strictly through-cylinder now becomes an owned closed solid from
+actual intersections, cap arrangements and material decisions. The result keeps
+its original surface carriers, two annular caps and an inward-facing cutter
+wall. Typed history covers **all 85 input entities and all 81 output origins**,
+including cropped seam ranges and jointly generated rims.
+
+![Actual owned Boolean boundaries and P100-evaluated surface samples](results/boolean-2026-10-15/costs/unit-cuda-device0-threads1-r1/through-bore.svg)
+
+CPU constructs the Boolean; CPU/P100 sampling and adjacency consume the result.
+Independent checks cover whole rational boundary maps, oriented manifold topology,
+exact material queries and complete six-kind history. The same-sized NVIDIA
+reference cut also agrees on volume, bounds and boundary witnesses.
+[API and supported family](docs/BOOLEANS.md) ·
+[Qualification and complete operation costs](results/boolean-2026-10-15/REPORT.md).
+Features are next; GPU Boolean construction and broader contact cases remain.
 
 ## Planar arrangements: exact regions, holes and shared boundaries
 
@@ -108,7 +128,7 @@ Median construction takes **471ms**; construction plus every graph/curve/region
 reader takes **2.40s**. Independent checking is a separate **10.57s** cost.
 Qualification passed **72 tests** with one existing GPU-only skip and **eight
 assertion-killed mutants**. Full exact graphs and source maps are exported for
-all five recipes. GPU construction, general circle overlay and Boolean assembly
+all five recipes. GPU construction, general circle overlay and broader Boolean assembly
 remain separate work.
 [API](docs/ARRANGEMENTS.md) · [Full results and scope](results/arrangements-2026-10-14/REPORT.md)
 
@@ -208,7 +228,7 @@ PYTHONPATH=python python3 examples/intersect_faces.py --recipe clipped \
 [Exact qualification and matched CPU/P100 costs](results/intersections-2026-10-14/REPORT.md) ·
 [Research and bibliography](papers/README.md#analytic-intersection-beachhead) ·
 [Journal](journal/) · [Return-pass research notes](papers/2026-10-14-intersection-round2-notes.md).
-General SSI, imported/tilted intersection inputs and Boolean assembly remain
+General SSI, imported/tilted intersection inputs and broader Boolean assembly remain
 future; the exact planar arrangement beachhead is a separate delivered operation.
 
 ## Resident surface-pair shortlist
