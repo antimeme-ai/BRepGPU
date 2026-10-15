@@ -224,6 +224,35 @@ final in-domain finite C(t)/S(queryUV) checks, with no extrapolation theorem.
 Raw and corrected finite correspondence maxima are reported separately. The
 owned raw-source mesher's geometry/approximation contracts remain unchanged.
 
+A generic query **coefficient** correction can affect any control of the admitted
+nonperiodic nonrational pcurve, not only its first/last control. "Global ends"
+refers to original carrier u0/u1/v0/v1. It never means an interior source-carrier
+knot. For each out-of-domain control coordinate, require its excursion≤
+128*ulp(max(1,abs(globalLower),abs(globalUpper))), then set that coordinate to
+the corresponding original global boundary. Leave every in-domain coordinate
+unchanged. Preserve pcurve degree, knots, multiplicities, weights and active
+t interval; source raw pcurves stay untouched. A line may first receive its
+stated unchanged-t linear B-spline representation. Reject periodic/rational
+editing and every beyond-grade generic excursion.
+
+Positive basis partition of unity gives uniform coordinate change at most the
+largest admitted control change; the final control hull lies in the original
+rectangle. Accumulate its natural-domain metric charge with prior edits and
+apply final in-domain finite C/S checks. Coefficient correction is not identical
+to pointwise `_recover_global_uv` (clamp and spline evaluation do not commute);
+it uses the same original global boundary and admission grade for a separate
+query representation. It adds no extrapolation theorem. Existing owned point
+recovery permits this grade at any original coedge t, so the earlier restriction
+to first/last pcurve controls was an overly strict interpretation, now retired.
+
+Actual169982/use138090 has25 projected controls: interior index2 V=
+.035000000000000017 and index9 V=.035000000000000052 versus originalVmax=
+.035000000000000003. The4.86e-17 excursion is below the unchanged2.84e-14
+128ULP unit-scale grade. An authored unit tensor plane with original bottom
+LINE and quadratic2D middle control8ULP below naturalV0 exercises this operation;
+the same512ULP construction must fail. No new source curve/inverse family is
+needed for this numerical coefficient case.
+
 After these explicit query corrections, require the finite nonperiodic query
 representation inside its original natural domain. The generic128ULP global
 endpoint correction is still the only untyped numerical admission. Never clamp

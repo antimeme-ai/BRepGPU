@@ -66,6 +66,29 @@ class SourceUVTests(unittest.TestCase):
                 outputs.append(output.read_bytes())
             self.assertEqual(*outputs,'wall timing leaked into deterministic source bytes')
 
+    def test_global_domain_control_recovery_is_bounded_and_preserves_raw(self):
+        executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
+            ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
+        with tempfile.TemporaryDirectory() as directory:
+            run=subprocess.run((str(executable),'global-domain-controls',str(Path(directory)/'query.brep')),
+                capture_output=True,text=True)
+            self.assertEqual(run.returncode,0,run.stderr)
+            rows=[row.split('\t') for row in run.stdout.splitlines()]
+            self.assertEqual([tuple(map(float,row[1:])) for row in rows if row[0]=='query_pc_basis'],[(2.,3.,0.,1.)])
+            self.assertEqual([tuple(map(float,row[1:])) for row in rows if row[0]=='query_control'],
+                [(1.,0.,0.,1.),(2.,.5,0.,1.),(3.,1.,0.,1.)])
+            self.assertEqual([float(row[1]) for row in rows if row[0]=='raw_middle_v'],[-8*math.ulp(1.)])
+            for row in rows:
+                if row[0]!='boundary' or row[1]!='10':continue
+                t=float(row[2]);xyz=tuple(map(float,row[3:6]));uv=tuple(map(float,row[6:8]))
+                self.assertLessEqual(math.dist(xyz,(t,0.,0.)),2**-32)
+                self.assertLessEqual(math.dist(uv,(t,0.)),2**-32)
+                self.assertLessEqual(math.dist(tuple(map(float,row[8:11])),xyz),2**-32)
+            bad=subprocess.run((str(executable),'global-domain-controls-too-far',str(Path(directory)/'bad.brep')),
+                capture_output=True,text=True)
+            self.assertNotEqual(bad.returncode,0)
+            self.assertIn('natural-domain',bad.stderr)
+
     def test_reversed_cylinder_preserves_all_native_seam_uses(self):
         executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
             ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
