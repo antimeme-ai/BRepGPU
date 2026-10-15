@@ -45,7 +45,13 @@ membership for box/cylinder/plate with every supporting face, plus complete
 closed rectangular-face contacts and world/bothUV maps. See
 docs/CLASSIFICATION.md and results/classification-2026-10-14/REPORT.md.
 Curved-trim contact, algebraic witness input and GPU classification remain
-separate units. Continue uncovered arrangements, meshing and interchange.
+separate units. The exact CPU planar arrangement beachhead is also delivered:
+rectangular grids and separated interior circle sections, complete regions,
+holes/twins/exterior, directed original boundary ranges, retained whole source
+maps, exact areas/witnesses and closed-region lookup. See docs/ARRANGEMENTS.md
+and results/arrangements-2026-10-14/REPORT.md. It does not assemble a Boolean or
+perform GPU construction. Continue uncovered trim-aware meshing and interchange
+plus solid/feature themes; general clipped/tangent arrangements are later work.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;

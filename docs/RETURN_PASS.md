@@ -21,7 +21,8 @@ See the [investigation brief](../papers/2026-10-14-python-role-return-pass.md).
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
 Complete analytic intersection and spatial/bothUV representation, plus the
 GPU edge-use adjacency/mate-reader beachhead, are delivered.
-Finish classification, planar arrangements, trim-aware meshing, narrow model
+Classification and bounded planar arrangements are now delivered. Finish
+trim-aware meshing, narrow model
 interchange and the other uncovered themes before this return pass.
 
 ## GPU lifetime and reusable inputs
@@ -107,6 +108,14 @@ shutdown and recovery outcomes rather than hiding costs at process exit.
   checking is a separate900–1,723ms cost. These are exact construction workloads,
   not GPU/Boolean speedups. Broader algebraic witnesses and curved contacts are
   [separately scoped](../papers/2026-10-14-classification-round2-notes.md).
+* [Planar arrangement results](../results/arrangements-2026-10-14/REPORT.md)
+  establish exact CPU regions/holes/shared uses. The32×32/64-circle case builds
+  in471ms and takes2.40s with actual graph/source-curve/location readers; exact
+  geometry reading alone is1.87s. Source preparation is922ms and independent
+  checking10.57s, both separate. Record bulk native consumers and certified
+  placement for the later language/integration decision; no GPU construction
+  or Boolean speedup is established. [Broader geometry notes](../papers/2026-10-14-arrangement-round2-notes.md)
+  retain clipped/tangent/cross-face work without starting a refinement lane.
 * The existing off-grid separated-bound proposal remains a numerical return
   experiment; it does not displace an uncovered theme without a blocking need.
 

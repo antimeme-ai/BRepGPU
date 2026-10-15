@@ -1,0 +1,7 @@
+section	side	body_id	revision	face_id	shape	origin_x	origin_y	origin_z	scale
+0	left	4	1	1	box	0/1	0/1	-2/1	4/1
+0	right	5	1	3	cylinder	-2/1	-3/2	0/1	1/1
+1	left	4	1	1	box	0/1	0/1	-2/1	4/1
+1	right	6	1	3	cylinder	-1/1	-3/2	0/1	1/1
+2	left	4	1	1	box	0/1	0/1	-2/1	4/1
+2	right	7	1	3	cylinder	3/2	3/2	0/1	1/1

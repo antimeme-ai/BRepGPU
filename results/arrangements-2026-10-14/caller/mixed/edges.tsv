@@ -1,0 +1,16 @@
+id	kind	start	end	source_kind	source_a	source_b	source_t0	source_t1	pieces	events
+0	line	0	1	boundary	1	5	0/1	1/2		
+1	line	1	2	boundary	1	5	1/2	1/1		
+2	line	3	4	v_cut	0					
+3	line	4	5	v_cut	0					
+4	line	6	7	boundary	3	7	1/1	1/2		
+5	line	7	8	boundary	3	7	1/2	0/1		
+6	line	0	3	boundary	4	8	1/1	1/2		
+7	line	1	4	u_cut	0					
+8	line	2	5	boundary	2	6	0/1	1/2		
+9	line	3	6	boundary	4	8	1/2	0/1		
+10	line	4	7	u_cut	0					
+11	line	5	8	boundary	2	6	1/2	1/1		
+12	circle	9	9	section	0	0			0,1,2,3	0,1,2,3
+13	circle	10	10	section	1	0			0,1,2,3	0,1,2,3
+14	circle	11	11	section	2	0			0,1,2,3	0,1,2,3
