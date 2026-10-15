@@ -295,3 +295,26 @@ Existing five complete-domain/physical/native methods pass0.564s with requested-
 tolerance-plus-numeric-grade probes. Actual165590 is53cells with maximum joint
 bound.00025255mm; four natural-boundary cases remain green. Oracle synced/stable
 for the parent's fresh complete retained run; no further edits planned.
+
+The continuing source inventory found plane167654/167656 sampled-boundary
+crossings before actual watch rendering. Parent stopped the pinned run. Read
+the original source circles and independently reproduced the physical samples,
+exact saved-chord crossing, nominal internal tangency and tiny encoded-circle
+overlap. Recorded the distinction in
+papers/2026-10-15-om10-tangent-boundary-study.md. The failure is incompatible
+chord grids at a narrow cusp, not foreign plane UV. Reported that blind common
+halving can preserve the pattern and that coordinated samples must satisfy all
+incident face bounds globally. Product files remain unchanged pending the
+owner's reviewed design/plan; no broad test campaign started.
+
+Reviewed coordinated global circular-joint collar design/subplan ACCEPT after
+clarifying admission. Root selected a cheap nominal internal-near-tangency
+guard using original endpoint correspondence, retained translated tolerances,
+unequal positive radii and regular parallel frames. This is a bounded
+approximation diagnostic, not a source-validity or isotopy claim. Existing
+exact final-loop simplicity/all-incident interval bounds decide admission;
+prospective sample cardinality must reject before allocating an oversized grid.
+Owner owns genuine observed source reds, authored unequal-radius source case,
+substantial-crossing/mandatory-cut rejection and production. Existing independent
+source/UV/physical oracles need no new recovery kind for different original-t
+samples.

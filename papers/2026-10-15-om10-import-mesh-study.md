@@ -878,3 +878,127 @@ and add `max_boundary_vertex_displacement_mm` and
 `max_surface_plus_canonical_bound_mm`. Source tolerance and all quality limits
 stay unchanged. This completes the already requested physical geometry bound,
 with no new coverage/qualification mechanism.
+
+### Source-tolerant circular joints and a shared sampling schedule
+
+The continuing old-code face scan found a new failure reason while complete
+qualification V2 was pinned: sampled UV boundaries intersect on original plane
+faces167654/167656. Root authorized unchanged-current read-only checks; both
+still fail. Root stopped V2 before implementation. The first face's crossing
+chords belong to consecutive original coedges124455/124456, edges91130/91105,
+spatial circles8034/8019, at original vertex71450. Their radii are1.2/1.275mm.
+The saved center distance is0.07500000000000011mm versus radius difference
+0.07499999999999996mm. Independent nominal circle equations from the saved
+centers/radii give tiny intersections about8.03e-8mm from the nominal joint.
+Saved frame Gram deviation is of comparable coefficient order, so these are not
+exact roots of the complete original saved parametric carriers.
+We therefore make no exact-real disjoint-circle/isotopy claim. Original declared
+vertex incidence remains the topological instruction, and selected source and
+mesh error budgets remain unchanged.
+
+The actual polygon crossing is about0.04mm from that vertex, with radial
+deficits4.16e-5/8.33e-5mm. Independently chosen near-joint source circle steps
+are0.03204315424 and0.02454369261 radians. The resulting chord grids interleave
+across a narrow tangent cusp. Exact source-owned plane inverse correctly exposes
+the crossing; loosening its predicate or deleting a source edge is inappropriate.
+Blind simultaneous dyadic refinement can reproduce the chord pattern at every
+scale. The mirrored face has the same source construction. Existing primary
+Triangle refinement discussions already distinguish geometric constraints from
+quality triangulation; no triangulator or dependency is selected here.
+
+Use a bounded candidate schedule before triangulating any face. The supported
+trigger is an exact sampled-boundary intersection on an original plane, whose
+two implicated original coedges are immediately adjacent at one declared original
+vertex and whose original spatial carriers are circles. All other intersections
+continue to fail with original face/coedge IDs. Derive endpoint parameter and
+direction from original directed coedge incidence, never nearest XYZ. The active
+source circles must have finite positive radii and finite nonzero intervals.
+Restrict admission to nominal INTERNAL near tangency: unequal radii, nonzero
+finite center distance d, regular near-orthonormal/parallel saved circle frames,
+and abs(d-abs(R1-R2))<=J. Here J=min(selected source_residual_mm,
+max(retained translated vertex tolerance, both translated edge tolerances)).
+Both original curve endpoint evaluations must agree with the declared original
+vertex within J. J is a TRANSLATED joint envelope, not an explicit original STEP
+per-vertex tolerance and not a new mesh/source quality allowance. This cheap
+nominal guard selects the approximation strategy; it does not prove exact source
+tangency, exact source validity/isotopy, or the location of every analytic
+intersection. No new intersection-neighborhood certifier is selected.
+All envelope inputs and J must be finite and nonnegative; zero permits only
+exact diagnostic equalities. Reject negative/nonfinite metadata. For this narrow
+nominal diagnostic require every saved circle/plane frame Gram diagonal within
+128*ulp(1.0) of1 and off-diagonals within that grade of0. Squared/cross-normal
+parallelism of both circle normals and the original plane normal uses the same
+named nominal-frame grade; axes are never normalized into replacement source
+geometry. These checks select near-unit regular frames and do not relax any
+source evaluator or selected world-space quality limit.
+
+Let h0 be the smaller of the two first nominal endpoint distances R*abs(delta_t)
+in the initial globally admitted schedules. Use ONE shared collar width
+min(8*h0, one quarter of each edge's full nominal active extent). For candidate
+k, use h=ldexp(h0,-k), original t=t_joint+direction*j*h/R for positive integers
+j strictly inside that edge's collar. These are common NOMINAL circular-distance
+samples: saved frame coefficients are not exact orthonormal real axes, so this
+is not an exact arclength assertion. Retain original endpoints, every original
+spatial knot, and every other mandatory carrier/guide cut. Only optional previous
+samples strictly inside the collar are replaced. Keep all existing samples
+outside it. Transition intervals are checked like every other interval.
+
+The candidate is admitted only when every interval passes the existing spatial
+curve and ALL ORIGINAL INCIDENT COEDGE trim-chord bounds against tolerance/8,
+including endpoint perturbation and each original carrier's source recovery.
+Reject a failed candidate and halve h; do not independently refine its circular
+collar and silently destroy the coupled schedule. Every candidate must stay in
+the full original parameter interval, have distinct ordered binary64 parameters,
+preserve mandatory cuts, and respect max_edge_samples. At most max_refinement
+candidates are tried. Check prospective grid cardinality against max_edge_samples
+BEFORE enumerating the integer j loop, so finer rejected attempts cannot allocate
+millions of optional samples. No tolerance, source-residual limit, or work cap
+increases.
+
+Sampling is a complete global phase: initial parameter schedules and bound
+contexts are collected first, planar source-owned loops are checked, and any
+admitted replacement is written to the SHARED edge parameter schedules. Final
+canonical edge vertices/keys are created only after schedules are stable. No
+face can retain a stale triangulation or an obsolete boundary sample. Recheck
+ALL affected original planar loops after a candidate. Distinct endpoint collars
+may coexist only when their open parameter intervals are disjoint; conflicting
+collars reject explicitly. Existing finalized collars are protected from later
+optional-cut replacement. Bound global accepted adjustments by the finite count
+of original planar circle joints, and retain a per-joint candidate limit. Any
+remaining or newly exposed unsupported intersection fails the whole operation.
+
+Reuse one existing exact segment/domain-simplicity mechanism. Cheap original
+circle-joint admission identifies candidate planes before any optional boundary
+scan; unqualified planes keep their existing single final domain check. Cache
+the final checked normalized owned UV sequences for affected planes and skip a
+duplicate final simplicity scan only on EXACT sequence equality. Source/raw
+recovery, canonical XYZ, displacement and all other face obligations still run.
+No second permanent domain checker or duplicate whole-source O(N squared) scan.
+
+This is a source-approximation construction, not a source repair: original raw
+curves, vertices, full parameter intervals, topology, tolerances, and recovered
+pcurves are unchanged. Final EdgeSamples exposes every actual original parameter
+and canonical source XYZ; BoundaryOccurrence retains original coedge identity and
+foreign UV as before. Report circular-joint resampling count and optional sample
+removal/addition counts, without treating optional derived samples as original
+source entities. Preserve diagnostic before/after schedules in ignored study
+logs. Independent complete positive UV-chain/physical-shell/source checks and
+the unchanged joint-cell/native error budgets still decide the actual result.
+
+Read-only boundary experiments on both actual faces found exact-simple polygons
+for h0=.03129320807mm and four successive halvings; first candidates have369
+nodes and maximum spatial chord bound0.000261565mm, below0.000625mm allocation.
+The shared incident faces are plane167654/cone167653 on91130,
+plane167654/cylinder167637 on91105, plane167656/cylinder167637 on91103, and
+plane167656/cone167657 on91134. These exploratory polygon results are not a
+closed-solid mesh or all-incident-bound acceptance claim.
+
+The source study then included all five actual incident faces while constructing
+initial schedules: both circles require257 parameters, twice the isolated plane
+schedule. Both exact sampled boundaries still cross. With h0=.01564660404mm,
+the first candidate fails the cone's unchanged trim bound (.00100408mm), while
+the next candidate h=.007823302018mm passes EVERY original incident interval:
+cone maximum.000588639mm, cylinder maximum.000297814mm, plane maximum.000108905mm.
+Both mirrored pairs agree. Shared collar width is.1251728323mm; modified circle
+schedules contain265/266 parameters. These are direct source-bound experiments,
+not a closed-solid or final native result.

@@ -338,3 +338,45 @@ cells/10.48s;166587 cone1230 has11082 cells/61.39s (6346 boundary UV nodes,
 maximum0.000012603mm. Existing connectivity resolves those old slivers; no new
 collapse, precision or source-recovery family. Full V2 remains the all-source
 qualification, and original scan results remain diagnostic failures of old code.
+
+Old scan subsequently exposed a genuinely new intersecting-boundary reason on
+planes167654/167656. Unchanged-current read-only checks reproduce both; root
+stopped V2 before edits. Source study/independent oracle find consecutive
+internally near-tangent original circle arcs: distinct optional sample phases
+cross at ~0.04mm from their declared joint, much farther than ~8e-8mm encoded
+circle crossover. Written study proposes finite common nominal circle-distance
+collars, preserving raw source and all mandatory cuts/full source intervals.
+All schedules must finalize globally before any physical edge keys or face mesh.
+
+Next bounded implementation subplan, pending root/oracle design review:
+1. Fleet red actual167654/167656 already established; add direct paired-circle
+   source fixture whose independent initial chord phases cross, plus unchanged
+   unsupported-crossing and fixed mandatory-cut failure cases. Use existing
+   independent source/domain checks on admitted final polygon; no new oracle.
+2. Separate initial shared parameter sampling from final edge vertex emission;
+   factor one all-incident interval-bound helper so initial and candidate
+   admission execute the same spatial/trim/source obligations.
+3. Add plane-only exact boundary preflight and supported original-circle-joint
+   candidate schedule, with protected disjoint endpoint collars, finite attempts,
+   unchanged sample budget, original entity diagnostics and adjustment metrics.
+4. Green direct methods and actual two faces; inspect actual neighboring cone/
+   cylinder bounds and full shared sample consistency. Independent existing
+   closed-solid/source/native fixture checks only for affected integration.
+5. Root/oracle code review, then fresh complete retained nonvisual qualification.
+   Do not render or claim whole-source success from these focused checks.
+
+Root selected a cheap nominal INTERNAL near-tangency guard using regular saved
+circle frames, unequal radii, source endpoint identity and the retained
+TRANSLATED joint envelope capped by selected source_residual. No new analytic
+intersection certifier or exact isotopy claim. One shared collar width, candidate
+grid cardinality admission before enumeration, all affected planar-loop checks,
+and reuse/cache of the existing exact simplicity mechanism close plan findings.
+Actual global incident schedules also fail the original crossing. Candidate0
+correctly fails cone trim bound; candidate1 passes all plane/cone/cylinder
+intervals without increasing.005/.001 or sample/work caps. Oracle final design
+acceptance and direct red precede production.
+
+Root/oracle design reviews ACCEPT after explicit nominal-frame grade128ulp(1),
+finite nonnegative translated J, and correction that tiny nominal circle roots
+from saved centers/radii are not full saved-frame parametric intersections.
+Production is authorized after meaningful fleet red; source remains unchanged.
