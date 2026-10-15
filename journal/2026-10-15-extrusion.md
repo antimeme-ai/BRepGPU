@@ -48,3 +48,11 @@ paths. Root visually inspected actual SVG; artifact review independently matched
 its coordinates to savedsource/sample records. Final report clarifies axial maps
 emit profile-local Z from normalized parameters. Revolution remains next; fillet/
 offset follow as separate units before deferred integration/Python/NCSX work.
+
+PR41 merged with all eight substantive feature commits preserved at
+7faa7173ae393eeb48ef5f9843352c67d5b88040; issue40 closed and the
+feature branch remains available. Local main and the execution checkout both
+reported that revision with clean tracked files after synchronization. Build,
+toolchain and private context directories were preserved. This final journal/
+issue-index checkpoint will be synchronized without further product changes.
+Revolution is the next researched feature unit; no return-pass tuning began.
