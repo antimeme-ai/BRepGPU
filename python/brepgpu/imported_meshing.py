@@ -315,9 +315,10 @@ def evaluate_carrier(carrier,u,v):
     raise ValueError('unsupported carrier')
 
 
-def _cylinder_coordinates(carrier,point):
-    if carrier.kind!=2 or carrier.radii[0]<=0:raise ValueError('regular original cylinder required')
-    delta=_sub(point,carrier.frame[:3]);axes=[carrier.frame[i:i+3] for i in (3,6,9)]
+def _frame_coordinates(carrier,point,*,exact=False):
+    values=tuple(Fraction(x) for x in carrier.frame) if exact else carrier.frame
+    target=tuple(Fraction(x) for x in point) if exact else point
+    delta=_sub(target,values[:3]);axes=[values[i:i+3] for i in (3,6,9)]
     determinant=_dot(axes[0],_cross(axes[1],axes[2]))
     if not math.isfinite(determinant) or determinant==0:raise ValueError('singular original analytic frame')
     covectors=[_scale(_cross(axes[1],axes[2]),1/determinant),
@@ -326,15 +327,80 @@ def _cylinder_coordinates(carrier,point):
     return tuple(_dot(delta,covector) for covector in covectors),covectors
 
 
+def _lift_angle(angle,seed):
+    period=2*math.pi;u=angle+math.floor((seed-angle)/period+.5)*period
+    grade=32*math.ulp(max(1.,abs(u),abs(seed)))
+    if abs(u-seed)>=math.pi-grade:raise ValueError('analytic inverse branch ambiguity')
+    return u
+
+
+def _cylinder_coordinates(carrier,point):
+    if carrier.kind!=2 or carrier.radii[0]<=0:raise ValueError('regular original cylinder required')
+    return _frame_coordinates(carrier,point)
+
+
 def _cylinder_uv(carrier,point,seed):
     local,_=_cylinder_coordinates(carrier,point)
     if not all(math.isfinite(x) for x in local) or math.hypot(*local[:2])==0:
         raise ValueError('cylinder inverse axis ambiguity')
-    angle=math.atan2(local[1],local[0]);period=2*math.pi
-    u=angle+math.floor((seed[0]-angle)/period+.5)*period
-    grade=32*math.ulp(max(1.,abs(u),abs(seed[0])))
-    if abs(u-seed[0])>=math.pi-grade:raise ValueError('cylinder inverse branch ambiguity')
-    return u,local[2]
+    return _lift_angle(math.atan2(local[1],local[0]),seed[0]),local[2]
+
+
+def _plane_uv(carrier,point):
+    if carrier.kind!=1:raise ValueError('original plane required')
+    return _frame_coordinates(carrier,point,exact=True)[0][:2]
+
+
+def _cone_uv(carrier,point,seed):
+    if carrier.kind!=3:raise ValueError('original cone required')
+    local,_=_frame_coordinates(carrier,point);cosine=math.cos(carrier.radii[1])
+    if cosine==0 or not math.isfinite(cosine):raise ValueError('cone axial inverse is singular')
+    if math.hypot(*local[:2])==0:raise ValueError('cone inverse axis ambiguity')
+    v=local[2]/cosine;radius=carrier.radii[0]+v*math.sin(carrier.radii[1])
+    if radius==0:raise ValueError('regular cone inverse cannot select apex branch')
+    angle=math.atan2(local[1],local[0])+(math.pi if radius<0 else 0.)
+    return _lift_angle(angle,seed[0]),v
+
+
+def _cone_apex(carrier,point):
+    sine=math.sin(carrier.radii[1]);cosine=math.cos(carrier.radii[1])
+    if sine==0 or cosine==0:return False
+    apex=-carrier.radii[0]/sine
+    expected=_add(carrier.frame[:3],_scale(carrier.frame[9:12],apex*cosine))
+    local,_=_frame_coordinates(carrier,point)
+    return _distance(expected,point)<=2**-32 and abs(local[2]/cosine-apex)<=2**-40*max(1.,abs(apex))
+
+
+def _cone_generator(source,edge,carrier,quality,cache):
+    key=(edge.id,carrier.id)
+    if key in cache:return cache[key]
+    curve=source.curve(edge.curve_id);result=None
+    if curve.kind==1:
+        a,b=edge.parameter_range;mid=evaluate_curve(curve,(a+b)/2)
+        local,_=_frame_coordinates(carrier,mid);cosine=math.cos(carrier.radii[1])
+        if cosine and math.hypot(*local[:2]):
+            v=local[2]/cosine;radius=carrier.radii[0]+v*math.sin(carrier.radii[1])
+            angle=math.atan2(local[1],local[0])+(math.pi if radius<0 else 0.)
+            residual=0.
+            for t in (a,b):
+                point=evaluate_curve(curve,t);q,_=_frame_coordinates(carrier,point)
+                residual=max(residual,_distance(evaluate_carrier(carrier,angle,q[2]/cosine)[0],point))
+            if residual<=quality.source_residual_mm:result=(angle,residual)
+    cache[key]=result
+    return result
+
+
+def _source_uv(source,edge,carrier,t,xyz,seed,quality,profiles):
+    if carrier.kind==1:return _plane_uv(carrier,xyz),'plane_source_inverse'
+    if carrier.kind==2:return _cylinder_uv(carrier,xyz,seed),'cylinder_source_inverse'
+    if carrier.kind!=3:raise ValueError('unsupported owned source inverse family')
+    profile=_cone_generator(source,edge,carrier,quality,profiles)
+    endpoint=t in edge.parameter_range
+    if profile is not None and (not endpoint or _cone_apex(carrier,xyz)):
+        local,_=_frame_coordinates(carrier,xyz)
+        v=(-carrier.radii[0]/math.sin(carrier.radii[1]) if endpoint else local[2]/math.cos(carrier.radii[1]))
+        return (_lift_angle(profile[0],seed[0]),v),'cone_source_generator'
+    return _cone_uv(carrier,xyz,seed),'cone_source_inverse'
 
 
 def _curve_derivative_bounds(curve,a,b):
@@ -361,24 +427,101 @@ def _curve_derivative_bounds(curve,a,b):
     return a1/w+an*w1/w**2,a2/w+(2*a1*w1+an*w2)/w**2+2*an*w1*w1/w**3
 
 
-def _cylinder_trim_bound(curve,carrier,a,b,seed_a,seed_b,xyz_a,xyz_b,metric):
+def _angular_trim_bound(curve,carrier,a,b,seed_a,seed_b,xyz_a,xyz_b,metric):
     speed,acceleration=_curve_derivative_bounds(curve,a,b);dt=abs(b-a)
     if not math.isfinite(speed+acceleration):return math.inf
-    midpoint=evaluate_curve(curve,(a+b)/2);q,cov=_cylinder_coordinates(carrier,midpoint)
+    midpoint=evaluate_curve(curve,(a+b)/2);q,cov=_frame_coordinates(carrier,midpoint)
     xx,yy,xy=_dot(cov[0],cov[0]),_dot(cov[1],cov[1]),_dot(cov[0],cov[1])
     op=math.sqrt((xx+yy+math.hypot(xx-yy,2*xy))/2)
     b1,b2=op*speed,op*acceleration;rho=math.hypot(*q[:2])-b1*dt/2
     if not math.isfinite(rho) or rho<=0:return math.inf
     variation=b1*dt/rho
     if variation>=math.pi:return math.inf
+    inverse=_cylinder_uv if carrier.kind==2 else _cone_uv
     ca,cb=evaluate_curve(curve,a),evaluate_curve(curve,b)
-    ua,ub=_cylinder_uv(carrier,ca,seed_a),_cylinder_uv(carrier,cb,seed_b)
+    ua,ub=inverse(carrier,ca,seed_a),inverse(carrier,cb,seed_b)
     grade=64*math.ulp(max(1.,abs(ua[0]),abs(ub[0])))
     if abs(ub[0]-ua[0])>variation+grade:return math.inf
-    va,vb=_cylinder_uv(carrier,xyz_a,seed_a),_cylinder_uv(carrier,xyz_b,seed_b)
+    va,vb=inverse(carrier,xyz_a,seed_a),inverse(carrier,xyz_b,seed_b)
     endpoint=max(sum(metric[i]*abs(x[i]-y[i]) for i in range(2)) for x,y in ((ua,va),(ub,vb)))
-    u2=b2/rho+2*b1*b1/rho**2;v2=_norm(cov[2])*acceleration
+    u2=b2/rho+2*b1*b1/rho**2
+    v2=_norm(cov[2])*acceleration/(abs(math.cos(carrier.radii[1])) if carrier.kind==3 else 1.)
     return (metric[0]*u2+metric[1]*v2)*dt*dt/8+endpoint
+
+
+def _cylinder_trim_bound(curve,carrier,a,b,seed_a,seed_b,xyz_a,xyz_b,metric):
+    return _angular_trim_bound(curve,carrier,a,b,seed_a,seed_b,xyz_a,xyz_b,metric)
+
+
+def _owned_trim_bound(source,edge,carrier,a,b,seeds,positions,metric,quality,profiles):
+    curve=source.curve(edge.curve_id);dt=abs(b-a)
+    if carrier.kind==2:return _angular_trim_bound(curve,carrier,a,b,*seeds,*positions,metric)
+    if carrier.kind==3 and _cone_generator(source,edge,carrier,quality,profiles) is None:
+        return _angular_trim_bound(curve,carrier,a,b,*seeds,*positions,metric)
+    original=(evaluate_curve(curve,a),evaluate_curve(curve,b));underlying=[];actual=[]
+    if carrier.kind==1:
+        underlying=[_plane_uv(carrier,p) for p in original]
+        _,cov=_frame_coordinates(carrier,original[0])
+        acceleration=_curve_derivative_bounds(curve,a,b)[1]
+        chord=(metric[0]*_norm(cov[0])+metric[1]*_norm(cov[1]))*acceleration*dt*dt/8
+    else:
+        profile=_cone_generator(source,edge,carrier,quality,profiles);cosine=math.cos(carrier.radii[1])
+        for point,seed in zip(original,seeds):
+            local,_=_frame_coordinates(carrier,point)
+            underlying.append((_lift_angle(profile[0],seed[0]),local[2]/cosine))
+        grade=64*math.ulp(max(1.,*(abs(p[0]) for p in underlying)))
+        if abs(underlying[0][0]-underlying[1][0])>grade:return math.inf
+        chord=0.
+    for t,point,seed in zip((a,b),positions,seeds):
+        actual.append(_source_uv(source,edge,carrier,t,point,seed,quality,profiles)[0])
+    endpoint=max(sum(metric[i]*float(abs(x[i]-y[i])) for i in range(2)) for x,y in zip(underlying,actual))
+    return chord+endpoint
+
+
+def _curve_scalar_range(curve,a,b,covector,origin):
+    """Linear-functional range on ORIGINAL active parameter geometry."""
+    lo,hi=sorted((a,b))
+    def value(point):return _dot(covector,_sub(point,origin))
+    if curve.kind==1:
+        values=[value(evaluate_curve(curve,t)) for t in (lo,hi)]
+    elif curve.kind in (2,3):
+        center=value(curve.frame[:3]);x=curve.radii[0]*_dot(covector,curve.frame[3:6]);y=curve.radii[1]*_dot(covector,curve.frame[6:9])
+        amplitude=math.hypot(x,y)
+        if hi-lo>=2*math.pi:values=[center-amplitude,center+amplitude]
+        else:
+            values=[value(evaluate_curve(curve,t)) for t in (lo,hi)]
+            critical=math.atan2(y,x)
+            for target in (critical,critical+math.pi):
+                k=math.ceil((lo-target)/(2*math.pi));t=target+k*2*math.pi
+                if lo<=t<=hi:values.append(center+(amplitude if target==critical else -amplitude))
+    else:
+        values=[]
+        if curve.kind==4:
+            nets=[_restrict_controls(_control_rows(curve.controls,3),lo,hi)]
+        else:
+            nets=[]
+            for span in curve.spans:
+                sa,sb=span.parameter_range;x,y=max(lo,sa),min(hi,sb)
+                if x<y:nets.append(_restrict_controls(_control_rows(span.controls,3),(x-sa)/(sb-sa),(y-sa)/(sb-sa)))
+        for net in nets:values.extend(value(_recover(h)) for h in net)
+    if not values or any(not math.isfinite(x) for x in values):raise ValueError('invalid original active curve range')
+    return math.nextafter(min(values),-math.inf),math.nextafter(max(values),math.inf)
+
+
+def _cone_v_envelope(source,carrier,edge_ids):
+    cosine=math.cos(carrier.radii[1])
+    if not cosine:raise ValueError('cone axial inverse is singular')
+    _,cov=_frame_coordinates(carrier,carrier.frame[:3]);values=[];apex_values=[]
+    for identifier in edge_ids:
+        edge=source.edge(identifier)
+        if edge.curve_id:values.extend(_curve_scalar_range(source.curve(edge.curve_id),*edge.parameter_range,cov[2],carrier.frame[:3]))
+        for v in edge.vertex_ids:
+            point=source.vertex(v).xyz
+            values.append(_frame_coordinates(carrier,point)[0][2])
+            if _cone_apex(carrier,point):apex_values.append(-carrier.radii[0]/math.sin(carrier.radii[1]))
+    result=[value/cosine for value in values]+apex_values
+    if not result or any(not math.isfinite(x) for x in result):raise ValueError('invalid source-owned cone V range')
+    return math.nextafter(min(result),-math.inf),math.nextafter(max(result),math.inf)
 
 
 def _recover_global_uv(carrier,uv):
@@ -451,7 +594,7 @@ def _curve_chord_bound(curve,a,b):
     return max(_point_segment(p,points[0],points[-1]) for p in points)
 
 
-def _surface_metric(carrier):
+def _surface_metric(carrier,v_bounds=None):
     """Conservative global first-partial norm bounds for UV trim chords."""
     if carrier.kind==6:
         result=[0.0,0.0]
@@ -461,6 +604,7 @@ def _surface_metric(carrier):
         return tuple(result)
     x,y,z=(carrier.frame[i:i+3] for i in (3,6,9));ex=_norm(x)+_norm(y);nz=_norm(z)
     r,a=carrier.radii;u0,u1,v0,v1=carrier.uv_bounds
+    if v_bounds is not None:v0,v1=v_bounds
     if carrier.kind==1:return _norm(x),_norm(y)
     if carrier.kind==2:return r*ex,nz
     if carrier.kind==3:return max(abs(r+v0*math.sin(a)),abs(r+v1*math.sin(a)))*ex,abs(math.sin(a))*ex+abs(math.cos(a))*nz
@@ -613,7 +757,7 @@ def _curve_knots_in_edge(source,edge,incidents):
     for coedge,carrier in incidents:
         # Owned cylinder UV depends on the ORIGINAL spatial curve. Foreign
         # branch-guide knot artifacts do not constrain that derived trim.
-        if carrier.kind==2:continue
+        if carrier.kind in (1,2,3):continue
         pc=source.curve(coedge.curve_id)
         if coedge.parameter_map_kind==1:result.update(t for t in pc.knots if lo<t<hi)
         elif coedge.parameter_map_kind==2:
@@ -635,13 +779,16 @@ def mesh_imported(source,quality=None,*,progress=None):
     vertices=[];triangles=[];face_meshes=[];edge_samples=[]
     vertex_by_key={};endpoint_keys={};edge_records={};incidents={};edge_owners={}
     carrier_slots={c.id:i for i,c in enumerate(source.carriers)}
-    metric_cache={};derivative_cache={};next_key=1
+    metric_cache={};derivative_cache={};profiles={};carrier_edges={};next_key=1
     errors={'max_edge_chord_bound_mm':0.0,'max_source_endpoint_residual_mm':0.0,
             'max_foreign_pcurve_to_edge_residual_mm':0.0,'max_source_joint_gap_mm':0.0,
             'max_surface_interpolation_bound_mm':0.0,'max_native_uv_rounding_bound_mm':0.0,
             'foreign_uv_recovery_count':0,'max_foreign_uv_recovery_shift_mm':0.0,
             'cylinder_inverse_sample_count':0,'joint_recovery_count':0,
-            'max_cylinder_inverse_correction_mm':0.0,'max_corrected_surface_to_edge_residual_mm':0.0}
+            'max_cylinder_inverse_correction_mm':0.0,'max_corrected_surface_to_edge_residual_mm':0.0,
+            'plane_inverse_sample_count':0,'cone_inverse_sample_count':0,'cone_generator_sample_count':0,
+            'max_plane_inverse_correction_mm':0.0,'max_cone_inverse_correction_mm':0.0,
+            'max_cone_generator_line_residual_mm':0.0}
     def make_vertex(definition,xyz,kind,identifier,t=0.0,uv=(0.0,0.0)):
         nonlocal next_key
         if any(not math.isfinite(x) for x in xyz):raise ValueError('nonfinite imported mesh vertex')
@@ -660,12 +807,15 @@ def mesh_imported(source,quality=None,*,progress=None):
         for li in face.loop_ids:
             for ci in source.loop(li).coedge_ids:
                 coedge=source.coedge(ci);incidents.setdefault(coedge.edge_id,[]).append((coedge,carrier))
+                carrier_edges.setdefault(carrier.id,set()).add(coedge.edge_id)
     for edge_index,edge in enumerate(source.edges):
         owner=edge_owners[edge.id];uses=incidents.get(edge.id,())
         curve=source.curve(edge.curve_id) if edge.curve_id else None
         if not uses:raise ValueError(f'edge {edge.id}: no source coedge occurrence')
         for _,carrier in uses:
-            if carrier.id not in metric_cache:metric_cache[carrier.id]=_surface_metric(carrier)
+            if carrier.id not in metric_cache:
+                vb=_cone_v_envelope(source,carrier,carrier_edges[carrier.id]) if carrier.kind==3 else None
+                metric_cache[carrier.id]=_surface_metric(carrier,vb)
         start,end=edge.parameter_range
         if start==end and not edge.degenerate:raise ValueError(f'edge {edge.id}: zero parameter extent')
         values=_curve_knots_in_edge(source,edge,uses)
@@ -679,12 +829,12 @@ def mesh_imported(source,quality=None,*,progress=None):
                 sa=_mapped_parameter(source,edge,coedge,a,carrier,quality)
                 sb=_mapped_parameter(source,edge,coedge,b,carrier,quality)
                 mu,mv=metric_cache[carrier.id]
-                if carrier.kind==2:
-                    if curve is None:raise ValueError('cylinder inverse requires original spatial curve')
+                if carrier.kind in (1,2,3):
+                    if curve is None:raise ValueError('analytic inverse requires original spatial curve')
                     pc=source.curve(coedge.curve_id)
                     seeds=[evaluate_curve(pc,t) for t in (sa,sb)]
                     seeds=[(uv[0]+coedge.periodic_shift[0]*2*math.pi,uv[1]) for uv in seeds]
-                    result=max(result,_cylinder_trim_bound(curve,carrier,a,b,*seeds,position(a),position(b),(mu,mv)))
+                    result=max(result,_owned_trim_bound(source,edge,carrier,a,b,seeds,(position(a),position(b)),(mu,mv),quality,profiles))
                 else:
                     uv_error=_curve_chord_bound(source.curve(coedge.curve_id),sa,sb)
                     result=max(result,uv_error*math.hypot(mu,mv))
@@ -743,12 +893,17 @@ def mesh_imported(source,quality=None,*,progress=None):
                     raw_residual=_distance(raw_point,record.positions[index])
                     errors['max_foreign_pcurve_to_edge_residual_mm']=max(errors['max_foreign_pcurve_to_edge_residual_mm'],raw_residual)
                     recovery_kind='pcurve'
-                    if carrier.kind==2:
-                        recovered=_cylinder_uv(carrier,record.positions[index],recovered)
-                        recovery_kind='cylinder_source_inverse'
-                        errors['cylinder_inverse_sample_count']+=1
+                    if carrier.kind in (1,2,3):
+                        recovered,recovery_kind=_source_uv(source,edge,carrier,t,record.positions[index],recovered,quality,profiles)
+                        family={1:'plane',2:'cylinder',3:'cone'}[carrier.kind]
+                        errors[family+'_inverse_sample_count']+=1
                         correction=_distance(raw_point,evaluate_carrier(carrier,*recovered)[0])
-                        errors['max_cylinder_inverse_correction_mm']=max(errors['max_cylinder_inverse_correction_mm'],correction)
+                        metric_name='max_'+family+'_inverse_correction_mm'
+                        errors[metric_name]=max(errors[metric_name],correction)
+                        if recovery_kind=='cone_source_generator':
+                            errors['cone_generator_sample_count']+=1
+                            profile=_cone_generator(source,edge,carrier,quality,profiles)
+                            errors['max_cone_generator_line_residual_mm']=max(errors['max_cone_generator_line_residual_mm'],profile[1])
                     uv=recovered
                     residual=_distance(evaluate_carrier(carrier,*uv)[0],record.positions[index])
                     errors['max_corrected_surface_to_edge_residual_mm']=max(errors['max_corrected_surface_to_edge_residual_mm'],residual)
@@ -759,21 +914,24 @@ def mesh_imported(source,quality=None,*,progress=None):
             for j,segment in enumerate(coedge_points):
                 following=coedge_points[(j+1)%len(coedge_points)];end=segment[-1];start=following[0]
                 if end.sample_key!=start.sample_key:raise ValueError(f'face {face.id}: disconnected original loop vertex')
-                if carrier.kind==2:
+                if carrier.kind in (1,2,3):
                     def foreign(o):
                         use=source.coedge(o.coedge_id)
-                        return replace(o,uv=(o.pcurve_uv[0]+use.periodic_shift[0]*2*math.pi,o.pcurve_uv[1]),recovery_kind='pcurve')
+                        return replace(o,uv=(o.pcurve_uv[0]+(use.periodic_shift[0]*2*math.pi if carrier.kind!=1 else 0.),o.pcurve_uv[1]),recovery_kind='pcurve')
                     incoming,outgoing=foreign(end),foreign(start)
                     uv_scale=max(1.,*(abs(x) for x in carrier.uv_bounds))
-                    if _distance(incoming.uv,outgoing.uv)>2**-32*uv_scale:
-                        vertex=vertex_by_key[end.sample_key]
-                        if vertex.source_kind!=1:raise ValueError('cylinder joint lacks original vertex')
-                        if abs(incoming.uv[0]-outgoing.uv[0])>=math.pi:raise ValueError('cylinder joint changes chart branch')
-                        canonical=_cylinder_uv(carrier,vertex.xyz,outgoing.uv)
+                    vertex=vertex_by_key[end.sample_key]
+                    if vertex.source_kind!=1:raise ValueError('analytic joint lacks original vertex')
+                    is_apex=carrier.kind==3 and _cone_apex(carrier,vertex.xyz)
+                    if not is_apex and _distance(incoming.uv,outgoing.uv)>2**-32*uv_scale:
+                        if carrier.kind!=1 and abs(incoming.uv[0]-outgoing.uv[0])>=math.pi:
+                            raise ValueError('analytic joint changes chart branch')
+                        canonical,_=_source_uv(source,source.edge(outgoing.edge_id),carrier,outgoing.source_parameter,vertex.xyz,outgoing.uv,quality,profiles)
                         if _distance(evaluate_carrier(carrier,*canonical)[0],vertex.xyz)>quality.source_residual_mm:
-                            raise ValueError('cylinder canonical joint exceeds source residual')
+                            raise ValueError('analytic canonical joint exceeds source residual')
                         segment[-1]=replace(end,uv=canonical);following[0]=replace(start,uv=canonical)
-                        joint_recoveries.append(JointRecovery(face.id,li,vertex.source_id,incoming,outgoing,canonical,'cylinder_vertex_inverse'))
+                        family={1:'plane',2:'cylinder',3:'cone'}[carrier.kind]
+                        joint_recoveries.append(JointRecovery(face.id,li,vertex.source_id,incoming,outgoing,canonical,family+'_vertex_inverse'))
                         errors['joint_recovery_count']+=1
                         end,start=segment[-1],following[0]
                 if end.uv!=start.uv:

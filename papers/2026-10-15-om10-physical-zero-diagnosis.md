@@ -55,3 +55,9 @@ Current owned-cylinder-inverse code does not reproduce the old physical-zero
 exception. It fails earlier with edge parameter subdivision exhausted binary64.
 That separate current interval/bound issue is being investigated by the source
 owner. It must not be described as current evidence for physical-zero handling.
+
+Subsequent correction removed foreign-only guide knots from the owned cylinder
+sampler while retaining original spatial knots and exact whole-interval span
+ownership. Face166811 then passed with14,218 UV cells and corrected residual
+3.5747e-5mm. Plane166230 and cone166156 subsequently passed their source-based
+recovery, respectively6 and99,384 cells, without a physical-collapse exemption.

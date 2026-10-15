@@ -163,3 +163,32 @@ cone inversion before triangulation addresses the cause. No dropped-cell or
 physical-collapse exemption is justified. Current cylinder case fails earlier
 in new edge sampling, so old scan's zero classification is stale. Saved details
 in papers/2026-10-15-om10-physical-zero-diagnosis.md and sent all facts to owners.
+
+Reviewed source-owned plane/cone recovery section and subplan ACCEPT before
+implementation. Actual apex cone1215/face166149 has LINE39324/edge86907 to
+originalvertex68670; cone1431/face171148 has LINE47467/edge101015 to apex78001.
+Each line occurs twice beside a circle; no curved singular generator in these
+actual cases. Extended bounded independent inverse/provenance checks using
+exact saved-frame Gauss-Jordan inversion (also corrects old cylinder dot-only
+assumption), exact affine planeUV equality, signed cone sheet/slant, original
+LINE affine endpoint residual proof and original vertex apex identity. Sourceowner
+review/affected greens are pending; physical/domain/native obligations retained.
+
+Sourceowner reviewed new independent plane/cone handlers. Fixed valid cone
+reference-radius-zero admission away from apex (cylinder still requires R>0),
+matching the native/source contract; regular cone computedradius0 still rejects.
+After the product's21focused greens, the five affected closed-plane geometry/
+native methods passed0.549s on the fleet. They exercise exact product Fraction
+dual versus independent Gauss-Jordan, full UV domains, physical genus and actual
+native jets/both projected poses, including retained malformed-output errors.
+Actual original plane/cone/apex diagnostics and complete source remain pending.
+
+Native owner found all48actual cone-apex queries byte-identical across CPU/P100s.
+The source raw/local V can overshoot the true apex onto the negative-radius
+sheet and reverse the normal consistently. Root accepted canonical analytic
+V=-R/sin(angle) at verified original apex vertices, retaining original XYZ and
+explicit endpoint perturbation. Independent generator boundary checks now
+require exact canonical V; actual native declared pole corners require that V,
+original source-vertex pole identity and the limiting-normal flag. Expected
+normal remains the original positive-interior limit. This fixes a source
+parameter semantic issue; no native backend algorithm change is needed.

@@ -937,29 +937,95 @@ def _chart_closure(source, face, closure, coordinate_tolerance):
             outgoing.id, oe.parameter_range[0 if outgoing.sense > 0 else 1])
 
 
-def _cylinder_inverse(carrier, xyz, branch_seed):
-    require(carrier.kind == 2 and carrier.radii[0] > 0, 'owned cylinder inverse needs original positive-radius cylinder')
+_DUAL_FRAMES = {}
+
+
+def _dual_frame(frame):
+    """Exact Gauss-Jordan inverse of the saved axis columns."""
+    if frame not in _DUAL_FRAMES:
+        rows = [[exact(frame[3+3*j+i]) for j in range(3)]+[F(i==j) for j in range(3)] for i in range(3)]
+        for column in range(3):
+            pivot = next((i for i in range(column,3) if rows[i][column]),None)
+            require(pivot is not None,'original analytic frame is singular')
+            rows[column],rows[pivot] = rows[pivot],rows[column]
+            divisor = rows[column][column]
+            rows[column] = [x/divisor for x in rows[column]]
+            for i in range(3):
+                if i != column:
+                    factor = rows[i][column]
+                    rows[i] = [a-factor*b for a,b in zip(rows[i],rows[column])]
+        _DUAL_FRAMES[frame] = tuple(tuple(row[3:]) for row in rows)
+    return _DUAL_FRAMES[frame]
+
+
+def _source_local(carrier,xyz,*,rational=False):
+    dual = _dual_frame(carrier.frame)
+    if rational:
+        delta = tuple(exact(a)-exact(b) for a,b in zip(xyz,carrier.frame[:3]))
+        return tuple(sum((a*b for a,b in zip(row,delta)),F(0)) for row in dual)
     delta = tuple(float(a)-b for a,b in zip(xyz,carrier.frame[:3]))
-    coordinates = tuple(math.fsum(delta[k]*carrier.frame[3+3*j+k] for k in range(3))
-                        for j in range(3))
+    return tuple(math.fsum(float(a)*b for a,b in zip(row,delta)) for row in dual)
+
+
+def _analytic_inverse(carrier, xyz, branch_seed):
+    require(carrier.kind in (1,2,3),'unsupported owned analytic trim inverse')
+    if carrier.kind == 1:
+        return _source_local(carrier,xyz,rational=True)[:2]
+    require(carrier.radii[0] > 0 if carrier.kind == 2 else carrier.radii[0] >= 0,
+            'owned angle inverse has invalid original reference radius')
+    coordinates = _source_local(carrier,xyz)
     require(all(math.isfinite(x) for x in coordinates) and math.hypot(*coordinates[:2]) > 0,
-            'owned cylinder inverse has invalid radial projection')
+            'owned angular inverse has invalid radial projection')
+    v = coordinates[2]
     angle = math.atan2(coordinates[1],coordinates[0])
+    if carrier.kind == 3:
+        cosine = math.cos(carrier.radii[1])
+        require(math.isfinite(cosine) and cosine != 0,'owned cone has singular axial conversion')
+        v /= cosine
+        radius = carrier.radii[0]+v*math.sin(carrier.radii[1])
+        require(radius != 0,'owned regular cone inverse cannot invent apex branch')
+        if radius < 0:
+            angle += math.pi
     angle += 2*math.pi*round((float(branch_seed)-angle)/(2*math.pi))
-    require(abs(angle-float(branch_seed)) < math.pi, 'owned cylinder inverse has ambiguous original branch')
-    return angle,coordinates[2]
+    require(abs(angle-float(branch_seed)) < math.pi, 'owned angular inverse has ambiguous original branch')
+    return angle,v
+
+
+def _cone_generator_inverse(source,carrier,edge,physical,branch_seed,quality,coordinate_tolerance):
+    require(carrier.kind == 3 and source.curve(edge.curve_id).kind == 1,
+            'owned cone generator must retain an original LINE')
+    curve = source.curve(edge.curve_id)
+    midpoint = float(sum(map(exact,edge.parameter_range))/2)
+    u,_ = _analytic_inverse(carrier,curve_point_float(curve,midpoint),branch_seed)
+    cosine = math.cos(carrier.radii[1])
+    for t in edge.parameter_range:
+        xyz = curve_point_float(curve,t)
+        v = _source_local(carrier,xyz)[2]/cosine
+        require(math.dist(xyz,carrier_jet_float(carrier,u,v)[0]) <= quality.source_residual_mm,
+                'original LINE whole-edge cone conversion exceeds endpoint residual bound')
+    if physical.source_kind == 1:
+        apex_v = -carrier.radii[0]/math.sin(carrier.radii[1])
+        apex = _frame_point(carrier.frame,(0.,0.,apex_v*cosine))
+        if math.dist(physical.xyz,apex) <= coordinate_tolerance:
+            require(physical.source_id in edge.vertex_ids,'cone apex is not original incident source vertex')
+            v = _source_local(carrier,physical.xyz)[2]/cosine
+            require(abs(v-apex_v) <= 2.**-40*max(1.,abs(apex_v)),
+                    'original cone apex fails explicit slant-coordinate grade')
+            return u,apex_v
+        raise AssertionError('cone generator endpoint kind requires verified original apex')
+    return u,_source_local(carrier,physical.xyz)[2]/cosine
 
 
 def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance):
-    require(recovery.kind == 'cylinder_vertex_inverse' and recovery.face_id == face.id and
+    inverse_kinds = {1:'plane_vertex_inverse',2:'cylinder_vertex_inverse',3:'cone_vertex_inverse'}
+    carrier = source.carrier(face.carrier_id)
+    require(recovery.kind == inverse_kinds.get(carrier.kind) and recovery.face_id == face.id and
             recovery.loop_id in face.loop_ids, 'unsupported/foreign original-vertex joint recovery')
     loop = source.loop(recovery.loop_id)
     a,b = recovery.incoming,recovery.outgoing
     require(a.coedge_id in loop.coedge_ids and b.coedge_id in loop.coedge_ids and
             loop.coedge_ids[(loop.coedge_ids.index(a.coedge_id)+1)%len(loop.coedge_ids)] == b.coedge_id,
             'joint recovery changed original incident-use order')
-    carrier = source.carrier(face.carrier_id)
-    require(carrier.kind == 2, 'cylinder joint recovery requires original cylindrical carrier')
     vertex = source.vertex(recovery.source_vertex_id)
     for occurrence,incoming in ((a,True),(b,False)):
         use = source.coedge(occurrence.coedge_id)
@@ -974,7 +1040,7 @@ def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance):
         require(getattr(occurrence,'recovery_kind','pcurve') == 'pcurve', 'joint recovery must retain pre-inverse occurrence')
         raw = curve_point_float(source.curve(use.curve_id),occurrence.pcurve_parameter)
         _near(occurrence.pcurve_uv,raw,coordinate_tolerance,'joint recovery lost raw recovered pcurve UV')
-        shifted = (raw[0]+use.periodic_shift[0]*2*math.pi,raw[1])
+        shifted = (raw[0]+use.periodic_shift[0]*2*math.pi if carrier.kind != 1 else raw[0],raw[1])
         _near(occurrence.uv,shifted,coordinate_tolerance,'joint recovery changed pre-inverse branch')
         if use.parameter_map_kind == 1:
             require(occurrence.pcurve_parameter == occurrence.source_parameter,
@@ -982,8 +1048,11 @@ def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance):
         endpoint_xyz = curve_point_float(source.curve(edge.curve_id),occurrence.source_parameter)
         require(math.dist(endpoint_xyz,vertex.xyz) <= quality.source_residual_mm,
                 'original joint edge/vertex incidence exceeds selected source residual')
-        expected = _cylinder_inverse(carrier,vertex.xyz,shifted[0])
-        _near(recovery.uv,expected,coordinate_tolerance,'canonical joint is not original-vertex cylinder inverse')
+        expected = _analytic_inverse(carrier,vertex.xyz,shifted[0])
+        if carrier.kind == 1:
+            require(tuple(map(exact,recovery.uv)) == expected,'plane joint lost exact source affine inverse')
+        else:
+            _near(recovery.uv,expected,coordinate_tolerance,'canonical joint is not original-vertex analytic inverse')
     require(a.sample_key == b.sample_key, 'joint recovery merged different physical source keys')
     corrected = carrier_jet_float(carrier,*recovery.uv)[0]
     require(math.dist(corrected,vertex.xyz) <= quality.source_residual_mm,
@@ -1009,6 +1078,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
     max_rounding_bound, rounding_bounds = 0., {}
     cylinder_recovery_count = joint_recovery_count = 0
     max_foreign_cylinder_residual = 0.
+    owned_recovery_counts = Counter()
     for vertex in mesh.vertices:
         key = (vertex.definition_id, vertex.physical_key)
         require(key not in vertices and vertex.definition_id in definitions, 'duplicate/foreign physical source key')
@@ -1112,17 +1182,32 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 expected_uv = tuple(float(x) + shift*period for x, shift, period in
                                     zip(expected_uv, use.periodic_shift, periods))
                 recovery_kind = getattr(occurrence,'recovery_kind','pcurve')
-                require(recovery_kind in ('pcurve','cylinder_source_inverse'), 'unsupported owned trim recovery kind')
-                if recovery_kind == 'cylinder_source_inverse':
+                inverse_kinds = {1:'plane_source_inverse',2:'cylinder_source_inverse',3:'cone_source_inverse'}
+                require(recovery_kind == 'pcurve' or recovery_kind == inverse_kinds.get(carrier.kind) or
+                        (carrier.kind == 3 and recovery_kind == 'cone_source_generator'),
+                        'unsupported owned trim recovery kind')
+                if recovery_kind != 'pcurve':
                     physical = vertices.get((face.definition_id,occurrence.sample_key))
                     require(physical is not None and physical.source_kind in (1,2),
                             'owned trim inverse lost original spatial generator')
-                    recovered = _cylinder_inverse(carrier,physical.xyz,expected_uv[0])
-                    _near(occurrence.uv,recovered,coordinate_tolerance,
-                          'owned trim is not original-source cylinder inverse')
-                    cylinder_recovery_count += 1
+                    if recovery_kind == 'cone_source_generator':
+                        recovered = _cone_generator_inverse(source,carrier,edge,physical,expected_uv[0],
+                                                            mesh.quality,coordinate_tolerance)
+                    else:
+                        recovered = _analytic_inverse(carrier,physical.xyz,expected_uv[0])
+                    if carrier.kind == 1:
+                        require(tuple(map(exact,occurrence.uv)) == recovered,'plane trim lost exact source affine inverse')
+                    else:
+                        _near(occurrence.uv,recovered,coordinate_tolerance,
+                              'owned trim is not original-source analytic inverse')
+                    if recovery_kind == 'cone_source_generator' and physical.source_kind == 1:
+                        require(float(occurrence.uv[1]) == recovered[1],
+                                'verified original cone apex lost canonical analytic V/limiting-normal semantics')
+                    owned_recovery_counts[recovery_kind] += 1
+                    cylinder_recovery_count += carrier.kind == 2
                     raw_point = carrier_jet_float(carrier,*expected_uv)[0]
-                    max_foreign_cylinder_residual = max(max_foreign_cylinder_residual,math.dist(raw_point,physical.xyz))
+                    if carrier.kind == 2:
+                        max_foreign_cylinder_residual = max(max_foreign_cylinder_residual,math.dist(raw_point,physical.xyz))
                     # A non-small original-vertex joint must retain both raw
                     # endpoint occurrences in original traversal order.
                     start_index = 0 if use.sense > 0 else 1
@@ -1133,9 +1218,10 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                         recovery_key = (loop.id,previous.id,use.id)
                         if previous.parameter_map_kind == 1:
                             previous_uv = curve_point_float(source.curve(previous.curve_id),previous_edge.parameter_range[end_index])
-                            previous_uv = (previous_uv[0]+previous.periodic_shift[0]*2*math.pi,previous_uv[1])
+                            previous_uv = (previous_uv[0]+previous.periodic_shift[0]*periods[0],previous_uv[1])
                             joint_grade = coordinate_tolerance*max(1.,*(abs(x) for x in (*carrier.uv_bounds,*expected_uv)))
-                            if max(abs(a-b) for a,b in zip(previous_uv,expected_uv)) > joint_grade:
+                            if (math.dist(previous_uv,expected_uv) > joint_grade and
+                                    (loop.id,previous.id) not in closure_parameters):
                                 require(recovery_key in joint_recoveries,'non-small source joint lost explicit inverse provenance')
                         if recovery_key in joint_recoveries:
                             _near(occurrence.uv,joint_recoveries[recovery_key].uv,coordinate_tolerance,
@@ -1162,7 +1248,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 # Canonical joint UV can close a measured foreign endpoint gap.
                 # Preserve its declared periodic lift; never silently relabel a
                 # seam occurrence by an entire revolution.
-                branch_divisor = 2 if recovery_kind == 'cylinder_source_inverse' else 4
+                branch_divisor = 2 if recovery_kind != 'pcurve' else 4
                 require(all(not period or abs(float(actual)-float(wanted)) < period/branch_divisor
                             for actual, wanted, period in zip(occurrence.uv, expected_uv, periods)),
                         'canonical occurrence changed its original periodic branch')
@@ -1284,7 +1370,8 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 max_independent_native_uv_rounding_bound_mm=max_rounding_bound,
                 cylinder_source_inverse_occurrences=cylinder_recovery_count,
                 original_vertex_joint_recoveries=joint_recovery_count,
-                max_foreign_cylinder_pcurve_residual_mm=max_foreign_cylinder_residual)
+                max_foreign_cylinder_pcurve_residual_mm=max_foreign_cylinder_residual,
+                owned_analytic_recovery_counts=tuple(sorted(owned_recovery_counts.items())))
 
 
 def _normal(carrier, uv, jet, orientation):
@@ -1364,6 +1451,9 @@ def qualify_native_scene(mesh, assembly, scene_path, jets_path, projected_paths=
     mesh_vertices = {(row.definition_id, row.physical_key): row for row in mesh.vertices}
     expected_by_definition = defaultdict(list)
     face_by_id = {row.id: row for row in mesh.source.faces}
+    original_cone_poles = {(row.face_id,closure.source_vertex_id) for row in mesh.faces
+                           for closure in getattr(row,'chart_closures',()) if closure.kind == 'cone_apex'}
+    limiting_cone_slots = set()
     for triangle in mesh.triangles:
         if not triangle.collapsed:
             expected_by_definition[face_by_id[triangle.face_id].definition_id].append(triangle)
@@ -1397,6 +1487,13 @@ def qualify_native_scene(mesh, assembly, scene_path, jets_path, projected_paths=
                         carriers[submitted[5]][0] == mesh.source.carriers[corner.carrier_slot].id,
                         'native actual corner carrier correspondence differs')
                 source_carrier = mesh.source.carriers[corner.carrier_slot]
+                if physical.source_kind == 1 and (original.face_id,physical.source_id) in original_cone_poles:
+                    require(source_carrier.kind == 3,'declared cone pole has wrong original carrier')
+                    pole_v = -source_carrier.radii[0]/math.sin(source_carrier.radii[1])
+                    pole_xyz = _frame_point(source_carrier.frame,(0.,0.,pole_v*math.cos(source_carrier.radii[1])))
+                    require(math.dist(physical.xyz,pole_xyz) <= coordinate_tolerance and submitted[4] == pole_v,
+                            'native original cone pole lost original vertex/canonical analytic V')
+                    limiting_cone_slots.add(slot)
                 rounding_bound = 0.
                 if any(type(x) is F for x in corner.uv):
                     rounding_key = (source_carrier.id,tuple(corner.uv))
@@ -1415,6 +1512,8 @@ def qualify_native_scene(mesh, assembly, scene_path, jets_path, projected_paths=
         row = struct.unpack_from('<15dII', jets, 16+128*index)
         require(row[15] == 0 and not row[16] & ~1 and all(math.isfinite(x) for x in row[:15]),
                 'actual native source jet status/finiteness differs')
+        if index in limiting_cone_slots:
+            require(row[16] & 1,'native declared original cone pole did not use limiting normal')
         carrier = native_original[vertex[5]]
         uv = vertex[3:5]
         sides = native_sides[vertex[5]]

@@ -137,3 +137,16 @@ mesh retained, exact caller helpers, same scene/views, flags3, source jets,
 per-backend immediate qualification and failures, own-source/product/binary pins,
 no raster path. Suggested recording the two existing refinement/allocation CLI
 budgets beside quality/view fields. No new mechanism, test or actual execution.
+
+Targeted actual-source cone apex diagnosis requested by root: read carriers1215/
+1431 and faces166149/171148, actual apex vertices and seam pcurve endpoints from
+the retained snapshot. Wrote a private48-row/36-distinct-UV tiny actual-carrier
+scene, zero views, and evaluated jets only on CPU24/P1000/P1001. Included original
+recovered Vmin, CPU and independently high-precision nearest apex constructions,
+nextafter interior and two small interior offsets. All complete output buffers
+are byte-identical. Canonical apex values cancel to rho0/limiting flag1; original
+foreign Vmin overshoots the source pole and consistently flips normals on all
+backends. No native production change is justified. Saved public source values,
+scope and consequences in papers/2026-10-15-om10-native-cone-apex-study.md. Root
+and geometry owner informed; source owner retains verified-pole UV canonicalization
+and perturbation-budget fixes. No actual watch rasterization occurred.
