@@ -58,9 +58,12 @@ operation is promised; fail visibly rather than silently falling back.
 The repository has studied/retained OCCT source and uses owned analytic/model
 oracles. It does not yet replay community B-rep cases against our operations
 or compare current arrangements with a separately executed exact kernel.
-The fleet inventory did not find DRAWEXE, OCCT/CGAL headers or their Python
-wrappers in the queried system locations. Runtime GMP/MPFR libraries alone
-are not a usable external geometry reference build.
+The initial fleet inventory found no DRAWEXE or OCCT/CGAL development setup in
+the queried system locations. Since then the OM10 work has built an isolated
+pinned OCCT source/query bridge and acquired the actual NVIDIA runtime; these
+are usable for their declared adapters. They do not establish an installed
+DRAW regression runner, a CGAL exact reference or community-case replay.
+Runtime GMP/MPFR libraries alone are not that exact geometry reference build.
 
 Next, produce the pinned upstream case/data inventory, classify coverage against
 the alpha capability matrix, and implement separately built reference runners

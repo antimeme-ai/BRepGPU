@@ -50,8 +50,10 @@ and [signed analytic offset](docs/OFFSET.md) are delivered.
 The planned breadth sweep is complete. The [stocktake and proposed next tranche](docs/POST_BREADTH_ROADMAP.md)
 cover result meshing, composable history, external qualification and measured
 runtime ownership. Actual extrusion/bore composition is now delivered; external
-adapters and runtime/language study remain. No language rewrite or general
-modeling support is implied.
+adapters and runtime/language study remain. The [post-watch roadmap proposal](docs/POST_WATCH_ROADMAP.md)
+connects required CPU references, measured preparation/runtime work, real edits
+and GPU topology construction in the next broad cycle. No language rewrite or
+general modeling support is implied.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
