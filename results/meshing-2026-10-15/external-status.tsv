@@ -1,0 +1,7 @@
+suite	revision	case_or_group	role	status
+OCCT	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	bugs/mesh/bug25586_1..3	extruded face holes	NOT_RUN_ADAPTER_MISSING
+OCCT	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	bugs/mesh/bug31853	holes at large deflection	NOT_RUN_ADAPTER_MISSING
+OCCT	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	bugs/mesh/bug25287	out-of-tolerance mesh	NOT_RUN_ADAPTER_MISSING
+OCCT	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	bugs/mesh/bug31449_1..3	free nodes and loopback face	NOT_RUN_ADAPTER_MISSING
+OCCT	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	bugs/mesh/bug32471	planar deflection recomputation	NOT_RUN_ADAPTER_MISSING
+OCCT	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	mesh/end	missing face/free links/cross-face/async/free-node checks	NOT_RUN_ADAPTER_MISSING
