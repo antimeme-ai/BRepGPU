@@ -80,6 +80,9 @@ chord approximation. Coedges consume the same sample keys in their own directed
 UV lifts. SameParameter=false requires an explicit map, not an assumed identical
 t. Evaluate actual spatial-edge/surface discrepancy; recovered UV is not exact
 source data merely because both source and result came from OCCT.
+Actual OM10 has zero non-SameParameter edges. Unproved continuation/projection
+maps are explicitly rejected by the mesher; seed pairs do not establish a unique
+branch. This delivery does not promise general non-SameParameter recovery.
 Original B-spline source carriers and extracted Bézier display spans have
 separate typed records despite their respective format-local kind6 tags.
 
@@ -92,6 +95,10 @@ deletion, centroid filtering, outer fan or geometry-coordinate welding.
 Use owned robust orientation with exact fallback, visible multiple-hole bridges
 and complete ear triangulation grounded in the Eberly/Shewchuk studies. Duplicate
 bridge occurrences share physical keys. Preserve collinear boundary constraints.
+The implemented bridge variant checks complete segment visibility and material
+membership before ranking visible endpoints by distance. It does not use the
+invalid nearest-reflex shortcut identified in the literature; independent full
+positive UV chains check the resulting domain rather than its bridge heuristic.
 Refinement is conforming: split both incident interior triangles; changing a
 physical edge updates every incident face. New interior samples refer to actual
 original carrier UV/span. Handle sphere/cone singularities by their actual
@@ -102,6 +109,19 @@ that source quotient can mark a collapsed cell. Full UV coverage includes them;
 physical incidence/native display omit them. Their curved source interiors can
 have area despite collapsed corner XYZ, so approximation bounds/refinement still
 apply to them. This representation clarification was reviewed during implementation.
+
+Actual source face165503 passes an original sphere-pole vertex with three source
+coedges; OCCT inserts an extra UV-only pole edge. Zero original degenerate edges
+therefore does not mean zero singular vertices. Preserve the original source
+edge inventory and explicitly reconcile the extra foreign chart connector.
+Owned `ChartClosure(face_id,loop_id,source_vertex_id,incoming_coedge_id,
+outgoing_coedge_id,uv_start,uv_end,kind)` records original traversal direction.
+Retain both actual incoming-end and outgoing-start UV occurrences with one
+physical source vertex. The connector must be at the proven analytic pole/apex,
+map constantly to that vertex and stay within the admitted periodic span.
+Normalized coverage can reverse traversal without changing this provenance.
+No fake original coedge or coordinate-nearness weld is introduced. Source and
+independent owners reviewed this amendment; root accepted before implementation.
 
 Canonical spatial-curve XYZ owns shared boundary positions. Interior positions
 come from source evaluation. Mesh corners retain separate UV/carrier/orientation

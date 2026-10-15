@@ -1,6 +1,7 @@
 #include "scene.hpp"
 #include <array>
 #include <chrono>
+#include <cstdio>
 #include <dlfcn.h>
 #include <filesystem>
 #include <iomanip>
@@ -204,10 +205,12 @@ struct SessionOwner {
     if (token) {
       Error e{};
       Times t;
-      api->close(token, &e, &t);
+      if (!api->close(token, &e, &t))
+        std::fprintf(stderr, "cleanup: %s: %s (row=%lld, native=%d)\n", e.stage,
+                     e.message, static_cast<long long>(e.row), e.native_code);
     }
-    if (plugin)
-      dlclose(plugin);
+    if (plugin && dlclose(plugin) != 0)
+      std::fprintf(stderr, "cleanup: CUDA plugin close failed\n");
   }
 };
 int run(int argc, char **argv) {
@@ -326,8 +329,9 @@ int run(int argc, char **argv) {
   rows.push_back({-1, "session_close", closing.close});
   if (owner.plugin) {
     t = Clock::now();
-    require(dlclose(owner.plugin) == 0, "session_close: plugin close failed");
+    void *plugin = owner.plugin;
     owner.plugin = nullptr;
+    require(dlclose(plugin) == 0, "session_close: plugin close failed");
     rows.push_back({-1, "plugin_close", ms(t)});
   }
   double complete = ms(full);
@@ -356,8 +360,10 @@ int run(int argc, char **argv) {
          "Lambert .20ambient+.70key+.16fill; .55Blinn; roughness "
          "exponent16/32/64/128\nresolve\tlinear average then sRGB; depth/ID "
          "upper-left subpixel\ncomplete_native_wall_scope\tinput decode "
-         "through explicit session/plugin close; excludes final "
-         "metadata/timing file writes and process shutdown\n";
+         "through explicit session/plugin close; excludes retained host "
+         "source/request "
+         "destruction, final metadata/timing file writes and process "
+         "shutdown\n";
   metadata.close();
   require(!metadata.fail(), "output: metadata write failed");
   std::cout << "completed\t" << backend << "\t" << requests.size() << "\t"

@@ -52,3 +52,60 @@ original plane/reversed normal jets, shared edge/opposite winding/offscreen,
 front/coplanar tie/instances/explosion, projected-only rotated normals/mapping,
 and supersample resolve identity. Expanded analytic/failure/multiblock cases and
 independent source review remain. No actual OM10 rasterization has run.
+
+Expanded independent native suite now has nine direct methods, all green on
+CPU1, CPU24 and both P100s. Added original-domain analytic carriers with indirect
+axes, independent rational spline first jets, sphere/cone limiting normals,
+and>512tiles with retained request-size changes. Eight focused process/error
+methods pass Release; applicable CPU methods also passed ASan/UBSan. Root's
+adversarial source review accepted the native geometry/raster ownership and
+caught reused-frame host-buffer destruction outside its wall; moved destruction
+inside that wall. Metadata explicitly separates native close wall from outer
+process exit and host source/request destruction.
+
+Further static self-review fixed secondary cleanup reporting during CLI error
+unwinding/failed CUDA create, and consumes the plugin handle before reporting a
+close error. No success geometry changed. GPU memcheck uses an ignored wrapper;
+its first invocation selected the wrapper directory's nonexistent default plugin,
+so it did not test GPU work. Corrected by passing the actual plugin explicitly
+and reran. Retain the distinction from product failures; no claimed memory result
+comes from the misconfigured attempt.
+
+At root's request independently read the source adapter and relevant OCCT
+BRep_Tool/StepToTopoDS source. Sent geometry owner three findings: silent nearest-
+endpoint parameter swapping; unproven affine continuation brackets when
+SameParameter=false; and missing raw-to-translated actual wire/edge-use inventory
+reconciliation. Owner accepted endpoint diagnostic/removal and noted actual
+source has zero non-SameParameter edges. They will explicitly reject unproven
+maps rather than claim branch recovery, and actual imported-wire reconciliation
+was already added in their newer adapter revision. Geometry owner retains fixes;
+this lane changed no adapter/mesh code. OCCT CurveOnSurface actually reverses
+local edge selection for a reversed face and chooses PCurve2 for a reversed
+closed-surface edge; raw occurrence orientation therefore needs that exact
+source convention, not treating two seam uses as one UV curve.
+
+Final focused native memory result: all nine independent direct methods pass on
+CPU1/CPU24/P1000/P1001. ASan/UBSan runs17 methods:16 applicable CPU methods pass;
+the CUDA-only ownership method is intentionally excluded there and separately
+passes Release and compute-sanitizer. GPU memcheck's14 instrumented processes
+all report zero leaked bytes;13 report zero errors, while the deliberate invalid-
+device fixture reports the expected CUDA API error. That is not presented as an
+all-zero-error run. Removed redundant invalid-device cleanup selection before
+stream creation; its focused rerun now reports exactly one intentional API error,
+zero leaks. The source-arithmetic failure rerun reports zero memory errors/leaks.
+No success-path changes or additional whole-corpus campaign followed.
+
+Independent oracle owner read all native files and accepted geometry/ownership.
+Their one valid stage finding was CPU projected diagnostic copy outside any
+named copy stage (whole wall already included it). Assigned that copy to
+result_download, symmetric with GPU diagnostics; affected project-only source/
+normal mapping case passed CPU24 after rebuild. Native direct review is complete.
+
+Reviewed root's complete render caller, presentation and benchmark driver without
+editing their files. Confirmed source_tables per-definition triangle order matches
+the actual scene writer and native occurrence/primitive flattening; camera view
+packing, source-instance ID decoding and common PNG/SVG path match native bytes.
+Sent three concrete reporting/reproducibility findings: CPU metadata should not
+claim GPU work; resident packed view rows should match corresponding cold view
+bytes, not just scene/software hashes; and the benchmark driver should pin its
+own executed source alongside the render caller. Root owns those changes.
