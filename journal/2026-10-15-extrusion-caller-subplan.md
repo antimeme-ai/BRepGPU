@@ -37,3 +37,11 @@ Reused owned TSV/tree utilities with source pins; native controls/source metadat
 and original exact points are fully exported. Reference uses public actual
 Curve.parameter_range/evaluate and linear_sweep API from pinned source. Root
 sampler source review accepted; integrated greens wait for CPU construction.
+
+Runtime source review found two valid pre-campaign corrections: the complete
+result qualifier already checks/returns profile truth, so remove the redundant
+separate caller profile qualifier. Include the actual post-sweep reference
+source-curve preservation probes in their named preservation+measure cost span,
+rather than leaving them untimed. Both corrected before measurement. Initial
+actual CPU caller returned successful qualified triangle output; final source
+baseline is rerun after these corrections before saved public/campaign records.
