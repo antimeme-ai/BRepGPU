@@ -115,3 +115,17 @@ helper: finite box PASS, coarse sphere measured FAIL, and absent-pcurve source
 preparation failure remain distinct. Nine focused methods now have retained
 greens across the bounded runs; actual whole-watch geometry/query/render and
 complete timing observations remain outstanding and gated by source recovery.
+
+Coordinated the source owner's exact existing qualification input fields for
+prepared query files. Genuine fleet red: a completed owned input fixture with
+valid scene/view/source bytes but no prepared query set incorrectly passed.
+The consumer now requires the source snapshot pin, exact definition file
+inventory and hashes, safe fixed relative paths, no duplicate fields, and final
+source/binary reports. Numerical queries use only these prepared files and
+recheck their hashes afterward; the genuine NVIDIA worker still imports its
+fresh raw neutral source unchanged. Three focused fleet methods pass0.168s:
+the positive prepared-input gate and missing/changed/path/count/duplicate
+sensitivities, the existing owned completion/input gate, and real numerical
+PASS versus measured FAIL versus missing-pcurve capability failure. Actual
+prepared whole-model query integration remains held for source closure and
+root authorization. Red/green logs remain private in context/.

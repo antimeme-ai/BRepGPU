@@ -25,16 +25,44 @@ def qualified_owned_inputs(directory,source_sha256,tolerance):
                      if row['stage']=='complete_nonvisual_qualification')
     require(len(completion)==1 and math.isfinite(float(completion[0]['seconds'])) and
             float(completion[0]['seconds'])>=0,'owned nonvisual qualification is incomplete')
-    inputs={r['field']:r['value'] for r in read_tsv(directory/'inputs.tsv')}
+    input_rows=read_tsv(directory/'inputs.tsv')
+    inputs={r['field']:r['value'] for r in input_rows}
+    require(len(inputs)==len(input_rows),'duplicate owned qualification input field')
     require(inputs['source_sha256']==source_sha256,'owned qualification original source differs')
     require(float(inputs['tolerance_mm'])==tolerance,'owned qualified mesh tolerance differs')
     source_path,scene_path=directory/'source.bgsource',directory/'scene.bgmesh'
     require(digest(scene_path)==inputs['scene_sha256'] and
             digest(directory/'views.bgview')==inputs['views_sha256'],
             'completed owned qualification input bytes changed')
+    require(inputs.get('source_snapshot_path')=='source.bgsource' and
+            inputs.get('source_snapshot_sha256')==digest(source_path),
+            'prepared query source snapshot identity is missing or changed')
     original=load_source(source_path)
     require(original.source_sha256==source_sha256,'completed owned source snapshot differs')
-    return original,source_path,scene_path
+    require(inputs.get('query_source_directory')=='query-source' and
+            inputs.get('query_definition_count')==str(len(original.definitions)),
+            'prepared query source inventory is incomplete')
+    definitions={d.id for d in original.definitions}
+    expected_fields={f'query_definition_{id}_{suffix}' for id in definitions
+                     for suffix in ('path','sha256')}
+    require({key for key in inputs if key.startswith('query_definition_')}==
+            expected_fields|{'query_definition_count'},
+            'prepared query definition fields differ from owned source')
+    query_sources={}
+    for id in sorted(definitions):
+        relative=f'query-source/definition-{id}.brep'
+        path=directory/relative
+        require(inputs[f'query_definition_{id}_path']==relative and
+                path.resolve().is_relative_to((directory/'query-source').resolve()) and
+                path.resolve().is_relative_to(directory.resolve()) and path.is_file(),
+                f'prepared query source #{id} path is missing or escapes qualification')
+        require(digest(path)==inputs[f'query_definition_{id}_sha256'],
+                f'prepared query source #{id} bytes changed')
+        query_sources[id]=path
+    require(all(path.is_file() and read_tsv(path)
+                for path in (directory/'sources.tsv',directory/'binaries.tsv')),
+            'completed owned qualification final source/binary reports missing')
+    return original,source_path,scene_path,query_sources
 
 
 def query_outcome(summary,code,source_face_count,witness_count,tolerance):
@@ -70,7 +98,9 @@ def main(args):
     metadata={r['field']:r['value'] for r in read_tsv(args.dataset/'metadata.tsv')}
     tolerance=float(metadata['chord_height_mm'])
     require(math.isfinite(tolerance) and tolerance>0,'reference requested tolerance invalid')
-    original,owned_source,owned_scene=qualified_owned_inputs(args.owned_qualification,source.source_sha256,tolerance)
+    original,owned_source,owned_scene,query_sources=qualified_owned_inputs(
+        args.owned_qualification,source.source_sha256,tolerance)
+    query_hashes={id:digest(path) for id,path in query_sources.items()}
     require(source.source_sha256==original.source_sha256,'reference/qualified source bytes differ')
     require(source.units_mm==original.units_mm==1.,'reference/qualified millimetre units differ')
     require(source.products==original.products and source.usages==original.usages and
@@ -124,7 +154,7 @@ def main(args):
     for start in range(0,len(query_definitions),args.workers):
         try:
             for d in query_definitions[start:start+args.workers]:
-                command=(str(args.query),'--source',str(args.dataset/'source'/d.filename),
+                command=(str(args.query),'--source',str(query_sources[d.id]),
                     '--mesh',str(paths[d.id]),'--witnesses',str(args.output/'witnesses'/f'definition-{d.id}.bgprobe'),
                     '--tolerance',str(tolerance),'--output-directory',str(args.output/f'query-{d.id}'))
                 log=(args.output/f'query-{d.id}.log').open('wb');stamp=time.perf_counter()
@@ -151,6 +181,8 @@ def main(args):
         else:failed.append(id)
         query_outcomes.append((id,classification,complete,detail))
     tsv(args.output/'query-outcomes.tsv',('definition_id','outcome','complete_numerical_outcome','detail'),query_outcomes)
+    require(all(digest(query_sources[id])==sha for id,sha in query_hashes.items()),
+            'prepared query source bytes changed during numerical queries')
     status='FAIL' if failed else 'PILOT_ONLY' if args.pilot_only else 'PASS'
     summary=(('status',status),('source_sha256',source.source_sha256),
         ('owned_source_sha256',digest(owned_source)),('owned_scene_sha256',digest(owned_scene)),
@@ -159,6 +191,7 @@ def main(args):
         ('source_occurrences',len(assemble(source).occurrences)),('requested_query_definitions',len(query_definitions)),
         ('queried_definitions',completed_queries),
         ('query_capability_status','COMPLETE' if completed_queries==len(query_definitions) else 'INCOMPLETE'),
+        ('query_source_scope','prepared owned-qualification query-source; original unchanged 3D boundary with explicit reconstructed 2D trims'),
         ('query_batch_wall_seconds',time.perf_counter()-query_begin),
         ('complete_qualification_wall_seconds',time.perf_counter()-begin),
         ('failed_definition_ids',','.join(map(str,sorted(set(failed))))),
