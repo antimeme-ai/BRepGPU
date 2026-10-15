@@ -59,20 +59,21 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Predicates, contacts and region classification | Delivered exact CPU material membership for all three owned solids and complete rectangular-face crossing/touch/disjoint/overlap/coincidence | Exact submitted-value truth, every incident face ID, complete closed contact corners and both original UVs; unsupported curved trims explicit | Algebraic witnesses, curved tangent contacts, near-coincidence and certified accelerator filters |
 | Face arrangements and topology construction | Delivered exact CPU rectangular grid plus separated interior circle sections, complete cell/disk/exterior regions and multi-hole boundaries | Complete source-domain region bijection, directed source ranges/maps, ordered loops/twins, all closed incident regions, exact witnesses/UV areas; no coordinate welding | Clipped/tangent/overlapping curves, source holes, general arrangements and cross-face Boolean assembly |
 | Solid operations and history | Delivered owned box-minus-through-cylinder Boolean, assembled on CPU from actual events/arrangements with complete six-kind history | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
-| Feature construction | Delivered strict convex-profile extrusion, full off-axis revolution and complete box-edge circular fillet; analytic offset next | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
+| Feature construction | Delivered strict convex-profile extrusion, full off-axis revolution and complete box-edge circular fillet and signed sharp-cylinder offset | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
 | GPU topology and residency | Delivered owned count/scan/fill of edge-use CSR and an actual mate/face-neighbor reader; per-call device storage | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
 
 Each row is a theme, not one oversized implementation assignment. Rows naming
 several operations are delivered as separate conceptual units. In particular,
-extrusion/revolution/box-edge fillet do not imply analytic offset support; analytic contact
+these narrow extrusion/revolution/fillet/offset families do not imply general feature support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
 Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/chart
 consumer, complete analytic plane/wall intersections, GPU edge-use adjacency
 and exact material/rectangular-face classification, bounded planar arrangements
 and complete canonical trim-aware meshes, carrier interchange and the first
 owned Boolean/history, convex-profile extrusion, full off-axis revolution and a
-complete box-edge fillet are delivered. Analytic offset remains; it needs its own researched design, reviewed plan,
-implementation and qualification.
+complete box-edge fillet and signed sharp-cylinder offset are delivered. This
+completes the planned feature breadth sequence. Every broader family still needs
+its own researched design, reviewed plan, implementation and qualification.
 
 ## First pass across the themes
 
@@ -132,8 +133,12 @@ closed solids with exact affine ancestry and qualified CPU/P100 consumers.
 The [owned full revolution](REVOLUTION.md) adds complete curved periodic
 geometry, source ancestry and same-face seams, qualified on CPU/P100 consumers.
 The [box-edge fillet](FILLET.md) adds exact rounded cap closures, original-plane
-trim maps, complete ancestry and two tangent contact rails. Continue analytic
-offset before broadening or tuning.
+trim maps, complete ancestry and two tangent contact rails. The [signed analytic
+offset](OFFSET.md) completes the feature sequence with sharp-joined curved solids
+and exact original-carrier normal feet, including explicit source extensions.
+The first planned theme beachheads are present; return-pass priorities must retain
+the distinction between general geometry coverage, required community oracles
+and measured integration opportunities.
 At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane

@@ -1,0 +1,19 @@
+field	value
+recipe	odd
+reference	usd-brep
+version	1.0.0
+overall_pass	False
+comparison_stage	source_factory
+offset_attempted	False
+source_manifold	True
+source_reference_volume	1.5707963471414912
+source_analytic_volume_float	1.5707963267948966
+source_volume_absolute_error	2.034659463134858e-08
+source_volume_relative_error	1.2953044442664586e-08
+source_volume_limit	1.5707963267948965e-08
+source_bounds_absolute_error	2.220446049250313e-16
+bounds_world_limit	2e-08
+join	intersection
+extended_offset	True
+self_intersection	True
+alpha	not external corpus qualification

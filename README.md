@@ -32,7 +32,8 @@ actual foreign ASCII USD BRep surfaces into owned CPU/P100 patches with original
 face/chart identities and explicit unsupported outcomes. Trims remain uninterpreted.
 An owned [through-bore Boolean with complete source history](docs/BOOLEANS.md)
 is now delivered. Feature construction is underway: [convex-profile extrusion](docs/EXTRUSION.md)
-[full profile revolution](docs/REVOLUTION.md) and a [complete box-edge fillet](docs/FILLET.md) are delivered; analytic offset is next.
+[full profile revolution](docs/REVOLUTION.md), a [complete box-edge fillet](docs/FILLET.md)
+and [signed analytic offset](docs/OFFSET.md) are delivered.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -93,12 +94,30 @@ BRepGPU evaluator.
 [Owned convex-profile extrusion](docs/EXTRUSION.md) ·
 [Owned full profile revolution](docs/REVOLUTION.md) ·
 [Owned box-edge fillet](docs/FILLET.md) ·
+[Owned signed analytic offset](docs/OFFSET.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Feature construction: signed analytic offsets
+
+An actual cylinder now offsets inward or outward into a closed owned solid,
+with exact changed cap/wall carriers and complete source history. Sharp
+intersection joins preserve two rim circles and the wall's distinct seam uses.
+Original-surface normal feet expose extensions outside the original trimmed faces.
+
+![Actual source and sharp offset boundaries with P100-evaluated samples](results/offset-2026-10-15/costs/outset-cuda-device0-threads1-r1/offset.svg)
+
+All 23 original entities have precise modified images. CPU constructs the feature;
+CPU/both-P100 consumers evaluate its carriers and read actual adjacency. Inward
+results equal erosion in this family; positive sharp joins differ from rounded
+Euclidean dilation. [API/support](docs/OFFSET.md) ·
+[Qualification, complete costs and explicit reference disagreements](results/offset-2026-10-15/REPORT.md).
+This completes the planned extrusion/revolution/fillet/offset breadth sequence.
+Broader geometry, external community qualification and measured integration work remain.
 
 ## Feature construction: a complete source-edge fillet
 
@@ -114,7 +133,7 @@ All four original vertical edges are supported. The result has 10 vertices,
 76 output origins. CPU constructs the feature; CPU/both-P100 native consumers
 sample its carriers and read actual adjacency. Caps meet the band sharply.
 [API/support](docs/FILLET.md) · [Qualification, foreign comparisons and complete costs](results/fillet-2026-10-15/REPORT.md).
-Analytic offset is the next breadth unit, before integration and tuning.
+The [signed offset](docs/OFFSET.md) completes the planned feature breadth sequence.
 
 ## Feature construction: a full profile revolution
 
@@ -131,7 +150,7 @@ CPU/both-P100 consumers evaluate actual geometry, oriented normals and adjacency
 [API/support](docs/REVOLUTION.md) · [Qualification and costs](results/revolution-2026-10-15/REPORT.md).
 The first foreign triangle agrees on bounds and boundary witnesses; its volume
 comparison remains outside the declared limit and is recorded as a failure.
-The [box-edge fillet](docs/FILLET.md) is also delivered; analytic offset is next.
+[Box-edge fillet](docs/FILLET.md) and [signed offset](docs/OFFSET.md) are also delivered.
 
 ## Feature construction: an actual profile extrusion
 
@@ -148,7 +167,7 @@ consumers sample its carriers and read actual adjacency. Independent integer-
 square-root intervals qualify non-axis unit normals; tiny edges and 32-vertex
 profiles have direct fleet cases. [API/support](docs/EXTRUSION.md) ·
 [Qualification, foreign comparisons and complete costs](results/extrusion-2026-10-15/REPORT.md).
-The [box-edge fillet](docs/FILLET.md) is also delivered; analytic offset remains a separate feature unit.
+[Box-edge fillet](docs/FILLET.md) and [signed offset](docs/OFFSET.md) are also delivered as separate feature units.
 
 ## Owned solid operations: a through-bore cut with history
 
