@@ -777,3 +777,79 @@ No rounded transformed points or approximate filter enters. Direct anisotropic
 quad A(0,0),B(2,0),C(2,1),D(.5,2) has determinant1.5*Lu^2-4*Lv^2, so the selected
 diagonal must change between metrics(1,1) and(2,1). Existing exact area/chain,
 constraint, degeneracy and actual-source tests apply unchanged.
+
+### Source-owned linear natural spline-boundary recovery
+
+Four new source failures172494/172983/173009/173010 have foreign U excursions
+1.17e-13..1.52e-13 outside original[0,4], exceeding the unchanged128ULP grade
+1.136868e-13. Original carriers4415/4747/4760/4761 have clamped degrees(2,1),
+shape(6,2), V[-.006,.01], unit weights. First/last U columns are exact linear
+source isocurves in V: each pair has identical XZ and Y=.19/.35. Eight original
+LINE side occurrences have original direction exactly(0,1,0), and original
+LINE coordinates and declared vertices share those saved column XZ exactly.
+Adjacent original quadratic/cubic profile curves meet these same source vertices.
+The pcurve was foreign reconstruction; no128ULP widening is selected.
+
+Admit only this source-derived capability: a clamped natural U endpoint, Vdegree1
+with exactly two poles, two distinct V knots of end multiplicity(2,2), and
+equal positive homogeneous weights on that endpoint
+column, hence an exact affine map P(V). Compute its saved coefficients with
+Fractions, retaining original U/V knots. For an original spatial LINE, require
+its original affine origin/direction to lie exactly on this column's line under
+rational arithmetic, both declared original vertices also on that line, and
+all active original/canonical endpoint V inside the original global V range.
+This establishes the whole LINE map, not sampled coincidence. Recover V from
+the exact rational orthogonal scalar projection onto the saved column. Original
+LINE and original vertex positions are unchanged. If multiple columns fit,
+choose only the uniquely nearest original U endpoint to this occurrence's raw
+branch seed, within half the original U span; reject ambiguity. Nonmatching
+source carriers/curves retain prior admission and global recovery rules.
+
+At an original vertex incident at this original loop joint to such an admitted
+original LINE occurrence, the same exact column inverse also supplies the adjacent
+original non-LINE
+coedge's endpoint UV. Its source identity, not a nearby position, joins the two
+occurrences. Preserve both raw pcurve values and original t/s. Emit existing
+JointRecovery with kind `spline_boundary_vertex_inverse`, in original traversal,
+for these source joints even when their foreign UV gap is numerically small.
+Resolve the incident original LINE occurrence and its raw branch at this joint;
+never store a single UV per face/physical vertex. Distinct U0/U4 seam occurrences
+remain distinct, and an unresolved branch conflict rejects the new family.
+BoundaryOccurrence kinds are `spline_boundary_generator` for the LINE and
+`spline_boundary_vertex_inverse` for its neighboring original endpoint. Natural
+column membership and an incident verified original LINE are independently
+recoverable from source IDs; no invented source edge or generic spline inverse.
+Corrected S(UV) versus original C(t)/canonical vertex must still satisfy the
+unchanged selected0.001mm source residual. Exact saved-value arithmetic does
+not remove the existing explicit floating evaluation limitation.
+
+The owned LINE UV map is affine in original t; its second derivative is zero.
+Its trim-chord budget includes canonical endpoint perturbation as for the other
+owned affine generators. For adjacent raw-pcurve edges retain the existing raw
+UV chord bound and add the maximum metric-weighted source-endpoint UV
+perturbation. Original spatial-curve chord bounds and independent source/world
+checks remain. Keep all source knots; no reason to drop foreign knots in this
+actual degree1-guide family. Actual corrected UV must be inside original knots.
+
+For foreign UV outside the original source domain, never evaluate S at that
+invalid input. Explicit source-boundary recovery may replace it only after the
+above source proof; record its count and U/V shifts separately. The foreign
+carrier residual maximum covers only admitted original-domain/128ULP-recovered
+foreign values, with an explicit skipped-outside-domain count. Raw pcurve UV
+still remains in every occurrence. Generic outside-grade inputs continue to
+reject. Existing full UV-domain/physical/native qualification applies unchanged;
+no physical collapse exemption or quality widening.
+
+Implementation pins one source column per original coedge using the whole raw
+branch guide U hull: exact affine endpoint values for a LINE guide, or positive
+homogeneous control hull for a Bezier/Bspline guide. The entire hull must be
+strictly within half the natural U extent of exactly one admitted column.
+Neighbor recovery resolves directed endpoints of the immediately adjacent
+original LINE occurrence at that original loop joint. Nonperiodic recovered
+pcurve shifts only; no wider periodic-spline support. Exact Fraction V remains
+in owned UV; native rounding uses the existing separate bound. The metric
+`foreign_uv_unevaluated_count` counts invalid foreign samples excluded from the
+foreign carrier residual maximum; U/V displacement maxima are coordinate shifts,
+not evaluations of an invalid source extension. Four actual cases now pass21/
+17/19/17 cells; independent source-column/joint/domain checks agree. Whole-source
+closed solids and actual native consumption remain separate pending obligations.

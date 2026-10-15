@@ -273,3 +273,34 @@ geometry is identical. Stop remaining Fraction-only focused queue after this
 baseline; review arithmetic amendment, implement, reuse25 direct methods with
 anisotropic determinant assertion, then all seven cap sources at unchanged
 quality/default20. Complete read-only old scan continues independently.
+
+Next source-boundary subplan (no production yet): exact linear natural spline
+columns, verified original LINE affine coefficient identity and incident original
+vertex inverse close four actual foreign-overhang cases. Written study specifies
+admission, raw retention, new recovery-kind strings in existing occurrence/joint
+records, original-domain output and chord endpoint perturbation. Independent
+source inspection confirms all eight actual LINE occurrences satisfy the exact
+coefficient conditions. Keep128ULP generic rule unchanged.
+Meaningful fleet reds: authored clamped tensor column+original LINE source maps
+recover exact UV; off-column LINE, unequal weights and wrong branch reject;
+adjacent original curve endpoint shares column inverse only through original
+vertex/incident LINE. Existing generic out-of-grade negative remains. Then all
+four actual faces, independent schema/source/domain checks and code review.
+Current connectivity checkpoint remains separate and production files stable
+until root stages it and both reviewers accept this extension design/plan.
+
+Both design/plan reviews accepted natural-boundary recovery with explicit V
+clamping and fixed coedge branch. Two genuine fleet reds observed (missing
+recovery; wrong-branch rejection absent). Implemented exact saved-column inverse,
+whole original LINE coefficient identity, original-loop directed adjacency,
+exact Fraction V and mandatory original joint records. Non-LINE neighbor scope
+remains narrow. Complete raw branch guide U hull fixes one column per coedge;
+no pointwise natural-column switch. Raw outside admitted recovery is never
+source-evaluated; `foreign_uv_unevaluated_count` names the excluded metric samples.
+Root and independent code reviews accepted; added source coedge/carrier and
+face/loop diagnostic IDs per root review.27 focused methods pass0.823s.
+Actual cases172494/172983/173009/173010 now21/17/19/17 cells in0.054/0.023/0.026/
+0.023s. Corrected source residual maximum5.3441e-14mm; four original joint records
+each. Independent original-column/endpoint/joint and exact domain checks pass
+all four; five existing closed-solid/native integration methods pass0.533s.
+No generic128ULP change, source entity omission, collapse exemption or image.

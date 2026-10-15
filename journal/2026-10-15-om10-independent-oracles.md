@@ -239,3 +239,39 @@ Lawson orientation tests use cached integer coordinates. Predicate signs/zeros,
 queue, constraints and geometry are unchanged. The existing25focused methods
 pass with anisotropic and rational-translation assertions. Actual seven default
 cap cases remain the performance/geometry observation; no broader campaign.
+
+Independently diagnosed four final global-U foreign recovery failures. Actual
+carriers have clampedU endpoints and degree1 two-control unitweight V columns.
+Eight original sideLINE occurrences have exactly axial directions and original
+saved X/Z equal to the source endpoint columns. Exact original-knot affine
+inversion reproduces sampled XYZ with zero comparison residual; source LINE and
+boundary maps are affine. Adjacent degree2/3 edge endpoints share those original
+vertices and need explicit joint recovery too. Generic128ULP grade remains;
+typed source-coefficient recovery design is under review, no production edit.
+Saved original data/family restrictions in the spline-boundary study.
+
+Reviewed written natural-spline-boundary design/subplan ACCEPT with explicit V
+clamping requirement: degree1/two controls alone does not imply affine parameter
+mapping over the first/last knots for a nonclamped vector. Actual V has exactly
+two knots with multiplicities2,2. Source LINE coefficient/vertex identity,
+unique raw U branch, adjacent original-vertex/joint provenance, unchanged generic
+ULP rejection and original-world/chord budgets are coherent. Await schema/code
+phase; no global grade or source residual change.
+
+Root approved clamped natural-boundary source family and existing oracle extension.
+Implemented independent coefficient/column/LINE proof, fixed full-guide branch,
+exact affine UV, same-original-vertex adjacent LINE recovery and mandatory typed
+JointRecovery. Generic128ULP rejection remains for pcurve recovery; source-owned
+output stays strictly within original knots and raw outside-domain S is skipped
+with explicit count. Sourceowner review and affected greens pending. No new
+framework, source-coordinate edit or physical collapse allowance.
+
+Sourceowner27direct methods pass; independent actual four-face output checks
+passed natural-column profile/original-vertex recovery, all four retained joint
+records per face and complete exact positive UV chains. Current cell counts are
+21/17/19/17 for172494/172983/173009/173010. Owned corrected residual maximum
+1.78e-15mm; raw outside-U counts3/2/2/1 were retained without invalid surface
+evaluation. These open-face checks do not establish closed solids. Existing five
+closed geometry/native integration methods passed0.533s. Sourcefamily code and
+oracle review accepted after directed joint, nonzero LINE/nonperiodic guards and
+narrow non-LINE neighboring endpoint scope. Oracle synced/stable for whole run.

@@ -262,3 +262,22 @@ the first integer stage took34.6s. These concurrent development observations
 are not headline benchmarks. Remaining rings/spirals and complete source remain
 pending. Publish this coherent geometry checkpoint before the separately
 studied spline-boundary recovery extension; keep all source and quality guards.
+
+All five initial ring failures and both cubic spiral failures pass the default
+quality with the reviewed connectivity stage; spiral171042/171044 produce4502/
+4478 cells. A later ring is the same diagnosed family and is checked separately.
+Four foreign-global-U failures prompted a new source-owned spline-boundary
+capability, with design/subplan and two code reviews before delivery. Exact
+original tensor endpoint columns and original LINE coefficients prove an affine
+whole-edge map; adjacent original vertices recover through their actual loop
+joint's verified LINE occurrence. Fixed coedge branch selection preserves seam
+identity. Generic128ULP rejection remains unchanged. Invalid foreign-domain S
+is never evaluated; excluded foreign residual inputs have an explicit count.
+
+27 focused methods pass. All four actual source faces pass in17–21 cells with
+four explicit original joint records each; corrected world residuals are below
+5.35e-14mm. Independent source-profile, joint and complete positive UV-chain
+checks pass all four outputs, and five affected closed geometry/native methods
+pass. Root requested source carrier/coedge/face/loop IDs on the new failures;
+integrated without geometry changes. Source and oracle files are ready for a
+fresh whole-source integration run. No actual watch rasterization has occurred.
