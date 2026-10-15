@@ -50,3 +50,32 @@ production correction yet; parent will checkpoint the plan/red first.
 V3 stopped before any face100 checkpoint and is NOTPASS. Root's interrupted SSH
 session returned255 after TERM; the owned process was separately confirmed gone.
 Do not describe it as a normal143 exit or completed geometry qualification.
+
+Implemented the accepted after-read explicit-empty assignment and supplied/
+empty checks before and afterTransfer in both isolated adapters, with truthful
+v2 metadata and diagnostics. No binary schema or source gate changed. Both
+fleet targets rebuilt; reference4 methods GREEN0.321s and existing source-reader
+5 GREEN0.004s. Root and independent owner reviewed the narrow correction:
+ACCEPT. Existing product source build's unrelated prior indentation warnings
+remain; the reference target is warning-free.
+
+Fresh reference export `context/reference-source-no-processing-v1` completes
+107 definitions/9,162 faces/138 products/196 usages. All source ID inventories,
+original solid→shell ordered face words, carrier IDs/raw senses, styles/face
+styles and product/usage metadata match the original/direct reviewed metadata.
+The existing independent original placement check has maximum2.22e-16mm; all
+166 original DFS paths/world placements pass with maximum1.78e-15mm. Native
+files total7,380,140bytes, largest1,200,332bytes, below the official input cap.
+Phase observations are read2.6002s, transfer1.0605s, graph0.1291s, write0.1503s;
+these are a nonbenchmark export observation, not a watch comparison. Actual
+flags are supplied/zero before and afterTransfer, and all original/direct/
+actual-solid face orientation gates pass. Qualification log is
+`context/reference-source-no-processing-qualification-v1.txt`.
+
+Fresh owned extraction fails closed before publishing its snapshot:
+`missing recovered UV at coedge109547`, face164974, original edge83676 and
+circle5435 on cylinder14336 radius1.275mm, in definition1713. Log is
+`context/om10-source-no-processing-v1.txt`. No corrected whole owned snapshot,
+raw-carrier qualification or V4 is claimed. Investigating actual missing-pcurve
+families and existing SameParameter states before a separately reviewed narrow
+source conversion. No mesher change or implicit FixShape restoration.

@@ -60,6 +60,27 @@ same authorized OCCT calls but is checked independently through original entity
 and serialized geometry/placement output. This keeps V3, its unchanged source
 adapter and later pilot checks valid without a gratuitous owned full-mesh rerun.
 
+Root accepted the complete design/subplan and checkpointed it. Genuine authored
+fleet red used the two-definition box/cylinder STEP before exporter code. New
+standalone target and immutable native manifest reader are implemented; four
+direct methods check actual V4 readback coordinates, original/reversed face
+orientation, absent triangulation/edge polygons, graph/hash identity and bounded
+malformed/path/unit/write failures. Independent NVIDIA producer also consumes
+that authored source directly, retaining genuine binary64 corner output.
+
+The actual-solid face orientation review exposed the old pre-read processing
+flag bug shared with the product adapter. The separately reviewed correction is
+recorded in `2026-10-15-step-shape-processing-subplan.md`. Actual after-read
+no-processing source export now passes every original/direct/solid orientation
+gate and complete original107/9,162/166 ID/graph/placement checks. Root and
+independent code reviews ACCEPT; reference direct4 GREEN0.321s after correction.
+Fresh original reference inputs are `context/reference-source-no-processing-v1`;
+7,380,140bytes total, largest1,200,332bytes, no compound or skipped definition.
+Full qualification details and finite placement grades are in the correction
+journal. No actual watch raster or benchmark. The fresh owned snapshot remains
+blocked on missing foreign pcurves; this source export's success is not a claim
+that owned full qualification or the whole watch delivery is complete.
+
 Root design/plan review ACCEPT after reading the complete source/serialization,
 manifest and single-import design. Implementation may proceed after meaningful
 fleet red. Distinguish source identity from embedded run timings and keep all
