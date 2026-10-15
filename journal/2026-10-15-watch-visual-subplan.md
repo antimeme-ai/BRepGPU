@@ -63,3 +63,21 @@ presentation, and records camera basis/material/light parameters. Oblique hero
 and near-top views use unchanged source coordinates and thickness. All three
 sources AST-parse locally; no product/test/render execution has been performed
 by this owner. Fleet execution remains serialized under root coordination.
+
+## Actual first-image correction
+
+Root inspected the first actual image and identified visible coincident-surface
+speckles: lower bridge top and escape-lug tops shared world Z=.405, while
+overlapping ruby/seat bores shared the same cylindrical surface. Root also
+observed the lower chassis entering the footer. These are actual scene/display
+findings, not a new geometry family or a new certification target.
+
+Moved the actual lower-bridge source origin Z from.28 to.32. Moved bearing-seat
+source offsets from-.09 to-.125 so their endcaps meet the ruby collars without
+overlapping their equal-radius cylindrical wall bands. Shifted display center
+and guide center from(900,815) to(900,740), reduced hero display scale410→360,
+and retained top scale385. No source geometry is anisotropically scaled or
+reconstructed by display. All three source ASTs pass. Root will perform one
+bounded actual-caller rerun, requalifying updated source parts, followed by
+image inspection; no extra test campaign is indicated by these recipe/camera
+changes. This owner has performed no geometry/render execution locally.

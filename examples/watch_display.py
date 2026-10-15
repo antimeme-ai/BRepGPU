@@ -36,7 +36,7 @@ def render(directory,parts,*,name,azimuth,elevation,scale=410.):
     """Draw every actual indexed facet; largest interpolated view Z wins."""
     directory=Path(directory);basis=_camera(azimuth,elevation)
     light=_unit((-.35,.50,.79));half=_unit((light[0],light[1],light[2]+1))
-    center=(900.,815.)
+    center=(900.,740.)
     depth=array('d',[-math.inf])*(WIDTH*HEIGHT);pixels=bytearray(WIDTH*HEIGHT*4)
     count=0
     for recipe,mesh,reader in parts:
@@ -82,7 +82,7 @@ def render(directory,parts,*,name,azimuth,elevation,scale=410.):
     svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1500" viewBox="0 0 1800 1500">
 <defs><radialGradient id="bg" cx="48%" cy="50%" r="65%"><stop stop-color="#1b303b"/><stop offset="1" stop-color="#070e18"/></radialGradient></defs>
 <rect width="1800" height="1500" fill="url(#bg)"/>
-<g fill="none" stroke="#89aab4" opacity=".11"><circle cx="900" cy="815" r="640"/><circle cx="900" cy="815" r="660"/><path d="M200 815H1600M900 145V1460"/></g>
+<g fill="none" stroke="#89aab4" opacity=".11"><circle cx="900" cy="740" r="640"/><circle cx="900" cy="740" r="660"/><path d="M200 740H1600M900 70V1410"/></g>
 <image width="1800" height="1500" href="data:image/png;base64,{encoded}"/>
 <g font-family="sans-serif"><text x="70" y="60" fill="#8aaab6" font-size="18" letter-spacing="5">ANTIMEME-AI / BRepGPU / OWNED GEOMETRY</text>
 <text x="65" y="133" fill="#f3e7d5" font-size="62" letter-spacing="3">OPENWORK / STUDY 01</text>

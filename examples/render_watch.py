@@ -173,7 +173,7 @@ def main(args):
     tsv(args.output_directory/'timings-parts.tsv',('part','source_and_construction_ms','mesh_ms','indexed_and_history_reader_ms',
         'construct_to_consumed_ms','independent_qualification_ms','part_filesystem_export_ms'),timings)
     assembly_end=time.perf_counter_ns();render_times=[]
-    for name,az,el,display_scale in (('hero',-16.,57.,410.),('top',0.,90.,385.)):
+    for name,az,el,display_scale in (('hero',-16.,57.,360.),('top',0.,90.,385.)):
         start=time.perf_counter_ns();scene=render(args.output_directory,parts,name=name,azimuth=az,elevation=el,scale=display_scale)
         render_times.append((name,(time.perf_counter_ns()-start)/1e6))
         tsv(args.output_directory/(name+'-scene.tsv'),('field','value'),scene)

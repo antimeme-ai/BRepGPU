@@ -52,7 +52,7 @@ def recipes():
     add('upper-bridge','off-center pierced upper support','silver',bridge,
         (-.10,.87,.43),1.,cutter=.5,offset=(.24,0.))
     add('lower-bridge','off-center pierced lower support','blue',bridge,
-        (.18,-.94,.28),1.,cutter=.5,offset=(-.28,0.))
+        (.18,-.94,.32),1.,cutter=.5,offset=(-.28,0.))
     wheels=(('barrel',(-.56,.40,.02),.43,32,.5,'gold'),
             ('center-wheel',(.19,.48,.10),.335,28,.5,'brass'),
             ('third-wheel',(.57,-.055,.19),.265,24,.5,'gold'),
@@ -85,7 +85,7 @@ def recipes():
         add(f'bearing-{i}','pierced ruby-colored bearing study','ruby',polygon(.15625,16),
             position,.5,cutter=.25)
         add(f'bearing-seat-{i}','separate metallic bearing seat','silver',polygon(.19,16),
-            (position[0],position[1],position[2]-.09),.5,cutter=.25)
+            (position[0],position[1],position[2]-.125),.5,cutter=.25)
     # Repeated bright fasteners and dark radial indexes sharpen the outer silhouette.
     for i in range(12):
         a=2*math.pi*i/12
