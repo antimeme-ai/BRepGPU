@@ -471,3 +471,65 @@ Lv=.04533651339 give metric charges8.148655e-8,3.660791e-8,1.088336e-5,
 hull is wholly inside its original interval. These are finite diagnostic
 observations and conservative coefficient-metric calculations, not proof of
 exact original natural-boundary identity.
+
+### Follow-up: native evaluation rounding at a proven in-domain coefficient hull
+
+Fresh actual source/query attemptv4 passes170920, then fails at170932/4259/use143134.
+A read-only original-source probe reproduces the selected nonrational B-spline:
+all25 V coefficients equal original Vmin=-1.7889624832941899, the other U
+coefficient hull is[0,1], and the original active interval remains
+[0,1.3925571192667849]. At t=0.08703481995417406 the native evaluator returns
+(.062521822147424355,-1.7889624832941902), one ULP below Vmin. Samples5,6,10,15
+show the same one-ULP constant-coordinate escape. This is finite evaluation
+rounding of a mathematically in-domain positive basis; it does not justify
+admitting an outside coefficient hull or changing source coefficients.
+Pinned OCCT8.0.1 commit b8f597c677811d1f9f4d8a97f5ae2825c0353a42 explains
+this observation: `src/FoundationClasses/TKMath/BSplCLib/BSplCLib.cxx`, `Eval` for
+dimension2 forms a knot-ratio weight X, computes Y=1-X and sums separately rounded X*coordinate
+and Y*next_coordinate; it does not preserve a nonbinary constant through a
+subtraction-based interpolation. `BSplCLib_CurveComputation.pxx` routes
+nonrational D0 through Eval and CoordsToPointDirect. The128ULP rule below is a
+fixed recovery admission, not a proved global bound on this foreign evaluator.
+
+A private read-only per-face run of the current helper covers all635 original
+spline faces:630 pass and5 fail.170932/143134 and170934/143140 fail the selected
+source-chart finite domain probe;171042/143630,171044/143642 and172417/151423
+fail the final query finite domain probe. The diagnostic publishes no source
+or query bytes and is not whole-solid qualification: it does not exercise
+cross-face support aliases or frozen parent ownership.
+
+Selected correction, subject to review: use one bounded finite-probe recovery
+for spline UV values only after proving the active nonrational, nonperiodic
+B-spline coefficient hull lies inside the original global carrier rectangle.
+The conic selected candidate already meets this condition. The final query
+domain operation has inspected/corrected every active coefficient before final
+correspondence, but the finite checker should verify the hull precondition
+directly rather than depend on call order. Copy/segment the pcurve to the saved
+original active range for this check; do not attach or alter that copy. Leave
+unrelated analytic carriers and all source geometry unchanged.
+
+For a finite native Value(t) outside a global side, accept recovery to that
+original side only within unchanged128*ulp(max(1,abs(lo),abs(hi))) on the axis;
+larger escapes reject. Evaluate the finite selected C/S residual at the
+recovered in-domain UV, retaining the unchanged .001mm source grade. This is a
+bounded numerical probe rule with a positive-basis domain precondition, not a
+new chart approximation, projection, coefficient edit, or extrapolation bound.
+The raw native pcurve, knots, weights, original t and IDs stay unchanged.
+
+This follows the existing owned mesher `_recover_global_uv`, which already
+recovers native UV at original global sides with that grade and records the
+actual metric-weighted recovery shift. Its later `_uv_rounding_bound` separately
+charges actual exact-to-binary64 corner conversion in the final mesh error sum.
+Neither mechanism is replaced or credited to this source finite-probe rule.
+Source-chart and query coefficient perturbations retain their existing
+cumulative tol/8 admission; this unit does not count finite evaluator rounding
+as another coefficient deformation or claim a whole-curve world-error bound.
+Actual owned mesh residual/rounding checks remain required at whole mesh time.
+
+Add a literal nonbinary constant-coordinate tensor-plane/native B-spline
+fixture that first reproduces the strict finite-check failure, while retaining
+the existing outside-hull beyond-grade rejection. Test exact preserved raw/query
+coefficients, original t and literal spatial C(t), and recovered finite residual.
+Then apply the one shared finite-probe recovery in the conic candidate check and
+final spline correspondence, run focused checks and peer review, and perform
+one fresh actual complete source/query attempt before any full mesh go.

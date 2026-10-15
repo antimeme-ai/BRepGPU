@@ -219,3 +219,25 @@ coedge10 unsupported query natural-domain escape,0.017s, retained in
 radius/t/literal C(t), raw and query selected side, full physical word and
 rejection of a larger bulge beyond allocation. Production is unchanged at this
 red checkpoint; implementation follows only this reviewed source approximation.
+
+The reviewed shared helper passes twelve focused source-UV/source-reader methods
+in0.368s. The new literal conic boundary method also passes ASan/UBSan in0.145s
+using the existing sanitizer target and OCCT build, without suppressions. A
+durable fresh actual source/query attemptv4 passes the previous170920 case but
+stops at170932/carrier4259/coedge143134: selected source UV leaves the original
+domain. No complete source snapshot is published, so complete original-source
+and assembly oracles and old/new delta have not run. The failed conversion is
+retained privately; exact selected coefficient/evaluation values are under
+read-only investigation before selecting any further production change.
+
+Read-only170932 values identify one-ULP native constant-coordinate evaluation
+rounding with exact in-domain25-control hull and unchanged original active t.
+A private635-spline-face diagnostic finds630 passes and5 finite-domain failures
+(170932,170934 selected chart;171042,171044,172417 final query). It writes no
+source or query files and does not replace whole-solid alias/ownership checks.
+The study now proposes an unchanged128ULP finite-probe recovery only after an
+explicit positive nonperiodic active B-spline in-domain hull check, without
+changing stored curves or coefficient admission. An authored nonbinary constant
+coordinate fixture must reproduce red before implementation. Root/peer design
+review is pending; production remains unchanged. Owned mesher recovery metrics
+and final actual UV rounding charges remain separate and required.
