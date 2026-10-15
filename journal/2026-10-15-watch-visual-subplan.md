@@ -34,3 +34,32 @@ meshing, independent checks, export and CPU rendering get separate timings.
 Read the saved images and records; fix actual output/code defects, then rerun
 affected work only. Root reviews actual output and source before publication.
 Stop at these direct obligations; no broad benchmark/certification campaign.
+
+## Implementation checkpoint
+
+Root accepted all design/plan reviews and reported genuine missing-API red
+before implementation. Added the three agreed files. Every part uses its own
+actual original source Frame and namespace; this avoids a second instance
+transformation layer. Radial lugs remain individually named closed solids.
+The scene includes an off-center bore in each long convex bridge, a large
+central opening in the blue chassis, a barrel/train and open balance assembly.
+
+Root source review caught short-cutter equality in several initial recipes:
+scale.25 equals height.25×feature scale1 and would not cut fully through.
+Changed those actual cutter recipes to scale.5, still strictly inside their
+convex profiles. No admission widening or tolerance repair. API owner and
+oracle owner confirmed result/history/qualifier fields directly.
+
+Caller uses world tolerance1/256 and max quarter segments64, checks actual
+bindings, reads ordered immediate/extrusion path objects to original records,
+then independently qualifies each actual produced mesh once. Exports per-part
+original profile, cutter packed/source tables, actual topology/controls,
+immediate/composed histories, mesh leaves/UVs, PLY and inventory. Aggregate PLY
+retains part and source-face IDs. Source hashes span actual Python inputs.
+
+Display reads actual rounded indexed positions and geometric facet normals,
+performs opaque CPU depth tests, writes transparent geometry PNG and SVG
+presentation, and records camera basis/material/light parameters. Oblique hero
+and near-top views use unchanged source coordinates and thickness. All three
+sources AST-parse locally; no product/test/render execution has been performed
+by this owner. Fleet execution remains serialized under root coordination.
