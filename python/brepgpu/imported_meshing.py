@@ -433,7 +433,11 @@ def _angular_trim_bound(curve,carrier,a,b,seed_a,seed_b,xyz_a,xyz_b,metric):
     midpoint=evaluate_curve(curve,(a+b)/2);q,cov=_frame_coordinates(carrier,midpoint)
     xx,yy,xy=_dot(cov[0],cov[0]),_dot(cov[1],cov[1]),_dot(cov[0],cov[1])
     op=math.sqrt((xx+yy+math.hypot(xx-yy,2*xy))/2)
-    b1,b2=op*speed,op*acceleration;rho=math.hypot(*q[:2])-b1*dt/2
+    b1,b2=op*speed,op*acceleration
+    if curve.kind==1:
+        direction=curve.frame[3:6]
+        b1=math.hypot(_dot(cov[0],direction),_dot(cov[1],direction));b2=0.
+    rho=math.hypot(*q[:2])-b1*dt/2
     if not math.isfinite(rho) or rho<=0:return math.inf
     variation=b1*dt/rho
     if variation>=math.pi:return math.inf
@@ -737,6 +741,68 @@ def _triangulate(loops,points):
     return triangles
 
 
+
+def _improve_connectivity(triangles,points,boundary_edges,metric):
+    """Owned strict Lawson flips; fixed vertices and source constraints survive."""
+    from collections import deque
+    if len(metric)!=2 or any(not math.isfinite(x) or x<=0 for x in metric):
+        raise ValueError('connectivity requires finite positive metric')
+    exact={i:tuple(Fraction(x) for x in p) for i,p in points.items()}
+    denominators=tuple(math.lcm(*(p[k].denominator for p in exact.values())) for k in range(2))
+    exact={i:tuple(p[k].numerator*(denominators[k]//p[k].denominator) for k in range(2)) for i,p in exact.items()}
+    rational_weights=tuple(Fraction(metric[k])**2/denominators[k]**2 for k in range(2))
+    common=math.lcm(*(w.denominator for w in rational_weights))
+    weights=tuple(w.numerator*(common//w.denominator) for w in rational_weights)
+    def orientation(a,b,c):
+        ax,ay=exact[a];bx,by=exact[b];cx,cy=exact[c]
+        return (bx-ax)*(cy-ay)-(by-ay)*(cx-ax)
+    active=list(triangles);incidence={}
+    def edges(tri):return tuple(tuple(sorted((a,b))) for a,b in zip(tri,tri[1:]+tri[:1]))
+    def insert(tid,tri):
+        if len(set(tri))!=3 or orientation(*tri)<=0:
+            raise ValueError('connectivity requires positive triangles')
+        for edge in edges(tri):
+            owners=incidence.setdefault(edge,set());owners.add(tid)
+            if len(owners)>2:raise ValueError('nonmanifold connectivity edge')
+    for tid,tri in enumerate(active):insert(tid,tri)
+    pending=set(incidence)-set(boundary_edges);queue=deque(sorted(pending))
+    flips=0;limit=8*len(points)**2
+    while queue:
+        edge=queue.popleft();pending.remove(edge)
+        owners=incidence.get(edge,())
+        if edge in boundary_edges or len(owners)!=2:continue
+        left,right=sorted(owners);old=active[left];other=active[right]
+        for j in range(3):
+            a,b,c=old[j],old[(j+1)%3],old[(j+2)%3]
+            if tuple(sorted((a,b)))==edge:break
+        d=next(i for i in other if i not in edge)
+        if len({a,b,c,d})!=4:continue
+        if orientation(b,a,d)<=0:continue
+        replacement=((c,d,b),(d,c,a));diagonal=tuple(sorted((c,d)))
+        if diagonal in incidence:continue
+        if any(orientation(*tri)<=0 for tri in replacement):continue
+        # Exact integer determinant = saved-UV determinant * positive W*Du*Dv.
+        # Common denominators change arithmetic only, preserving exact zero/sign.
+        delta=[tuple(x-y for x,y in zip(exact[i],exact[d])) for i in (a,b,c)]
+        lift=[weights[0]*x*x+weights[1]*y*y for x,y in delta]
+        (ax,ay),(bx,by),(cx,cy)=delta
+        determinant=(lift[0]*(bx*cy-by*cx)+lift[1]*(cx*ay-cy*ax)+lift[2]*(ax*by-ay*bx))
+        if determinant<=0:continue
+        if flips>=limit:raise ValueError('connectivity flip work cap exhausted')
+        flips+=1
+        affected=set(edges(old))|set(edges(other))
+        for tid,tri in ((left,old),(right,other)):
+            for e in edges(tri):
+                incidence[e].remove(tid)
+                if not incidence[e]:del incidence[e]
+        for tid,tri in zip((left,right),replacement):active[tid]=tri;insert(tid,tri)
+        affected.update(edges(replacement[0]));affected.update(edges(replacement[1]))
+        for e in sorted(affected):
+            if e not in boundary_edges and e in incidence and e not in pending:
+                pending.add(e);queue.append(e)
+    return active
+
+
 def _mapped_parameter(source,edge,coedge,t,carrier,quality):
     if coedge.parameter_map_kind==1:return t
     pairs=coedge.parameter_map
@@ -1002,6 +1068,9 @@ def mesh_imported(source,quality=None,*,progress=None):
                 raise ValueError(f'face {face.id}: hole outside source outer boundary')
         try:initial=_triangulate(node_loops,points)
         except ValueError as exc:raise ValueError(f'face {face.id}: {exc}') from None
+        if any(_surface_error(carrier,[points[i] for i in tri],derivative_cache)>quality.tolerance_mm*.75 for tri in initial):
+            try:initial=_improve_connectivity(initial,points,boundary_edges,metric_cache[carrier.id])
+            except ValueError as exc:raise ValueError(f'face {face.id}: {exc}') from None
         active={i:(tri,0) for i,tri in enumerate(initial)};next_tri=len(active)
         edge_incidence={}
         def add_incidence(tid,tri):
@@ -1041,7 +1110,11 @@ def mesh_imported(source,quality=None,*,progress=None):
                 uv=_positive_midpoint(points[a],points[b],opposite)
                 new_level=1+max(levels[a],levels[b])
                 try:_guard_carrier_refinement(math.sqrt(float(max(candidates)[0])),metric_scale,quality.max_refinement,node-initial_node_count)
-                except ValueError as exc:raise ValueError(f'face {face.id}: {exc}; UV={uvs!r}') from None
+                except ValueError as exc:
+                    edges_detail=tuple((tuple(points[i] for i in (a,b)),tuple(sorted((a,b))) in boundary_edges,
+                                        tuple((vertex_by_key[keys[i]].source_kind,vertex_by_key[keys[i]].source_id,vertex_by_key[keys[i]].source_parameter) for i in (a,b)))
+                                       for a,b in zip(tri,tri[1:]+tri[:1]))
+                    raise ValueError(f'face {face.id}: {exc}; UV={uvs!r}; error={error!r}; selected={(points[a],points[b])!r}; all_edges={edges_detail!r}; carrier={(carrier.id,carrier.kind,carrier.radii)!r}') from None
                 new=node;node+=1;points[new]=uv;levels[new]=new_level;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
                 for old in affected:
                     oldtri,olddepth=remove_triangle(old)
@@ -1076,7 +1149,8 @@ def mesh_imported(source,quality=None,*,progress=None):
             if rounding>quality.tolerance_mm/16:raise ValueError('native UV rounding exceeds quality')
             errors['max_native_uv_rounding_bound_mm']=max(errors['max_native_uv_rounding_bound_mm'],rounding)
             collapsed=len(set(physical))<3
-            if collapsed and not (set(physical)&singular_keys):raise ValueError('unsupported collapsed source triangle')
+            if collapsed and any(physical.count(k)>1 and k not in singular_keys for k in set(physical)):
+                raise ValueError('unsupported collapsed source triangle')
             xyz=tuple(vertex_by_key[k].xyz for k in physical)
             if not collapsed:
                 area=_cross(_sub(xyz[1],xyz[0]),_sub(xyz[2],xyz[0]))

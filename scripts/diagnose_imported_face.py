@@ -49,11 +49,12 @@ def main():
     parser.add_argument('--jobs',type=int,default=4)
     parser.add_argument('--rotate-start',type=int,default=0,help='scan all faces, starting at this source index and wrapping')
     parser.add_argument('--tolerance',type=float,default=.005)
+    parser.add_argument('--max-refinement',type=int,default=20)
     args=parser.parse_args()
     if args.scan:
         if args.face is not None or not 1<=args.jobs<=8:parser.error('--scan requires no face and1..8 jobs')
         global _SCAN_SOURCE,_SCAN_QUALITY
-        _SCAN_QUALITY=MeshQuality(tolerance_mm=args.tolerance)
+        _SCAN_QUALITY=MeshQuality(tolerance_mm=args.tolerance,max_refinement=args.max_refinement)
         _SCAN_SOURCE=load_source(args.source);begin=time.perf_counter();failures=[];count=0
         if not 0<=args.rotate_start<len(_SCAN_SOURCE.faces):parser.error('scan rotation outside face inventory')
         ordered=_SCAN_SOURCE.faces[args.rotate_start:]+_SCAN_SOURCE.faces[:args.rotate_start]
@@ -73,7 +74,7 @@ def main():
     print('diagnostic_original_face',args.face,'of_source',source.source_sha256,flush=True)
     print('carrier',carrier.id,carrier.kind,carrier.degrees,carrier.uv_bounds,
           carrier.knot_u,carrier.mult_u,carrier.knot_v,carrier.mult_v,'radii',carrier.radii,flush=True)
-    mesh=mesh_imported(source,MeshQuality(tolerance_mm=args.tolerance))
+    mesh=mesh_imported(source,MeshQuality(tolerance_mm=args.tolerance,max_refinement=args.max_refinement))
     print('face_vertices',len(mesh.vertices),'face_triangles',len(mesh.triangles),
           'closures',len(mesh.faces[0].chart_closures),'metrics',mesh.error_metrics,
           'timings',mesh.timings,flush=True)

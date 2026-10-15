@@ -221,3 +221,55 @@ endpoints now use exact canonical host -R/sin V; originalXYZ remains unchanged.
 Restarted complete eight-worker diagnostic scan with current source-owned
 recovery, rotating source index6000 then wrapping all prior faces. Complete
 whole-source/native qualification remains pending; no trophy image yet.
+
+Read-only root review found a narrow admission bug while the full run is pinned:
+collapsed cells currently require any corner to be a supported source pole,
+rather than requiring EVERY REPEATED physical key to be that supported pole.
+Independent whole-mesh qualification already enforces the stronger condition.
+Queue the direct guard tightening after the pinned run and before rendering;
+existing authored hemisphere at deliberately coarse quality supplies a repeated
+nonpole-pair-plus-pole fault. No new collapse allowance or source omission.
+
+New complete-scan geometry subplan (implementation awaits parent/oracle review):
+1. Keep all-face diagnostic scan running, record every failure. Parent stopped
+   the pinned full run before product edits; no target images exist.
+2. Add direct source LINE angular-bound fixture proving tiny projected velocity
+   despite full axial speed, and a coarse hemisphere repeated-NONpole negative.
+   Run genuine fleet reds, then the narrow projection/quotient fixes.
+3. Add an owned fixed-vertex constrained metric-Lawson stage after ears only
+   when initial surface bounds fail. Exact incircle, strict convexity/positivity,
+   immutable source boundaries, deterministic cocircular no-op and8*N*N flip
+   rejection guard. No new dependency, points, tolerance or source omission.
+4. Fleet reds: convex quad wrong diagonal expected corrected; constrained wrong
+   diagonal unchanged; nonconvex pair unchanged; cocircular no-op; thin strip
+   expected local connectivity and exact UV area/boundary-chain preservation.
+5. Implement, focused greens, then actual five thin rings, spiral171044 and
+   LINE failures171110/171115 with default .005/.001/max20. Independent existing
+   complete UV/physical/native fixtures attack real output after code review.
+6. Parent restarts fresh full retained qualification only after stable reviewed
+   files and broad-scan remaining-family inventory. Report cap/timing/counts;
+   no minimum-angle, universal termination or alpha claim.
+
+Root and independent oracle accepted the written connectivity/LINE/quotient
+subplan. Four new fleet reds observed: axial LINE trim bound2mm instead of0;
+unsupported repeated nonpole pair accepted; two missing Lawson entry points.
+Implemented exact projected LINE direction, stronger repeated-key guard and
+owned constrained metric flips. Both reviewers found the same strict-convexity
+precondition gap (new triangles positive alone does not establish the old
+opposite-side relation for malformed overlapping input); added exact old-side
+check and a direct overlapping-positive-pair no-op case. Added original face ID
+to connectivity exceptions. Final25 direct methods pass in0.865s. Independent
+existing5 complete-domain/physical/native integration methods pass in0.528s.
+Actual original171110/171115 now each130 vertices/128 cells in0.759/0.716s;
+corrected original source residual below5e-16mm. No zero-area exemption.
+The current read-only old-module scan continues; later171042 is the same cubic
+spiral cap family as171044. All five ring caps and both spiral caps remain
+explicit default-quality focused obligations, then complete-source qualification.
+
+First exact-Fraction ring170999 now passes2048 cells in156.1s; Lawson128.6s.
+Parent proposed exact common-denominator integer arithmetic for this fixed
+point set. Written derivation preserves the exact determinant sign, so selected
+geometry is identical. Stop remaining Fraction-only focused queue after this
+baseline; review arithmetic amendment, implement, reuse25 direct methods with
+anisotropic determinant assertion, then all seven cap sources at unchanged
+quality/default20. Complete read-only old scan continues independently.

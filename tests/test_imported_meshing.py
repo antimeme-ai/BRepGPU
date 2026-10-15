@@ -43,6 +43,57 @@ def exact_triangle_area(points,triangles):
 
 
 class ImportedMeshingTests(unittest.TestCase):
+    def test_projected_axial_line_bound_does_not_create_false_angular_samples(self):
+        frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+        cylinder=Carrier(1,2,frame,(1.,0.),(0.,2*math.pi,0.,1.))
+        line=Curve(2,3,1,(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.),(0.,0.),(0.,1.))
+        self.assertEqual(_cylinder_trim_bound(line,cylinder,0.,1.,(0.,0.),(0.,1.),
+                                             (1.,0.,0.),(1.,0.,1.),(2.,1.)),0.)
+
+    def test_repeated_nonpole_key_is_not_excused_by_another_pole_corner(self):
+        with self.assertRaisesRegex(ValueError,'unsupported collapsed source triangle'):
+            mesh_imported(sphere_cap_fixture(),MeshQuality(tolerance_mm=100.))
+
+    def test_metric_lawson_preserves_constraints_and_convex_domain(self):
+        from brepgpu.imported_meshing import _improve_connectivity
+        points={0:(0.,0.),1:(2.,0.),2:(2.,2.),3:(0.,1.)}
+        initial=[(0,1,2),(0,2,3)];boundary={(0,1),(1,2),(2,3),(0,3)}
+        improved=_improve_connectivity(initial,points,boundary,(1.,1.))
+        self.assertTrue(all(1 in t and 3 in t for t in improved))
+        self.assertEqual(exact_triangle_area(points,improved),Fraction(3))
+        shifted={i:(Fraction(x)+Fraction(1,3),Fraction(y)+Fraction(1,7)) for i,(x,y) in points.items()}
+        self.assertEqual(_improve_connectivity(initial,shifted,boundary,(1.,1.)),improved)
+        self.assertEqual(_improve_connectivity(initial,points,boundary|{(0,2)},(1.,1.)),initial)
+        concave={0:(0.,0.),1:(2.,0.),2:(.5,.5),3:(0.,2.)}
+        self.assertEqual(_improve_connectivity(initial,concave,boundary,(1.,1.)),initial)
+        overlap={0:(0.,0.),1:(2.,0.),2:(0.,2.),3:(.5,.5)}
+        overlapping=[(0,1,2),(0,1,3)]
+        self.assertEqual(_improve_connectivity(overlapping,overlap,set(),(1.,1.)),overlapping)
+        square={0:(0.,0.),1:(1.,0.),2:(1.,1.),3:(0.,1.)}
+        self.assertEqual(_improve_connectivity(initial,square,boundary,(1.,1.)),initial)
+        anisotropic={0:(0.,0.),1:(2.,0.),2:(2.,1.),3:(.5,2.)}
+        self.assertEqual(_improve_connectivity(initial,anisotropic,boundary,(1.,1.)),initial)
+        self.assertTrue(all(1 in t and 3 in t for t in _improve_connectivity(initial,anisotropic,boundary,(2.,1.))))
+        for metric in ((0.,1.),(1.,math.inf),(-1.,1.)):
+            with self.assertRaises(ValueError):_improve_connectivity(initial,points,boundary,metric)
+
+    def test_metric_lawson_removes_full_width_thin_strip_fan(self):
+        from collections import Counter
+        from brepgpu.imported_meshing import _improve_connectivity
+        points={i:(float(i),0.) for i in range(25)}
+        points.update({25+i:(float(i),.25) for i in range(25)})
+        loop=list(range(25))+list(range(49,24,-1))
+        boundary={tuple(sorted((a,b))) for a,b in zip(loop,loop[1:]+loop[:1])}
+        initial=_triangulate([loop],points)
+        actual=_improve_connectivity(initial,points,boundary,(1.,1.))
+        self.assertEqual(exact_triangle_area(points,actual),Fraction(6))
+        self.assertLessEqual(max(max(points[i][0] for i in t)-min(points[i][0] for i in t) for t in actual),1.)
+        chain=Counter()
+        for t in actual:
+            for a,b in zip(t,t[1:]+t[:1]):chain[tuple(sorted((a,b)))]+=1
+        self.assertEqual({e for e,n in chain.items() if n==1},boundary)
+        self.assertTrue(all(n in (1,2) for n in chain.values()))
+
     def test_degree_five_boundary_is_not_reduced_to_cubic(self):
         # Bernstein controls [0,0,0,0,0,1] are exactly x(t)=t**5.
         controls=tuple(v for i in range(6) for v in (float(i==5),0.0,0.0,1.0))

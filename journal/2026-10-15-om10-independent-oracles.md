@@ -192,3 +192,50 @@ require exact canonical V; actual native declared pole corners require that V,
 original source-vertex pole identity and the limiting-normal flag. Expected
 normal remains the original positive-interior limit. This fixes a source
 parameter semantic issue; no native backend algorithm change is needed.
+
+Full scan found five million-node cap failures on ordinary thin periodic rings
+and two owned-cylinder atan2 one-ULP slivers on original axial LINE samples.
+Reviewed actual projected LINE direction/zero acceleration as a valid tighter
+bound, preserving shared-edge incidence and physical-zero rejection. Owner is
+collecting low-cap selected-edge diagnostics before choosing the ring refinement
+remedy; cap/tolerance unchanged. Confirmed existing independent collapsed guard
+already requires every repeated physical key be a declared source pole; product
+'any singular corner' condition must be replaced, without a new collapse family.
+
+Low-cap source diagnostic170999 confirmed2064 initial boundary nodes/2062 ears,
+some spanning2pi. At4096 constructions the selected free edge was already
+angular-dominant; a curvature score change would not address this witness.
+Reviewed written owned initial metric-Lawson design/subplan ACCEPT: exact saved
+UV/metric incircle, strictly convex positive replacement pairs, immutable source
+boundaries, no-op cocircular ties and8*N*N accepted-flip guard. Existing refinement
+and source/cell error limits remain. Original LINE projected directions are
+~1e-33 and only adjacent plane/cylinder need those edges, so tighter original
+projected derivative removes artificial cuts for actual cases. Every repeated
+collapsed key must remain an original supported pole. No oracle expansion needed.
+
+Reviewed implemented connectivity/LINE/quotient code. Found that positive old
+and new triangles alone did not reject a same-side overlapping pair; required
+explicit opposite-side old-edge orientation for the strict convex union.
+Root found the same issue. Owner fixed it and added a literal overlapping-pair
+case to the existing quadrilateral method. Re-review ACCEPT; exact weighted
+incircle, source constraints, fixed triangle IDs/incidence, deterministic dedup
+queue, positive metric and work guard match the plan. Owner25direct greens;
+existing five complete-domain/physical/native integration methods passed0.528s.
+Actual axial LINE faces now pass without zero-area allowance. Rings/spirals and
+complete actual source qualification remain pending.
+
+First ring170999 passed2048cells, but exact Fraction connectivity cost128.6s
+of156.1s. Reviewed arithmetic-only integer replacement ACCEPT before code:
+common positive coordinate denominators Du/Dv and exact metric-weight denominator
+W scale the original incircle determinant by positive W*Du*Dv; local orientation
+scales by Du*Dv. No coordinates are quantized and no geometry/queue/cap changes.
+Fraction conversion precedes metric squaring; exact LCM/division happens once.
+Existing anisotropic determinant and rational translation assertions attack
+metric-scale and denominator mistakes without another qualification mechanism.
+
+Reviewed integer implementation ACCEPT: exact per-axisLCM coordinate conversion,
+Fraction metric before squaring, common positive integer weights, and all local
+Lawson orientation tests use cached integer coordinates. Predicate signs/zeros,
+queue, constraints and geometry are unchanged. The existing25focused methods
+pass with anisotropic and rational-translation assertions. Actual seven default
+cap cases remain the performance/geometry observation; no broader campaign.
