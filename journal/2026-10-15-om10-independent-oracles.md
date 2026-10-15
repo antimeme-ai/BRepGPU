@@ -467,3 +467,23 @@ correspondence only, not exact boundary/isotopy claims. Original 3D geometry and
 owned edge/cell error obligations remain unchanged. Requested and reviewed the
 explicit no-query-deferral/domain sequencing before acceptance; no new code or
 test campaign in this review lane.
+
+Source-chart implementation review found that capability selection scanned
+unsegmented guide controls before restricting to the original active parameter
+interval. An inactive outside control could spuriously select the approximation.
+Requested selection and whole-hull checks on the copied/segmented active basis,
+without newly routing otherwise unsupported in-domain pcurves through editing.
+The missing-PC-only callsite, single-use check, actual geometric endpoints,
+finite original-t C/S gates, deterministic diagnostics and seeded per-use query
+budget otherwise match the reviewed design. Root independently found the same
+active-guide ordering issue; no additional execution campaign was requested.
+
+Final source-chart code review ACCEPT after the active-guide correction.
+Ineligible rational/periodic guides retain the prior path; the same segmented
+active basis drives capability selection, side/hull checks and the coefficient
+edit. Original geometric endpoint/C/S/t gates, deterministic source diagnostics
+and source-charge initialization of the cumulative query budget match the
+reviewed scope. The literal small-conic tight-tolerance negative attacks the
+allocation separately from the large-conic source-residual rejection. No further
+finding or additional campaign; complete original-source qualification remains
+required before V4 or any actual watch claim.

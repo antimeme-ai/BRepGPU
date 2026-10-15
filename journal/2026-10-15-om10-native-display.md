@@ -432,3 +432,18 @@ affected seam occurrences. Owner narrowed this new conic family to exactly one
 original edge use on its supporting face, rejecting repeated/seam use and keeping
 existing analytic seams unchanged. Reread that amendment and sent final native
 design/subplan ACCEPT. No code, probes or additional campaign by this lane.
+
+Reviewed the implemented conic source-chart helper and adapter diagnostics.
+Missing-PC-only invocation, copied active original-t basis, single-use ownership,
+source guards, selected-curve readback, deterministic diagnostic rows and query
+budget seeding fit the reviewed design. Found one narrow admission-order issue:
+escape was tested on an unsegmented guide before its active interval was copied/
+segmented. An inactive control excursion could therefore trigger the strategy
+for an in-domain active guide. Sent owner/root the active-basis check requirement;
+no extra test campaign or actual source execution by this lane.
+
+Verified the active-guide correction: eligible nonrational/nonperiodic guide is
+copied and segmented on saved original[a,b] before the escape scan; that same
+basis receives the selected coordinate change, and an in-domain active guide
+returns the original unchanged. Final native helper/adapter code ACCEPT. No
+remaining copy/parameter/storage/ownership/provenance finding, no extra tests.

@@ -37,11 +37,19 @@ struct SourceUVConnector {
   double u0=0,v0=0,u1=0,v1=0;
   TopoDS_Edge edge;
 };
+struct SourceUVChartApproximation {
+  SourceID face_id=0,coedge_id=0;
+  int axis=0;
+  double side=0,max_guide_coefficient_delta=0,uv_metric_mm=0;
+  // Guide residual may evaluate foreign extension outside the original domain.
+  double max_guide_extension_residual_mm=0,max_selected_residual_mm=0;
+};
 struct PreparedSourceUV {
   TopoDS_Shape raw_shape,query_shape;
   NCollection_DataMap<TopoDS_Shape,TopoDS_Shape,TopTools_ShapeMapHasher> copies,query_copies;
   SourceUVStats stats;
   std::vector<SourceUVConnector> connectors;
+  std::vector<SourceUVChartApproximation> chart_approximations;
   TopoDS_Shape mapped(const TopoDS_Shape& original) const;
   TopoDS_Shape query_mapped(const TopoDS_Shape& original) const;
 };
