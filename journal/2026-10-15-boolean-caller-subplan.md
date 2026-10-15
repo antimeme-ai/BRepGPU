@@ -32,3 +32,8 @@ Direct red: fleet healthy existing make_body(box) six-face prerequisite passed;
 then python3 examples/cut_bore.py --help failed with exit2 because the requested
 caller does not exist. This is the missing executable boundary, not a native
 build or environment failure. Product caller implementation follows this red.
+
+Caller/controller/reference sources now written after recorded fleet red. Static
+AST parsing passed without importing/running product code locally. Root reviewed
+the independent sampler unit; no blocking source findings. Its fleet integration
+waits for construction source readiness. No new native binaries or dependencies.
