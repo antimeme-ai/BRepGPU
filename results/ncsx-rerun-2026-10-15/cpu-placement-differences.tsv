@@ -1,0 +1,4 @@
+artifact	field	p1000	cpu1
+recipe.tsv	backend	cuda	cpu
+recipe.tsv	observed_native_backend_tag	1	0
+scene.tsv	backend	cuda	cpu
