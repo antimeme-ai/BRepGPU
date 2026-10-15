@@ -1,5 +1,26 @@
 # BRepGPU research
 
+## Complete source-edge box fillet
+
+The [design](../docs/FILLET_DESIGN.md) and [reviewed plan](../docs/FILLET_PLAN.md)
+follow independent [geometry/history](2026-10-15-fillet-semantics-study.md),
+[whole-feature oracle](2026-10-15-fillet-oracles-study.md) and
+[runtime/reference](2026-10-15-fillet-runtime-study.md) studies.
+Bibliographies: [semantics](fillet-semantics.bib), [oracles](fillet-oracles.bib),
+[runtime](fillet-runtime.bib). Actual OCCT plane/plane fillet construction,
+Truck trim/end closure, NVIDIA mutation/ownership and primary rational-conic
+literature inform this exceptional exact family. General rolling-ball surfaces
+need not be rational; the two perpendicular planes admit an exact quarter band.
+[Acquisition gaps](fillet-semantics-SHOPPING_LIST.md) remain explicit.
+All three design and plan reviews accepted before 28 real missing-operation
+fleet tests and the actual caller red. [Sampler review](2026-10-15-fillet-sampler-root-review.md)
+and [caller/reference review](2026-10-15-fillet-caller-runtime-review.md) preserve
+concrete findings. [API](../docs/FILLET.md) and [results](../results/fillet-2026-10-15/REPORT.md)
+retain complete original-source maps, native/CSR artifacts and full caller costs.
+[Round-two notes](2026-10-15-fillet-return-pass-runtime-notes.md) defer broader families and
+integration until after analytic offset. No dependency is adopted and selected
+foreign comparisons do not complete external alpha qualification.
+
 ## Full meridian-profile revolution
 
 The [design](../docs/REVOLUTION_DESIGN.md) and [reviewed plan](../docs/REVOLUTION_PLAN.md)
