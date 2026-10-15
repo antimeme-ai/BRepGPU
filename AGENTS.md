@@ -90,3 +90,15 @@ land, and push meaningful checkpoints so the public repository reflects ongoing
 work. Open a pull request and preserve the substantive commits when merging to
 main; prefer a merge commit over squashing the work. Keep merged feature branches
 available for inspecting the delivery history.
+
+## Alpha release qualification
+
+Read docs/ALPHA_QUALIFICATION.md. The operator requires the applicable external
+community suites green before cutting alpha, while allowing red/unported cases
+during development. Required missing data/adapters, unsupported cases, skips,
+xfails and unresolved oracle disagreements are non-green. Define the complete
+required corpus against advertised operations before observing pass results;
+changes to promised alpha scope/corpus require operator review. Reference-build
+success is not BRepGPU qualification: adapters must check our actual outputs.
+Selected manual mutant kills describe specific fault sensitivity, not broad
+coverage or readiness. Current external qualification remains incomplete.
