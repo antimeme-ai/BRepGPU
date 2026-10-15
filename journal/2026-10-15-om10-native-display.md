@@ -235,3 +235,38 @@ Reference owner confirmed definition-local NVIDIA geometry and actual per-corner
 normal availability; position/normal precision and returned polygon triangulation
 still need the actual API/extraction contract resolved. Wrote design and bounded
 candidate sequence for root review only; no new source, build, test or render.
+
+Root and reference owner accepted the isolated raw-display design/subplan after
+confirming genuine f64 NVIDIA corner AuxData normals and explicit triangle-only
+output. Authored absent-entry fleet red first. Root review caught two fixture
+mistakes before a target build: keys initially identified distinct XYZ as the
+same physical vertex, and two hypotenuse-boundary pixels were incorrectly
+counted inside. Corrected keys and independently derived the non-top-left
+hypotenuse exclusion (only pixel0 inside); reran absent-entry red. Shared raster
+math was never changed to fit the fixture.
+
+Implemented native/om10_reference only: explicit raw-record decoder/ownership,
+proper source placements, unchanged projection/raster/shading math, retained
+CPU worker/tile scheduling and raw image/diagnostic output. Repeated physical
+keys require identical XYZ within each definition and retain distinct corner
+normals. No carriers/evaluation/CUDA/reference-kernel dependency is introduced.
+The new namespace initially made finite ambiguous with libc; qualified the shared
+function and built the new target. Six final direct methods pass CPU1(0.075s)
+andCPU24(0.111s), covering scalar pixels, shared edges/winding/SS2, front/ties,
+placements/normals, corner identities, errors and one byte-identical plane
+comparison against the existing CPU path. Added an actual two-request retained
+pose check in the same focused method; the complete six-method CPU24 ASan/UBSan
+run including it passed in0.492s with leak/error halting enabled. CLI help passed;
+dynamic linkage lists no CUDA. Reference owner adversarially reviewed all four
+source/build files and accepted without findings. Root review remains pending.
+No existing product/helper/native source or binary changed; no watch raster,
+NVIDIA kernel run or whole-source qualification campaign was performed here.
+
+Root completed the raw-display code review and accepted the implementation:
+explicit checked binary decoding, per-definition physical-key consistency,
+proper rigid placement, unchanged shared projection/raster math, retained CPU
+scheduling and measured teardown match the reviewed scope. Zero-valued external
+keys are valid; the occurrence sentinel is UINT64_MAX, as in the owned entry.
+The independent scalar tests and focused sanitizer run already cover the changed
+unit; no additional campaign is warranted without a new finding. Actual whole
+watch rasterization remains pending complete nonvisual qualification.

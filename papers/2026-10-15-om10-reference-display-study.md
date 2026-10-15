@@ -84,8 +84,13 @@ identities, not automatically original STEP entity IDs.
 Normals must be actual NVIDIA tessellation output with explicit per-corner
 indexing, definition-local coordinates and face orientation. Normalize their
 nonzero magnitudes for display without reversing orientation or reconstructing
-them from owned carriers. SDK normal orientation/index correspondence still
-requires the reference owner's confirmation before implementation. The public
+them from owned carriers. The reference owner confirmed SDK corner
+`PolyEdge::GetAuxData()->m_vNormal` stores the genuine f64 tessellation normal,
+adjusted for original face reversal before emission; obtain XYZ from that edge's
+start physical vertex. This corner record preserves seam/apex distinctions a
+single normal per physical vertex/face can lose. Require each corner to supply
+a finite nonzero normal and real physical vertex key; reject absent/ambiguous
+correspondence. The public
 Python binding's `to_mesh_arrays(face_varying_normals=True)` casts coordinates
 AND normals to float32; `get_points()` retains binary64 positions in the same
 physical vertex order. That path would retain the already rounded float32
@@ -177,3 +182,9 @@ still must directly check real indexing/orientation before the NVIDIA watch run;
 the standalone raw consumer can now proceed on independent tiny inputs. All
 qualification-pinned files and binaries stay unchanged. No actual target raster
 is authorized by this implementation approval.
+
+Implementation review completed: root and the independent reference owner both
+accept the isolated raw decoder, CPU scheduling, shared math, lifetime and output
+scope. Six direct methods and the same focused address/undefined sanitizer run
+pass on the fleet. This establishes the raw consumer on authored inputs; genuine
+NVIDIA geometry admission and whole-watch qualification remain separate work.
