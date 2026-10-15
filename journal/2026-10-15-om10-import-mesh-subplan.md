@@ -304,3 +304,28 @@ Actual cases172494/172983/173009/173010 now21/17/19/17 cells in0.054/0.023/0.026
 each. Independent original-column/endpoint/joint and exact domain checks pass
 all four; five existing closed-solid/native integration methods pass0.533s.
 No generic128ULP change, source entity omission, collapse exemption or image.
+
+Before pinning the next full run, owner found canonical boundary displacement
+missing from the actual triangle interpolation acceptance. Parent held the run;
+root and oracle accepted the direct barycentric perturbation derivation. Written
+amendment completes existing intended error accounting, retaining .005/.001.
+Direct fleet red: independent planar prism source with one carrier displaced
+normally0.0005mm, source residual limit .001 but requested mesh .0004; ideal
+surface bound0 cannot excuse canonical displacement above .0003 allocation.
+Also check admitted0.0001 displacement appears in actual combined metrics. Then
+cache face-local node displacements, reject impossible fixed corners early,
+accept ideal+maxcorner and finalsum maxcombined+2chord+round. Existing27 methods,
+actual165590 and source-boundary cases verify the affected path before review.
+
+Joint-cell accounting final28 direct methods pass1.000s; independent existing
+five closed-solid/native integration methods pass0.564s with actual physical
+probe gate tightened to requested tolerance plus existing numerical comparison
+grade. Both code reviews accept. Explicit nonfinite displacement rejection and
+same joint-bound initial Lawson trigger close review findings. Actual165590 now
+53 cells/.077s: ideal maximum0.0001452878mm, canonical displacement maximum
+0.0001409593mm, maximum actual per-cell sum0.0002525484mm. Four source-boundary
+cases remain green. Default cap cases all five rings and both spirals pass;
+additional R13.6 cylinder173378 passes4096 cells in184.31s. Remaining old cap
+IDs172236/173126 are same thin full-period cone/cylinder source family; complete
+current mesh qualification still covers each. Old full scan has only the three
+studied failure families; no source omissions or target image.

@@ -73,6 +73,21 @@ def exact_triangle_area(points,triangles):
 
 
 class ImportedMeshingTests(unittest.TestCase):
+    def test_canonical_boundary_displacement_is_in_actual_cell_error_budget(self):
+        from tests.test_imported_geometry import pierced_prism_source
+        source=pierced_prism_source();carrier=source.carriers[0]
+        def shifted(delta):
+            frame=(*carrier.frame[:2],carrier.frame[2]+delta,*carrier.frame[3:])
+            return replace(source,carriers=(replace(carrier,frame=frame),*source.carriers[1:]))
+        quality=MeshQuality(tolerance_mm=.0004,source_residual_mm=.001)
+        with self.assertRaisesRegex(ValueError,'canonical boundary displacement'):
+            mesh_imported(shifted(.0005),quality)
+        admitted=mesh_imported(shifted(.0001),quality)
+        metrics=dict(admitted.error_metrics)
+        self.assertEqual(metrics['max_surface_interpolation_bound_mm'],0.)
+        self.assertAlmostEqual(metrics['max_boundary_vertex_displacement_mm'],.0001)
+        self.assertAlmostEqual(metrics['max_surface_plus_canonical_bound_mm'],.0001)
+
     def test_source_spline_columns_recover_generator_and_shared_vertex_uv(self):
         mesh=mesh_imported(spline_column_fixture())
         self.assertEqual(len(mesh.triangles),2)

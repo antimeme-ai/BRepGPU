@@ -853,3 +853,28 @@ foreign carrier residual maximum; U/V displacement maxima are coordinate shifts,
 not evaluations of an invalid source extension. Four actual cases now pass21/
 17/19/17 cells; independent source-column/joint/domain checks agree. Whole-source
 closed solids and actual native consumption remain separate pending obligations.
+
+### Complete the physical-triangle interpolation error budget
+
+Final owner review found an omitted term from the intended contract above:
+canonical original edge XYZ may differ from S(ownedUV), although the foreign
+recovery residual separately satisfies0.001mm. Ideal-surface Hessian error alone
+does not bound a triangle rendered with those canonical vertices. For any cell,
+let delta_i=canonicalXYZ_i-S(UV_i). Barycentric interpolation changes by
+sum(lambda_i*delta_i), with norm at most max_i(norm(delta_i)). Therefore use
+`ideal_surface_bound + max_corner_displacement` as the cell bound against the
+unchanged0.75*tolerance_mm allocation. Final combined accounting uses the maximum
+of these actual combined cell bounds, plus existing2*edge_chord and native UV
+rounding; do not add two unrelated global maxima or double-count displacement.
+
+Cache displacement once per face-local initial UV node after final joint/domain
+normalization (a physical key can occur on different faces/charts). New interior
+XYZ is constructed from the same source evaluation at its owned UV, so its
+computational displacement is zero; separate UV/native-evaluation floating
+limitations remain stated. Include collapsed pole UV cells in this accounting.
+A fixed boundary displacement above the allocation rejects immediately instead
+of constructing useless interior points. Keep the separate ideal surface maximum
+and add `max_boundary_vertex_displacement_mm` and
+`max_surface_plus_canonical_bound_mm`. Source tolerance and all quality limits
+stay unchanged. This completes the already requested physical geometry bound,
+with no new coverage/qualification mechanism.

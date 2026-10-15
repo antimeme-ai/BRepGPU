@@ -275,3 +275,23 @@ evaluation. These open-face checks do not establish closed solids. Existing five
 closed geometry/native integration methods passed0.533s. Sourcefamily code and
 oracle review accepted after directed joint, nonzero LINE/nonperiodic guards and
 narrow non-LINE neighboring endpoint scope. Oracle synced/stable for whole run.
+
+Sourceowner found the intended physical approximation contract still omitted
+canonical boundary XYZ-to-surface displacement from queue acceptance/final sum.
+Reviewed the correction ACCEPT mathematically: barycentric corner perturbation
+is bounded by its maximum corner norm, so per-cell surface+canonical bound plus
+separate UV rounding restores the requested tolerance accounting. Cache per face
+node, retain collapsed UV cells, final sum uses max joint bound (not separate
+maxima added twice). Existing independent physical probes will use requested
+tolerance plus numeric comparison grade, not extra source_residual, after root
+accepts the written amendment. No tolerance/cap widening or new qualifier layer.
+
+Reviewed joint-cell implementation ACCEPT after two narrow alignments: reject
+nonfinite canonical displacement before caching/max, and apply the same joint
+bound to the initial connectivity trigger. Owner28direct greens include genuine
+old acceptance of.0005mm plane displacement under requested.0004mm tolerance,
+now rejected early; smaller.0001mm displacement remains admitted and reported.
+Existing five complete-domain/physical/native methods pass0.564s with requested-
+tolerance-plus-numeric-grade probes. Actual165590 is53cells with maximum joint
+bound.00025255mm; four natural-boundary cases remain green. Oracle synced/stable
+for the parent's fresh complete retained run; no further edits planned.

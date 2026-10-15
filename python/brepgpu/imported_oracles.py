@@ -1467,8 +1467,8 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 wanted = tuple(map(float, carrier_jet_float(carrier, *uv)[0]))
                 actual = tuple(float(sum(weights[j]*exact(xyz[j][k]) for j in range(3))) for k in range(3))
                 error = math.dist(actual, wanted)
-                require(math.isfinite(error) and error <= mesh.quality.tolerance_mm + mesh.quality.source_residual_mm,
-                        'actual finite source interpolation probe exceeds stated quality components')
+                require(math.isfinite(error) and error <= mesh.quality.tolerance_mm + coordinate_tolerance,
+                        'actual physical interpolation probe exceeds requested tolerance plus numeric comparison grade')
                 max_probe_error = max(max_probe_error, error)
         qualify_domain(tuple(normalized_loops), tuple(triangle_uvs))
     require(triangle_owners == Counter({i: 1 for i in range(len(mesh.triangles))}),
