@@ -1,0 +1,7 @@
+check	maximum	limit_or_units	samples
+position	1.5092094240998222e-16	9.094947017729282e-13	90720
+du	2.6188271411183974e-17	9.313225746154785e-10	90720
+dv	5.360295540768334e-16	9.313225746154785e-10	90720
+seam_position	0.0	1.8189894035458565e-12	all neighboring patch boundary samples
+source_coil_centerline_fit	0.003887301573422884	original coordinate units; sampled diagnostic only	3456
+source_plasma_fit	0.006217897392490993	original coordinate units; sampled diagnostic only	7776

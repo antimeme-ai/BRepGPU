@@ -21,3 +21,14 @@ aggregate overlaps its phases; full clock covers original main work through
 final pins, excluding only imports, new timing/placement files and prints.
 Actual display/oracle/geometry unchanged. Sent root permission to proceed within
 the already authorized one-P1000/one-CPU1 plan. No code or execution here.
+
+Final read-only artifact/report review ACCEPTED. Recomputed18hash-comparison
+rows, both patch/query/control/triangle inventories and all actual raw-jet
+difference counts/maxima. Baseline/P1009artifacts identical; CPU/P100 geometry
+PNG identical; composed new P100 PNG also identical to existing hero. Viewed
+image framing/captions. Both6-source pin tables match current bytes and native
+pins match baseline. Sequential phase sums cover full endpoints within.0025ms.
+Report accurately distinguishes11.4× observed synchronous-wrapper evaluation,
+slower P100 cold native aggregate,40.379/41.024s full observed caller walls and
+untimed baseline. No historical or established whole-render speedup claimed.
+Saved final disposition in the same review paper; no code, jobs or reruns here.
