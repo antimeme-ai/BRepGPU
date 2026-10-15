@@ -89,6 +89,28 @@ class SourceUVTests(unittest.TestCase):
             self.assertNotEqual(bad.returncode,0)
             self.assertIn('natural-domain',bad.stderr)
 
+    def test_native_evaluation_rounding_preserves_in_domain_basis(self):
+        executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
+            ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
+        with tempfile.TemporaryDirectory() as directory:
+            run=subprocess.run((str(executable),'evaluation-rounding',str(Path(directory)/'query.brep')),
+                capture_output=True,text=True)
+            self.assertEqual(run.returncode,0,run.stderr)
+            rows=[row.split('\t') for row in run.stdout.splitlines()]
+            lo=-1.7889624832941899;end=1.3925571192667849
+            self.assertEqual([tuple(map(float,row[1:])) for row in rows if row[0]=='query_pc_basis'],[(2.,4.,0.,end)])
+            self.assertEqual([tuple(map(float,row[1:])) for row in rows if row[0]=='query_control'],
+                [(1.,0.,lo,1.),(2.,.185,lo,1.),(3.,(.37+end)/2,lo,1.),(4.,end,lo,1.)])
+            self.assertEqual([float(row[1]) for row in rows if row[0]=='raw_middle_v'],[lo])
+            probes=[row for row in rows if row[0]=='boundary' and row[1]=='10']
+            self.assertEqual(len(probes),17)
+            self.assertTrue(any(float(row[7])<lo for row in probes),'fixture did not expose native constant-coordinate roundoff')
+            for row in probes:
+                t=float(row[2]);xyz=tuple(map(float,row[3:6]));uv=tuple(map(float,row[6:8]))
+                self.assertLessEqual(math.dist(xyz,(t,lo,0.)),2**-32)
+                self.assertLessEqual(abs(uv[1]-lo),128*math.ulp(abs(lo)))
+                self.assertLessEqual(math.dist(tuple(map(float,row[8:11])),xyz),2**-32)
+
     def test_conic_source_chart_approximation_preserves_original_curve_and_budget(self):
         executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
             ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()

@@ -138,3 +138,21 @@ tolerance1e-7; the initial1e-6 legitimately admitted its measured1.18048e-7mm
 guide charge. The large-conic case separately rejects the unchanged source
 residual limit. Resumed the source owner for the bounded sanitizer method and
 one fresh complete source/query conversion; no target images or mesh run yet.
+
+The conic source method passes ASan/UBSan0.145s. Actual source-only attemptv4
+passes170920 and stops at170932: native evaluation returns a constant V one ULP
+below its original bound despite an exactly in-domain coefficient hull. A
+read-only635-spline diagnostic finds630 passes and5 finite-domain failures;
+it publishes no source and does not cover whole-solid ownership/alias checks.
+Studied the pinned OCCT weighted interpolation and reviewed a bounded finite
+probe recovery with an independent reviewer. Preserve stored coefficients and
+original t; require the active positive hull inside the original domain before
+using the unchanged128ULP numerical recovery. Owned mesh error obligations stay.
+
+A literal four-control quadratic pcurve with interior knot.37 and Greville U
+coefficients genuinely reproduces the strict production query-domain failure
+in0.012s on the fleet. Its spatial oracle is the literal original LINE
+C(t)=(t,-1.7889624832941899,0). Earlier single-span fixtures did not reproduce
+roundoff and are not counted as red. The shared finite-probe implementation
+follows that reviewed design and genuine red. Updated current rendering notes
+and the reference requirement wording; all complete-watch outcomes remain pending.
