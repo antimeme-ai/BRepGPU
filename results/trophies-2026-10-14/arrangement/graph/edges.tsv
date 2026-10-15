@@ -1,0 +1,673 @@
+id	kind	start	end	source_kind	source_a	source_b	source_t0	source_t1	pieces	events
+0	line	0	1	boundary	1	5	0/1	1/16		
+1	line	1	2	boundary	1	5	1/16	1/8		
+2	line	2	3	boundary	1	5	1/8	3/16		
+3	line	3	4	boundary	1	5	3/16	1/4		
+4	line	4	5	boundary	1	5	1/4	5/16		
+5	line	5	6	boundary	1	5	5/16	3/8		
+6	line	6	7	boundary	1	5	3/8	7/16		
+7	line	7	8	boundary	1	5	7/16	1/2		
+8	line	8	9	boundary	1	5	1/2	9/16		
+9	line	9	10	boundary	1	5	9/16	5/8		
+10	line	10	11	boundary	1	5	5/8	11/16		
+11	line	11	12	boundary	1	5	11/16	3/4		
+12	line	12	13	boundary	1	5	3/4	13/16		
+13	line	13	14	boundary	1	5	13/16	7/8		
+14	line	14	15	boundary	1	5	7/8	15/16		
+15	line	15	16	boundary	1	5	15/16	1/1		
+16	line	17	18	v_cut	0					
+17	line	18	19	v_cut	0					
+18	line	19	20	v_cut	0					
+19	line	20	21	v_cut	0					
+20	line	21	22	v_cut	0					
+21	line	22	23	v_cut	0					
+22	line	23	24	v_cut	0					
+23	line	24	25	v_cut	0					
+24	line	25	26	v_cut	0					
+25	line	26	27	v_cut	0					
+26	line	27	28	v_cut	0					
+27	line	28	29	v_cut	0					
+28	line	29	30	v_cut	0					
+29	line	30	31	v_cut	0					
+30	line	31	32	v_cut	0					
+31	line	32	33	v_cut	0					
+32	line	34	35	v_cut	1					
+33	line	35	36	v_cut	1					
+34	line	36	37	v_cut	1					
+35	line	37	38	v_cut	1					
+36	line	38	39	v_cut	1					
+37	line	39	40	v_cut	1					
+38	line	40	41	v_cut	1					
+39	line	41	42	v_cut	1					
+40	line	42	43	v_cut	1					
+41	line	43	44	v_cut	1					
+42	line	44	45	v_cut	1					
+43	line	45	46	v_cut	1					
+44	line	46	47	v_cut	1					
+45	line	47	48	v_cut	1					
+46	line	48	49	v_cut	1					
+47	line	49	50	v_cut	1					
+48	line	51	52	v_cut	2					
+49	line	52	53	v_cut	2					
+50	line	53	54	v_cut	2					
+51	line	54	55	v_cut	2					
+52	line	55	56	v_cut	2					
+53	line	56	57	v_cut	2					
+54	line	57	58	v_cut	2					
+55	line	58	59	v_cut	2					
+56	line	59	60	v_cut	2					
+57	line	60	61	v_cut	2					
+58	line	61	62	v_cut	2					
+59	line	62	63	v_cut	2					
+60	line	63	64	v_cut	2					
+61	line	64	65	v_cut	2					
+62	line	65	66	v_cut	2					
+63	line	66	67	v_cut	2					
+64	line	68	69	v_cut	3					
+65	line	69	70	v_cut	3					
+66	line	70	71	v_cut	3					
+67	line	71	72	v_cut	3					
+68	line	72	73	v_cut	3					
+69	line	73	74	v_cut	3					
+70	line	74	75	v_cut	3					
+71	line	75	76	v_cut	3					
+72	line	76	77	v_cut	3					
+73	line	77	78	v_cut	3					
+74	line	78	79	v_cut	3					
+75	line	79	80	v_cut	3					
+76	line	80	81	v_cut	3					
+77	line	81	82	v_cut	3					
+78	line	82	83	v_cut	3					
+79	line	83	84	v_cut	3					
+80	line	85	86	v_cut	4					
+81	line	86	87	v_cut	4					
+82	line	87	88	v_cut	4					
+83	line	88	89	v_cut	4					
+84	line	89	90	v_cut	4					
+85	line	90	91	v_cut	4					
+86	line	91	92	v_cut	4					
+87	line	92	93	v_cut	4					
+88	line	93	94	v_cut	4					
+89	line	94	95	v_cut	4					
+90	line	95	96	v_cut	4					
+91	line	96	97	v_cut	4					
+92	line	97	98	v_cut	4					
+93	line	98	99	v_cut	4					
+94	line	99	100	v_cut	4					
+95	line	100	101	v_cut	4					
+96	line	102	103	v_cut	5					
+97	line	103	104	v_cut	5					
+98	line	104	105	v_cut	5					
+99	line	105	106	v_cut	5					
+100	line	106	107	v_cut	5					
+101	line	107	108	v_cut	5					
+102	line	108	109	v_cut	5					
+103	line	109	110	v_cut	5					
+104	line	110	111	v_cut	5					
+105	line	111	112	v_cut	5					
+106	line	112	113	v_cut	5					
+107	line	113	114	v_cut	5					
+108	line	114	115	v_cut	5					
+109	line	115	116	v_cut	5					
+110	line	116	117	v_cut	5					
+111	line	117	118	v_cut	5					
+112	line	119	120	v_cut	6					
+113	line	120	121	v_cut	6					
+114	line	121	122	v_cut	6					
+115	line	122	123	v_cut	6					
+116	line	123	124	v_cut	6					
+117	line	124	125	v_cut	6					
+118	line	125	126	v_cut	6					
+119	line	126	127	v_cut	6					
+120	line	127	128	v_cut	6					
+121	line	128	129	v_cut	6					
+122	line	129	130	v_cut	6					
+123	line	130	131	v_cut	6					
+124	line	131	132	v_cut	6					
+125	line	132	133	v_cut	6					
+126	line	133	134	v_cut	6					
+127	line	134	135	v_cut	6					
+128	line	136	137	v_cut	7					
+129	line	137	138	v_cut	7					
+130	line	138	139	v_cut	7					
+131	line	139	140	v_cut	7					
+132	line	140	141	v_cut	7					
+133	line	141	142	v_cut	7					
+134	line	142	143	v_cut	7					
+135	line	143	144	v_cut	7					
+136	line	144	145	v_cut	7					
+137	line	145	146	v_cut	7					
+138	line	146	147	v_cut	7					
+139	line	147	148	v_cut	7					
+140	line	148	149	v_cut	7					
+141	line	149	150	v_cut	7					
+142	line	150	151	v_cut	7					
+143	line	151	152	v_cut	7					
+144	line	153	154	v_cut	8					
+145	line	154	155	v_cut	8					
+146	line	155	156	v_cut	8					
+147	line	156	157	v_cut	8					
+148	line	157	158	v_cut	8					
+149	line	158	159	v_cut	8					
+150	line	159	160	v_cut	8					
+151	line	160	161	v_cut	8					
+152	line	161	162	v_cut	8					
+153	line	162	163	v_cut	8					
+154	line	163	164	v_cut	8					
+155	line	164	165	v_cut	8					
+156	line	165	166	v_cut	8					
+157	line	166	167	v_cut	8					
+158	line	167	168	v_cut	8					
+159	line	168	169	v_cut	8					
+160	line	170	171	v_cut	9					
+161	line	171	172	v_cut	9					
+162	line	172	173	v_cut	9					
+163	line	173	174	v_cut	9					
+164	line	174	175	v_cut	9					
+165	line	175	176	v_cut	9					
+166	line	176	177	v_cut	9					
+167	line	177	178	v_cut	9					
+168	line	178	179	v_cut	9					
+169	line	179	180	v_cut	9					
+170	line	180	181	v_cut	9					
+171	line	181	182	v_cut	9					
+172	line	182	183	v_cut	9					
+173	line	183	184	v_cut	9					
+174	line	184	185	v_cut	9					
+175	line	185	186	v_cut	9					
+176	line	187	188	v_cut	10					
+177	line	188	189	v_cut	10					
+178	line	189	190	v_cut	10					
+179	line	190	191	v_cut	10					
+180	line	191	192	v_cut	10					
+181	line	192	193	v_cut	10					
+182	line	193	194	v_cut	10					
+183	line	194	195	v_cut	10					
+184	line	195	196	v_cut	10					
+185	line	196	197	v_cut	10					
+186	line	197	198	v_cut	10					
+187	line	198	199	v_cut	10					
+188	line	199	200	v_cut	10					
+189	line	200	201	v_cut	10					
+190	line	201	202	v_cut	10					
+191	line	202	203	v_cut	10					
+192	line	204	205	v_cut	11					
+193	line	205	206	v_cut	11					
+194	line	206	207	v_cut	11					
+195	line	207	208	v_cut	11					
+196	line	208	209	v_cut	11					
+197	line	209	210	v_cut	11					
+198	line	210	211	v_cut	11					
+199	line	211	212	v_cut	11					
+200	line	212	213	v_cut	11					
+201	line	213	214	v_cut	11					
+202	line	214	215	v_cut	11					
+203	line	215	216	v_cut	11					
+204	line	216	217	v_cut	11					
+205	line	217	218	v_cut	11					
+206	line	218	219	v_cut	11					
+207	line	219	220	v_cut	11					
+208	line	221	222	v_cut	12					
+209	line	222	223	v_cut	12					
+210	line	223	224	v_cut	12					
+211	line	224	225	v_cut	12					
+212	line	225	226	v_cut	12					
+213	line	226	227	v_cut	12					
+214	line	227	228	v_cut	12					
+215	line	228	229	v_cut	12					
+216	line	229	230	v_cut	12					
+217	line	230	231	v_cut	12					
+218	line	231	232	v_cut	12					
+219	line	232	233	v_cut	12					
+220	line	233	234	v_cut	12					
+221	line	234	235	v_cut	12					
+222	line	235	236	v_cut	12					
+223	line	236	237	v_cut	12					
+224	line	238	239	v_cut	13					
+225	line	239	240	v_cut	13					
+226	line	240	241	v_cut	13					
+227	line	241	242	v_cut	13					
+228	line	242	243	v_cut	13					
+229	line	243	244	v_cut	13					
+230	line	244	245	v_cut	13					
+231	line	245	246	v_cut	13					
+232	line	246	247	v_cut	13					
+233	line	247	248	v_cut	13					
+234	line	248	249	v_cut	13					
+235	line	249	250	v_cut	13					
+236	line	250	251	v_cut	13					
+237	line	251	252	v_cut	13					
+238	line	252	253	v_cut	13					
+239	line	253	254	v_cut	13					
+240	line	255	256	v_cut	14					
+241	line	256	257	v_cut	14					
+242	line	257	258	v_cut	14					
+243	line	258	259	v_cut	14					
+244	line	259	260	v_cut	14					
+245	line	260	261	v_cut	14					
+246	line	261	262	v_cut	14					
+247	line	262	263	v_cut	14					
+248	line	263	264	v_cut	14					
+249	line	264	265	v_cut	14					
+250	line	265	266	v_cut	14					
+251	line	266	267	v_cut	14					
+252	line	267	268	v_cut	14					
+253	line	268	269	v_cut	14					
+254	line	269	270	v_cut	14					
+255	line	270	271	v_cut	14					
+256	line	272	273	boundary	3	7	1/1	15/16		
+257	line	273	274	boundary	3	7	15/16	7/8		
+258	line	274	275	boundary	3	7	7/8	13/16		
+259	line	275	276	boundary	3	7	13/16	3/4		
+260	line	276	277	boundary	3	7	3/4	11/16		
+261	line	277	278	boundary	3	7	11/16	5/8		
+262	line	278	279	boundary	3	7	5/8	9/16		
+263	line	279	280	boundary	3	7	9/16	1/2		
+264	line	280	281	boundary	3	7	1/2	7/16		
+265	line	281	282	boundary	3	7	7/16	3/8		
+266	line	282	283	boundary	3	7	3/8	5/16		
+267	line	283	284	boundary	3	7	5/16	1/4		
+268	line	284	285	boundary	3	7	1/4	3/16		
+269	line	285	286	boundary	3	7	3/16	1/8		
+270	line	286	287	boundary	3	7	1/8	1/16		
+271	line	287	288	boundary	3	7	1/16	0/1		
+272	line	0	17	boundary	4	8	1/1	15/16		
+273	line	1	18	u_cut	0					
+274	line	2	19	u_cut	1					
+275	line	3	20	u_cut	2					
+276	line	4	21	u_cut	3					
+277	line	5	22	u_cut	4					
+278	line	6	23	u_cut	5					
+279	line	7	24	u_cut	6					
+280	line	8	25	u_cut	7					
+281	line	9	26	u_cut	8					
+282	line	10	27	u_cut	9					
+283	line	11	28	u_cut	10					
+284	line	12	29	u_cut	11					
+285	line	13	30	u_cut	12					
+286	line	14	31	u_cut	13					
+287	line	15	32	u_cut	14					
+288	line	16	33	boundary	2	6	0/1	1/16		
+289	line	17	34	boundary	4	8	15/16	7/8		
+290	line	18	35	u_cut	0					
+291	line	19	36	u_cut	1					
+292	line	20	37	u_cut	2					
+293	line	21	38	u_cut	3					
+294	line	22	39	u_cut	4					
+295	line	23	40	u_cut	5					
+296	line	24	41	u_cut	6					
+297	line	25	42	u_cut	7					
+298	line	26	43	u_cut	8					
+299	line	27	44	u_cut	9					
+300	line	28	45	u_cut	10					
+301	line	29	46	u_cut	11					
+302	line	30	47	u_cut	12					
+303	line	31	48	u_cut	13					
+304	line	32	49	u_cut	14					
+305	line	33	50	boundary	2	6	1/16	1/8		
+306	line	34	51	boundary	4	8	7/8	13/16		
+307	line	35	52	u_cut	0					
+308	line	36	53	u_cut	1					
+309	line	37	54	u_cut	2					
+310	line	38	55	u_cut	3					
+311	line	39	56	u_cut	4					
+312	line	40	57	u_cut	5					
+313	line	41	58	u_cut	6					
+314	line	42	59	u_cut	7					
+315	line	43	60	u_cut	8					
+316	line	44	61	u_cut	9					
+317	line	45	62	u_cut	10					
+318	line	46	63	u_cut	11					
+319	line	47	64	u_cut	12					
+320	line	48	65	u_cut	13					
+321	line	49	66	u_cut	14					
+322	line	50	67	boundary	2	6	1/8	3/16		
+323	line	51	68	boundary	4	8	13/16	3/4		
+324	line	52	69	u_cut	0					
+325	line	53	70	u_cut	1					
+326	line	54	71	u_cut	2					
+327	line	55	72	u_cut	3					
+328	line	56	73	u_cut	4					
+329	line	57	74	u_cut	5					
+330	line	58	75	u_cut	6					
+331	line	59	76	u_cut	7					
+332	line	60	77	u_cut	8					
+333	line	61	78	u_cut	9					
+334	line	62	79	u_cut	10					
+335	line	63	80	u_cut	11					
+336	line	64	81	u_cut	12					
+337	line	65	82	u_cut	13					
+338	line	66	83	u_cut	14					
+339	line	67	84	boundary	2	6	3/16	1/4		
+340	line	68	85	boundary	4	8	3/4	11/16		
+341	line	69	86	u_cut	0					
+342	line	70	87	u_cut	1					
+343	line	71	88	u_cut	2					
+344	line	72	89	u_cut	3					
+345	line	73	90	u_cut	4					
+346	line	74	91	u_cut	5					
+347	line	75	92	u_cut	6					
+348	line	76	93	u_cut	7					
+349	line	77	94	u_cut	8					
+350	line	78	95	u_cut	9					
+351	line	79	96	u_cut	10					
+352	line	80	97	u_cut	11					
+353	line	81	98	u_cut	12					
+354	line	82	99	u_cut	13					
+355	line	83	100	u_cut	14					
+356	line	84	101	boundary	2	6	1/4	5/16		
+357	line	85	102	boundary	4	8	11/16	5/8		
+358	line	86	103	u_cut	0					
+359	line	87	104	u_cut	1					
+360	line	88	105	u_cut	2					
+361	line	89	106	u_cut	3					
+362	line	90	107	u_cut	4					
+363	line	91	108	u_cut	5					
+364	line	92	109	u_cut	6					
+365	line	93	110	u_cut	7					
+366	line	94	111	u_cut	8					
+367	line	95	112	u_cut	9					
+368	line	96	113	u_cut	10					
+369	line	97	114	u_cut	11					
+370	line	98	115	u_cut	12					
+371	line	99	116	u_cut	13					
+372	line	100	117	u_cut	14					
+373	line	101	118	boundary	2	6	5/16	3/8		
+374	line	102	119	boundary	4	8	5/8	9/16		
+375	line	103	120	u_cut	0					
+376	line	104	121	u_cut	1					
+377	line	105	122	u_cut	2					
+378	line	106	123	u_cut	3					
+379	line	107	124	u_cut	4					
+380	line	108	125	u_cut	5					
+381	line	109	126	u_cut	6					
+382	line	110	127	u_cut	7					
+383	line	111	128	u_cut	8					
+384	line	112	129	u_cut	9					
+385	line	113	130	u_cut	10					
+386	line	114	131	u_cut	11					
+387	line	115	132	u_cut	12					
+388	line	116	133	u_cut	13					
+389	line	117	134	u_cut	14					
+390	line	118	135	boundary	2	6	3/8	7/16		
+391	line	119	136	boundary	4	8	9/16	1/2		
+392	line	120	137	u_cut	0					
+393	line	121	138	u_cut	1					
+394	line	122	139	u_cut	2					
+395	line	123	140	u_cut	3					
+396	line	124	141	u_cut	4					
+397	line	125	142	u_cut	5					
+398	line	126	143	u_cut	6					
+399	line	127	144	u_cut	7					
+400	line	128	145	u_cut	8					
+401	line	129	146	u_cut	9					
+402	line	130	147	u_cut	10					
+403	line	131	148	u_cut	11					
+404	line	132	149	u_cut	12					
+405	line	133	150	u_cut	13					
+406	line	134	151	u_cut	14					
+407	line	135	152	boundary	2	6	7/16	1/2		
+408	line	136	153	boundary	4	8	1/2	7/16		
+409	line	137	154	u_cut	0					
+410	line	138	155	u_cut	1					
+411	line	139	156	u_cut	2					
+412	line	140	157	u_cut	3					
+413	line	141	158	u_cut	4					
+414	line	142	159	u_cut	5					
+415	line	143	160	u_cut	6					
+416	line	144	161	u_cut	7					
+417	line	145	162	u_cut	8					
+418	line	146	163	u_cut	9					
+419	line	147	164	u_cut	10					
+420	line	148	165	u_cut	11					
+421	line	149	166	u_cut	12					
+422	line	150	167	u_cut	13					
+423	line	151	168	u_cut	14					
+424	line	152	169	boundary	2	6	1/2	9/16		
+425	line	153	170	boundary	4	8	7/16	3/8		
+426	line	154	171	u_cut	0					
+427	line	155	172	u_cut	1					
+428	line	156	173	u_cut	2					
+429	line	157	174	u_cut	3					
+430	line	158	175	u_cut	4					
+431	line	159	176	u_cut	5					
+432	line	160	177	u_cut	6					
+433	line	161	178	u_cut	7					
+434	line	162	179	u_cut	8					
+435	line	163	180	u_cut	9					
+436	line	164	181	u_cut	10					
+437	line	165	182	u_cut	11					
+438	line	166	183	u_cut	12					
+439	line	167	184	u_cut	13					
+440	line	168	185	u_cut	14					
+441	line	169	186	boundary	2	6	9/16	5/8		
+442	line	170	187	boundary	4	8	3/8	5/16		
+443	line	171	188	u_cut	0					
+444	line	172	189	u_cut	1					
+445	line	173	190	u_cut	2					
+446	line	174	191	u_cut	3					
+447	line	175	192	u_cut	4					
+448	line	176	193	u_cut	5					
+449	line	177	194	u_cut	6					
+450	line	178	195	u_cut	7					
+451	line	179	196	u_cut	8					
+452	line	180	197	u_cut	9					
+453	line	181	198	u_cut	10					
+454	line	182	199	u_cut	11					
+455	line	183	200	u_cut	12					
+456	line	184	201	u_cut	13					
+457	line	185	202	u_cut	14					
+458	line	186	203	boundary	2	6	5/8	11/16		
+459	line	187	204	boundary	4	8	5/16	1/4		
+460	line	188	205	u_cut	0					
+461	line	189	206	u_cut	1					
+462	line	190	207	u_cut	2					
+463	line	191	208	u_cut	3					
+464	line	192	209	u_cut	4					
+465	line	193	210	u_cut	5					
+466	line	194	211	u_cut	6					
+467	line	195	212	u_cut	7					
+468	line	196	213	u_cut	8					
+469	line	197	214	u_cut	9					
+470	line	198	215	u_cut	10					
+471	line	199	216	u_cut	11					
+472	line	200	217	u_cut	12					
+473	line	201	218	u_cut	13					
+474	line	202	219	u_cut	14					
+475	line	203	220	boundary	2	6	11/16	3/4		
+476	line	204	221	boundary	4	8	1/4	3/16		
+477	line	205	222	u_cut	0					
+478	line	206	223	u_cut	1					
+479	line	207	224	u_cut	2					
+480	line	208	225	u_cut	3					
+481	line	209	226	u_cut	4					
+482	line	210	227	u_cut	5					
+483	line	211	228	u_cut	6					
+484	line	212	229	u_cut	7					
+485	line	213	230	u_cut	8					
+486	line	214	231	u_cut	9					
+487	line	215	232	u_cut	10					
+488	line	216	233	u_cut	11					
+489	line	217	234	u_cut	12					
+490	line	218	235	u_cut	13					
+491	line	219	236	u_cut	14					
+492	line	220	237	boundary	2	6	3/4	13/16		
+493	line	221	238	boundary	4	8	3/16	1/8		
+494	line	222	239	u_cut	0					
+495	line	223	240	u_cut	1					
+496	line	224	241	u_cut	2					
+497	line	225	242	u_cut	3					
+498	line	226	243	u_cut	4					
+499	line	227	244	u_cut	5					
+500	line	228	245	u_cut	6					
+501	line	229	246	u_cut	7					
+502	line	230	247	u_cut	8					
+503	line	231	248	u_cut	9					
+504	line	232	249	u_cut	10					
+505	line	233	250	u_cut	11					
+506	line	234	251	u_cut	12					
+507	line	235	252	u_cut	13					
+508	line	236	253	u_cut	14					
+509	line	237	254	boundary	2	6	13/16	7/8		
+510	line	238	255	boundary	4	8	1/8	1/16		
+511	line	239	256	u_cut	0					
+512	line	240	257	u_cut	1					
+513	line	241	258	u_cut	2					
+514	line	242	259	u_cut	3					
+515	line	243	260	u_cut	4					
+516	line	244	261	u_cut	5					
+517	line	245	262	u_cut	6					
+518	line	246	263	u_cut	7					
+519	line	247	264	u_cut	8					
+520	line	248	265	u_cut	9					
+521	line	249	266	u_cut	10					
+522	line	250	267	u_cut	11					
+523	line	251	268	u_cut	12					
+524	line	252	269	u_cut	13					
+525	line	253	270	u_cut	14					
+526	line	254	271	boundary	2	6	7/8	15/16		
+527	line	255	272	boundary	4	8	1/16	0/1		
+528	line	256	273	u_cut	0					
+529	line	257	274	u_cut	1					
+530	line	258	275	u_cut	2					
+531	line	259	276	u_cut	3					
+532	line	260	277	u_cut	4					
+533	line	261	278	u_cut	5					
+534	line	262	279	u_cut	6					
+535	line	263	280	u_cut	7					
+536	line	264	281	u_cut	8					
+537	line	265	282	u_cut	9					
+538	line	266	283	u_cut	10					
+539	line	267	284	u_cut	11					
+540	line	268	285	u_cut	12					
+541	line	269	286	u_cut	13					
+542	line	270	287	u_cut	14					
+543	line	271	288	boundary	2	6	15/16	1/1		
+544	circle	289	289	section	0	0			0,1,2,3	0,1,2,3
+545	circle	290	290	section	1	0			0,1,2,3	0,1,2,3
+546	circle	291	291	section	2	0			0,1,2,3	0,1,2,3
+547	circle	292	292	section	3	0			0,1,2,3	0,1,2,3
+548	circle	293	293	section	4	0			0,1,2,3	0,1,2,3
+549	circle	294	294	section	5	0			0,1,2,3	0,1,2,3
+550	circle	295	295	section	6	0			0,1,2,3	0,1,2,3
+551	circle	296	296	section	7	0			0,1,2,3	0,1,2,3
+552	circle	297	297	section	8	0			0,1,2,3	0,1,2,3
+553	circle	298	298	section	9	0			0,1,2,3	0,1,2,3
+554	circle	299	299	section	10	0			0,1,2,3	0,1,2,3
+555	circle	300	300	section	11	0			0,1,2,3	0,1,2,3
+556	circle	301	301	section	12	0			0,1,2,3	0,1,2,3
+557	circle	302	302	section	13	0			0,1,2,3	0,1,2,3
+558	circle	303	303	section	14	0			0,1,2,3	0,1,2,3
+559	circle	304	304	section	15	0			0,1,2,3	0,1,2,3
+560	circle	305	305	section	16	0			0,1,2,3	0,1,2,3
+561	circle	306	306	section	17	0			0,1,2,3	0,1,2,3
+562	circle	307	307	section	18	0			0,1,2,3	0,1,2,3
+563	circle	308	308	section	19	0			0,1,2,3	0,1,2,3
+564	circle	309	309	section	20	0			0,1,2,3	0,1,2,3
+565	circle	310	310	section	21	0			0,1,2,3	0,1,2,3
+566	circle	311	311	section	22	0			0,1,2,3	0,1,2,3
+567	circle	312	312	section	23	0			0,1,2,3	0,1,2,3
+568	circle	313	313	section	24	0			0,1,2,3	0,1,2,3
+569	circle	314	314	section	25	0			0,1,2,3	0,1,2,3
+570	circle	315	315	section	26	0			0,1,2,3	0,1,2,3
+571	circle	316	316	section	27	0			0,1,2,3	0,1,2,3
+572	circle	317	317	section	28	0			0,1,2,3	0,1,2,3
+573	circle	318	318	section	29	0			0,1,2,3	0,1,2,3
+574	circle	319	319	section	30	0			0,1,2,3	0,1,2,3
+575	circle	320	320	section	31	0			0,1,2,3	0,1,2,3
+576	circle	321	321	section	32	0			0,1,2,3	0,1,2,3
+577	circle	322	322	section	33	0			0,1,2,3	0,1,2,3
+578	circle	323	323	section	34	0			0,1,2,3	0,1,2,3
+579	circle	324	324	section	35	0			0,1,2,3	0,1,2,3
+580	circle	325	325	section	36	0			0,1,2,3	0,1,2,3
+581	circle	326	326	section	37	0			0,1,2,3	0,1,2,3
+582	circle	327	327	section	38	0			0,1,2,3	0,1,2,3
+583	circle	328	328	section	39	0			0,1,2,3	0,1,2,3
+584	circle	329	329	section	40	0			0,1,2,3	0,1,2,3
+585	circle	330	330	section	41	0			0,1,2,3	0,1,2,3
+586	circle	331	331	section	42	0			0,1,2,3	0,1,2,3
+587	circle	332	332	section	43	0			0,1,2,3	0,1,2,3
+588	circle	333	333	section	44	0			0,1,2,3	0,1,2,3
+589	circle	334	334	section	45	0			0,1,2,3	0,1,2,3
+590	circle	335	335	section	46	0			0,1,2,3	0,1,2,3
+591	circle	336	336	section	47	0			0,1,2,3	0,1,2,3
+592	circle	337	337	section	48	0			0,1,2,3	0,1,2,3
+593	circle	338	338	section	49	0			0,1,2,3	0,1,2,3
+594	circle	339	339	section	50	0			0,1,2,3	0,1,2,3
+595	circle	340	340	section	51	0			0,1,2,3	0,1,2,3
+596	circle	341	341	section	52	0			0,1,2,3	0,1,2,3
+597	circle	342	342	section	53	0			0,1,2,3	0,1,2,3
+598	circle	343	343	section	54	0			0,1,2,3	0,1,2,3
+599	circle	344	344	section	55	0			0,1,2,3	0,1,2,3
+600	circle	345	345	section	56	0			0,1,2,3	0,1,2,3
+601	circle	346	346	section	57	0			0,1,2,3	0,1,2,3
+602	circle	347	347	section	58	0			0,1,2,3	0,1,2,3
+603	circle	348	348	section	59	0			0,1,2,3	0,1,2,3
+604	circle	349	349	section	60	0			0,1,2,3	0,1,2,3
+605	circle	350	350	section	61	0			0,1,2,3	0,1,2,3
+606	circle	351	351	section	62	0			0,1,2,3	0,1,2,3
+607	circle	352	352	section	63	0			0,1,2,3	0,1,2,3
+608	circle	353	353	section	64	0			0,1,2,3	0,1,2,3
+609	circle	354	354	section	65	0			0,1,2,3	0,1,2,3
+610	circle	355	355	section	66	0			0,1,2,3	0,1,2,3
+611	circle	356	356	section	67	0			0,1,2,3	0,1,2,3
+612	circle	357	357	section	68	0			0,1,2,3	0,1,2,3
+613	circle	358	358	section	69	0			0,1,2,3	0,1,2,3
+614	circle	359	359	section	70	0			0,1,2,3	0,1,2,3
+615	circle	360	360	section	71	0			0,1,2,3	0,1,2,3
+616	circle	361	361	section	72	0			0,1,2,3	0,1,2,3
+617	circle	362	362	section	73	0			0,1,2,3	0,1,2,3
+618	circle	363	363	section	74	0			0,1,2,3	0,1,2,3
+619	circle	364	364	section	75	0			0,1,2,3	0,1,2,3
+620	circle	365	365	section	76	0			0,1,2,3	0,1,2,3
+621	circle	366	366	section	77	0			0,1,2,3	0,1,2,3
+622	circle	367	367	section	78	0			0,1,2,3	0,1,2,3
+623	circle	368	368	section	79	0			0,1,2,3	0,1,2,3
+624	circle	369	369	section	80	0			0,1,2,3	0,1,2,3
+625	circle	370	370	section	81	0			0,1,2,3	0,1,2,3
+626	circle	371	371	section	82	0			0,1,2,3	0,1,2,3
+627	circle	372	372	section	83	0			0,1,2,3	0,1,2,3
+628	circle	373	373	section	84	0			0,1,2,3	0,1,2,3
+629	circle	374	374	section	85	0			0,1,2,3	0,1,2,3
+630	circle	375	375	section	86	0			0,1,2,3	0,1,2,3
+631	circle	376	376	section	87	0			0,1,2,3	0,1,2,3
+632	circle	377	377	section	88	0			0,1,2,3	0,1,2,3
+633	circle	378	378	section	89	0			0,1,2,3	0,1,2,3
+634	circle	379	379	section	90	0			0,1,2,3	0,1,2,3
+635	circle	380	380	section	91	0			0,1,2,3	0,1,2,3
+636	circle	381	381	section	92	0			0,1,2,3	0,1,2,3
+637	circle	382	382	section	93	0			0,1,2,3	0,1,2,3
+638	circle	383	383	section	94	0			0,1,2,3	0,1,2,3
+639	circle	384	384	section	95	0			0,1,2,3	0,1,2,3
+640	circle	385	385	section	96	0			0,1,2,3	0,1,2,3
+641	circle	386	386	section	97	0			0,1,2,3	0,1,2,3
+642	circle	387	387	section	98	0			0,1,2,3	0,1,2,3
+643	circle	388	388	section	99	0			0,1,2,3	0,1,2,3
+644	circle	389	389	section	100	0			0,1,2,3	0,1,2,3
+645	circle	390	390	section	101	0			0,1,2,3	0,1,2,3
+646	circle	391	391	section	102	0			0,1,2,3	0,1,2,3
+647	circle	392	392	section	103	0			0,1,2,3	0,1,2,3
+648	circle	393	393	section	104	0			0,1,2,3	0,1,2,3
+649	circle	394	394	section	105	0			0,1,2,3	0,1,2,3
+650	circle	395	395	section	106	0			0,1,2,3	0,1,2,3
+651	circle	396	396	section	107	0			0,1,2,3	0,1,2,3
+652	circle	397	397	section	108	0			0,1,2,3	0,1,2,3
+653	circle	398	398	section	109	0			0,1,2,3	0,1,2,3
+654	circle	399	399	section	110	0			0,1,2,3	0,1,2,3
+655	circle	400	400	section	111	0			0,1,2,3	0,1,2,3
+656	circle	401	401	section	112	0			0,1,2,3	0,1,2,3
+657	circle	402	402	section	113	0			0,1,2,3	0,1,2,3
+658	circle	403	403	section	114	0			0,1,2,3	0,1,2,3
+659	circle	404	404	section	115	0			0,1,2,3	0,1,2,3
+660	circle	405	405	section	116	0			0,1,2,3	0,1,2,3
+661	circle	406	406	section	117	0			0,1,2,3	0,1,2,3
+662	circle	407	407	section	118	0			0,1,2,3	0,1,2,3
+663	circle	408	408	section	119	0			0,1,2,3	0,1,2,3
+664	circle	409	409	section	120	0			0,1,2,3	0,1,2,3
+665	circle	410	410	section	121	0			0,1,2,3	0,1,2,3
+666	circle	411	411	section	122	0			0,1,2,3	0,1,2,3
+667	circle	412	412	section	123	0			0,1,2,3	0,1,2,3
+668	circle	413	413	section	124	0			0,1,2,3	0,1,2,3
+669	circle	414	414	section	125	0			0,1,2,3	0,1,2,3
+670	circle	415	415	section	126	0			0,1,2,3	0,1,2,3
+671	circle	416	416	section	127	0			0,1,2,3	0,1,2,3
