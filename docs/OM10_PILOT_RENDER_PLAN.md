@@ -1,7 +1,7 @@
 # OM10 pilot images from the qualified scene
 
 Root-reviewed and accepted plan. **Do not execute until root explicitly reports
-the complete nonvisual V2 source/mesh/assembly/CPU/P100 qualification PASS.** During
+the complete nonvisual source/mesh/assembly/CPU/P100 qualification PASS.** During
 the active qualification run, documentation/journal and the private pilot utility
 may be prepared. No actual watch rasterization, product/helper/binary edits or
 rebuilds.
@@ -64,7 +64,7 @@ A small private fleet utility/common recipe will:
 Root inspects full-resolution assembled/exploded geometry, framing, source-linked
 labels, leader readability and source attribution. Native lane can diagnose
 actual CPU/P100 fidelity differences using RGBA/depth/IDs and the same poses'
-existing V2 projected/source-jet diagnostics. Exact tiny renderer oracles already
+existing qualified projected/source-jet diagnostics. Exact tiny renderer oracles already
 establish raster rules; do not add a generic pixel-certification framework or
 repeat qualification because the picture is attractive.
 

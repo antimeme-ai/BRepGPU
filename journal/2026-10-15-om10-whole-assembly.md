@@ -35,3 +35,10 @@ open after this documentation delivery. Recorded source geometry gaps and a
 concrete dependency tradeoff for operator discussion, without silently adopting
 OCCT. Static source/report/API review and doc links/whitespace are sufficient for
 this scope assessment; no new product tests or performance campaign are started.
+
+Later implementation checkpoint: the reviewed pilot recipe now requires an
+explicit completed whole-source nonvisual PASS without naming a stopped run
+revision. Both earlier whole runs remain stopped, with no raster output. The
+private pilot utility has the same prerequisite; native lane changed only its
+description and did not execute it. This documentation correction needs no
+product rebuild or repeated native campaign.
