@@ -11,7 +11,7 @@ select every recorded optimization.
 
 The operator requires NVIDIA USD/BRep CPU reference times for **every scenario
 presented in the README**, after the complete OM10 watch pass concludes. The
-watch itself already includes that external baseline alongside owned CPU/P100.
+watch itself requires that external baseline alongside owned CPU/P100.
 This follow-on tranche takes priority as an explicit obligation; it does not
 start while the watch delivery is active. Tracked in
 [issue63](https://github.com/antimeme-ai/BRepGPU/issues/63).
