@@ -123,18 +123,25 @@ def execute(args):
     phase('material_boundary_history_consume')
     request=prepare_grid(result,args.grid);phase('request_prepare')
     with Engine(backend=args.backend,device=args.device,threads=args.threads,library_path=args.library_path) as engine:
+        require(Path(engine._lib._name).resolve()==native[0],'loaded native path differs')
         phase('engine_setup');batch=sample(engine,request)
+        require(batch.result is result and batch.request is request,'native request/result owner differs')
+        require((batch.backend,batch.device)==(args.backend,args.device),'native placement differs')
         checksum=sum(sum(row.position)+sum(row.normal) for row in batch.rows if row.native_status!=-1)
         require(math.isfinite(checksum),'nonfinite consumed native checksum');phase('sample_and_consume')
     phase('engine_cleanup')
-    topology=solid.topology_input();library=AdjacencyLibrary(args.topology_library);phase('topology_pack_library_load')
+    topology=solid.topology_input();library=AdjacencyLibrary(args.topology_library)
+    require(library.path==native[1] and Path(library._lib._name).resolve()==native[1],'loaded topology path differs')
+    phase('topology_pack_library_load')
     adjacency=library.build(topology,backend=args.backend,device=args.device,threads=args.threads);phase('adjacency_build')
     kinds=tuple(adjacency.edge_kind(i) for i in range(3))
     require(kinds==(PAIRED,PAIRED,SAME_FACE_PAIR),'actual rim/seam pair kinds differ')
     erows=tuple((i,kind,tuple(v.entity_id for v in adjacency.edge_uses(i))) for i,kind in enumerate(kinds))
     crows=tuple((i,adjacency.mate(i).entity_id,adjacency.neighbor(i).entity_id) for i in range(6))
-    phase('actual_adjacency_reader');complete=(time.perf_counter_ns()-started)/1e6
-    factory_complete=(time.perf_counter_ns()-factory_start)/1e6
+    require(all((key.instance,key.body_id,key.revision)==(0,solid.body_id,solid.revision)
+        for i in range(6) for key in (adjacency.mate(i),adjacency.neighbor(i))),'actual reader escaped result namespace')
+    phase('actual_adjacency_reader');end=time.perf_counter_ns()
+    complete=(end-started)/1e6;factory_complete=(end-factory_start)/1e6
     qstart=time.perf_counter_ns();quality={}
     for prefix,values in (('result',qualify_result(result)),('samples',qualify_samples(batch)),('topology',qualify_topology(result,adjacency))):
         quality.update((prefix+'_'+name,value) for name,value in values.items())
@@ -144,7 +151,7 @@ def execute(args):
     tsv(out/'recipe.tsv',('field','value'),(('recipe',args.recipe),('distance',distance),('join',result.join),('source_body',source.body_id),('source_revision',source.revision),
         ('output_body',solid.body_id),('output_revision',solid.revision),('scale',scale.hex()),*((f'origin_{i}',o.hex()) for i,o in enumerate(origin)),
         ('radius',R),('half_height',H),('world_volume_rational',solid.volume.rational),('world_volume_pi_coefficient',solid.volume.pi),
-        ('observed_backend',batch.backend),('observed_device',batch.device),('candidate_count',batch.count),('admitted_count',batch.evaluated_count),('checksum',checksum)))
+        ('requested_backend',args.backend),('requested_device',args.device),('requested_threads',args.threads),('grid',args.grid),('observed_backend',batch.backend),('observed_device',batch.device),('candidate_count',batch.count),('admitted_count',batch.evaluated_count),('checksum',checksum)))
     tsv(out/'source-vertices.tsv',('id','x','y','z'),((v.id,*v.position) for v in source.vertices))
     tsv(out/'sources.tsv',('path','sha256'),pins);tsv(out/'native-libraries.tsv',('name','sha256'),before)
     tsv(out/'quality.tsv',('field','value'),sorted(quality.items()))
