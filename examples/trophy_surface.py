@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Orbital reliquary: actual native rational carriers, analytic checks, owned SVG."""
 import argparse
+import base64
 from array import array
 import csv
 from fractions import Fraction as F
 import hashlib
 import math
+import struct
+import zlib
 from pathlib import Path
 from brepgpu import Engine, Patch
 
@@ -91,37 +94,70 @@ def cross(a,b):
     return (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])
 
 
-def render(output, specs, points, normals, n, backend_label):
+def surface_png(specs, points, normals, n):
+    """Owned orthographic depth buffer. These are display triangles only."""
+    width,height=1800,1500
+    depth=array('d',[-math.inf])*(width*height)
+    pixels=bytearray(width*height*4)
     palette=((.16,.68,.72),(.87,.45,.20),(.77,.76,.48),(.28,.49,.62),(.64,.31,.39))
-    polys=[]
     light=unit((-.4,-.5,1))
-    for ti,spec in enumerate(specs):
-        color=palette[spec[4]]
-        for patch in range(16):
-            start=(ti*16+patch)*n*n
-            for i in range(n-1):
-                for j in range(n-1):
-                    ids=[start+i*n+j,start+(i+1)*n+j,start+(i+1)*n+j+1,start+i*n+j+1]
-                    vertices=[view(points[k]) for k in ids]
-                    normal=unit(view(tuple(sum(normals[k][a] for k in ids) for a in range(3))))
-                    diffuse=abs(sum(a*b for a,b in zip(normal,light)))
-                    highlight=abs(normal[2])**30
-                    rim=(1-abs(normal[2]))**3
-                    rgb=[min(255,round(255*(c*(.23+.70*diffuse)+.28*highlight+.09*rim))) for c in color]
-                    fill='#'+''.join(f'{c:02x}' for c in rgb)
-                    xy=' '.join(f'{900+900*x:.2f},{795-900*y:.2f}' for x,y,z in vertices)
-                    polys.append((sum(p[2] for p in vertices)/4,xy,fill))
+    vertices=[]
+    for k,(point,normal) in enumerate(zip(points,normals)):
+        x,y,z=view(point); normal=view(normal)
+        diffuse=abs(sum(a*b for a,b in zip(normal,light)))
+        highlight=abs(normal[2])**30;rim=(1-abs(normal[2]))**3
+        base=palette[specs[k//(16*n*n)][4]]
+        rgb=tuple(min(255,255*(c*(.23+.70*diffuse)+.28*highlight+.09*rim)) for c in base)
+        vertices.append((900+900*x,795-900*y,z,*rgb))
+    def triangle(ia,ib,ic):
+        a,b,c=(vertices[k] for k in (ia,ib,ic))
+        ax,ay=a[:2];bx,by=b[:2];cx,cy=c[:2]
+        area=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy)
+        if abs(area)<1e-12:return
+        xmin=max(0,math.ceil(min(ax,bx,cx)-.5));xmax=min(width-1,math.floor(max(ax,bx,cx)-.5))
+        ymin=max(0,math.ceil(min(ay,by,cy)-.5));ymax=min(height-1,math.floor(max(ay,by,cy)-.5))
+        for y in range(ymin,ymax+1):
+            py=y+.5
+            for x in range(xmin,xmax+1):
+                px=x+.5
+                wa=((by-cy)*(px-cx)+(cx-bx)*(py-cy))/area
+                wb=((cy-ay)*(px-cx)+(ax-cx)*(py-cy))/area
+                wc=1-wa-wb
+                if min(wa,wb,wc)<-1e-10:continue
+                z=wa*a[2]+wb*b[2]+wc*c[2];index=y*width+x
+                if z<=depth[index]:continue
+                depth[index]=z;offset=4*index
+                for channel in range(3):
+                    pixels[offset+channel]=max(0,min(255,round(wa*a[channel+3]+wb*b[channel+3]+wc*c[channel+3])))
+                pixels[offset+3]=255
+    for patch in range(len(specs)*16):
+        start=patch*n*n
+        for i in range(n-1):
+            for j in range(n-1):
+                a=start+i*n+j;b=a+n;c=b+1;d=a+1
+                triangle(a,b,c);triangle(a,c,d)
+    def chunk(kind,payload):
+        return struct.pack('!I',len(payload))+kind+payload+struct.pack('!I',zlib.crc32(kind+payload)&0xffffffff)
+    raw=b''.join(b'\0'+pixels[y*width*4:(y+1)*width*4] for y in range(height))
+    return (b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!2I5B',width,height,8,6,0,0,0))
+            +chunk(b'IDAT',zlib.compress(raw,6))+chunk(b'IEND',b''))
+
+
+def render(output, specs, points, normals, n, backend_label):
+    png=surface_png(specs,points,normals,n)
+    output.with_name('surface.png').write_bytes(png)
+    encoded=base64.b64encode(png).decode('ascii')
     lines=['<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1500" viewBox="0 0 1800 1500">',
            '<defs><radialGradient id="bg"><stop stop-color="#182a36"/><stop offset="1" stop-color="#070e18"/></radialGradient></defs>',
            '<rect width="1800" height="1500" fill="url(#bg)"/>',
            '<g fill="none" stroke="#7b9ca9" opacity=".12">']
     for radius in (220,440,660): lines.append(f'<circle cx="900" cy="795" r="{radius}"/>')
     lines += ['<path d="M90 795H1710M900 195V1395"/></g>',
+              f'<image x="0" y="0" width="1800" height="1500" href="data:image/png;base64,{encoded}"/>',
               '<g font-family="sans-serif"><text x="90" y="80" fill="#8ba4b7" font-size="20" letter-spacing="5">BRepGPU / STUDIES IN RATIONAL GEOMETRY / 01</text>',
               '<text x="88" y="152" fill="#f0e6cf" font-size="62" letter-spacing="2">ORBITAL RELIQUARY</text>',
-              f'<text x="91" y="197" fill="#a3b6c5" font-size="23">Thirteen interleaved carriers. One FP64 patch batch · {backend_label}.</text></g>']
-    lines += [f'<polygon points="{xy}" fill="{fill}" stroke="{fill}" stroke-width=".35"/>' for _,xy,fill in sorted(polys)]
-    lines += ['<g font-family="monospace" font-size="19" fill="#a3b6c5">',
+              f'<text x="91" y="197" fill="#a3b6c5" font-size="23">Thirteen interleaved carriers. One FP64 patch batch · {backend_label}.</text></g>',
+              '<g font-family="monospace" font-size="19" fill="#a3b6c5">',
               '<text x="90" y="1402">208 RATIONAL QUADRATIC PATCHES / 60,112 POSITION + FIRST-JET SAMPLES</text>',
               '<text x="90" y="1440">Native derivative lighting · surface assembly · sampled display, no fusion or chord bound</text></g></svg>']
     output.write_text('\n'.join(lines)+'\n')
@@ -188,7 +224,7 @@ def main():
         [('position',float(max_errors[0]),2**-40),('du',float(max_errors[1]),2**-30),('dv',float(max_errors[2]),2**-30),('seam_position',seam_error,2**-40),('seam_unit_normal',normal_error,2**-30)])
     tsv('sources.tsv',('path','sha256'),((path,hashlib.sha256(Path(path).read_bytes()).hexdigest()) for path in ('examples/trophy_surface.py','python/brepgpu/__init__.py')))
     render(out/'orbital.svg',specs,points,normals,n, f'CUDA device {args.device}' if args.backend=='cuda' else 'native CPU')
-    (out/'REPORT.md').write_text(f'''# Orbital reliquary\n\nActual {args.backend} device {args.device} evaluation: {len(specs)} independent torus\ncarriers, {len(patches)} degree-(2,2) patches, {len(slots):,} samples, first jets.\nAll statuses succeeded; all outputs finite. Every sampled position and both\nfirst derivatives were compared against independent exact Fraction torus maps\nat the submitted binary64 parameters. See qualification.tsv for absolute errors\nand existing native grades. Closed chart seams also agree in position and\noriented unit normal; raw seam parameter speeds intentionally differ.\n\nThe assembly is a visual arrangement of separate carriers, not a fused B-rep.\nSVG quadrilaterals are display samples without a chord or trim guarantee.\nLighting uses actual returned derivatives; painter ordering can have visibility\nartifacts where carriers overlap. No performance claim is made.\n\ncontrols.tsv preserves homogeneous binary64 inputs; assembly.tsv defines the\nanalytic recipe. Query order: patch-major, u-major/v-fast, 17×17, parameters\ni/16,j/16 including endpoints. jets.f64 is native little-endian binary64,\nstructure-of-arrays: Sx,Sy,Sz,Sux,Suy,Suz,Svx,Svy,Svz, each {len(slots)} values.\nStatus success is checked before writing. Source hashes are in sources.tsv.\n\nReproduce from repository root with PYTHONPATH=python and BREPGPU_LIBRARY set\nto an existing qualified native library:\n\n```sh\npython3 examples/trophy_surface.py --backend cuda --device 0 \\\n  --output-directory results/local-trophies/orbital\n```\n''')
+    (out/'REPORT.md').write_text(f'''# Orbital reliquary\n\nActual {args.backend} device {args.device} evaluation: {len(specs)} independent torus\ncarriers, {len(patches)} degree-(2,2) patches, {len(slots):,} samples, first jets.\nAll statuses succeeded; all outputs finite. Every sampled position and both\nfirst derivatives were compared against independent exact Fraction torus maps\nat the submitted binary64 parameters. See qualification.tsv for absolute errors\nand existing native grades. Closed chart seams also agree in position and\noriented unit normal; raw seam parameter speeds intentionally differ.\n\nThe assembly is a visual arrangement of separate carriers, not a fused B-rep.\nDepth-buffered display triangles are samples without a chord or trim guarantee.\nLighting uses actual returned derivatives; the owned display rasterizer uses an orthographic depth buffer. No performance claim is made.\n\ncontrols.tsv preserves homogeneous binary64 inputs; assembly.tsv defines the\nanalytic recipe. Query order: patch-major, u-major/v-fast, 17×17, parameters\ni/16,j/16 including endpoints. jets.f64 is native little-endian binary64,\nstructure-of-arrays: Sx,Sy,Sz,Sux,Suy,Suz,Svx,Svy,Svz, each {len(slots)} values.\nStatus success is checked before writing. Source hashes are in sources.tsv.\n\nReproduce from repository root with PYTHONPATH=python and BREPGPU_LIBRARY set\nto an existing qualified native library:\n\n```sh\npython3 examples/trophy_surface.py --backend cuda --device 0 \\\n  --output-directory results/local-trophies/orbital\n```\n''')
     print(f'patches={len(patches)} samples={len(slots)} errors={[float(e) for e in max_errors]} seam={seam_error} normals={normal_error}')
 
 if __name__=='__main__': main()
