@@ -32,6 +32,36 @@ def sphere_cap_fixture():
         (circle,meridian,*uv))
 
 
+
+def spline_column_fixture():
+    """Owned open rectangle fixture; foreign UV lies beyond generic128ULP."""
+    xyz=((0.,0.,0.),(1.,0.,1.),(1.,2.,1.),(0.,2.,0.))
+    curves=[];edges=[];coedges=[]
+    uv_origins=((-1e-10,0.),(1.+1e-10,0.),(1.+1e-10,1.),(-1e-10,1.))
+    uv_directions=((1.,0.),(0.,1.),(-1.,0.),(0.,-1.))
+    for i in range(4):
+        a,b=xyz[i],xyz[(i+1)%4];cid=101+i
+        if i in (0,2):
+            controls=tuple(x for p in (a,b) for x in (*p,1.))
+            curve=Curve(cid,3,5,ZERO_FRAME,(0.,0.),(0.,1.),1,(0.,1.),(2,2),controls,
+                        (CurveSpan((0.,1.),1,controls),))
+        else:
+            curve=Curve(cid,3,1,(*a,*(y-x for x,y in zip(a,b)),0.,0.,0.,0.,0.,0.),(0.,0.),(0.,1.))
+        origin,direction=uv_origins[i],uv_directions[i];pcid=2**63+11+i
+        pc=Curve(pcid,2,1,(*origin,0.,*direction,0.,0.,0.,0.,0.,0.,0.),(0.,0.),(0.,1.))
+        curves.extend((curve,pc));edges.append(Edge(40+i,(50+i,50+(i+1)%4),cid,(0.,1.),True,True,False,0.))
+        coedges.append(Coedge(11+i,40+i,60,1,pcid,(0.,1.)))
+    controls=tuple(x for p in (xyz[0],xyz[3],xyz[1],xyz[2]) for x in (*p,1.))
+    span=SurfaceSpan((0.,1.,0.,1.),(1,1),controls)
+    carrier=Carrier(70,6,ZERO_FRAME,(0.,0.),(0.,1.,0.,1.),(1,1),
+                    (0.,1.),(2,2),(0.,1.),(2,2),(2,2),controls,(span,))
+    return ImportedSource('ef'*32,1.,0.,10,'independently authored spline column rectangle',
+        (Product(10,'spline column fixture','fixture',20),),
+        (SolidDefinition(20,10,(30,),(40,41,42,43),(50,51,52,53)),),(),
+        tuple(Vertex(50+i,p,0.) for i,p in enumerate(xyz)),tuple(edges),tuple(coedges),
+        (Loop(60,30,True,(11,12,13,14)),),(Face(30,20,70,1,(60,),0.),),(carrier,),tuple(curves))
+
+
 def exact_triangle_area(points,triangles):
     total=Fraction(0)
     for tri in triangles:
@@ -43,6 +73,27 @@ def exact_triangle_area(points,triangles):
 
 
 class ImportedMeshingTests(unittest.TestCase):
+    def test_source_spline_columns_recover_generator_and_shared_vertex_uv(self):
+        mesh=mesh_imported(spline_column_fixture())
+        self.assertEqual(len(mesh.triangles),2)
+        self.assertEqual(len(mesh.faces[0].joint_recoveries),4)
+        self.assertEqual({o.recovery_kind for loop in mesh.faces[0].boundary_loops for o in loop},
+                         {'spline_boundary_generator','spline_boundary_vertex_inverse'})
+        self.assertEqual(sum(exact_triangle_area({i:c.uv for i,c in enumerate(t.corners)},[(0,1,2)]) for t in mesh.triangles),1)
+        self.assertGreater(dict(mesh.error_metrics)['foreign_uv_unevaluated_count'],0)
+        for loop in mesh.faces[0].boundary_loops:
+            self.assertTrue(all(0<=o.uv[0]<=1 and 0<=o.uv[1]<=1 for o in loop))
+
+    def test_source_spline_column_admission_rejects_wrong_line_weights_and_branch(self):
+        source=spline_column_fixture()
+        line=source.curve(102);bad=replace(line,frame=(1.01,*line.frame[1:]))
+        with self.assertRaises(ValueError):mesh_imported(replace(source,curves=tuple(bad if c.id==bad.id else c for c in source.curves)))
+        carrier=source.carriers[0];controls=list(carrier.controls);controls[7]=2.
+        with self.assertRaises(ValueError):mesh_imported(replace(source,carriers=(replace(carrier,controls=tuple(controls)),)))
+        pc=source.curve(2**63+12);bad=replace(pc,frame=(.5,*pc.frame[1:]))
+        with self.assertRaisesRegex(ValueError,'branch'):
+            mesh_imported(replace(source,curves=tuple(bad if c.id==bad.id else c for c in source.curves)))
+
     def test_projected_axial_line_bound_does_not_create_false_angular_samples(self):
         frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
         cylinder=Carrier(1,2,frame,(1.,0.),(0.,2*math.pi,0.,1.))

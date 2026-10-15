@@ -192,3 +192,16 @@ give a reversed normal. Independent boundary checks therefore require this V
 exactly. Actual native declared pole vertices retain the same V, must emit the
 limiting-normal flag, and compare against the original positive-interior normal
 limit; numeric position closeness alone is insufficient.
+
+The accepted natural-spline-boundary family uses existing occurrence/joint
+records with spline_boundary_generator and spline_boundary_vertex_inverse.
+Independent checks require original clamped U, two clamped degree1 V controls
+with equal positive weights, exact original LINE affine coefficient and vertex
+membership in a natural control column, active V range, and one fixed column
+selected by the entire positive-control raw-guide U hull. Exact source-column
+UV is checked directly. A neighboring non-LINE endpoint must be the same original
+vertex at an immediately adjacent verified LINE occurrence in this loop; typed
+joint metadata is mandatory even for tiny raw gaps. Generic128ULP admission
+remains unchanged. Raw out-of-domain S is never evaluated; its occurrence count
+is explicit. Existing full physical/domain/native checks remain the only output
+qualification layer.

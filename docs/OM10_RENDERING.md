@@ -5,8 +5,8 @@ The target is the supplied **Association openmovement OM10 MAN VA01.3**:
 explode the same complete geometry, preserving original names, usage paths,
 rigid transforms, edge/coedge identities and per-face source mapping.
 
-The complete pipeline is implemented; the all-face diagnostic scan has exposed
-remaining refinement and axial-edge failures under study. Whole-source mesh
+The complete pipeline is implemented. Focused ring/spiral connectivity,
+axial-edge and source-owned spline-boundary checks pass; whole-source mesh
 and three-backend integration must pass before actual watch rasterization.
 The [reviewed plan](OM10_IMPLEMENTATION_PLAN.md),
 [source/recovery study](../papers/2026-10-15-om10-import-mesh-study.md) and
@@ -124,6 +124,11 @@ Original STEP contains no UV trim curves. Reconstructed foreign pcurves remain
 available as provenance and branch guides. Owned source-driven plane/cylinder/
 cone recovery preserves original XYZ and parameters; exact rational plane UV
 preserves collinearity. Singular source poles retain explicit chart closures.
+Clamped linear spline-boundary columns recover original LINE parameters and
+their incident original-vertex joints by exact source coefficients. This keeps
+the generic128ULP outside-domain rejection unchanged. Foreign UV that cannot
+be evaluated inside the original domain has an explicit count; its raw values
+remain retained and corrected source residuals must still pass.
 All physical triangles must have nonzero area; only proven pole quotients omit
 collapsed physical cells while retaining their UV coverage/error accounting.
 
