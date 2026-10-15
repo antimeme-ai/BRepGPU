@@ -89,6 +89,36 @@ class SourceUVTests(unittest.TestCase):
             self.assertNotEqual(bad.returncode,0)
             self.assertIn('natural-domain',bad.stderr)
 
+    def test_conic_source_chart_approximation_preserves_original_curve_and_budget(self):
+        executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
+            ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
+        with tempfile.TemporaryDirectory() as directory:
+            run=subprocess.run((str(executable),'conic-boundary',str(Path(directory)/'query.brep')),
+                capture_output=True,text=True)
+            self.assertEqual(run.returncode,0,run.stderr)
+            rows=[row.split('\t') for row in run.stdout.splitlines()]
+            self.assertEqual([tuple(map(float,row[1:])) for row in rows if row[0]=='original_circle'],
+                [(.01,0.,.04)])
+            self.assertEqual([row[1:] for row in rows if row[0]=='original_uses'],[['10','11','12','13']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='ordered_uses'],[['4']])
+            raw=[row for row in rows if row[0]=='raw_boundary']
+            self.assertEqual(len(raw),17)
+            self.assertTrue(all(float(row[2])==1. for row in raw),'owned source retained unconstrained guide')
+            boundary=[row for row in rows if row[0]=='boundary' and row[1]=='10']
+            self.assertEqual(len(boundary),17)
+            center=1-.01*math.cos(.02)
+            for row in boundary:
+                t=float(row[2]);xyz=tuple(map(float,row[3:6]));u,v=map(float,row[6:8])
+                expected=(center+.01*math.cos(t-.02),.01*math.sin(t-.02),0.)
+                self.assertLessEqual(math.dist(xyz,expected),2**-32)
+                self.assertEqual(u,1.)
+                self.assertLessEqual(math.dist((u,v,0.),xyz),.005/8)
+                self.assertLessEqual(math.dist(tuple(map(float,row[8:11])),(u,v,0.)),2**-32)
+            bad=subprocess.run((str(executable),'conic-boundary-too-far',str(Path(directory)/'bad.brep')),
+                capture_output=True,text=True)
+            self.assertNotEqual(bad.returncode,0)
+            self.assertIn('allocation',bad.stderr)
+
     def test_reversed_cylinder_preserves_all_native_seam_uses(self):
         executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
             ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
