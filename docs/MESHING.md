@@ -1,5 +1,8 @@
 # Complete trim-aware canonical meshes
 
+[Actual geometry and CPU cost results](../results/meshing-2026-10-15/REPORT.md)
+include complete meshes, source records and direct qualification.
+
 The owned CPU mesher constructs a complete indexed triangle shell for the
 existing box, cylinder or one-hole plate. Physical boundary vertices are shared
 by source identity; face/chart/coedge occurrences remain distinct. Original
