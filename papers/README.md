@@ -550,3 +550,15 @@ The original anonymous request remains a membership redirect in the manifest.
 The [next-step proposal](../docs/REAL_WATCH_NEXT.md) recommends a source inventory
 and one dimensioned thin component, alongside the broader runtime/Python and
 external-oracle tranche. No geometry implementation or dependency is selected.
+
+
+## Whole OM10 assembly and comparative graphics
+
+[Actual geometry/trim gaps](2026-10-15-om10-whole-assembly-geometry-gaps.md)
+identify the full-source requirements behind the operator's new assembled and
+exploded/labeled CPU/P100 target. The [delivery/benchmark brief](../docs/OM10_ASSEMBLY_DELIVERY.md)
+records source import, instance identity, general trims/mesh, GPU coverage,
+explosion/labels and end-to-end timing scopes. The107 stored solids expand to166
+occurrences; one fixture or a faster evaluated subset cannot satisfy full-model
+coverage. An OCCT reference/source adapter is discussed, not adopted. No product
+implementation, complete import, rendering or new timing was performed.

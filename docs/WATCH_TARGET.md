@@ -110,3 +110,16 @@ ETA/Sellita/MIYOTA/TMI documents offer real service/casing/detail drawings, not 
 complete internal movement package. Source access and an actual component
 inventory precede faithful reconstruction. Current thin-part/aspect restrictions
 need a reviewed dimensional contract; study01 remains schematic and unchanged.
+
+
+## Whole-assembly target supersedes the single-part candidate
+
+The operator now requests the complete OM10 movement assembled, followed by an
+exploded/labeled assembly, both CPU-only and GPU-accelerated, with actual timings
+in graphics for a key X post. The [delivery gap and benchmark brief](OM10_ASSEMBLY_DELIVERY.md)
+records the target:107 unique solids and166 source occurrences, faithful geometry,
+hierarchical placements/explosion and labels. The clamp remains a development
+fixture. Read the [whole-source geometry gaps](../papers/2026-10-15-om10-whole-assembly-geometry-gaps.md)
+for multispan surfaces, degree-five boundaries and missing UV trim recovery.
+An isolated OCCT import/reference bridge is proposed for discussion; no dependency
+or implementation is selected by this brief. Existing study01/NCSX stay intact.
