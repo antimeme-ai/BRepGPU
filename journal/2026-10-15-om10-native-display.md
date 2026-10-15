@@ -25,3 +25,30 @@ byte-identical source-derived images.
 
 No product code, geometry, test, render, native build or Git mutation occurred
 in this research stage. Await integrated reviewed design and plan.
+
+Integrated design and implementation plan accepted after native review. Added
+explicit finite-result errors, original assembled alpha0 branch, and deterministic
+supersample ID/depth policy. Oracle owner caught cameraY convention ambiguity;
+we resolved it as screenY=centerY-scale*cameraUp before implementation green.
+Initial two native fleet tests genuinely failed because the executable did not
+exist; source/assembly reds were separate. Later expanded cases are not claimed
+as initial red.
+
+Implemented the isolated native/om10 C++17 executable and optional CUDA12.8/sm60
+plugin. Own checked binary parsing, original-UV analytic/Bezier first jets,
+limiting normals, copied source values, retained CPU workers/device geometry,
+rigid instances/explosion, fixed-subpixel top-left coverage, complete CSR tile
+bins, two-level512-entry GPU scans, visibility, source-normal shading, linear
+supersampling/sRGB and explicit geometry/projection/identity diagnostics. CPU
+path never loads CUDA. No existing ABI/build changed. Root source review caught
+valid cone reference radius0 and proper rotation consistency; fixed both.
+Static self-review fixed partial-upload cleanup pointer ownership and CUDA
+arithmetic source-row errors before the first GPU qualification.
+
+Fleet Release CPU+CUDA build succeeded, with no host warnings after cleanup;
+nvcc reports the expected pre-sm75 architecture deprecation. Six direct methods
+passed on CPU1, CPU24, P1000 and P1001: exact tiny pixel/depth/source IDs,
+original plane/reversed normal jets, shared edge/opposite winding/offscreen,
+front/coplanar tie/instances/explosion, projected-only rotated normals/mapping,
+and supersample resolve identity. Expanded analytic/failure/multiblock cases and
+independent source review remain. No actual OM10 rasterization has run.
