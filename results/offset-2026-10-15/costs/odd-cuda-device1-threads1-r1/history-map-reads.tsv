@@ -1,0 +1,60 @@
+kind	id	u	v	source_t	source_uv
+vertex	1	0	0		
+vertex	2	0	0		
+edge	1	0	0	0	
+edge	1	1/7	0	1/7	
+edge	1	1/2	0	1/2	
+edge	1	6/7	0	6/7	
+edge	1	1	0	1	
+edge	2	0	0	0	
+edge	2	1/7	0	1/7	
+edge	2	1/2	0	1/2	
+edge	2	6/7	0	6/7	
+edge	2	1	0	1	
+edge	3	0	0	0	
+edge	3	1/7	0	1/7	
+edge	3	1/2	0	1/2	
+edge	3	6/7	0	6/7	
+edge	3	1	0	1	
+coedge	1	0	0	0	(Fraction(145, 128), Fraction(1, 2))
+coedge	1	1/7	0	1/7	(Fraction(6833, 8320), Fraction(1087, 1040))
+coedge	1	1/2	0	1/2	(Fraction(-17, 128), Fraction(1, 2))
+coedge	1	6/7	0	6/7	(Fraction(3557, 3712), Fraction(59, 928))
+coedge	1	1	0	1	(Fraction(145, 128), Fraction(1, 2))
+coedge	2	0	0	0	(Fraction(145, 128), Fraction(1, 2))
+coedge	2	1/7	0	1/7	(Fraction(6833, 8320), Fraction(1087, 1040))
+coedge	2	1/2	0	1/2	(Fraction(-17, 128), Fraction(1, 2))
+coedge	2	6/7	0	6/7	(Fraction(3557, 3712), Fraction(59, 928))
+coedge	2	1	0	1	(Fraction(145, 128), Fraction(1, 2))
+coedge	3	0	0	0	(Fraction(0, 1), Fraction(-17, 256))
+coedge	3	1/7	0	1/7	(Fraction(4, 7), Fraction(-17, 256))
+coedge	3	1/2	0	1/2	(Fraction(2, 1), Fraction(-17, 256))
+coedge	3	6/7	0	6/7	(Fraction(24, 7), Fraction(-17, 256))
+coedge	3	1	0	1	(Fraction(4, 1), Fraction(-17, 256))
+coedge	4	0	0	0	(Fraction(4, 1), Fraction(-17, 256))
+coedge	4	1/7	0	1/7	(Fraction(4, 1), Fraction(171, 1792))
+coedge	4	1/2	0	1/2	(Fraction(4, 1), Fraction(1, 2))
+coedge	4	6/7	0	6/7	(Fraction(4, 1), Fraction(1621, 1792))
+coedge	4	1	0	1	(Fraction(4, 1), Fraction(273, 256))
+coedge	5	0	0	0	(Fraction(0, 1), Fraction(273, 256))
+coedge	5	1/7	0	1/7	(Fraction(4, 7), Fraction(273, 256))
+coedge	5	1/2	0	1/2	(Fraction(2, 1), Fraction(273, 256))
+coedge	5	6/7	0	6/7	(Fraction(24, 7), Fraction(273, 256))
+coedge	5	1	0	1	(Fraction(4, 1), Fraction(273, 256))
+coedge	6	0	0	0	(Fraction(0, 1), Fraction(-17, 256))
+coedge	6	1/7	0	1/7	(Fraction(0, 1), Fraction(171, 1792))
+coedge	6	1/2	0	1/2	(Fraction(0, 1), Fraction(1, 2))
+coedge	6	6/7	0	6/7	(Fraction(0, 1), Fraction(1621, 1792))
+coedge	6	1	0	1	(Fraction(0, 1), Fraction(273, 256))
+loop	1	1/3	2/5		(Fraction(37, 128), Fraction(239, 640))
+loop	2	1/3	2/5		(Fraction(37, 128), Fraction(239, 640))
+loop	3	4/3	2/5		(Fraction(4, 3), Fraction(99, 256))
+face	1	1/3	2/5		(Fraction(37, 128), Fraction(239, 640))
+face	2	1/3	2/5		(Fraction(37, 128), Fraction(239, 640))
+face	3	4/3	2/5		(Fraction(4, 3), Fraction(99, 256))
+chart	1	1/3	2/5		(Fraction(37, 128), Fraction(239, 640))
+chart	2	1/3	2/5		(Fraction(37, 128), Fraction(239, 640))
+chart	3	1/3	2/5		(Fraction(1, 3), Fraction(99, 256))
+chart	4	1/3	2/5		(Fraction(4, 3), Fraction(99, 256))
+chart	5	1/3	2/5		(Fraction(7, 3), Fraction(99, 256))
+chart	6	1/3	2/5		(Fraction(10, 3), Fraction(99, 256))

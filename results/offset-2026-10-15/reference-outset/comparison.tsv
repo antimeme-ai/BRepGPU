@@ -1,0 +1,30 @@
+field	value
+recipe	outset
+reference	usd-brep
+version	1.0.0
+overall_pass	False
+comparison_stage	offset_result
+offset_attempted	True
+source_preserved	True
+manifold	True
+reference_volume	0.06902863213387267
+analytic_volume_float	0.06902913545485385
+owned_exact_pi	45/2048
+volume_absolute_error	5.033209811849959e-07
+volume_relative_error	7.291428146513233e-06
+bounds_absolute_error	8.881784197001252e-16
+boundary_witnesses	63
+max_boundary_distance	1.084758341894971e-06
+max_boundary_residual	1.084758341894971e-06
+reference_volume_requested_accuracy	1e-08
+volume_relative_limit	1e-08
+bounds_world_limit	5e-09
+boundary_world_limit	5e-08
+join	intersection
+extended_offset	True
+self_intersection	True
+world_input_rounding	exact binary64 cylinder inputs/bounds/anchors/distance
+ownership	pure new result; original retained and probed before/after; no copy/mutation
+source_preservation_scope	original volume/manifold/bounds/all edge endpoint ports/ranges/3point probes before and after
+material_history	not compared; no foreign material/history adapter
+alpha	not external corpus qualification
