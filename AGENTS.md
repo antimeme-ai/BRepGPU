@@ -113,6 +113,11 @@ The extrusion/revolution/fillet/offset breadth sequence is complete. Broader
 geometry, community qualification, source-map composition and result meshing
 remain. Revisit the breadth map and recorded return-pass opportunities before
 selecting the next implementation unit; this delivery starts no tuning/rewrite.
+The post-breadth stocktake is in docs/POST_BREADTH_ROADMAP.md. Its next tranche
+is proposed: result meshing, one admitted operation chain, external adapters,
+runtime/Python-role study and an owned NCSX component. Earlier scheduling notes
+do not mean breadth is unfinished. No language migration, dependency adoption,
+alpha scope change or product implementation is selected by that proposal.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native
