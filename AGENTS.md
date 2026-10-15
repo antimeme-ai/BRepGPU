@@ -74,6 +74,15 @@ adjacency consumers are independently qualified. See docs/BOOLEANS.md and
 results/boolean-2026-10-15/REPORT.md. No canonical type widening, general result
 mesher or GPU Boolean construction is established. Continue the final feature
 theme as separate extrusion/revolution/fillet/offset conceptual units.
+The convex-profile extrusion unit is delivered: exact lattice profiles with 3–32 vertices; strict
+convex CCW winding and centered height build independent owned solids with full
+six-kind translated/generated ancestry. All controls/maps are exact; CPU/both-
+P100 sampling and adjacency consumers are independently qualified, including
+integer-sqrt intervals for non-axis unit normals. See docs/EXTRUSION.md and
+results/extrusion-2026-10-15/REPORT.md. Source control/parameter/traversal identity
+remains explicit; no canonical type guard is widened, no GPU construction or
+general result mesher is established. Continue revolution next, then independently
+scoped fillet and offset before integration/tuning.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native
