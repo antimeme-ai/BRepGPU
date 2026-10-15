@@ -18,3 +18,14 @@ Study candidate: complete factory box/cylinder/one-hole-plate meshes, CPU exact
 construction, rational edge samples and independent whole-face coverage checks.
 No new library, general triangulator, GPU lifetime work or native rebuild is
 selected. Source studies and reviewed complete design precede implementation.
+
+While implementation was active, the operator requested the existing stellarator
+reference directory for a continuing PPPL trophy target. Located the corrected
+source spelling, copied13files/18,360,279bytes into ignored quarantine, verified
+all eleven supplied size/hash entries and preserved an intact acquisition archive
+with restoration manifest. Saved public source inventory and NCSX rendering
+brief. Read the supplied start guide, inspected the complete-core/vessel page
+image and extracted the report/design titles and geometry description. This is
+PDF/photo material, not native CAD or coil-coordinate geometry. Recorded a
+consistent geometry/camera/lighting baseline for future comparable renders;
+continued the already authorized mesh beachhead.
