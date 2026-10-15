@@ -8,12 +8,11 @@ import argparse
 import csv
 from pathlib import Path
 import shutil
-import statistics
 import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT/'examples'))
+sys.path[:0] = [str(ROOT/'python'), str(ROOT/'examples')]
 from om10_scene import View, labeled_svg
 
 
@@ -35,10 +34,8 @@ def main(args):
         raise ValueError('OM10 presentation composition executes on the fleet')
     args.output.mkdir(parents=True, exist_ok=False)
     summary = {(r['scope'], r['view'], r['backend']): r for r in rows(args.benchmark/'summary.tsv')}
-    observations = rows(args.benchmark/'observations.tsv')
-    outputs = rows(args.benchmark/'outputs.tsv')
     for state in ('assembled', 'exploded'):
-        # Fixed first GPU0 image; displayed times are all-repeat medians. There
+        # Fixed full-task GPU0 image; native times are all-repeat medians. There
         # is no image/timing repeat search or choice of the fastest observation.
         selected = args.benchmark/f'cold-00-{state}-p100-0'
         view = view_from_bytes(selected/'views.bgview')
@@ -51,24 +48,29 @@ def main(args):
                           'start' if float(r['label_x']) < view.width/2 else 'end') for r in callout_rows)
         panel = []
         for backend, title in (('cpu1', 'CPU1'), ('cpu24', 'CPU24'), ('p100-0', 'P100 / 0'), ('p100-1', 'P100 / 1')):
-            native = []
-            for row in outputs:
-                if row['run'].startswith('cold-') and row['view'] == state and row['backend'] == backend:
-                    native += [float(t['seconds']) for t in rows(args.benchmark/row['relative_directory']/'timings.tsv')
-                               if t['stage'] == 'complete_native_process_including_exit']
-            if len(native) != len({r['repeat'] for r in observations
-                                  if r['scope'] == 'cold_complete_process' and r['view'] == state and r['backend'] == backend}):
-                raise ValueError('complete matching native/cold observations are required')
-            cold = float(summary['cold_complete_process', state, backend]['median_seconds'])
-            panel.append((title, f'{statistics.median(native):.3f} / {cold:.3f} s'))
-        n = summary['cold_complete_process', state, 'p100-0']['n']
+            native = summary['native_complete_process', state, backend]
+            if int(native['n']) < 3:
+                raise ValueError('poster requires repeated matched native process observations')
+            panel.append((title, f"{float(native['median_seconds']):.3f} s"))
+        task_panel = []
+        for backend, title in (('cpu24', 'CPU24'), ('p100-0', 'P100 / 0')):
+            full = summary['cold_complete_process', state, backend]
+            if int(full['n']) != 1:
+                raise ValueError('full task panel describes one actual observation')
+            task_panel.append((title, f"{float(full['median_seconds']):.3f} s"))
+        native_counts = {summary['native_complete_process', state, backend]['n']
+                         for backend in ('cpu1','cpu24','p100-0','p100-1')}
+        if len(native_counts) != 1:
+            raise ValueError('native backends have different repeat counts')
+        n = native_counts.pop()
         labeled_svg(args.output/(state+'.svg'), png, view,
             title='OM10 / '+state.upper(),
             subtitle='CPU STEP + owned trim meshing · CPU / P100 first jets, placement + raster',
             counts=(('source solids', 107), ('source faces', '9,162'), ('placed parts', 166)),
-            timings=panel, timing_header=f'NATIVE PROCESS / FULL STEP→IMAGE · MEDIAN OF {n}',
+            timings=panel, timing_header=f'NATIVE PROCESS · MEDIAN n={n}',
+            task_timings=task_panel, task_timing_header='FRESH STEP → PNG + SVG · n=1',
             callouts=callouts,
-            attribution=f'Association openmovement / OM10 MAN VA01.3 · CC BY-SA 3.0 · {tolerance_um:g} μm mesh target · full wall ends at PNG + SVG; final SVG rasterization separate')
+            attribution=f'Association openmovement / OM10 MAN VA01.3 · CC BY-SA 3.0 · {tolerance_um:g} μm mesh target · native: prepared scene → raw image · final SVG rasterization separate')
         shutil.copyfile(selected/f'000-{state}-callouts.tsv', args.output/(state+'-callouts.tsv'))
         # Preserve actual CPU and GPU pixels as comparison artifacts too.
         for label in ('cpu24', 'p100-0'):

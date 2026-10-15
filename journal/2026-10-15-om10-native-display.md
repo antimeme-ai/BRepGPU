@@ -150,3 +150,25 @@ backends. No native production change is justified. Saved public source values,
 scope and consequences in papers/2026-10-15-om10-native-cone-apex-study.md. Root
 and geometry owner informed; source owner retains verified-pole UV canonicalization
 and perturbation-budget fixes. No actual watch rasterization occurred.
+
+Reviewed a bounded benchmark scope change after actual full mesh cost became
+clear. Accepted four fresh complete callers (CPU24/P1000 × assembled/exploded),
+one directly enclosed observation per task, instead of24fresh full callers plus
+four resident rebuilds. Correctness still comes from existing actual whole-source
+and native qualifiers. Prepared native repeats can reuse the existing identical
+BGMESH01 and exact perpose BGVIEW01 outputs: CPU1/CPU24/bothP100 fresh-process
+median/range, plus explicitly resident native batches. These are separate named
+scopes, never sums or extrapolated complete walls. Poster should separate the
+four native median rows from the two full-task n1 rows and fit both panels in the
+footer. No new mesh persistence, framework, qualification or actual rendering
+was performed for this review. Parent owns plan/driver/poster edits.
+
+Reviewed implemented cost-aware driver/poster amendment and optional second timing
+panel. Accepted without blockers: exactly four fresh full callers/n1, identical
+scene/software checks across poses/backends,24fresh prepared-native observations
+at default3repeats, four resident batches with exact two-pose request rows. All
+walls remain directly enclosed and named. Poster checks sample counts, uses fixed
+full P1000 imagery and separates native medians from full n1 observations. The
+default2400px layout separates counts, full task and native panels without six-row
+footer stacking. Command/build paths and actual primitive/source mapping remain
+consistent. Static review only; no watch target execution or new test mechanism.

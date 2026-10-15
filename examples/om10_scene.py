@@ -257,7 +257,7 @@ def visible_anchors(path, width, height, *, step=3, valid_ids=None):
 
 
 def labeled_svg(path, png_path, view, *, title, subtitle, counts, timings,
-                callouts=(), timing_header='',
+                callouts=(), timing_header='', task_timings=(), task_timing_header='',
                 attribution='Association openmovement · OM10 MAN VA01.3 · CC BY-SA 3.0 · BRepGPU mesh, palette, lighting and labels'):
     """Compose source-linked typography over the actual native image pixels."""
     esc = html.escape
@@ -281,6 +281,10 @@ def labeled_svg(path, png_path, view, *, title, subtitle, counts, timings,
     for i, (label, value) in enumerate(timings):
         x = w-570
         rows.append(f'<text x="{x}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)} </tspan>{esc(value)}</text>')
+    if task_timing_header:
+        rows.append(f'<text x="{w-1390}" y="{h-190}" font-size="14" fill="#6cddd0">{esc(task_timing_header)}</text>')
+    for i, (label, value) in enumerate(task_timings):
+        rows.append(f'<text x="{w-1390}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)} </tspan>{esc(value)}</text>')
     for text, x, y, ax, ay, anchor in callouts:
         elbow = x+12 if anchor == 'start' else x-12
         rows.extend((f'<path d="M {ax:.2f} {ay:.2f} L {elbow:.2f} {y-8:.2f} L {x:.2f} {y-8:.2f}" stroke="#6cddd0" stroke-width="1.2" opacity=".65" fill="none"/>',
