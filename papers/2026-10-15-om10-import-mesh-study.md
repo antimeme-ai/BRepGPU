@@ -534,3 +534,21 @@ Strict span selection replaces the former generic extrapolation tolerance.
 Root accepted this bounded amendment after actual parent-cell diagnosis and
 independent oracle review. Direct adjacent-double fan, excessive-overhang
 rejection and retained-raw tiny-overhang checks attack these failure classes.
+
+
+Actual cylinder face165361 demonstrated that maximum arithmetic construction
+ancestry still does not measure geometric resolution under propagated conforming
+splits: levels18/20/20 retained a freely splittable0.1736rad width and0.0270mm
+bound. Root and oracle reviewed the budget correction. Carrier max_refinement
+now controls a metric resolution floor G*2**(-max_refinement), where G is the
+initial sampled face-domain diagonal in declared global first-partial-norm UV
+metric. Selected free-edge metric length (or centroid triangle diameter) must
+exceed that finite floor. This is a parameter/Lipschitz metric, not a claimed
+physical edge length. Source edge adaptive recursion retains its original
+dyadic-depth limit. Carrier max_refinement also bounds created interior nodes
+per face by2**max_refinement (initial boundary nodes excluded), terminating
+nonconvergent fixed-boundary floors even when their free edges stay long.
+Default20 therefore admits20 metric halvings and1,048,576 interior constructions;
+no approximation tolerance, source face, or quality allocation is relaxed.
+Budget failure rejects the complete mesh. Direct metric-floor and work-cap
+faults plus original165361 are the immediate tests before the complete rerun.

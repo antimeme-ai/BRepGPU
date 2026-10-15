@@ -110,3 +110,31 @@ correction repairs foreign reconstruction only at original global endpoints,
 within128ulp(max(1,abs(lower),abs(upper))) and existing world residual. Raw
 recovered UV remains available. Independent qualification rejects over-grade
 correction or retained out-of-domain owned UV. No interior source knot is snapped.
+
+Reviewed the nonvisual whole-source backend integration runner plan ACCEPT.
+One fresh full source/mesh/assembly remains in RAM; existing original/mesh/
+assembly checks run once, then identical scene and two PROJECT_ONLY views feed
+CPU24/P1000/P1001 native processes. Existing source-jet/projected qualification
+checks each actual backend output. Review requirements are separate empty output
+directories, unchanged packed inputs, source/binary pins and immediate failure.
+This avoids repeated expensive mesh construction and adds no persistence or
+qualification layer; these walls describe qualification, not render benchmarks.
+
+Static review of `scripts/qualify_om10.py` accepted the implemented orchestration.
+The unique output root separates backend files; two flags3 requests use actual
+caller geometry helpers; process exit and each independent actual-output check
+fail closed. Requested the imported exact arithmetic helper
+`interchange_oracles.py` be included in source pins. Source mesher's next actual
+refinement failure is an ancestry-versus-resolution guard issue; metric floor
+is appropriate, but it needs a separate finite work cap to reject an impossible
+fixed-boundary bound rather than refining forever above the metric floor.
+
+Independently diagnosed actual cylinder face165590/coedge112915. Exact original
+rational Cox source XYZ matches the failing physical sample. Foreign degree1 UV
+line misses by.00247233mm there; nearest original-cylinder inverse misses by only
+.0000268981mm.1001source samples measured max radial residual.000140959mm versus
+same-t foreign residual.00661021mm. Even the best scalar reparameterization of
+that foreign line misses.00169744mm at the failure and.00374175mm near peak,
+exceeding unchanged.001mm. This establishes a foreign UV curve defect at the
+chosen grade, not a reason to relax the source residual. Saved full data and
+recovery design considerations in the cylinder-trim study. No production change.

@@ -5,7 +5,7 @@ import unittest
 
 from brepgpu.imported_source import (Curve,Carrier,SurfaceSpan,ZERO_FRAME,ImportedSource,
     Product,SolidDefinition,Vertex,Edge,Coedge,Loop,Face)
-from brepgpu.imported_meshing import evaluate_curve,evaluate_carrier,_triangulate,_orient,_surface_error,_positive_midpoint,_recover_global_uv,_uv_rounding_bound,MeshQuality,mesh_imported
+from brepgpu.imported_meshing import evaluate_curve,evaluate_carrier,_triangulate,_orient,_surface_error,_positive_midpoint,_recover_global_uv,_uv_rounding_bound,_guard_carrier_refinement,MeshQuality,mesh_imported
 
 
 def sphere_cap_fixture():
@@ -155,6 +155,15 @@ class ImportedMeshingTests(unittest.TestCase):
             _recover_global_uv(carrier,(-1e-10,.15))
         with self.assertRaisesRegex(ValueError,'outside global recovery grade'):
             _recover_global_uv(carrier,(1.,1.+1e-10))
+
+    def test_metric_resolution_and_independent_work_cap_fail_closed(self):
+        _guard_carrier_refinement(1.,16.,20,100)
+        with self.assertRaisesRegex(ValueError,'metric resolution exhausted'):
+            _guard_carrier_refinement(math.ldexp(16.,-20),16.,20,0)
+        with self.assertRaisesRegex(ValueError,'work cap exhausted'):
+            _guard_carrier_refinement(1.,16.,20,2**20)
+        with self.assertRaisesRegex(ValueError,'invalid carrier refinement metric'):
+            _guard_carrier_refinement(1.,math.inf,20,0)
 
     def test_original_sphere_pole_needs_generated_chart_connector(self):
         mesh=mesh_imported(sphere_cap_fixture(),MeshQuality(tolerance_mm=.05))

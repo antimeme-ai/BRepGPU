@@ -322,6 +322,16 @@ def _positive_midpoint(a,b,opposite):
     return point
 
 
+def _guard_carrier_refinement(length,scale,max_refinement,created):
+    if not math.isfinite(scale) or scale<=0 or not math.isfinite(length):
+        raise ValueError('invalid carrier refinement metric')
+    floor=math.ldexp(scale,-max_refinement)
+    if length<=floor:
+        raise ValueError(f'carrier metric resolution exhausted: length={length!r} floor={floor!r} scale={scale!r}')
+    if created>=1<<max_refinement:
+        raise ValueError(f'carrier interior construction work cap exhausted: created={created} cap={1<<max_refinement}')
+
+
 def _outward(value,direction):
     rounded=float(value)
     if (direction<0 and Fraction(rounded)>value) or (direction>0 and Fraction(rounded)<value):
@@ -631,7 +641,7 @@ def mesh_imported(source,quality=None,*,progress=None):
                     residual=_distance(evaluate_carrier(carrier,*uv)[0],record.positions[index])
                     errors['max_raw_pcurve_to_edge_residual_mm']=max(errors['max_raw_pcurve_to_edge_residual_mm'],residual)
                     if residual>quality.source_residual_mm:
-                        raise ValueError(f'face {face.id} coedge {ci}: source recovery residual {residual:.17g} exceeds {quality.source_residual_mm}')
+                        raise ValueError(f'face {face.id} coedge {ci}: source recovery residual {residual:.17g} exceeds {quality.source_residual_mm}; t={t!r} s={s!r} rawUV={raw_uv!r} UV={uv!r} xyz={record.positions[index]!r} carrier={(carrier.id,carrier.kind,carrier.radii)!r}')
                     segment.append(BoundaryOccurrence(ci,edge.id,record.vertex_keys[index],t,uv,s,raw_uv))
                 coedge_points.append(segment)
             for j,segment in enumerate(coedge_points):
@@ -686,6 +696,10 @@ def mesh_imported(source,quality=None,*,progress=None):
                 if points[a]==points[b]:raise ValueError(f'face {face.id}: duplicate adjacent UV occurrence')
                 boundary_edges.add(tuple(sorted((a,b))))
             node_loops.append(ids)
+        initial_node_count=node
+        mu,mv=metric_cache[carrier.id]
+        metric_scale=math.hypot(mu*(max(p[0] for p in points.values())-min(p[0] for p in points.values())),
+                                mv*(max(p[1] for p in points.values())-min(p[1] for p in points.values())))
         # Direct domain simplicity is required before ears; no epsilon cleanup.
         segments=[(loop_index,i,a,b) for loop_index,loop in enumerate(node_loops)
                   for i,(a,b) in enumerate(zip(loop,loop[1:]+loop[:1]))]
@@ -737,7 +751,8 @@ def mesh_imported(source,quality=None,*,progress=None):
                     opposite.append((points[x],points[y],points[z]))
                 uv=_positive_midpoint(points[a],points[b],opposite)
                 new_level=1+max(levels[a],levels[b])
-                if new_level>quality.max_refinement:raise ValueError(f'face {face.id}: dyadic carrier refinement exhausted at {uvs!r}')
+                try:_guard_carrier_refinement(math.sqrt(float(max(candidates)[0])),metric_scale,quality.max_refinement,node-initial_node_count)
+                except ValueError as exc:raise ValueError(f'face {face.id}: {exc}; UV={uvs!r}') from None
                 new=node;node+=1;points[new]=uv;levels[new]=new_level;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
                 for old in affected:
                     oldtri,olddepth=remove_triangle(old)
@@ -752,7 +767,9 @@ def mesh_imported(source,quality=None,*,progress=None):
                     uv=tuple(sum(Fraction(p[k]) for p in uvs)/3 for k in range(2))
                 if any(_orient(a,b,uv)<=0 for a,b in zip(uvs,uvs[1:]+uvs[:1])):raise ValueError('exact centroid has nonpositive child')
                 new_level=1+max(levels[i] for i in tri)
-                if new_level>quality.max_refinement:raise ValueError(f'face {face.id}: centroid carrier refinement exhausted')
+                diameter=max(math.hypot(mu*float(a[0]-b[0]),mv*float(a[1]-b[1])) for a,b in zip(uvs,uvs[1:]+uvs[:1]))
+                try:_guard_carrier_refinement(diameter,metric_scale,quality.max_refinement,node-initial_node_count)
+                except ValueError as exc:raise ValueError(f'face {face.id}: {exc}; centroid UV={uvs!r}') from None
                 new=node;node+=1;points[new]=uv;levels[new]=new_level;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
                 oldtri,olddepth=remove_triangle(tid)
                 for a,b in zip(oldtri,oldtri[1:]+oldtri[:1]):

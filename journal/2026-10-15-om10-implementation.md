@@ -159,3 +159,18 @@ the owner therefore adds an explicit finite2^max_refinement created-interior-
 vertex budget per face. Exhaustion fails the whole call. No source is skipped,
 no error criterion or per-face exception is widened. Focused actual/fault checks
 and complete-source qualification follow this correction.
+
+Read pinned reference analytic UV recovery, seeded spline continuation, wire
+identity checks and curve-on-surface residual validation. Saved concrete reading
+notes in papers/2026-10-15-om10-tolerant-incidence-reading.md. Actual cylinder
+165500 contains declared common-vertex incidence with6.27e-7mm curve mismatch;
+this supports source-vertex recovery rather than a blanket UV-grade increase.
+Independent owner investigates the larger165590 residual against original data.
+Keep source uncertainty, imported tolerances and selected quality distinct.
+
+Metric-resolution/work-cap correction passed14 focused methods in0.977s and
+actual source165361 in7.207s with41,415 UV cells at the unchanged0.00375mm
+surface-bound allocation. Both reviewers accepted the correction. The continuing
+scan exposed original tolerant incidence and defective foreign cylinder UV lines;
+these require a separately reviewed source-cylinder inverse trim capability.
+Whole-source qualification and actual watch images remain pending.
