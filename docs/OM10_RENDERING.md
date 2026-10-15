@@ -129,6 +129,17 @@ their incident original-vertex joints by exact source coefficients. This keeps
 the generic128ULP outside-domain rejection unchanged. Foreign UV that cannot
 be evaluated inside the original domain has an explicit count; its raw values
 remain retained and corrected source residuals must still pass.
+Nominal internal-near-tangent circular joints on planes can require coordinated
+chord samples. The owned sampler finalizes a shared schedule before emitting
+edge keys, preserving original curves, endpoints and full parameter intervals.
+Every incident carrier must admit every interval under the existing budget;
+exact final boundary simplicity is mandatory. Admission uses a stated nominal
+frame grade and the retained translated joint envelope capped by the selected
+source residual. It makes no exact source-isotopy claim. Protected finite collars,
+sample/work limits and unresolved multiple crossings reject explicitly. The
+[source study](../papers/2026-10-15-om10-tangent-boundary-study.md) records the
+observed cusp, actual coupled faces and independent review.
+
 All physical triangles must have nonzero area; only proven pole quotients omit
 collapsed physical cells while retaining their UV coverage/error accounting.
 

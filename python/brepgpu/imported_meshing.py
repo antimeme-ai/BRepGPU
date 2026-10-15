@@ -926,6 +926,218 @@ def _curve_knots_in_edge(source,edge,incidents):
     return sorted(result,reverse=start>end)
 
 
+@dataclass
+class _EdgeBounds:
+    """Explicit per-edge context; post-sampling consumers cannot late-bind a loop."""
+    source: object
+    edge: object
+    uses: tuple
+    quality: object
+    profiles: dict
+
+    def position(self,t):
+        if t==self.edge.parameter_range[0]:return self.source.vertex(self.edge.vertex_ids[0]).xyz
+        if t==self.edge.parameter_range[1]:return self.source.vertex(self.edge.vertex_ids[1]).xyz
+        return evaluate_curve(self.source.curve(self.edge.curve_id),t)
+
+    def bound(self,a,b):
+        source,edge=self.source,self.edge
+        curve=source.curve(edge.curve_id) if edge.curve_id else None
+        result=0. if edge.degenerate else _curve_chord_bound(curve,a,b)
+        for coedge,carrier,metric in self.uses:
+            sa=_mapped_parameter(source,edge,coedge,a,carrier,self.quality)
+            sb=_mapped_parameter(source,edge,coedge,b,carrier,self.quality)
+            pc=source.curve(coedge.curve_id)
+            seeds=[evaluate_curve(pc,t) for t in (sa,sb)]
+            seeds=[(uv[0]+coedge.periodic_shift[0]*2*math.pi,uv[1]) for uv in seeds]
+            if carrier.kind in (1,2,3):
+                if curve is None:raise ValueError('analytic inverse requires original spatial curve')
+                value=_owned_trim_bound(source,edge,carrier,a,b,seeds,
+                    (self.position(a),self.position(b)),metric,self.quality,self.profiles)
+                if not math.isfinite(value):return math.inf
+                result=max(result,value)
+            else:
+                owned=[_spline_boundary_uv(source,coedge,carrier,t,self.position(t),seed,self.profiles)
+                       for t,seed in zip((a,b),seeds)]
+                if all(o is not None and o[1]=='spline_boundary_generator' for o in owned):
+                    underlying=[_spline_boundary_uv(source,coedge,carrier,t,evaluate_curve(curve,t),seed,self.profiles)[0]
+                                for t,seed in zip((a,b),seeds)]
+                    value=max(sum(m*abs(x-y) for m,x,y in zip(metric,o[0],u))
+                              for o,u in zip(owned,underlying))
+                    if not math.isfinite(value):return math.inf
+                    result=max(result,value)
+                else:
+                    uv_error=_curve_chord_bound(pc,sa,sb)*math.hypot(*metric)
+                    perturb=max((sum(m*abs(x-y) for m,x,y in zip(metric,o[0],seed)) if o else 0.)
+                                for o,seed in zip(owned,seeds))
+                    if not math.isfinite(uv_error) or not math.isfinite(perturb):return math.inf
+                    result=max(result,uv_error+perturb)
+        if not math.isfinite(result):return math.inf
+        return result
+
+
+def _boundary_intersection(node_loops,points):
+    """The single exact sampled-domain simplicity check, also used by preflight."""
+    segments=[(li,a,b) for li,loop in enumerate(node_loops)
+              for a,b in zip(loop,loop[1:]+loop[:1])]
+    for i,(li,a,b) in enumerate(segments):
+        for lj,c,d in segments[i+1:]:
+            if li==lj and ({a,b}&{c,d}):continue
+            if _segments_touch(points[a],points[b],points[c],points[d]):return a,b,c,d
+    return None
+
+
+_NOMINAL_FRAME_GRADE=128*math.ulp(1.)
+
+
+def _circle_joint(source,face,incoming,outgoing,quality):
+    """Cheap nominal internal-near-tangency admission, not source certification."""
+    carrier=source.carrier(face.carrier_id)
+    if carrier.kind!=1 or incoming.edge_id==outgoing.edge_id:return None
+    ea,eb=(source.edge(c.edge_id) for c in (incoming,outgoing))
+    if not ea.curve_id or not eb.curve_id:return None
+    ca,cb=(source.curve(e.curve_id) for e in (ea,eb))
+    if ca.kind!=2 or cb.kind!=2:return None
+    if any(c.radii[0]!=c.radii[1] for c in (ca,cb)):return None
+    va=ea.vertex_ids[1 if incoming.sense>0 else 0]
+    vb=eb.vertex_ids[0 if outgoing.sense>0 else 1]
+    if va!=vb:return None
+    vertex=source.vertex(va)
+    tolerances=(vertex.tolerance,ea.tolerance,eb.tolerance)
+    if any(not math.isfinite(t) or t<0 for t in tolerances):return None
+    envelope=min(quality.source_residual_mm,max(tolerances))
+    if not math.isfinite(envelope) or envelope<0:return None
+    radii=(ca.radii[0],cb.radii[0]);distance=_distance(ca.frame[:3],cb.frame[:3])
+    if any(not math.isfinite(r) or r<=0 for r in radii) or radii[0]==radii[1]:return None
+    if not math.isfinite(distance) or distance<=0 or abs(distance-abs(radii[0]-radii[1]))>envelope:return None
+    frames=(ca.frame,cb.frame,carrier.frame)
+    for frame in frames:
+        axes=[frame[i:i+3] for i in (3,6,9)]
+        if any(not math.isfinite(x) for axis in axes for x in axis):return None
+        for i in range(3):
+            for j in range(3):
+                if abs(_dot(axes[i],axes[j])-(1. if i==j else 0.))>_NOMINAL_FRAME_GRADE:return None
+    normal=carrier.frame[9:12]
+    for frame in frames[:2]:
+        n=frame[9:12];cross=_cross(n,normal)
+        if _dot(cross,cross)>_NOMINAL_FRAME_GRADE**2*_dot(n,n)*_dot(normal,normal):return None
+    ta=ea.parameter_range[1 if incoming.sense>0 else 0]
+    tb=eb.parameter_range[0 if outgoing.sense>0 else 1]
+    if any(not math.isfinite(t) for e in (ea,eb) for t in e.parameter_range):return None
+    if any(e.parameter_range[0]==e.parameter_range[1] for e in (ea,eb)):return None
+    if any(_distance(evaluate_curve(c,t),vertex.xyz)>envelope for c,t in ((ca,ta),(cb,tb))):return None
+    return incoming,outgoing,va
+
+
+def _planar_schedule_boundary(source,face,parameters,contexts):
+    carrier=source.carrier(face.carrier_id);loops=[];points={};owners={};next_node=0
+    for loop in sorted((source.loop(i) for i in face.loop_ids),key=lambda loop:not loop.outer):
+        rows=[]
+        for ci in loop.coedge_ids:
+            coedge=source.coedge(ci);values=parameters[coedge.edge_id]
+            if coedge.sense<0:values=values[::-1]
+            for t in values[:-1]:
+                rows.append((_plane_uv(carrier,contexts[coedge.edge_id].position(t)),ci))
+        reversed_order=(_area([uv for uv,_ in rows])>0)!=loop.outer
+        if reversed_order:rows.reverse()
+        ids=[]
+        for index,(uv,ci) in enumerate(rows):
+            # owners describes the OUTGOING SEGMENT, not its point occurrence.
+            if reversed_order:ci=rows[(index+1)%len(rows)][1]
+            points[next_node]=uv;owners[next_node]=ci;ids.append(next_node);next_node+=1
+        loops.append(ids)
+    return loops,points,owners
+
+
+def _circle_candidate(source,joint,parameters,mandatory,step,width,quality,protected):
+    result={};collars={}
+    for index,coedge in enumerate(joint[:2]):
+        edge=source.edge(coedge.edge_id);curve=source.curve(edge.curve_id);old=parameters[edge.id]
+        at_start=(index==1)==(coedge.sense>0)
+        endpoint=old[0] if at_start else old[-1]
+        neighbor=old[1] if at_start else old[-2]
+        direction=math.copysign(1.,neighbor-endpoint);end=endpoint+direction*width/curve.radii[0]
+        lo,hi=sorted((endpoint,end))
+        if any(max(lo,a)<min(hi,b) for a,b in protected.get(edge.id,())):return None
+        count=math.ceil(width/step)
+        if count>quality.max_edge_samples:return None
+        kept=[t for t in old if t in mandatory[edge.id] or abs(t-endpoint)*curve.radii[0]>=width]
+        if len(kept)+count-1>quality.max_edge_samples:return None
+        generated=[endpoint+direction*(j*step/curve.radii[0]) for j in range(1,count)]
+        if len(set(generated))!=count-1 or endpoint in generated:return None
+        values=sorted(set((*kept,endpoint,*generated)),reverse=edge.parameter_range[0]>edge.parameter_range[1])
+        if len(values)>quality.max_edge_samples:return None
+        if (values[0],values[-1])!=edge.parameter_range:return None
+        if any(not min(edge.parameter_range)<=t<=max(edge.parameter_range) for t in values):return None
+        if not set(mandatory[edge.id])<=set(values):return None
+        result[edge.id]=tuple(values);collars[edge.id]=(lo,hi)
+    return result,collars
+
+
+def _coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bounds,quality,errors):
+    eligible={};joint_count=0;protected={};checked={};accepted=0
+    for face in source.faces:
+        if source.carrier(face.carrier_id).kind!=1:continue
+        pairs={}
+        for lid in face.loop_ids:
+            coedges=[source.coedge(i) for i in source.loop(lid).coedge_ids]
+            for incoming,outgoing in zip(coedges,coedges[1:]+coedges[:1]):
+                joint=_circle_joint(source,face,incoming,outgoing,quality)
+                if joint:pairs[frozenset((incoming.id,outgoing.id))]=joint
+        if pairs:eligible[face.id]=pairs;joint_count+=len(pairs)
+    plane_uses={}
+    for face in source.faces:
+        if source.carrier(face.carrier_id).kind==1:
+            for lid in face.loop_ids:
+                for ci in source.loop(lid).coedge_ids:
+                    plane_uses.setdefault(source.coedge(ci).edge_id,set()).add(face.id)
+    for fid,pairs in eligible.items():
+        face=source.face(fid);loops,points,owners=_planar_schedule_boundary(source,face,parameters,contexts)
+        crossing=_boundary_intersection(loops,points)
+        if crossing is None:
+            checked[fid]=tuple(tuple(points[i] for i in loop) for loop in loops);continue
+        joint=pairs.get(frozenset((owners[crossing[0]],owners[crossing[2]])))
+        if joint is None:raise ValueError(f'face {fid}: unsupported intersecting sampled UV boundary coedges {(owners[crossing[0]],owners[crossing[2]])}')
+        near=[]
+        for index,coedge in enumerate(joint[:2]):
+            edge=source.edge(coedge.edge_id);curve=source.curve(edge.curve_id);ts=parameters[edge.id]
+            at_start=(index==1)==(coedge.sense>0)
+            near.append(abs(ts[1]-ts[0] if at_start else ts[-1]-ts[-2])*curve.radii[0])
+        h0=min(near);width=min(8*h0,*(abs(source.edge(c.edge_id).parameter_range[1]-source.edge(c.edge_id).parameter_range[0])*source.curve(source.edge(c.edge_id).curve_id).radii[0]/4 for c in joint[:2]))
+        if not math.isfinite(h0) or h0<=0 or not math.isfinite(width) or width<=0:
+            raise ValueError(f'face {fid}: invalid nominal circle joint schedule')
+        for k in range(quality.max_refinement):
+            step=math.ldexp(h0,-k)
+            if step<=0:break
+            candidate=_circle_candidate(source,joint,parameters,mandatory,step,width,quality,protected)
+            if candidate is None:continue
+            replacements,collars=candidate;bounds={};admitted=True
+            for eid,ts in replacements.items():
+                maximum=0.
+                for a,b in zip(ts,ts[1:]):
+                    value=contexts[eid].bound(a,b);maximum=max(maximum,value)
+                    if value>quality.tolerance_mm/8:admitted=False;break
+                if not admitted:break
+                bounds[eid]=maximum
+            if not admitted:continue
+            trial=parameters|replacements;results={}
+            for affected in sorted(set.union(*(plane_uses[eid] for eid in replacements))):
+                ls,ps,_=_planar_schedule_boundary(source,source.face(affected),trial,contexts)
+                if _boundary_intersection(ls,ps) is not None:admitted=False;break
+                results[affected]=tuple(tuple(ps[i] for i in loop) for loop in ls)
+            if not admitted:continue
+            accepted+=1
+            if accepted>joint_count:raise ValueError(f'face {fid}: global circle joint schedule work exhausted')
+            for eid,ts in replacements.items():
+                errors['circle_joint_optional_samples_removed']+=len(set(parameters[eid])-set(ts))
+                errors['circle_joint_optional_samples_added']+=len(set(ts)-set(parameters[eid]))
+                parameters[eid]=ts;edge_bounds[eid]=bounds[eid];protected.setdefault(eid,[]).append(collars[eid])
+            errors['circle_joint_resampling_count']+=1;checked.update(results);break
+        else:raise ValueError(f'face {fid}: circular joint shared sampling candidates exhausted; coedges={(joint[0].id,joint[1].id)} vertex={joint[2]}')
+        if fid not in checked:raise ValueError(f'face {fid}: circular joint parameter resolution exhausted')
+    return checked
+
+
 def mesh_imported(source,quality=None,*,progress=None):
     """Mesh every supplied solid definition without a foreign mesh fallback."""
     if type(source) is not ImportedSource:raise TypeError('expected ImportedSource')
@@ -936,6 +1148,7 @@ def mesh_imported(source,quality=None,*,progress=None):
     begin=time.perf_counter();validate_source(source)
     vertices=[];triangles=[];face_meshes=[];edge_samples=[]
     vertex_by_key={};endpoint_keys={};edge_records={};incidents={};edge_owners={}
+    parameters={};mandatory={};contexts={};edge_bounds={}
     carrier_slots={c.id:i for i,c in enumerate(source.carriers)}
     metric_cache={};derivative_cache={};profiles={};carrier_edges={};next_key=1
     errors={'max_edge_chord_bound_mm':0.0,'max_source_endpoint_residual_mm':0.0,
@@ -948,7 +1161,8 @@ def mesh_imported(source,quality=None,*,progress=None):
             'plane_inverse_sample_count':0,'cone_inverse_sample_count':0,'cone_generator_sample_count':0,
             'max_plane_inverse_correction_mm':0.0,'max_cone_inverse_correction_mm':0.0,
             'max_cone_generator_line_residual_mm':0.0,'spline_boundary_sample_count':0,
-            'foreign_uv_unevaluated_count':0,'max_spline_boundary_u_shift':0.0,'max_spline_boundary_v_shift':0.0}
+            'foreign_uv_unevaluated_count':0,'max_spline_boundary_u_shift':0.0,'max_spline_boundary_v_shift':0.0,
+            'circle_joint_resampling_count':0,'circle_joint_optional_samples_removed':0,'circle_joint_optional_samples_added':0}
     def make_vertex(definition,xyz,kind,identifier,t=0.0,uv=(0.0,0.0)):
         nonlocal next_key
         if any(not math.isfinite(x) for x in xyz):raise ValueError('nonfinite imported mesh vertex')
@@ -978,41 +1192,14 @@ def mesh_imported(source,quality=None,*,progress=None):
                 metric_cache[carrier.id]=_surface_metric(carrier,vb)
         start,end=edge.parameter_range
         if start==end and not edge.degenerate:raise ValueError(f'edge {edge.id}: zero parameter extent')
-        values=_curve_knots_in_edge(source,edge,uses)
-        def position(t):
-            if t==start:return source.vertex(edge.vertex_ids[0]).xyz
-            if t==end:return source.vertex(edge.vertex_ids[1]).xyz
-            return evaluate_curve(curve,t)
-        def bound(a,b):
-            result=0.0 if edge.degenerate else _curve_chord_bound(curve,a,b)
-            for coedge,carrier in uses:
-                sa=_mapped_parameter(source,edge,coedge,a,carrier,quality)
-                sb=_mapped_parameter(source,edge,coedge,b,carrier,quality)
-                mu,mv=metric_cache[carrier.id]
-                if carrier.kind in (1,2,3):
-                    if curve is None:raise ValueError('analytic inverse requires original spatial curve')
-                    pc=source.curve(coedge.curve_id)
-                    seeds=[evaluate_curve(pc,t) for t in (sa,sb)]
-                    seeds=[(uv[0]+coedge.periodic_shift[0]*2*math.pi,uv[1]) for uv in seeds]
-                    result=max(result,_owned_trim_bound(source,edge,carrier,a,b,seeds,(position(a),position(b)),(mu,mv),quality,profiles))
-                else:
-                    pc=source.curve(coedge.curve_id)
-                    seeds=[evaluate_curve(pc,t) for t in (sa,sb)]
-                    seeds=[(uv[0]+coedge.periodic_shift[0]*2*math.pi,uv[1]) for uv in seeds]
-                    owned=[_spline_boundary_uv(source,coedge,carrier,t,position(t),seed,profiles) for t,seed in zip((a,b),seeds)]
-                    if all(o is not None and o[1]=='spline_boundary_generator' for o in owned):
-                        underlying=[_spline_boundary_uv(source,coedge,carrier,t,evaluate_curve(curve,t),seed,profiles)[0] for t,seed in zip((a,b),seeds)]
-                        result=max(result,max(sum(m*abs(x-y) for m,x,y in zip((mu,mv),o[0],u)) for o,u in zip(owned,underlying)))
-                    else:
-                        uv_error=_curve_chord_bound(pc,sa,sb)*math.hypot(mu,mv)
-                        perturb=max((sum(m*abs(x-y) for m,x,y in zip((mu,mv),o[0],seed)) if o is not None else 0.) for o,seed in zip(owned,seeds))
-                        result=max(result,uv_error+perturb)
-            return result
-        samples=[values[0]]
+        values=_curve_knots_in_edge(source,edge,uses);mandatory[edge.id]=tuple(values)
+        context=_EdgeBounds(source,edge,tuple((co,ca,metric_cache[ca.id]) for co,ca in uses),quality,profiles)
+        contexts[edge.id]=context;samples=[values[0]];maximum=0.
         def refine(a,b,depth):
-            accepted_bound=bound(a,b)
+            nonlocal maximum
+            accepted_bound=context.bound(a,b)
             if accepted_bound<=quality.tolerance_mm/8:
-                errors['max_edge_chord_bound_mm']=max(errors['max_edge_chord_bound_mm'],accepted_bound)
+                maximum=max(maximum,accepted_bound)
                 samples.append(b);return
             if depth>=quality.max_refinement or len(samples)>=quality.max_edge_samples:
                 raise ValueError(f'edge {edge.id}: chord refinement exhausted')
@@ -1021,6 +1208,13 @@ def mesh_imported(source,quality=None,*,progress=None):
             refine(a,mid,depth+1);refine(mid,b,depth+1)
         for a,b in zip(values,values[1:]):refine(a,b,0)
         if len(samples)>quality.max_edge_samples:raise ValueError('source edge exceeds sample budget')
+        parameters[edge.id]=tuple(samples);edge_bounds[edge.id]=maximum
+        if progress is not None and (edge_index+1)%1000==0:progress('edges',edge_index+1,len(source.edges),edge.id)
+    checked_planes=_coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bounds,quality,errors)
+    errors['max_edge_chord_bound_mm']=max(edge_bounds.values(),default=0.)
+    for edge in source.edges:
+        owner=edge_owners[edge.id];samples=parameters[edge.id]
+        curve=source.curve(edge.curve_id) if edge.curve_id else None
         keys=[];positions=[]
         for i,t in enumerate(samples):
             if i==0:key=endpoint_keys[(owner,edge.vertex_ids[0])]
@@ -1035,7 +1229,6 @@ def mesh_imported(source,quality=None,*,progress=None):
             keys.append(key);positions.append(xyz)
         record=EdgeSamples(edge.id,tuple(samples),tuple(keys),tuple(positions))
         edge_samples.append(record);edge_records[edge.id]=record
-        if progress is not None and (edge_index+1)%1000==0:progress('edges',edge_index+1,len(source.edges),edge.id)
     sampled=time.perf_counter()
     for face_index,face in enumerate(source.faces):
         carrier=source.carrier(face.carrier_id);slot=carrier_slots[carrier.id]
@@ -1187,13 +1380,9 @@ def mesh_imported(source,quality=None,*,progress=None):
         metric_scale=math.hypot(mu*(max(p[0] for p in points.values())-min(p[0] for p in points.values())),
                                 mv*(max(p[1] for p in points.values())-min(p[1] for p in points.values())))
         # Direct domain simplicity is required before ears; no epsilon cleanup.
-        segments=[(loop_index,i,a,b) for loop_index,loop in enumerate(node_loops)
-                  for i,(a,b) in enumerate(zip(loop,loop[1:]+loop[:1]))]
-        for i,(li,ii,a,b) in enumerate(segments):
-            for lj,jj,c,d in segments[i+1:]:
-                if li==lj and ({a,b}&{c,d}):continue
-                if _segments_touch(points[a],points[b],points[c],points[d]):
-                    raise ValueError(f'face {face.id}: intersecting sampled UV boundary')
+        sequence=tuple(tuple(points[i] for i in loop) for loop in node_loops)
+        if checked_planes.get(face.id)!=sequence and _boundary_intersection(node_loops,points) is not None:
+            raise ValueError(f'face {face.id}: intersecting sampled UV boundary')
         for hole in node_loops[1:]:
             if _winding([points[i] for i in node_loops[0]],points[hole[0]])!=1:
                 raise ValueError(f'face {face.id}: hole outside source outer boundary')

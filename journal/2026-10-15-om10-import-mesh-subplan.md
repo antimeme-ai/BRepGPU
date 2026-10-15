@@ -390,3 +390,30 @@ line XYZ formulas, complete original ordered coedge sample chains and endpoints,
 and existing independent full polygon coverage. This is an open-sheet source
 construction regression, not a closed-solid qualification claim. Production
 implementation now proceeds under both accepted reviews.
+
+Implementation study exposed bounded-strategy scope on the short.17rad fixture:
+its quarterextent collar ends before another chord crossing. Keep it as explicit
+max_refinement3 candidate-exhaustion negative. Longer1.36rad independently
+authored source arcs match the actual long-arc construction; exact pre-change
+0cc4b9e mesher fails this fixture at UV simplicity (retained fleet log), and current
+implementation passes. Existing assertions now also check independent circle
+sagittas against the unchanged chord allocation. No generic all-cusp promise.
+Independent multiple crossings on one affected plane likewise fail if no single
+pair candidate makes that plane fully simple; no simultaneous arrangement solver.
+
+Circle-schedule unit reviewed/green:32 direct methods pass1.491s after correcting
+descending fixture SameSense metadata; independent existing five closed-solid/
+native integration methods pass0.539s. Both code reviews accept. Final actual
+coupled input contains both original planes, both adjacent cones and their shared
+cylinder,20 original edges. It passes36.95s with2664 vertices/3886 cells; exact
+independent polygon-domain checks pass all five faces (671/671/969/606/969 cells).
+Two joint schedules replace19 optional samples and add53; source endpoints/full
+intervals remain. Maximum all-incident edge bound0.000588639mm, joint-cell bound
+0.00346823mm, boundary displacement6.89e-15mm. Product SHA-256 at this run is
+6d189e3d2c1a2a5fb595d5c475a58325444678850722b67ac54f8f97292a15e0.
+This open source subset is not closed-solid/whole-watch qualification.
+
+Continuing old scan newly reports a nonclosing UV joint on spline face169982.
+Root holds the next full pin pending unchanged-current source diagnosis. The
+accepted circle unit is stable for its separate checkpoint; no new joint fix
+or target render has been undertaken.
