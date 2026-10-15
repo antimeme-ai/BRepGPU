@@ -536,3 +536,16 @@ cap-hole mesh. [API](../docs/FEATURE_BORE.md) and
 [watch target notes](../docs/WATCH_TARGET.md) describe the admitted family and
 schematic visual limits. Original horology sources inform layout; no watch CAD,
 image, dependency or functional mechanism is adopted.
+
+
+## Real watch drawings and source-driven next steps
+
+The [frumentarius source report](2026-10-15-watch-drawing-source-frumentarius.md)
+compares five actual movement projects/manufacturer packages, with inspected
+pages and explicit dimensional/access/reuse gaps. [Acquisition manifest](2026-10-15-watch-drawing-acquisitions.tsv)
+retains original URLs/hashes; PDFs stay ignored. OM10 is the strongest construction
+lead, with public gear data and a reported ticking prototype, but the listed
+STEP remains behind free signup and has not been acquired. The
+[next-step proposal](../docs/REAL_WATCH_NEXT.md) recommends a source inventory
+and one dimensioned thin component, alongside the broader runtime/Python and
+external-oracle tranche. No geometry implementation or dependency is selected.
