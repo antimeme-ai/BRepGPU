@@ -121,3 +121,19 @@ raster-stage descriptions despite producing no images. Root should make these
 mode-specific. Recommended a short CPU-preparation/CUDA-stage legend in the final
 poster; actual long-name/leader readability remains planned post-qualification
 image inspection. Parent owns all presentation edits; no new tests/mechanisms.
+
+Reviewed the appended nonvisual whole-source backend runner plan before code.
+Accepted retaining one immutable freshly constructed mesh and using the existing
+raw/source/mesh/assembly/native qualifiers plus identical actual caller scene and
+PROJECT_ONLY views for CPU24/P1000/P1001. This avoids duplicate expensive mesh
+construction and adds no qualification mechanism or persistence format. Asked
+root to include the runner's own source in before/after pins and retain actual
+quality/view settings and scene/view hashes in its existing TSV output. No
+product geometry/render/test execution occurred in this review.
+
+Read the implemented scripts/qualify_om10.py against actual MeshQuality,
+mesh_imported, qualifier and native APIs. Accepted without blockers: one source/
+mesh retained, exact caller helpers, same scene/views, flags3, source jets,
+per-backend immediate qualification and failures, own-source/product/binary pins,
+no raster path. Suggested recording the two existing refinement/allocation CLI
+budgets beside quality/view fields. No new mechanism, test or actual execution.

@@ -69,7 +69,7 @@ def main():
     carrier=source.carriers[0]
     print('diagnostic_original_face',args.face,'of_source',source.source_sha256,flush=True)
     print('carrier',carrier.id,carrier.kind,carrier.degrees,carrier.uv_bounds,
-          carrier.knot_u,carrier.mult_u,carrier.knot_v,carrier.mult_v,flush=True)
+          carrier.knot_u,carrier.mult_u,carrier.knot_v,carrier.mult_v,'radii',carrier.radii,flush=True)
     mesh=mesh_imported(source,MeshQuality(tolerance_mm=args.tolerance))
     print('face_vertices',len(mesh.vertices),'face_triangles',len(mesh.triangles),
           'closures',len(mesh.faces[0].chart_closures),'metrics',mesh.error_metrics,
