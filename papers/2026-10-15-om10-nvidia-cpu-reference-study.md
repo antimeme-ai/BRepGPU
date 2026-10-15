@@ -149,6 +149,16 @@ corner data and perface reports while still exercising24-way kernel throughput.
 It is the stronger admitted reference for this comparison. Do not use an
 unsafe shared context to manufacture apparent parallelism.
 
+The public default-context API has Create/GetOrCreate but no destroy/reset call.
+`SmApiGeneral.cpp33–63` stores a raw process-global pointer; official examples
+retain it for the process lifetime. Explicitly destroy owned Brep/PolyBrep
+objects, then include actual worker process exit/resource reclamation in the
+outer wall. Do not delete a borrowed default-context pointer and leave the
+SDK's global dangling. Source-normal orientation is likewise explicit:
+`SmTess.cpp7335–7343` negates the evaluated normal when `bReverse`, and line6976
+copies the resulting value into corner auxiliary data. No second reversal is
+appropriate in this exporter; direct reversed-box-face checks test that fact.
+
 ## Display and complete timing boundary
 
 The [separately reviewed raw display](2026-10-15-om10-reference-display-study.md)
