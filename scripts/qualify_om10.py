@@ -49,20 +49,29 @@ def main(args):
         tsv(out/'qualification.tsv', ('field', 'value'), metrics)
     with (out/'adapter.tsv').open('w') as log:
         measure('foreign_cpu_step_translation', lambda: subprocess.run(
-            (str(args.adapter.resolve()), str(args.step.resolve()), str(out/'source.bgsource')),
+            (str(args.adapter.resolve()), str(args.step.resolve()), str(out/'source.bgsource'),
+             '--query-brep-dir',str(out/'query-source'),'--source-residual-mm',str(args.source_residual),
+             '--tolerance-mm',str(args.tolerance)),
             stdout=log, stderr=subprocess.STDOUT, check=True))
     source = measure('owned_source_decode', lambda: load_source(out/'source.bgsource'))
     require(source.source_sha256 == OM10_SHA256 and
             (len(source.definitions), len(source.faces), len(source.products), len(source.usages)) == (107,9162,138,196),
             'complete original source inventory differs')
+    query_paths=tuple((d.id,out/'query-source'/f'definition-{d.id}.brep') for d in source.definitions)
+    require({p.name for p in (out/'query-source').iterdir()}=={p.name for _,p in query_paths},
+            'complete prepared query source inventory differs')
+    def source_hashes():
+        return (hashlib.sha256((out/'source.bgsource').read_bytes()).hexdigest(),
+                *(hashlib.sha256(path.read_bytes()).hexdigest() for _,path in query_paths))
+    query_pins=source_hashes()
     quality = MeshQuality(args.tolerance, args.source_residual, args.max_refinement, args.max_edge_samples)
-    mesh = measure('owned_complete_mesh', lambda: mesh_imported(source, quality,
-        progress=lambda *row: print(*row, flush=True)))
     assembly = measure('owned_complete_assembly', lambda: assemble(source))
     require(len(assembly.occurrences) == 166 and len({o.definition_id for o in assembly.occurrences}) == 107,
             'complete expanded assembly differs')
     record('original_geometry', measure('qualify_original_geometry', lambda: qualify_original_geometry(source,args.step)))
     record('original_assembly', measure('qualify_original_assembly', lambda: qualify_original_assembly(source,args.step,assembly)))
+    mesh = measure('owned_complete_mesh', lambda: mesh_imported(source, quality,
+        progress=lambda *row: print(*row, flush=True)))
     record('mesh', measure('qualify_mesh', lambda: qualify_mesh(mesh,original_path=args.step)))
     bounds = mesh.definition_bounds
     layout, records, axes = authored_layout(assembly,bounds)
@@ -81,6 +90,11 @@ def main(args):
     inputs = input_hashes()
     tsv(out/'inputs.tsv',('field','value'), (
         ('source_sha256',OM10_SHA256),('scene_sha256',inputs[0]),('views_sha256',inputs[1]),
+        ('source_snapshot_path','source.bgsource'),('source_snapshot_sha256',query_pins[0]),
+        ('query_source_directory','query-source'),('query_definition_count',len(query_paths)),
+        *((key,value) for index,(id,path) in enumerate(query_paths) for key,value in (
+            (f'query_definition_{id}_path',str(path.relative_to(out))),
+            (f'query_definition_{id}_sha256',query_pins[index+1]))),
         ('tolerance_mm',args.tolerance),('source_residual_mm',args.source_residual),
         ('max_refinement',args.max_refinement),('max_edge_samples',args.max_edge_samples),
         ('width',args.width),('height',args.height),('supersample',args.supersample),
@@ -99,6 +113,7 @@ def main(args):
             mesh,assembly,scene,native_out/'source-jets.bin',
             tuple(native_out/f'frame-{i:06d}.projected' for i in range(2)),views_path=views,explosion=layout)))
         require(input_hashes() == inputs,'actual native scene/view inputs changed across backends')
+        require(source_hashes()==query_pins,'source snapshot/prepared query bytes changed during qualification')
         print(label,'complete original-source native geometry PASS',flush=True)
     require((*pin_files(),(str(own_path.relative_to(ROOT)),hashlib.sha256(own_path.read_bytes()).hexdigest())) == pins,
             'qualification/product source changed during operation')

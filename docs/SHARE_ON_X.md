@@ -14,21 +14,21 @@ outcome explicitly; a requested tessellation tolerance is not a measured pass.
 Add the measured timing claim only after the matching report exists, keeping
 whole two-view workflow times separate from prepared-scene native display.
 
-The supplied Association openmovement OM10 MAN VA01.3 contains107 reusable
-solid definitions,9,162 faces and166 placed leaf occurrences. Import and owned
+The supplied Association openmovement OM10 MAN VA01.3 contains 107 reusable
+solid definitions, 9,162 faces and 166 placed leaf occurrences. Import and owned
 meshing run on CPU; the accelerated path uses the P100 for carrier evaluation,
 placement and display. This is an imported complete movement, without a claim
 to reconstruct its original parametric feature history. Pair the assembled and
-exploded graphics, retain Association openmovement attribution and CC BY-SA3.0
+exploded graphics, retain Association openmovement attribution and CC BY-SA 3.0
 artwork terms, and link the complete results from the README.
 
-No X publication is part of this task. After the watch pass, issue63 requires
+No X publication is part of this task. After the watch pass, issue #63 requires
 NVIDIA CPU reference runs across every README scenario.
 
 ## Historical launch draft
 
 > Starting BRepGPU: working toward an owned GPU B-rep kernel on P100s. First
-> checkpoint: a reproducible CPU baseline,16/19 workloads qualified, concrete
+> checkpoint: a reproducible CPU baseline, 16/19 workloads qualified, concrete
 > tessellation-error witnesses, and three research reports. Next: FP64 rational
 > patches.
 

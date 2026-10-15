@@ -104,3 +104,31 @@ original C(t)/S(UV) evaluation, deterministic BGSRC bytes, V4 query presence and
 literal spherical octant curves/analytic surface. Negative native fixture modes
 must actually mutate native input and traverse production guards; mode-name
 refusal in the fixture would not establish the failure claim.
+
+The first whole raw-source diagnostic fails at original face164999/carrier14349,
+four-use full-circle/seam cylinder. Retained endpoints show a2π seam-slot
+mismatch and native WireExplorer2/4 uses although source word and3D C/S agree.
+The authored reversed-cylinder wall with original circle range[π,3π] directly
+reproduces2/4,0.014s, before the correction. Selected fix: normalize only the
+mature fixer's temporary working wire to its local-FORWARD convention; preserve
+original source word and original-face final readback. Native method research
+shows SetFace(REVERSED) alone would not change ShapeAnalysis_Edge's support-only
+PCurve lookup, so that proposed shortcut was rejected without implementation.
+Root accepted the source-derived full-word temporary-view correction.
+
+## Implementation review checkpoint
+
+Shared source/query preparation, adapter and qualification integration are
+implemented. Five direct source-UV methods and five affected source-reader
+methods pass on the fleet (0.298s), including missing-PC extraction, unchanged
+original geometry/placements, deterministic snapshot/query export and literal
+forward/reversed pole and seam fixtures. Genuine reversed-cylinder and
+reversed-pole reds preceded their fixes. Root, independent math and native code
+reviews accept the addressed implementation. Native review caught the face
+state initialization order, seam convention and parent/child orientation bugs;
+final actual query use-cycle checks include declared connector placement.
+
+This checkpoint establishes the bounded authored capability, not the watch.
+One fresh actual complete source/query export and a bounded native sanitizer
+run are starting. Complete original geometry/assembly and actual source delta
+remain required before full V4 meshing or any target render.

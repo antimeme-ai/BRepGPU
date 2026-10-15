@@ -133,3 +133,32 @@ analytic path reconstructs/discards them. Keep the reconstruction cost in the
 owned extract/query pipeline where required; do not force it into NVIDIA's
 measured import input or call a query-source preparation failure NVIDIA failure.
 This review selects no implementation and authorizes no CAD rerun.
+
+## Face-aware traversal and reversed-face convention
+
+A later actual-source diagnostic stopped closed at a cylinder loop containing
+two full circles and two occurrences of one seam. Read the complete pinned
+BRepTools_WireExplorer Init/Next in response; no CAD execution by this review.
+Its face-aware Next reads BRep_Tool::CurveOnSurface(edge,myFace). That overload
+explicitly reverses the edge for a REVERSED face (BRep_Tool.cxx334–350).
+With several outgoing candidates, WireExplorer accepts only a candidate whose
+start UV lies within its carrier-resolution-derived U/V tolerances of the current
+end. No candidate sets the current edge null. A sole remaining closed-circle
+candidate also stops if the current UV is closer to its end than its start.
+Period-equivalent world points need not satisfy either chart-space rule.
+
+The selected fixer convention differs. ShapeAnalysis_Edge::PCurve(edge,face)
+at cxx171–209 explicitly leaves the face-reversal implementation commented out;
+it delegates through surface handle/location and uses edge orientation alone.
+FixShifted calls that helper, CheckSeam normalizes to FORWARD, and ReplacePCurve
+reads paired slots on an explicitly FORWARD face. Merely passing a REVERSED
+face to FixShifted therefore does not change its seam lookup convention.
+
+If source bindings retain the original face-composed word, the selected fixer
+needs an explicitly mapped local-FORWARD traversal. A candidate is a temporary
+reversed wire for a reversed face: ShapeExtend_WireData then reverses sequence
+and composes edge orientations, while the original source word remains intact.
+This must be checked against actual branch endpoints; it is not permission to
+reorder source uses or remove WireExplorer's complete-use check. A finite C/S
+probe alone cannot detect an incorrect whole-period seam slot. The source owner
+has the actual diagnostic values and owns the final diagnosis/implementation.

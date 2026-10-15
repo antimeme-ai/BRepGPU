@@ -66,6 +66,44 @@ class SourceUVTests(unittest.TestCase):
                 outputs.append(output.read_bytes())
             self.assertEqual(*outputs,'wall timing leaked into deterministic source bytes')
 
+    def test_reversed_cylinder_preserves_all_native_seam_uses(self):
+        executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
+            ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
+        with tempfile.TemporaryDirectory() as directory:
+            run=subprocess.run((str(executable),'cylinder-reversed',str(Path(directory)/'query.brep')),
+                capture_output=True,text=True)
+            self.assertEqual(run.returncode,0,run.stderr)
+            rows=[row.split('\t') for row in run.stdout.splitlines()]
+            self.assertEqual([row[1:] for row in rows if row[0]=='original_uses'],[['10','11','12','13']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='ordered_uses'],[['4']])
+            for row in rows:
+                if row[0]!='boundary':continue
+                xyz=tuple(map(float,row[3:6]));u,v=map(float,row[6:8])
+                self.assertLessEqual(math.dist(xyz,(.345*math.cos(u),.345*math.sin(u),v)),2**-32)
+
+    def test_reversed_pole_keeps_actual_original_word(self):
+        executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
+            ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
+        with tempfile.TemporaryDirectory() as directory:
+            run=subprocess.run((str(executable),'sphere-octant-reversed',str(Path(directory)/'query.brep')),
+                capture_output=True,text=True)
+            self.assertEqual(run.returncode,0,run.stderr)
+            rows=[row.split('\t') for row in run.stdout.splitlines()]
+            self.assertEqual([row[1:] for row in rows if row[0]=='original_uses'],[['12','11','10']])
+            self.assertEqual([row[1:] for row in rows if row[0]=='ordered_uses'],[['4']])
+            connector=[tuple(map(float,row[1:])) for row in rows if row[0]=='connector']
+            self.assertEqual(len(connector),1)
+            self.assertEqual((connector[0][1],connector[0][3]),(math.pi/2,math.pi/2))
+            for row in rows:
+                if row[0]!='boundary':continue
+                t=float(row[2]);xyz=tuple(map(float,row[3:6]));u,v=map(float,row[6:8])
+                expected={10:(2.5*math.cos(t),2.5*math.sin(t),0.),
+                    11:(0.,2.5*math.sin(t),2.5*math.cos(t)),
+                    12:(2.5*math.cos(t),0.,2.5*math.sin(t))}[int(row[1])]
+                self.assertLessEqual(math.dist(xyz,expected),2**-32)
+                self.assertLessEqual(math.dist(xyz,(2.5*math.cos(v)*math.cos(u),
+                    2.5*math.cos(v)*math.sin(u),2.5*math.sin(v))),.001)
+
     def test_literal_sphere_octant_pole_and_checked_failure_paths(self):
         executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',
             ROOT/'build/om10-step-source/brepgpu-source-uv-fixture')).resolve()
@@ -79,9 +117,9 @@ class SourceUVTests(unittest.TestCase):
             self.assertEqual(len(boundary),3*17)
             for _,use,t,*values in boundary:
                 t=float(t);values=tuple(map(float,values));xyz,uv,actual=values[:3],values[3:5],values[5:]
-                expected={10:(2.5*math.cos(t),0.,2.5*math.sin(t)),
+                expected={10:(2.5*math.cos(t),2.5*math.sin(t),0.),
                           11:(0.,2.5*math.sin(t),2.5*math.cos(t)),
-                          12:(2.5*math.cos(t),2.5*math.sin(t),0.)}[int(use)]
+                          12:(2.5*math.cos(t),0.,2.5*math.sin(t))}[int(use)]
                 sphere=(2.5*math.cos(uv[1])*math.cos(uv[0]),
                         2.5*math.cos(uv[1])*math.sin(uv[0]),2.5*math.sin(uv[1]))
                 self.assertLessEqual(math.dist(xyz,expected),2**-32)
