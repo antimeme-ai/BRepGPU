@@ -16,3 +16,26 @@ Local static AST parsing passes. No product execution, dependency/build or Git
 operation. Construction/sampler dependency greens and independent source reviews
 must precede own serialized CPU1/24/P1000/1 fleet greens; results recorded below
 when run. Source review readiness sent to parent and geometry owner.
+
+Dependency construction8 CPU green and sampler-owner placements completed before
+own GPU runs. Initial whole12 CPU1/24 greens were2.718s/3.038s. Reread original
+source signed-zero admission correction and strengthened own source canonical
+control/vertex/curve bit checks before final qualification. No algorithm failure.
+
+Final unchanged whole12 methods, zero skips, all pass:
+
+| Placement | unittest time |
+| --- | ---: |
+| CPU threads1 | 2.858s |
+| CPU threads24 | 2.923s |
+| CUDA device0 | 3.879s |
+| CUDA device1 | 3.684s |
+
+Each invocation used PYTHONPATH=python:tests, python3 -B -m unittest test_offset -v,
+the existing pair-release core and topology-release library paths, and the stated
+BREPGPU_TEST_BACKEND/DEVICE/THREADS placement. Only owned oracle/test files synced;
+no new native build or dependency. Runtime's exclusive GPU lane was released
+before these runs; all four ran serially. Explicitly released GPU lane to parent
+and runtime owner after completion. Constructor source review accepted; semantic
+owner's independent whole oracle/test source review remains separate. These are
+correctness tests, not operation-cost or model-size performance claims.

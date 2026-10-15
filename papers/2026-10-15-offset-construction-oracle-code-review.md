@@ -28,3 +28,10 @@ ingestion and factory-only immutable records fit the declared contract. The
 independent test unit contains late validation rollback/retry and falsified
 geometry, ancestry, Footpoint/readers and native vectors; actual fleet greens
 remain a separate required step.
+
+Reread the source-owner's original-control signed-zero admission correction.
+The original factory rotates binary64 numerator pairs and retains their signed
+zero bits; new controls are built from exact Fraction coefficients. The separate
+original-control expectation preserves that distinction without changing the
+new geometry. Accepted. The independent qualifier likewise binds original
+canonical control bits explicitly; it does not silently normalize source zeros.

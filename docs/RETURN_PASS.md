@@ -249,3 +249,30 @@ All three selected same-world foreign fillet comparisons pass unchanged criteria
 the earlier revolution volume issue stays open and external alpha suites remain
 non-green. Analytic offset is next before integration, tuning, Python-role or
 matched NCSX rendering timing work.
+
+
+## Signed analytic offset and completion of the feature sequence
+
+The [sharp-cylinder offset](OFFSET.md) closes the planned feature breadth sequence,
+with exact changed carriers and actual original-carrier normal feet. [48 complete
+calls](../results/offset-2026-10-15/REPORT.md) have the same23-entity/six-chart graph,
+1734candidates and1550admitted rows. CPU1 medians90.472/86.931/84.916ms beat P1000
+784.377/586.370/638.930ms and P1001 1149.549/1359.455/1180.092ms. Every P100
+complete range loses CPU1. Three signed-distance/Frame recipes are not larger CAD
+models; observed CPU differences supply no controlled thread/clock explanation.
+
+For outset, P1000/1 Engine setup258.204/637.740ms, separate adjacency build
+210.926/521.023ms and Engine cleanup43.278/85.475ms dominate. Exact request work
+is28.717–31.679ms across placements, while actual sample/normal/scatter consumed
+wall is32.448–39.872ms. Phase medians nest and cannot be summed. Preserve actual
+querybits, source-foot effective trim versus carrier extension, rawface versus
+normalizedchart domains, source revisions and closed-ring/seam occurrences when
+considering retained/native ownership. [Round-two notes](../papers/2026-10-15-offset-return-pass-runtime-notes.md)
+keep general joins/offset singularities and future timing/language questions.
+
+Two foreign offsets fail unchanged volume/boundary criteria; the third is blocked
+before offset by original source-volume preflight. Issue48 and the source study
+retain query tolerance/integration/carrier-path uncertainty; issue43 remains
+separate. No required community alpha corpus is green. Revisit the theme map,
+external oracle gaps and actual full-caller costs before selecting return-pass
+priorities. This delivery starts no integration/tuning/rewrite or NCSX timing.
