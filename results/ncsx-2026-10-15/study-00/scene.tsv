@@ -1,0 +1,63 @@
+field	value
+projection	orthographic
+width	1800
+height	1200
+azimuth_degrees	35.0
+elevation_degrees	25.0
+source_up_axis	Z
+source_camera_target	0 0 0
+pixels_per_source_unit	240.0
+screen_center_x	900.0
+screen_center_y	650.0
+position_input	already source/world; renderer applies no source scale
+native_normalization_scale	4
+native_normalization_origin	0 0 0
+normal_input	unit source/world native first-jet normals, per patch sample
+lighting	two-sided absolute Lambert plus view-facing highlight and rim
+light_view_x	-0.38
+light_view_y	0.48
+light_view_z	0.79
+diffuse_ambient	0.24
+diffuse_gain	0.72
+highlight_gain	0.26
+highlight_power	28
+rim_gain	0.07
+rim_power	3
+sample_order	tile contiguous; u-major / v-fast
+quad_split	(u,v),(u+1,v),(u+1,v+1); (u,v),(u+1,v+1),(u,v+1)
+depth_rule	largest interpolated camera Z wins; opaque surface pixels
+pixel_rule	pixel centers; signed barycentrics; inclusive edge epsilon1e-10
+png	RGBA8, transparent background, filter0, noninterlaced
+source_fit	sampled source diagnostics are separate; no global chord bound
+pack_section	illustrative rectangular sections; not as-built dimensions
+plasma	source-derived fitted plasma boundary; not vacuum vessel
+patches	5472
+samples	90720
+backend	cuda
+device	0
+display_triangles	101376
+camera_right_x	-0.573576436351046
+camera_right_y	0.8191520442889918
+camera_right_z	0.0
+camera_up_x	-0.34618861305875415
+camera_up_y	-0.242403876506104
+camera_up_z	0.9063077870366499
+camera_toward_viewer_x	0.7424038765061041
+camera_toward_viewer_y	0.5198367907256845
+camera_toward_viewer_z	0.42261826174069944
+material_0_r	0.87
+material_0_g	0.46
+material_0_b	0.23
+material_0_role	source coil family 0
+material_1_r	0.97
+material_1_g	0.64
+material_1_b	0.34
+material_1_role	source coil family 1
+material_2_r	0.72
+material_2_g	0.32
+material_2_b	0.16
+material_2_role	source coil family 2
+material_3_r	0.1
+material_3_g	0.48
+material_3_b	0.51
+material_3_role	plasma
