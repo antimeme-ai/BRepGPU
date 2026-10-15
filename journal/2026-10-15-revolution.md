@@ -70,3 +70,13 @@ bounds and54/108/288boundary witnesses pass for all. Issue43 tracks the exact
 triangle discrepancy; no upstream message was sent. Independent artifact review
 accepted exact input/source bindings and all450witnesses with honest red/green
 outcomes. No tolerance was widened and external alpha qualification remains open.
+
+Final performance/report review accepted: all48rawcalls/12summarycells and all36
+many16diagnostic medians agree; source/controller pins and five native hashes
+remain stable. Artifact review accepted complete source/history/map/native/CSR/
+SVG bindings and all450foreign witnesses. Public paths/private-host scan clean.
+README now displays actual16-edge/P100 geometry; research/API/roadmap and issue
+indexes point to complete results. Round-two notes retain broader geometry,
+periodic-history constraints, exact host/setup costs and issue43 volume debt.
+Fillet and offset precede deferred integration/Python-role/NCSX timing. Proceed
+to PR merge preserving feature commits, then clean main/fleet handoff.

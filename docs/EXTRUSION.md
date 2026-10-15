@@ -111,4 +111,5 @@ supply owned history/material or satisfy mandatory external alpha suites.
 [Research](../papers/README.md) ·
 [Qualification and costs](../results/extrusion-2026-10-15/REPORT.md) ·
 [Return pass](RETURN_PASS.md).
-Revolution, fillet and offset remain separate subsequent feature units.
+[Full off-axis revolution](REVOLUTION.md) is now delivered. Fillet and offset
+remain separate subsequent feature units.

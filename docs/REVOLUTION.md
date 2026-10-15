@@ -59,7 +59,10 @@ before atomic publication; late failure preserves profile and earlier results.
 TopologyInput uses the existing ABI5 standalone typed representation with empty
 snapshots: Nordinary opposed ring pairs and Nsame-face seam pairs. Existing
 canonical body, Boolean, extrusion sampler and mesher guards remain scoped.
-See REVOLUTION_DESIGN.md and REVOLUTION_PLAN.md for the independently reviewed
-contract and qualification. Actual native/P100 and measured caller outcomes are
-reported separately when qualification and the campaign finish; no performance
-or external-alpha certification follows from this API definition.
+See the [design](REVOLUTION_DESIGN.md), [reviewed plan](REVOLUTION_PLAN.md) and
+[qualification/cost report](../results/revolution-2026-10-15/REPORT.md). All 27
+new methods pass across applicable CPU/both-P100 placements; complete costs and
+optional foreign comparison outcomes are reported separately. The foreign
+triangle volume comparison remains outside its declared limit. Required
+external community alpha qualification remains incomplete.
+Fillet and offset are the next independent breadth units.

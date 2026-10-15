@@ -1,5 +1,28 @@
 # BRepGPU research
 
+## Full meridian-profile revolution
+
+The [design](../docs/REVOLUTION_DESIGN.md) and [reviewed plan](../docs/REVOLUTION_PLAN.md)
+follow independent [geometry/history](2026-10-15-revolution-semantics-study.md),
+[whole-feature oracle](2026-10-15-revolution-oracles-study.md) and
+[runtime/reference](2026-10-15-revolution-runtime-study.md) studies.
+Bibliographies: [semantics](revolution-semantics.bib),
+[oracles](revolution-oracles.bib), [runtime](revolution-runtime.bib).
+Actual OCCT/Truck/NVIDIA sweeps, Sauer's rational-conic notes, Shene's homogeneous
+circle construction and the primary missing-set study inform the complete closed
+rational atlas, source-preserving axis choice, periodic seam occurrences and
+exact radical predicates. All three design and plan reviews accepted before
+27 real missing-operation fleet tests and the actual caller red. Reference
+study does not adopt a dependency or complete external alpha qualification.
+[API](../docs/REVOLUTION.md) and [results](../results/revolution-2026-10-15/REPORT.md)
+retain complete source maps, native/CSR artifacts and all 48 caller costs.
+[Actual artifact review](2026-10-15-revolution-unit-artifact-semantics-review.md) and
+[reference volume investigation](2026-10-15-revolution-reference-volume-investigation.md)
+keep the triangle comparison explicitly non-green; no tolerance is widened.
+[Round-two notes](2026-10-15-revolution-round2-notes.md) defer broader geometry and
+integration until after fillet/offset.
+
+
 ## Owned convex-profile extrusion
 
 The [design](../docs/EXTRUSION_DESIGN.md) and [plan](../docs/EXTRUSION_PLAN.md)
