@@ -1,0 +1,8 @@
+phase	result	count	seconds	detail
+absent_api	EXPECTED_RED	12	1.177	16 missing-module errors before implementation
+actual_result_mesh	PASS	12	20.765	whole exact/rounded domains, source maps, manifold and direct altered-output faults
+affected_compatibility	PASS	46	15.729	canonical meshing/entry, Boolean/construction/sampling and body
+canonical_export	PASS	1		actual same-tolerance plate PLY byte-identical to archived output
+serial_callers	PASS	28		four first independently qualified outputs and24 full-output correspondences
+standalone_caller	PASS	1		actual refined result independently qualified/exported
+external_community	NOT_RUN			adapters/data/corpus inventory remain incomplete

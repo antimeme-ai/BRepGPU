@@ -1,0 +1,5 @@
+case	operand_prepare_ms	cpu_boolean_ms	filesystem_export_ms
+coarse-unit	1.009151	56.282933	32.988647
+fine-unit	0.950389	56.487939	57.864727
+translated-scale2	0.988504	54.091152	90.444909
+subnormal-quarter	1.079781	57.088237	64.124858

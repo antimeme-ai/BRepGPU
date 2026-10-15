@@ -86,8 +86,10 @@ the original carrier at actual submitted UV, not CPU parity.
 `solid.topology_input()` emits existing `TopologyInput` with typed sources and
 `snapshots=()`. Retain the CutResult alongside it. This separate result type is
 not a canonical BodySnapshot: existing canonical meshing, classification adapters
-and `pack_bodies` do not accept it. There is no general result mesher or imported
-solid support in this operation.
+and `pack_bodies` do not accept it. A separate [result mesher](CUT_MESHING.md) now
+consumes the full retained CutResult through `cut.tessellate(tolerance=...)`,
+keeping actual trimmed carriers and history. General result meshing and imported
+solid support remain outside this operation.
 
 Fleet reproduction:
 

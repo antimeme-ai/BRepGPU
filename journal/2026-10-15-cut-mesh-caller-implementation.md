@@ -22,3 +22,17 @@ segment cap and exact tolerance to standalone recipe. Saved caller-owner source
 review in papers/2026-10-15-cut-mesh-caller-code-review.md. Caller/helper/benchmark
 sources are stable for parent-owned serial qualification and costs. No geometry
 execution was performed in this lane.
+
+Reviewed actual saved four-case/standalone artifacts after the parent-owned
+serial run. Recomputed28 raw/20 summary correspondences, checked saved inventory
+counts/bounds, measured source hashes, all original result carrier control/frame
+bits against named operands, raw cutter V and distinct seam U, and85/81 history
+inventory. Viewed actual exported PNG; open bore, full wire view and captions
+are clear. Saved accepted artifact/cost review in
+papers/2026-10-15-cut-mesh-caller-artifact-review.md. No measured source edits or
+local product execution occurred.
+
+Final report/API/README/delivery-journal publication review accepted against
+saved artifacts. Scoped timings, external non-green status, no GPU/speedup claim
+and pre-existing archival caption-only difference are stated correctly. Added
+acceptance to caller artifact review; no measured source edits.
