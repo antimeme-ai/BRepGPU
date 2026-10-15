@@ -46,3 +46,11 @@ open findings; all12 measured source hashes match. Updated API, README graphic,
 roadmap, return-pass and issue54. Planned direct obligations, one compatibility
 run and actual callers are complete. Testing stops here; only publication and
 clean Git/fleet handoff remain. No native build or new dependency was selected.
+
+Merged PR [#55](https://github.com/antimeme-ai/BRepGPU/pull/55) at
+2026-10-15T13:21:24Z as `cfa5a200b48a1b3e967e7aec47ebbf3030894365`,
+preserving the five substantive feature commits and remote branch. Local main
+and fleet matched the merge with clean worktrees; protected native hashes are
+unchanged from before this unit. Issue54 closes the bounded delivery. Final
+bookkeeping is synced to both checkouts. Tests stopped after the scoped passes;
+no further campaign or new implementation unit was started.
