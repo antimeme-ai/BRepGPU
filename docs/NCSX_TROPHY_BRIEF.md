@@ -12,6 +12,15 @@ engineering PDFs, page images and an assembly photograph; it contains no native
 CAD model, surface control nets, triangle mesh or machine-readable coil curves.
 Documentary renders must not be represented as BRepGPU geometry output.
 
+## First source-based rendering
+
+After inspecting this documentary pack, acquired separate scientific Fourier
+coil centerlines and an NCSX plasma boundary with their original MIT license.
+[Study00 and the goal-object roadmap](NCSX_GOAL_OBJECT.md) now provide an actual
+P100-evaluated rendering and recorded comparison baseline. These inputs do not
+supply the engineering vacuum vessel, winding forms, ports or supports; plasma
+must remain separately labeled.
+
 ## Read first
 
 - [PPPL-4742, 2012 project review](https://bp-pub.pppl.gov/pub_report/2012/PPPL-4742.pdf):
@@ -32,9 +41,9 @@ Documentary renders must not be represented as BRepGPU geometry output.
 
 ## Comparable iterations
 
-Select one explicitly sourced geometry/revision before the first actual NCSX
-render. Prefer acquiring native geometry or coil coordinates; any reconstruction
-from drawings must record its assumptions and measured limitations. Retain the
+The first actual NCSX scene uses the pinned scientific coil/plasma data recorded
+in study00. Future engineering geometry and any reconstruction from drawings
+must record its revision, assumptions and measured limitations. Retain the
 same source geometry, units, view/crop, resolution, lighting and component
 visibility between comparison images. When one changes, name it rather than
 crediting its visual difference to a kernel improvement.
@@ -43,5 +52,5 @@ Separate source acquisition/reconstruction, supported carrier evaluation,
 trimmed-face meshing and assembled topology. Show which actual BRepGPU operations
 produced each image and their unresolved/unsupported portions. The existing
 synthetic trophies remain historical demonstrations; NCSX is the continuing
-visual target. Current canonical meshing work proceeds as the next broad-pass
-unit; the full NCSX model requires substantially broader input geometry.
+visual target. Canonical meshing has its own completed bounded beachhead;
+the full NCSX model requires substantially broader input geometry and operations.
