@@ -36,3 +36,12 @@ reviewandperformance/reportreviewaccepted. Fullpublicartifacts/notes/READMEgraph
 publishedthroughfeaturebranch checkpoints. Plannedfeaturebreadthsequencecomplete;
 no integration/tuning/Pythonrewrite/NCSXtiming started. PRmerge+cleanfleet handoff
 next, withactualmergeSHA recordedafteritexists.
+
+
+PR49 merged2026-10-15T11:38:24Z at46de2f375d8ca701e3f6f2d6fa8c740ecb8b60fc.
+Allsubstantivebranchcommits preserved; remote feat/analytic-offset retained.
+Issue47 CLOSED; referenceissue48 andearlierrevolution43 OPEN. Localmain/fleet
+checkout synchronized clean to actualmergedsource, withnative/toolchain/private
+contextpreserved. Exploratorysource/referenceprobes movedtoignoredfleetcontext,
+initialreferenceobservations alreadyretainedthere. Finalbookkeepingcommit records
+actualmerge/issueindexhandoff, then matchingclean source revisions verifiedagain.
