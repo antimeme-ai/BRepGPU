@@ -398,3 +398,139 @@ values, not a triangulator-private cache.
 exact BGMESH01 format, duplicating display corners where UV/carrier/face normal
 requires it while retaining definition-scoped physical keys. Root supplies
 instances and materials; geometry code does not choose explosion or labels.
+
+## Actual-source findings and reviewed implementation amendments
+
+The first nonvisual fleet extraction and strict reader succeeded with the exact
+original hash, 107 solids, 9,162 faces, 9,768 loops, 51,742 coedges, 25,871 edges,
+17,129 vertices, 138 products, 196 usages and 219 retained style/material records.
+All original edge bindings have SameParameter=true, no original edge is flagged
+degenerate, and recovered UV curves require degrees through five. Independent
+raw-source geometry comparison found maximum scalar discrepancy 2.22e-16 mm
+before subsequent adapter fidelity corrections. These are development findings,
+not complete mesh acceptance or render results.
+
+The owned bridge implementation checks candidate segment intersections against
+all original/current boundaries and tests its midpoint in the same material
+component before selecting the shortest *verified visible* bridge. This is a
+deliberate simpler variant than Eberly's minimum-angle search. The disproved
+shortcut chooses a nearest reflex vertex without establishing visibility;
+our algorithm does not use that shortcut. The original Eberly counterexample
+is a direct test. Independent positive-domain boundary chains remain decisive.
+
+Actual non-SameParameter continuation is outside this observed source family.
+Do not treat affine seed nodes as a proof of a unique projection branch. The
+owned mesher explicitly rejects unproved kind3 continuation rather than claiming
+a general projection solver. Original metadata stays available; nothing from
+this actual whole-source target is omitted by that rejection.
+
+### Sphere-pole chart closure: design amendment for review
+
+Original face165503 has sphere carrier930, R2.9, UV U approximately π..3π and
+V1.3857136715..π/2. Its original loop28562 contains three occurrences: a complete
+lower circle85181 and seam85182 twice. Both seam uses meet original pole vertex
+67548, but their pole UV values have distinct U. A complete finite UV polygon
+therefore requires a connector between those two UV endpoints. The translated
+face inserts a 3D-degenerate/null-curve edge for this chart purpose; it is not an
+original EDGE_CURVE and must never be assigned an invented original source ID.
+Thus original degenerate-edge count zero does not mean singular vertices zero.
+
+Retain all original source topology. Classify any translated added pole edge
+separately, checking that it is flagged degenerate and collapses to the actual
+original source pole vertex. The owned mesher derives its own `ChartClosure`:
+`(face_id, source_vertex_id, incoming_coedge_id, outgoing_coedge_id,
+uv_start, uv_end, kind)`, where kind is `sphere_pole` or `cone_apex`.
+`FaceMesh.chart_closures` is a tuple of these explicit values. The boundary chain
+contains both the incoming source edge's actual final UV occurrence and the
+outgoing edge's actual initial UV occurrence, sharing their original physical
+vertex key. Their connecting segment is a generated chart boundary, not an
+original coedge. Retain both actual pcurve parameters/raw UV values.
+
+Independently verify same original vertex ownership, original edge endpoint
+parameters, the analytic singular parameter and the carrier-to-original-vertex
+residual. A sphere closure has constant V at a declared pole; a cone closure
+has constant apex V. A generic UV gap must not be labeled singular because its
+physical endpoints are close. UV partition includes the generated connector.
+Physical incidence uses the quotient. Explicit collapsed UV cells remain in
+the UV partition but do not produce native physical triangles; their curved
+image approximation still must satisfy the same refinement/error obligation.
+
+The initial cylinder face164988 refinement failure was diagnosed with its actual
+UV triangle and bound: 20 *propagated neighbor split counts* were reached while
+its bound was 0.003895744 mm against the unchanged 0.00375 mm surface allocation.
+Budget must count actual nested dyadic vertex construction, not increment a
+neighbor's entire triangle depth merely because a conforming split reaches it.
+This corrects bookkeeping without relaxing requested geometric quality.
+
+The remaining cylinder boundary floor exposed an unnecessarily loose Hessian
+bound: a qualified radius14.9925 source arc chord spans0.01761002rad and has
+bound0.0005815mm, but the initial crude surface bound exceeded0.00375mm and
+could not improve while that boundary stayed fixed. Root and independent
+oracle owners reviewed the sharper interpolation formula. Expand each vertex
+around the barycentric point p: the weighted first derivative terms cancel.
+The vector remainder is bounded by one half times
+`Muu Var(u)+2 Muv sum(lambda*abs(delta_u*delta_v))+Mvv Var(v)`.
+Cauchy bounds the mixed sum by `sqrt(Var(u)*Var(v))`; a variable supported on
+an interval of width D has variance at most D²/4. The valid uniform-Hessian
+bound is therefore
+`(Muu*du²+2*Muv*du*dv+Mvv*dv²)/8`.
+This applies only with uniform derivative bounds over the entire triangle;
+crossed spline knots retain the separately convergent piecewise Lipschitz bound.
+No quality allocation or source boundary was relaxed. Quadratic `f(u)=u²`
+attains its univariate limit at an edge midpoint and `f(u,v)=uv` attacks the
+mixed term. Floating-point bound calculations remain subject to their explicit
+numerical limitations; they are not a newly claimed exact universal certificate.
+
+Actual spline face165086 subsequently exposed a second false boundary floor.
+One saved UV endpoint lies a few binary64 ulps past U=-1. That is retained,
+not snapped away. The source carrier4194 is degree(2,1), with U multiplicity1
+at that knot, hence C1. Applying a first-derivative Lipschitz bound to every
+crossed knot was needlessly weak. For positive rational B-splines, original
+`degree - multiplicity >= 1` supplies continuous first derivatives. A C1,
+piecewise-C2 map has the same Taylor integral remainder using the componentwise
+maximum Hessian bounds over all intersected spans. Root and independent review
+accepted that correction; genuine C0 crossings keep the conservative Lipschitz
+fallback. Crossings use the actual strict saved-UV interval, without an epsilon
+that could hide a source knot. A globally quadratic two-span C1 fixture and a
+genuine C0 kink distinguish the two cases.
+
+Curve.kind4 Bézier carrier parameters are explicitly natural[0,1]. Active edge
+and coedge ranges are separate fields and may be proper subintervals. The full
+carrier control net must not be reinterpreted as already restricted to that
+active interval. Adapter, reader, product evaluator and independent oracle use
+the same original-domain convention. Actual OM10 has no kind4 curve, but a
+direct negative fixture prevents an ambiguous carrier-domain admission.
+
+
+### Reviewed exact UV construction and foreign global-end recovery
+
+Actual face165122 contains an interior shared diagonal whose endpoint V values
+are adjacent binary64 numbers (0.15 and 0.14999999999999997). Its two positive
+parent cells have no representable binary64 four-child midpoint fan. Preserve
+ordinary binary64 UV where its children remain positive; otherwise construct
+the exact rational midpoint of the saved endpoints. Every predicate containing
+a Fraction bypasses the float filter and uses exact rational arithmetic.
+Centroids use the same positive-child requirement and exact construction when
+necessary. This preserves the owned UV partition; it does not claim that the
+separately rounded native UV values partition that domain. Geometry evaluation
+and native inputs explicitly round UV to binary64. Hessian bounding boxes round
+outward. A global first-partial bound times the exact UV rounding displacement
+produces max_native_uv_rounding_bound_mm, required <= tolerance/16. The measured
+combined allocation 2*edge_chord_bound + surface_interpolation_bound +
+native_uv_rounding_bound must remain <= tolerance. Independent native checking
+compares the submitted rounded values and original-carrier displacement.
+
+The same recovered pcurve extends U=-8.56e-15 outside the original global spline
+domain [0,2]. Original STEP supplied no UV curves. Recover FOREIGN UV only at
+global original knot-domain ends, with per-axis grade
+128*ulp(max(1,abs(domain_lower),abs(domain_upper))). Outside that grade fail;
+never snap an interior knot. Retain raw pcurve_uv and actual pcurve parameter;
+the corrected carrier point must remain within source_residual_mm of the
+original physical edge sample. Record foreign_uv_recovery_count and
+max_foreign_uv_recovery_shift_mm (in-domain first-partial norm times UV shift,
+a conversion-displacement estimate; raw out-of-domain UV is not evaluated or
+claimed to belong to the original source domain).
+Strict span selection replaces the former generic extrapolation tolerance.
+Root accepted this bounded amendment after actual parent-cell diagnosis and
+independent oracle review. Direct adjacent-double fan, excessive-overhang
+rejection and retained-raw tiny-overhang checks attack these failure classes.

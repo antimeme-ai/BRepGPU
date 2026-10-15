@@ -18,7 +18,7 @@ precedes final source-derived trophy renders.
 
 ## Files and boundaries
 
-- `tools/step_source/CMakeLists.txt` and `tools/step_source/main.cpp`: isolated
+- `native/step_source/CMakeLists.txt` and `native/step_source/main.cpp`: isolated
   OCCT STEP/XDE extraction and BGSRC001 writer; no product tessellation.
 - `python/brepgpu/imported_source.py`: frozen native values, bounded binary
   reader, structural validation and original-ID lookups.
@@ -99,3 +99,45 @@ owned, and actual Python/import/mesh wall remains in the cold measurements.
 This is enough direct work for the requested claim. No mutation campaign,
 second certificate layer, unrelated historic GPU rerun or alpha certification
 is introduced. Actual failures can justify additional focused cases.
+
+Actual-source correction study: original sphere face165503 has a pole vertex
+but no declared degenerate source edge. Its three-edge original loop needs an
+explicit generated UV chart connector between the two source seam endpoint
+occurrences. Review the continuing study's ChartClosure amendment with root and
+the independent owner before implementing it. Retain original identities; no
+generic UV gap or nearby vertex becomes a pole by tolerance. Actual mesh
+refinement bookkeeping also must count dyadic construction depth rather than
+propagated neighbor updates. Unproved non-SameParameter continuation is rejected;
+the actual supplied source's original edges are all SameParameter=true.
+
+Reviewed actual-source amendment: preserve exact rational UV construction only
+when binary64 cannot produce a positive conforming fan; round explicitly at
+native evaluation and account for its first-partial displacement. Recover only
+foreign UV overhang at original global spline endpoints within 128 scale ULPs,
+retaining raw UV, count, displacement and existing source residual limit. Root
+and independent oracle reviewed the actual adjacent-double parents first. Add
+direct faults/greens, focused actual face, then complete actual source run.
+
+Root requested a diagnostic all-face scan if repeated first failures hide
+remaining families. Extend the existing original-face diagnostic utility with
+explicit --scan and bounded worker count; each face reports pass/failure, no
+product mesh is assembled or qualified and no geometry is rendered. This is a
+fault inventory only; the final product remains complete and fail-closed.
+
+Checkpoint status: root and independent oracle accepted the source-derived pole
+connector, sharp /8 Hessian bound, C1-cross-knot Hessian maximum, exact rational
+UV constructions and bounded global-end foreign UV recovery. All13 focused
+meshing tests pass on the fleet in1.041s. Previously failing original face165122
+now meshes into22 positive UV cells in0.0108s; four foreign endpoint recoveries
+and maximum native UV rounding estimate1.39e-16mm are explicit. Source checkpoint
+7e7de7d already preserves all107 definitions/9162 faces. Full actual mesh and
+independent qualification are still running; this checkpoint does not claim
+that the whole OM10 target is green and contains no watch render. A separate
+four-worker diagnostic scan reports every face failure without assembling a
+product mesh. Early actual faces produce80k–330k cells; preserve complete
+coverage and learn the actual final scene size before performance work.
+
+Root's diagnostic utility review found that scan workers ignored --tolerance
+and the utility lacked the explicit Linux execution guard. Workers now receive
+the selected immutable MeshQuality through fork inheritance and main rejects
+non-Linux CAD execution, matching the fleet caller. No geometry algorithm changed.

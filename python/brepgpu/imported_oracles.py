@@ -1,7 +1,7 @@
 """Independent original-carrier and complete imported-domain answers.
 
 Production triangulation, span extraction and native raster helpers are not
-used here. Exact predicates operate on the actual saved binary64 values.
+used here. Exact predicates use saved binary64 values and owned rational UV.
 """
 from collections import Counter, defaultdict
 from fractions import Fraction as F
