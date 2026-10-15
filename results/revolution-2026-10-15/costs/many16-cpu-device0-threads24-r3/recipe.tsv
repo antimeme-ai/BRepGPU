@@ -1,0 +1,24 @@
+field	value
+recipe	many16
+backend	cpu
+device	0
+threads	24
+grid	9
+profile_body	1
+output_body	2
+vertices	16
+origin_x_hex	-0x1.0000000000000p+1
+origin_y_hex	0x1.0000000000000p+0
+origin_z_hex	0x1.0000000000000p-1
+scale_hex	0x1.0000000000000p+1
+profile_area	75/512
+world_volume_rational	0
+world_volume_pi_coefficient	75/64
+observed_backend	cpu
+observed_device	0
+samples	5184
+evaluated_samples	5184
+checksum	-2592.0
+construction	owned CPU full positive local-Y revolution
+native_consumers	first jets/oriented normals and adjacency
+mesher	not implemented

@@ -206,3 +206,20 @@ Preserve full affine ancestry and exact generating IDs through any native/GPU/
 resident migration. [Broader-family notes](../papers/2026-10-15-extrusion-round2-notes.md)
 retain holes/concavity/curves/directions and meshing. Finish revolution/fillet/
 offset breadth units before beginning those integrations or the Python-role study.
+
+## Full off-axis profile revolution
+
+The [revolution feature](REVOLUTION.md) is qualified on actual source geometry,
+periodic topology, history and CPU/both-P100 consumers. [48 complete callers](../results/revolution-2026-10-15/REPORT.md)
+measure 972/1944/5184 native candidates. Best CPU medians are 53.963/161.197/
+361.477 ms, versus P1000 658.223/746.626/1008.083 ms and P1001 1172.783/
+1270.603/1754.468 ms. All complete GPU ranges lose the best corresponding CPU
+range; unpinned CPU variability supplies no causal thread-scaling result.
+
+Keep exact source-map evaluation inside actual operation costs. Any resident/
+native migration must preserve two seam occurrences on one face, both closed-ring
+endpoint ports, precise contextual ancestry and nonuniform rational quarter maps.
+Partial angles/poles/axes, curved or holed profiles and result meshing are distinct
+families. [Round-two notes](../papers/2026-10-15-revolution-round2-notes.md) retain
+these constraints and the non-green optional foreign triangle volume comparison.
+Fillet and offset remain ahead of integration, Python-role and NCSX timing work.

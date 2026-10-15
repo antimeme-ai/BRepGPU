@@ -1,0 +1,593 @@
+kind	id	role	u	v	source_t	source_u	source_v	periodic	orientation	source_trim
+vertex	1	anchor	0	0		55/64	1/2	0	1	2
+vertex	2	anchor	0	0		109/128	69/128	0	1	2
+vertex	3	anchor	0	0		53/64	37/64	0	1	2
+vertex	4	anchor	0	0		101/128	77/128	0	1	2
+vertex	5	anchor	0	0		3/4	39/64	0	1	2
+vertex	6	anchor	0	0		91/128	77/128	0	1	2
+vertex	7	anchor	0	0		43/64	37/64	0	1	2
+vertex	8	anchor	0	0		83/128	69/128	0	1	2
+vertex	9	anchor	0	0		41/64	1/2	0	1	2
+vertex	10	anchor	0	0		83/128	59/128	0	1	2
+vertex	11	anchor	0	0		43/64	27/64	0	1	2
+vertex	12	anchor	0	0		91/128	51/128	0	1	2
+vertex	13	anchor	0	0		3/4	25/64	0	1	2
+vertex	14	anchor	0	0		101/128	51/128	0	1	2
+vertex	15	anchor	0	0		53/64	27/64	0	1	2
+vertex	16	anchor	0	0		109/128	59/128	0	1	2
+edge	1	ring	0	0		55/64	1/2	0	1	2
+edge	1	ring	1/7	0		55/64	1/2	4/7	1	2
+edge	1	ring	1/2	0		55/64	1/2	2	1	2
+edge	1	ring	6/7	0		55/64	1/2	24/7	1	2
+edge	1	ring	1	0		55/64	1/2	4	1	2
+edge	2	ring	0	0		109/128	69/128	0	1	2
+edge	2	ring	1/7	0		109/128	69/128	4/7	1	2
+edge	2	ring	1/2	0		109/128	69/128	2	1	2
+edge	2	ring	6/7	0		109/128	69/128	24/7	1	2
+edge	2	ring	1	0		109/128	69/128	4	1	2
+edge	3	ring	0	0		53/64	37/64	0	1	2
+edge	3	ring	1/7	0		53/64	37/64	4/7	1	2
+edge	3	ring	1/2	0		53/64	37/64	2	1	2
+edge	3	ring	6/7	0		53/64	37/64	24/7	1	2
+edge	3	ring	1	0		53/64	37/64	4	1	2
+edge	4	ring	0	0		101/128	77/128	0	1	2
+edge	4	ring	1/7	0		101/128	77/128	4/7	1	2
+edge	4	ring	1/2	0		101/128	77/128	2	1	2
+edge	4	ring	6/7	0		101/128	77/128	24/7	1	2
+edge	4	ring	1	0		101/128	77/128	4	1	2
+edge	5	ring	0	0		3/4	39/64	0	1	2
+edge	5	ring	1/7	0		3/4	39/64	4/7	1	2
+edge	5	ring	1/2	0		3/4	39/64	2	1	2
+edge	5	ring	6/7	0		3/4	39/64	24/7	1	2
+edge	5	ring	1	0		3/4	39/64	4	1	2
+edge	6	ring	0	0		91/128	77/128	0	1	2
+edge	6	ring	1/7	0		91/128	77/128	4/7	1	2
+edge	6	ring	1/2	0		91/128	77/128	2	1	2
+edge	6	ring	6/7	0		91/128	77/128	24/7	1	2
+edge	6	ring	1	0		91/128	77/128	4	1	2
+edge	7	ring	0	0		43/64	37/64	0	1	2
+edge	7	ring	1/7	0		43/64	37/64	4/7	1	2
+edge	7	ring	1/2	0		43/64	37/64	2	1	2
+edge	7	ring	6/7	0		43/64	37/64	24/7	1	2
+edge	7	ring	1	0		43/64	37/64	4	1	2
+edge	8	ring	0	0		83/128	69/128	0	1	2
+edge	8	ring	1/7	0		83/128	69/128	4/7	1	2
+edge	8	ring	1/2	0		83/128	69/128	2	1	2
+edge	8	ring	6/7	0		83/128	69/128	24/7	1	2
+edge	8	ring	1	0		83/128	69/128	4	1	2
+edge	9	ring	0	0		41/64	1/2	0	1	2
+edge	9	ring	1/7	0		41/64	1/2	4/7	1	2
+edge	9	ring	1/2	0		41/64	1/2	2	1	2
+edge	9	ring	6/7	0		41/64	1/2	24/7	1	2
+edge	9	ring	1	0		41/64	1/2	4	1	2
+edge	10	ring	0	0		83/128	59/128	0	1	2
+edge	10	ring	1/7	0		83/128	59/128	4/7	1	2
+edge	10	ring	1/2	0		83/128	59/128	2	1	2
+edge	10	ring	6/7	0		83/128	59/128	24/7	1	2
+edge	10	ring	1	0		83/128	59/128	4	1	2
+edge	11	ring	0	0		43/64	27/64	0	1	2
+edge	11	ring	1/7	0		43/64	27/64	4/7	1	2
+edge	11	ring	1/2	0		43/64	27/64	2	1	2
+edge	11	ring	6/7	0		43/64	27/64	24/7	1	2
+edge	11	ring	1	0		43/64	27/64	4	1	2
+edge	12	ring	0	0		91/128	51/128	0	1	2
+edge	12	ring	1/7	0		91/128	51/128	4/7	1	2
+edge	12	ring	1/2	0		91/128	51/128	2	1	2
+edge	12	ring	6/7	0		91/128	51/128	24/7	1	2
+edge	12	ring	1	0		91/128	51/128	4	1	2
+edge	13	ring	0	0		3/4	25/64	0	1	2
+edge	13	ring	1/7	0		3/4	25/64	4/7	1	2
+edge	13	ring	1/2	0		3/4	25/64	2	1	2
+edge	13	ring	6/7	0		3/4	25/64	24/7	1	2
+edge	13	ring	1	0		3/4	25/64	4	1	2
+edge	14	ring	0	0		101/128	51/128	0	1	2
+edge	14	ring	1/7	0		101/128	51/128	4/7	1	2
+edge	14	ring	1/2	0		101/128	51/128	2	1	2
+edge	14	ring	6/7	0		101/128	51/128	24/7	1	2
+edge	14	ring	1	0		101/128	51/128	4	1	2
+edge	15	ring	0	0		53/64	27/64	0	1	2
+edge	15	ring	1/7	0		53/64	27/64	4/7	1	2
+edge	15	ring	1/2	0		53/64	27/64	2	1	2
+edge	15	ring	6/7	0		53/64	27/64	24/7	1	2
+edge	15	ring	1	0		53/64	27/64	4	1	2
+edge	16	ring	0	0		109/128	59/128	0	1	2
+edge	16	ring	1/7	0		109/128	59/128	4/7	1	2
+edge	16	ring	1/2	0		109/128	59/128	2	1	2
+edge	16	ring	6/7	0		109/128	59/128	24/7	1	2
+edge	16	ring	1	0		109/128	59/128	4	1	2
+edge	17	seam	0	0	0	55/64	1/2	0	1	2
+edge	17	seam	1/7	0	1/7	769/896	453/896	0	1	2
+edge	17	seam	1/2	0	1/2	219/256	133/256	0	1	2
+edge	17	seam	6/7	0	6/7	191/224	239/448	0	1	2
+edge	17	seam	1	0	1	109/128	69/128	0	1	2
+edge	18	seam	0	0	0	109/128	69/128	0	1	2
+edge	18	seam	1/7	0	1/7	95/112	61/112	0	1	2
+edge	18	seam	1/2	0	1/2	215/256	143/256	0	1	2
+edge	18	seam	6/7	0	6/7	745/896	513/896	0	1	2
+edge	18	seam	1	0	1	53/64	37/64	0	1	2
+edge	19	seam	0	0	0	53/64	37/64	0	1	2
+edge	19	seam	1/7	0	1/7	737/896	521/896	0	1	2
+edge	19	seam	1/2	0	1/2	207/256	151/256	0	1	2
+edge	19	seam	6/7	0	6/7	89/112	67/112	0	1	2
+edge	19	seam	1	0	1	101/128	77/128	0	1	2
+edge	20	seam	0	0	0	101/128	77/128	0	1	2
+edge	20	seam	1/7	0	1/7	351/448	135/224	0	1	2
+edge	20	seam	1/2	0	1/2	197/256	155/256	0	1	2
+edge	20	seam	6/7	0	6/7	677/896	545/896	0	1	2
+edge	20	seam	1	0	1	3/4	39/64	0	1	2
+edge	21	seam	0	0	0	3/4	39/64	0	1	2
+edge	21	seam	1/7	0	1/7	667/896	545/896	0	1	2
+edge	21	seam	1/2	0	1/2	187/256	155/256	0	1	2
+edge	21	seam	6/7	0	6/7	321/448	135/224	0	1	2
+edge	21	seam	1	0	1	91/128	77/128	0	1	2
+edge	22	seam	0	0	0	91/128	77/128	0	1	2
+edge	22	seam	1/7	0	1/7	79/112	67/112	0	1	2
+edge	22	seam	1/2	0	1/2	177/256	151/256	0	1	2
+edge	22	seam	6/7	0	6/7	607/896	521/896	0	1	2
+edge	22	seam	1	0	1	43/64	37/64	0	1	2
+edge	23	seam	0	0	0	43/64	37/64	0	1	2
+edge	23	seam	1/7	0	1/7	599/896	513/896	0	1	2
+edge	23	seam	1/2	0	1/2	169/256	143/256	0	1	2
+edge	23	seam	6/7	0	6/7	73/112	61/112	0	1	2
+edge	23	seam	1	0	1	83/128	69/128	0	1	2
+edge	24	seam	0	0	0	83/128	69/128	0	1	2
+edge	24	seam	1/7	0	1/7	145/224	239/448	0	1	2
+edge	24	seam	1/2	0	1/2	165/256	133/256	0	1	2
+edge	24	seam	6/7	0	6/7	575/896	453/896	0	1	2
+edge	24	seam	1	0	1	41/64	1/2	0	1	2
+edge	25	seam	0	0	0	41/64	1/2	0	1	2
+edge	25	seam	1/7	0	1/7	575/896	443/896	0	1	2
+edge	25	seam	1/2	0	1/2	165/256	123/256	0	1	2
+edge	25	seam	6/7	0	6/7	145/224	209/448	0	1	2
+edge	25	seam	1	0	1	83/128	59/128	0	1	2
+edge	26	seam	0	0	0	83/128	59/128	0	1	2
+edge	26	seam	1/7	0	1/7	73/112	51/112	0	1	2
+edge	26	seam	1/2	0	1/2	169/256	113/256	0	1	2
+edge	26	seam	6/7	0	6/7	599/896	383/896	0	1	2
+edge	26	seam	1	0	1	43/64	27/64	0	1	2
+edge	27	seam	0	0	0	43/64	27/64	0	1	2
+edge	27	seam	1/7	0	1/7	607/896	375/896	0	1	2
+edge	27	seam	1/2	0	1/2	177/256	105/256	0	1	2
+edge	27	seam	6/7	0	6/7	79/112	45/112	0	1	2
+edge	27	seam	1	0	1	91/128	51/128	0	1	2
+edge	28	seam	0	0	0	91/128	51/128	0	1	2
+edge	28	seam	1/7	0	1/7	321/448	89/224	0	1	2
+edge	28	seam	1/2	0	1/2	187/256	101/256	0	1	2
+edge	28	seam	6/7	0	6/7	667/896	351/896	0	1	2
+edge	28	seam	1	0	1	3/4	25/64	0	1	2
+edge	29	seam	0	0	0	3/4	25/64	0	1	2
+edge	29	seam	1/7	0	1/7	677/896	351/896	0	1	2
+edge	29	seam	1/2	0	1/2	197/256	101/256	0	1	2
+edge	29	seam	6/7	0	6/7	351/448	89/224	0	1	2
+edge	29	seam	1	0	1	101/128	51/128	0	1	2
+edge	30	seam	0	0	0	101/128	51/128	0	1	2
+edge	30	seam	1/7	0	1/7	89/112	45/112	0	1	2
+edge	30	seam	1/2	0	1/2	207/256	105/256	0	1	2
+edge	30	seam	6/7	0	6/7	737/896	375/896	0	1	2
+edge	30	seam	1	0	1	53/64	27/64	0	1	2
+edge	31	seam	0	0	0	53/64	27/64	0	1	2
+edge	31	seam	1/7	0	1/7	745/896	383/896	0	1	2
+edge	31	seam	1/2	0	1/2	215/256	113/256	0	1	2
+edge	31	seam	6/7	0	6/7	95/112	51/112	0	1	2
+edge	31	seam	1	0	1	109/128	59/128	0	1	2
+edge	32	seam	0	0	0	109/128	59/128	0	1	2
+edge	32	seam	1/7	0	1/7	191/224	209/448	0	1	2
+edge	32	seam	1/2	0	1/2	219/256	123/256	0	1	2
+edge	32	seam	6/7	0	6/7	769/896	443/896	0	1	2
+edge	32	seam	1	0	1	55/64	1/2	0	1	2
+coedge	1	ring_start	0	0	0	55/64	1/2	0	1	2
+coedge	1	ring_start	1/7	0	0	55/64	1/2	4/7	1	2
+coedge	1	ring_start	1/2	0	0	55/64	1/2	2	1	2
+coedge	1	ring_start	6/7	0	0	55/64	1/2	24/7	1	2
+coedge	1	ring_start	1	0	0	55/64	1/2	4	1	2
+coedge	2	seam_end	0	0	0	55/64	1/2	4	1	2
+coedge	2	seam_end	1/7	0	1/7	769/896	453/896	4	1	2
+coedge	2	seam_end	1/2	0	1/2	219/256	133/256	4	1	2
+coedge	2	seam_end	6/7	0	6/7	191/224	239/448	4	1	2
+coedge	2	seam_end	1	0	1	109/128	69/128	4	1	2
+coedge	3	ring_end	0	0	1	109/128	69/128	0	-1	2
+coedge	3	ring_end	1/7	0	1	109/128	69/128	4/7	-1	2
+coedge	3	ring_end	1/2	0	1	109/128	69/128	2	-1	2
+coedge	3	ring_end	6/7	0	1	109/128	69/128	24/7	-1	2
+coedge	3	ring_end	1	0	1	109/128	69/128	4	-1	2
+coedge	4	seam_start	0	0	0	55/64	1/2	0	-1	2
+coedge	4	seam_start	1/7	0	1/7	769/896	453/896	0	-1	2
+coedge	4	seam_start	1/2	0	1/2	219/256	133/256	0	-1	2
+coedge	4	seam_start	6/7	0	6/7	191/224	239/448	0	-1	2
+coedge	4	seam_start	1	0	1	109/128	69/128	0	-1	2
+coedge	5	ring_start	0	0	0	109/128	69/128	0	1	2
+coedge	5	ring_start	1/7	0	0	109/128	69/128	4/7	1	2
+coedge	5	ring_start	1/2	0	0	109/128	69/128	2	1	2
+coedge	5	ring_start	6/7	0	0	109/128	69/128	24/7	1	2
+coedge	5	ring_start	1	0	0	109/128	69/128	4	1	2
+coedge	6	seam_end	0	0	0	109/128	69/128	4	1	2
+coedge	6	seam_end	1/7	0	1/7	95/112	61/112	4	1	2
+coedge	6	seam_end	1/2	0	1/2	215/256	143/256	4	1	2
+coedge	6	seam_end	6/7	0	6/7	745/896	513/896	4	1	2
+coedge	6	seam_end	1	0	1	53/64	37/64	4	1	2
+coedge	7	ring_end	0	0	1	53/64	37/64	0	-1	2
+coedge	7	ring_end	1/7	0	1	53/64	37/64	4/7	-1	2
+coedge	7	ring_end	1/2	0	1	53/64	37/64	2	-1	2
+coedge	7	ring_end	6/7	0	1	53/64	37/64	24/7	-1	2
+coedge	7	ring_end	1	0	1	53/64	37/64	4	-1	2
+coedge	8	seam_start	0	0	0	109/128	69/128	0	-1	2
+coedge	8	seam_start	1/7	0	1/7	95/112	61/112	0	-1	2
+coedge	8	seam_start	1/2	0	1/2	215/256	143/256	0	-1	2
+coedge	8	seam_start	6/7	0	6/7	745/896	513/896	0	-1	2
+coedge	8	seam_start	1	0	1	53/64	37/64	0	-1	2
+coedge	9	ring_start	0	0	0	53/64	37/64	0	1	2
+coedge	9	ring_start	1/7	0	0	53/64	37/64	4/7	1	2
+coedge	9	ring_start	1/2	0	0	53/64	37/64	2	1	2
+coedge	9	ring_start	6/7	0	0	53/64	37/64	24/7	1	2
+coedge	9	ring_start	1	0	0	53/64	37/64	4	1	2
+coedge	10	seam_end	0	0	0	53/64	37/64	4	1	2
+coedge	10	seam_end	1/7	0	1/7	737/896	521/896	4	1	2
+coedge	10	seam_end	1/2	0	1/2	207/256	151/256	4	1	2
+coedge	10	seam_end	6/7	0	6/7	89/112	67/112	4	1	2
+coedge	10	seam_end	1	0	1	101/128	77/128	4	1	2
+coedge	11	ring_end	0	0	1	101/128	77/128	0	-1	2
+coedge	11	ring_end	1/7	0	1	101/128	77/128	4/7	-1	2
+coedge	11	ring_end	1/2	0	1	101/128	77/128	2	-1	2
+coedge	11	ring_end	6/7	0	1	101/128	77/128	24/7	-1	2
+coedge	11	ring_end	1	0	1	101/128	77/128	4	-1	2
+coedge	12	seam_start	0	0	0	53/64	37/64	0	-1	2
+coedge	12	seam_start	1/7	0	1/7	737/896	521/896	0	-1	2
+coedge	12	seam_start	1/2	0	1/2	207/256	151/256	0	-1	2
+coedge	12	seam_start	6/7	0	6/7	89/112	67/112	0	-1	2
+coedge	12	seam_start	1	0	1	101/128	77/128	0	-1	2
+coedge	13	ring_start	0	0	0	101/128	77/128	0	1	2
+coedge	13	ring_start	1/7	0	0	101/128	77/128	4/7	1	2
+coedge	13	ring_start	1/2	0	0	101/128	77/128	2	1	2
+coedge	13	ring_start	6/7	0	0	101/128	77/128	24/7	1	2
+coedge	13	ring_start	1	0	0	101/128	77/128	4	1	2
+coedge	14	seam_end	0	0	0	101/128	77/128	4	1	2
+coedge	14	seam_end	1/7	0	1/7	351/448	135/224	4	1	2
+coedge	14	seam_end	1/2	0	1/2	197/256	155/256	4	1	2
+coedge	14	seam_end	6/7	0	6/7	677/896	545/896	4	1	2
+coedge	14	seam_end	1	0	1	3/4	39/64	4	1	2
+coedge	15	ring_end	0	0	1	3/4	39/64	0	-1	2
+coedge	15	ring_end	1/7	0	1	3/4	39/64	4/7	-1	2
+coedge	15	ring_end	1/2	0	1	3/4	39/64	2	-1	2
+coedge	15	ring_end	6/7	0	1	3/4	39/64	24/7	-1	2
+coedge	15	ring_end	1	0	1	3/4	39/64	4	-1	2
+coedge	16	seam_start	0	0	0	101/128	77/128	0	-1	2
+coedge	16	seam_start	1/7	0	1/7	351/448	135/224	0	-1	2
+coedge	16	seam_start	1/2	0	1/2	197/256	155/256	0	-1	2
+coedge	16	seam_start	6/7	0	6/7	677/896	545/896	0	-1	2
+coedge	16	seam_start	1	0	1	3/4	39/64	0	-1	2
+coedge	17	ring_start	0	0	0	3/4	39/64	0	1	2
+coedge	17	ring_start	1/7	0	0	3/4	39/64	4/7	1	2
+coedge	17	ring_start	1/2	0	0	3/4	39/64	2	1	2
+coedge	17	ring_start	6/7	0	0	3/4	39/64	24/7	1	2
+coedge	17	ring_start	1	0	0	3/4	39/64	4	1	2
+coedge	18	seam_end	0	0	0	3/4	39/64	4	1	2
+coedge	18	seam_end	1/7	0	1/7	667/896	545/896	4	1	2
+coedge	18	seam_end	1/2	0	1/2	187/256	155/256	4	1	2
+coedge	18	seam_end	6/7	0	6/7	321/448	135/224	4	1	2
+coedge	18	seam_end	1	0	1	91/128	77/128	4	1	2
+coedge	19	ring_end	0	0	1	91/128	77/128	0	-1	2
+coedge	19	ring_end	1/7	0	1	91/128	77/128	4/7	-1	2
+coedge	19	ring_end	1/2	0	1	91/128	77/128	2	-1	2
+coedge	19	ring_end	6/7	0	1	91/128	77/128	24/7	-1	2
+coedge	19	ring_end	1	0	1	91/128	77/128	4	-1	2
+coedge	20	seam_start	0	0	0	3/4	39/64	0	-1	2
+coedge	20	seam_start	1/7	0	1/7	667/896	545/896	0	-1	2
+coedge	20	seam_start	1/2	0	1/2	187/256	155/256	0	-1	2
+coedge	20	seam_start	6/7	0	6/7	321/448	135/224	0	-1	2
+coedge	20	seam_start	1	0	1	91/128	77/128	0	-1	2
+coedge	21	ring_start	0	0	0	91/128	77/128	0	1	2
+coedge	21	ring_start	1/7	0	0	91/128	77/128	4/7	1	2
+coedge	21	ring_start	1/2	0	0	91/128	77/128	2	1	2
+coedge	21	ring_start	6/7	0	0	91/128	77/128	24/7	1	2
+coedge	21	ring_start	1	0	0	91/128	77/128	4	1	2
+coedge	22	seam_end	0	0	0	91/128	77/128	4	1	2
+coedge	22	seam_end	1/7	0	1/7	79/112	67/112	4	1	2
+coedge	22	seam_end	1/2	0	1/2	177/256	151/256	4	1	2
+coedge	22	seam_end	6/7	0	6/7	607/896	521/896	4	1	2
+coedge	22	seam_end	1	0	1	43/64	37/64	4	1	2
+coedge	23	ring_end	0	0	1	43/64	37/64	0	-1	2
+coedge	23	ring_end	1/7	0	1	43/64	37/64	4/7	-1	2
+coedge	23	ring_end	1/2	0	1	43/64	37/64	2	-1	2
+coedge	23	ring_end	6/7	0	1	43/64	37/64	24/7	-1	2
+coedge	23	ring_end	1	0	1	43/64	37/64	4	-1	2
+coedge	24	seam_start	0	0	0	91/128	77/128	0	-1	2
+coedge	24	seam_start	1/7	0	1/7	79/112	67/112	0	-1	2
+coedge	24	seam_start	1/2	0	1/2	177/256	151/256	0	-1	2
+coedge	24	seam_start	6/7	0	6/7	607/896	521/896	0	-1	2
+coedge	24	seam_start	1	0	1	43/64	37/64	0	-1	2
+coedge	25	ring_start	0	0	0	43/64	37/64	0	1	2
+coedge	25	ring_start	1/7	0	0	43/64	37/64	4/7	1	2
+coedge	25	ring_start	1/2	0	0	43/64	37/64	2	1	2
+coedge	25	ring_start	6/7	0	0	43/64	37/64	24/7	1	2
+coedge	25	ring_start	1	0	0	43/64	37/64	4	1	2
+coedge	26	seam_end	0	0	0	43/64	37/64	4	1	2
+coedge	26	seam_end	1/7	0	1/7	599/896	513/896	4	1	2
+coedge	26	seam_end	1/2	0	1/2	169/256	143/256	4	1	2
+coedge	26	seam_end	6/7	0	6/7	73/112	61/112	4	1	2
+coedge	26	seam_end	1	0	1	83/128	69/128	4	1	2
+coedge	27	ring_end	0	0	1	83/128	69/128	0	-1	2
+coedge	27	ring_end	1/7	0	1	83/128	69/128	4/7	-1	2
+coedge	27	ring_end	1/2	0	1	83/128	69/128	2	-1	2
+coedge	27	ring_end	6/7	0	1	83/128	69/128	24/7	-1	2
+coedge	27	ring_end	1	0	1	83/128	69/128	4	-1	2
+coedge	28	seam_start	0	0	0	43/64	37/64	0	-1	2
+coedge	28	seam_start	1/7	0	1/7	599/896	513/896	0	-1	2
+coedge	28	seam_start	1/2	0	1/2	169/256	143/256	0	-1	2
+coedge	28	seam_start	6/7	0	6/7	73/112	61/112	0	-1	2
+coedge	28	seam_start	1	0	1	83/128	69/128	0	-1	2
+coedge	29	ring_start	0	0	0	83/128	69/128	0	1	2
+coedge	29	ring_start	1/7	0	0	83/128	69/128	4/7	1	2
+coedge	29	ring_start	1/2	0	0	83/128	69/128	2	1	2
+coedge	29	ring_start	6/7	0	0	83/128	69/128	24/7	1	2
+coedge	29	ring_start	1	0	0	83/128	69/128	4	1	2
+coedge	30	seam_end	0	0	0	83/128	69/128	4	1	2
+coedge	30	seam_end	1/7	0	1/7	145/224	239/448	4	1	2
+coedge	30	seam_end	1/2	0	1/2	165/256	133/256	4	1	2
+coedge	30	seam_end	6/7	0	6/7	575/896	453/896	4	1	2
+coedge	30	seam_end	1	0	1	41/64	1/2	4	1	2
+coedge	31	ring_end	0	0	1	41/64	1/2	0	-1	2
+coedge	31	ring_end	1/7	0	1	41/64	1/2	4/7	-1	2
+coedge	31	ring_end	1/2	0	1	41/64	1/2	2	-1	2
+coedge	31	ring_end	6/7	0	1	41/64	1/2	24/7	-1	2
+coedge	31	ring_end	1	0	1	41/64	1/2	4	-1	2
+coedge	32	seam_start	0	0	0	83/128	69/128	0	-1	2
+coedge	32	seam_start	1/7	0	1/7	145/224	239/448	0	-1	2
+coedge	32	seam_start	1/2	0	1/2	165/256	133/256	0	-1	2
+coedge	32	seam_start	6/7	0	6/7	575/896	453/896	0	-1	2
+coedge	32	seam_start	1	0	1	41/64	1/2	0	-1	2
+coedge	33	ring_start	0	0	0	41/64	1/2	0	1	2
+coedge	33	ring_start	1/7	0	0	41/64	1/2	4/7	1	2
+coedge	33	ring_start	1/2	0	0	41/64	1/2	2	1	2
+coedge	33	ring_start	6/7	0	0	41/64	1/2	24/7	1	2
+coedge	33	ring_start	1	0	0	41/64	1/2	4	1	2
+coedge	34	seam_end	0	0	0	41/64	1/2	4	1	2
+coedge	34	seam_end	1/7	0	1/7	575/896	443/896	4	1	2
+coedge	34	seam_end	1/2	0	1/2	165/256	123/256	4	1	2
+coedge	34	seam_end	6/7	0	6/7	145/224	209/448	4	1	2
+coedge	34	seam_end	1	0	1	83/128	59/128	4	1	2
+coedge	35	ring_end	0	0	1	83/128	59/128	0	-1	2
+coedge	35	ring_end	1/7	0	1	83/128	59/128	4/7	-1	2
+coedge	35	ring_end	1/2	0	1	83/128	59/128	2	-1	2
+coedge	35	ring_end	6/7	0	1	83/128	59/128	24/7	-1	2
+coedge	35	ring_end	1	0	1	83/128	59/128	4	-1	2
+coedge	36	seam_start	0	0	0	41/64	1/2	0	-1	2
+coedge	36	seam_start	1/7	0	1/7	575/896	443/896	0	-1	2
+coedge	36	seam_start	1/2	0	1/2	165/256	123/256	0	-1	2
+coedge	36	seam_start	6/7	0	6/7	145/224	209/448	0	-1	2
+coedge	36	seam_start	1	0	1	83/128	59/128	0	-1	2
+coedge	37	ring_start	0	0	0	83/128	59/128	0	1	2
+coedge	37	ring_start	1/7	0	0	83/128	59/128	4/7	1	2
+coedge	37	ring_start	1/2	0	0	83/128	59/128	2	1	2
+coedge	37	ring_start	6/7	0	0	83/128	59/128	24/7	1	2
+coedge	37	ring_start	1	0	0	83/128	59/128	4	1	2
+coedge	38	seam_end	0	0	0	83/128	59/128	4	1	2
+coedge	38	seam_end	1/7	0	1/7	73/112	51/112	4	1	2
+coedge	38	seam_end	1/2	0	1/2	169/256	113/256	4	1	2
+coedge	38	seam_end	6/7	0	6/7	599/896	383/896	4	1	2
+coedge	38	seam_end	1	0	1	43/64	27/64	4	1	2
+coedge	39	ring_end	0	0	1	43/64	27/64	0	-1	2
+coedge	39	ring_end	1/7	0	1	43/64	27/64	4/7	-1	2
+coedge	39	ring_end	1/2	0	1	43/64	27/64	2	-1	2
+coedge	39	ring_end	6/7	0	1	43/64	27/64	24/7	-1	2
+coedge	39	ring_end	1	0	1	43/64	27/64	4	-1	2
+coedge	40	seam_start	0	0	0	83/128	59/128	0	-1	2
+coedge	40	seam_start	1/7	0	1/7	73/112	51/112	0	-1	2
+coedge	40	seam_start	1/2	0	1/2	169/256	113/256	0	-1	2
+coedge	40	seam_start	6/7	0	6/7	599/896	383/896	0	-1	2
+coedge	40	seam_start	1	0	1	43/64	27/64	0	-1	2
+coedge	41	ring_start	0	0	0	43/64	27/64	0	1	2
+coedge	41	ring_start	1/7	0	0	43/64	27/64	4/7	1	2
+coedge	41	ring_start	1/2	0	0	43/64	27/64	2	1	2
+coedge	41	ring_start	6/7	0	0	43/64	27/64	24/7	1	2
+coedge	41	ring_start	1	0	0	43/64	27/64	4	1	2
+coedge	42	seam_end	0	0	0	43/64	27/64	4	1	2
+coedge	42	seam_end	1/7	0	1/7	607/896	375/896	4	1	2
+coedge	42	seam_end	1/2	0	1/2	177/256	105/256	4	1	2
+coedge	42	seam_end	6/7	0	6/7	79/112	45/112	4	1	2
+coedge	42	seam_end	1	0	1	91/128	51/128	4	1	2
+coedge	43	ring_end	0	0	1	91/128	51/128	0	-1	2
+coedge	43	ring_end	1/7	0	1	91/128	51/128	4/7	-1	2
+coedge	43	ring_end	1/2	0	1	91/128	51/128	2	-1	2
+coedge	43	ring_end	6/7	0	1	91/128	51/128	24/7	-1	2
+coedge	43	ring_end	1	0	1	91/128	51/128	4	-1	2
+coedge	44	seam_start	0	0	0	43/64	27/64	0	-1	2
+coedge	44	seam_start	1/7	0	1/7	607/896	375/896	0	-1	2
+coedge	44	seam_start	1/2	0	1/2	177/256	105/256	0	-1	2
+coedge	44	seam_start	6/7	0	6/7	79/112	45/112	0	-1	2
+coedge	44	seam_start	1	0	1	91/128	51/128	0	-1	2
+coedge	45	ring_start	0	0	0	91/128	51/128	0	1	2
+coedge	45	ring_start	1/7	0	0	91/128	51/128	4/7	1	2
+coedge	45	ring_start	1/2	0	0	91/128	51/128	2	1	2
+coedge	45	ring_start	6/7	0	0	91/128	51/128	24/7	1	2
+coedge	45	ring_start	1	0	0	91/128	51/128	4	1	2
+coedge	46	seam_end	0	0	0	91/128	51/128	4	1	2
+coedge	46	seam_end	1/7	0	1/7	321/448	89/224	4	1	2
+coedge	46	seam_end	1/2	0	1/2	187/256	101/256	4	1	2
+coedge	46	seam_end	6/7	0	6/7	667/896	351/896	4	1	2
+coedge	46	seam_end	1	0	1	3/4	25/64	4	1	2
+coedge	47	ring_end	0	0	1	3/4	25/64	0	-1	2
+coedge	47	ring_end	1/7	0	1	3/4	25/64	4/7	-1	2
+coedge	47	ring_end	1/2	0	1	3/4	25/64	2	-1	2
+coedge	47	ring_end	6/7	0	1	3/4	25/64	24/7	-1	2
+coedge	47	ring_end	1	0	1	3/4	25/64	4	-1	2
+coedge	48	seam_start	0	0	0	91/128	51/128	0	-1	2
+coedge	48	seam_start	1/7	0	1/7	321/448	89/224	0	-1	2
+coedge	48	seam_start	1/2	0	1/2	187/256	101/256	0	-1	2
+coedge	48	seam_start	6/7	0	6/7	667/896	351/896	0	-1	2
+coedge	48	seam_start	1	0	1	3/4	25/64	0	-1	2
+coedge	49	ring_start	0	0	0	3/4	25/64	0	1	2
+coedge	49	ring_start	1/7	0	0	3/4	25/64	4/7	1	2
+coedge	49	ring_start	1/2	0	0	3/4	25/64	2	1	2
+coedge	49	ring_start	6/7	0	0	3/4	25/64	24/7	1	2
+coedge	49	ring_start	1	0	0	3/4	25/64	4	1	2
+coedge	50	seam_end	0	0	0	3/4	25/64	4	1	2
+coedge	50	seam_end	1/7	0	1/7	677/896	351/896	4	1	2
+coedge	50	seam_end	1/2	0	1/2	197/256	101/256	4	1	2
+coedge	50	seam_end	6/7	0	6/7	351/448	89/224	4	1	2
+coedge	50	seam_end	1	0	1	101/128	51/128	4	1	2
+coedge	51	ring_end	0	0	1	101/128	51/128	0	-1	2
+coedge	51	ring_end	1/7	0	1	101/128	51/128	4/7	-1	2
+coedge	51	ring_end	1/2	0	1	101/128	51/128	2	-1	2
+coedge	51	ring_end	6/7	0	1	101/128	51/128	24/7	-1	2
+coedge	51	ring_end	1	0	1	101/128	51/128	4	-1	2
+coedge	52	seam_start	0	0	0	3/4	25/64	0	-1	2
+coedge	52	seam_start	1/7	0	1/7	677/896	351/896	0	-1	2
+coedge	52	seam_start	1/2	0	1/2	197/256	101/256	0	-1	2
+coedge	52	seam_start	6/7	0	6/7	351/448	89/224	0	-1	2
+coedge	52	seam_start	1	0	1	101/128	51/128	0	-1	2
+coedge	53	ring_start	0	0	0	101/128	51/128	0	1	2
+coedge	53	ring_start	1/7	0	0	101/128	51/128	4/7	1	2
+coedge	53	ring_start	1/2	0	0	101/128	51/128	2	1	2
+coedge	53	ring_start	6/7	0	0	101/128	51/128	24/7	1	2
+coedge	53	ring_start	1	0	0	101/128	51/128	4	1	2
+coedge	54	seam_end	0	0	0	101/128	51/128	4	1	2
+coedge	54	seam_end	1/7	0	1/7	89/112	45/112	4	1	2
+coedge	54	seam_end	1/2	0	1/2	207/256	105/256	4	1	2
+coedge	54	seam_end	6/7	0	6/7	737/896	375/896	4	1	2
+coedge	54	seam_end	1	0	1	53/64	27/64	4	1	2
+coedge	55	ring_end	0	0	1	53/64	27/64	0	-1	2
+coedge	55	ring_end	1/7	0	1	53/64	27/64	4/7	-1	2
+coedge	55	ring_end	1/2	0	1	53/64	27/64	2	-1	2
+coedge	55	ring_end	6/7	0	1	53/64	27/64	24/7	-1	2
+coedge	55	ring_end	1	0	1	53/64	27/64	4	-1	2
+coedge	56	seam_start	0	0	0	101/128	51/128	0	-1	2
+coedge	56	seam_start	1/7	0	1/7	89/112	45/112	0	-1	2
+coedge	56	seam_start	1/2	0	1/2	207/256	105/256	0	-1	2
+coedge	56	seam_start	6/7	0	6/7	737/896	375/896	0	-1	2
+coedge	56	seam_start	1	0	1	53/64	27/64	0	-1	2
+coedge	57	ring_start	0	0	0	53/64	27/64	0	1	2
+coedge	57	ring_start	1/7	0	0	53/64	27/64	4/7	1	2
+coedge	57	ring_start	1/2	0	0	53/64	27/64	2	1	2
+coedge	57	ring_start	6/7	0	0	53/64	27/64	24/7	1	2
+coedge	57	ring_start	1	0	0	53/64	27/64	4	1	2
+coedge	58	seam_end	0	0	0	53/64	27/64	4	1	2
+coedge	58	seam_end	1/7	0	1/7	745/896	383/896	4	1	2
+coedge	58	seam_end	1/2	0	1/2	215/256	113/256	4	1	2
+coedge	58	seam_end	6/7	0	6/7	95/112	51/112	4	1	2
+coedge	58	seam_end	1	0	1	109/128	59/128	4	1	2
+coedge	59	ring_end	0	0	1	109/128	59/128	0	-1	2
+coedge	59	ring_end	1/7	0	1	109/128	59/128	4/7	-1	2
+coedge	59	ring_end	1/2	0	1	109/128	59/128	2	-1	2
+coedge	59	ring_end	6/7	0	1	109/128	59/128	24/7	-1	2
+coedge	59	ring_end	1	0	1	109/128	59/128	4	-1	2
+coedge	60	seam_start	0	0	0	53/64	27/64	0	-1	2
+coedge	60	seam_start	1/7	0	1/7	745/896	383/896	0	-1	2
+coedge	60	seam_start	1/2	0	1/2	215/256	113/256	0	-1	2
+coedge	60	seam_start	6/7	0	6/7	95/112	51/112	0	-1	2
+coedge	60	seam_start	1	0	1	109/128	59/128	0	-1	2
+coedge	61	ring_start	0	0	0	109/128	59/128	0	1	2
+coedge	61	ring_start	1/7	0	0	109/128	59/128	4/7	1	2
+coedge	61	ring_start	1/2	0	0	109/128	59/128	2	1	2
+coedge	61	ring_start	6/7	0	0	109/128	59/128	24/7	1	2
+coedge	61	ring_start	1	0	0	109/128	59/128	4	1	2
+coedge	62	seam_end	0	0	0	109/128	59/128	4	1	2
+coedge	62	seam_end	1/7	0	1/7	191/224	209/448	4	1	2
+coedge	62	seam_end	1/2	0	1/2	219/256	123/256	4	1	2
+coedge	62	seam_end	6/7	0	6/7	769/896	443/896	4	1	2
+coedge	62	seam_end	1	0	1	55/64	1/2	4	1	2
+coedge	63	ring_end	0	0	1	55/64	1/2	0	-1	2
+coedge	63	ring_end	1/7	0	1	55/64	1/2	4/7	-1	2
+coedge	63	ring_end	1/2	0	1	55/64	1/2	2	-1	2
+coedge	63	ring_end	6/7	0	1	55/64	1/2	24/7	-1	2
+coedge	63	ring_end	1	0	1	55/64	1/2	4	-1	2
+coedge	64	seam_start	0	0	0	109/128	59/128	0	-1	2
+coedge	64	seam_start	1/7	0	1/7	191/224	209/448	0	-1	2
+coedge	64	seam_start	1/2	0	1/2	219/256	123/256	0	-1	2
+coedge	64	seam_start	6/7	0	6/7	769/896	443/896	0	-1	2
+coedge	64	seam_start	1	0	1	55/64	1/2	0	-1	2
+loop	1	swept_loop	7/3	2/5	2/5	137/160	33/64	7/3	1	2
+loop	2	swept_loop	7/3	2/5	2/5	539/640	71/128	7/3	1	2
+loop	3	swept_loop	7/3	2/5	2/5	13/16	47/80	7/3	1	2
+loop	4	swept_loop	7/3	2/5	2/5	99/128	387/640	7/3	1	2
+loop	5	swept_loop	7/3	2/5	2/5	47/64	97/160	7/3	1	2
+loop	6	swept_loop	7/3	2/5	2/5	89/128	379/640	7/3	1	2
+loop	7	swept_loop	7/3	2/5	2/5	53/80	9/16	7/3	1	2
+loop	8	swept_loop	7/3	2/5	2/5	413/640	67/128	7/3	1	2
+loop	9	swept_loop	7/3	2/5	2/5	103/160	31/64	7/3	1	2
+loop	10	swept_loop	7/3	2/5	2/5	421/640	57/128	7/3	1	2
+loop	11	swept_loop	7/3	2/5	2/5	11/16	33/80	7/3	1	2
+loop	12	swept_loop	7/3	2/5	2/5	93/128	253/640	7/3	1	2
+loop	13	swept_loop	7/3	2/5	2/5	49/64	63/160	7/3	1	2
+loop	14	swept_loop	7/3	2/5	2/5	103/128	261/640	7/3	1	2
+loop	15	swept_loop	7/3	2/5	2/5	67/80	7/16	7/3	1	2
+loop	16	swept_loop	7/3	2/5	2/5	547/640	61/128	7/3	1	2
+face	1	swept_face	7/3	2/5	2/5	137/160	33/64	7/3	1	2
+face	2	swept_face	7/3	2/5	2/5	539/640	71/128	7/3	1	2
+face	3	swept_face	7/3	2/5	2/5	13/16	47/80	7/3	1	2
+face	4	swept_face	7/3	2/5	2/5	99/128	387/640	7/3	1	2
+face	5	swept_face	7/3	2/5	2/5	47/64	97/160	7/3	1	2
+face	6	swept_face	7/3	2/5	2/5	89/128	379/640	7/3	1	2
+face	7	swept_face	7/3	2/5	2/5	53/80	9/16	7/3	1	2
+face	8	swept_face	7/3	2/5	2/5	413/640	67/128	7/3	1	2
+face	9	swept_face	7/3	2/5	2/5	103/160	31/64	7/3	1	2
+face	10	swept_face	7/3	2/5	2/5	421/640	57/128	7/3	1	2
+face	11	swept_face	7/3	2/5	2/5	11/16	33/80	7/3	1	2
+face	12	swept_face	7/3	2/5	2/5	93/128	253/640	7/3	1	2
+face	13	swept_face	7/3	2/5	2/5	49/64	63/160	7/3	1	2
+face	14	swept_face	7/3	2/5	2/5	103/128	261/640	7/3	1	2
+face	15	swept_face	7/3	2/5	2/5	67/80	7/16	7/3	1	2
+face	16	swept_face	7/3	2/5	2/5	547/640	61/128	7/3	1	2
+chart	1	swept_chart	1/3	2/5	2/5	137/160	33/64	1/3	1	2
+chart	2	swept_chart	1/3	2/5	2/5	137/160	33/64	4/3	1	2
+chart	3	swept_chart	1/3	2/5	2/5	137/160	33/64	7/3	1	2
+chart	4	swept_chart	1/3	2/5	2/5	137/160	33/64	10/3	1	2
+chart	5	swept_chart	1/3	2/5	2/5	539/640	71/128	1/3	1	2
+chart	6	swept_chart	1/3	2/5	2/5	539/640	71/128	4/3	1	2
+chart	7	swept_chart	1/3	2/5	2/5	539/640	71/128	7/3	1	2
+chart	8	swept_chart	1/3	2/5	2/5	539/640	71/128	10/3	1	2
+chart	9	swept_chart	1/3	2/5	2/5	13/16	47/80	1/3	1	2
+chart	10	swept_chart	1/3	2/5	2/5	13/16	47/80	4/3	1	2
+chart	11	swept_chart	1/3	2/5	2/5	13/16	47/80	7/3	1	2
+chart	12	swept_chart	1/3	2/5	2/5	13/16	47/80	10/3	1	2
+chart	13	swept_chart	1/3	2/5	2/5	99/128	387/640	1/3	1	2
+chart	14	swept_chart	1/3	2/5	2/5	99/128	387/640	4/3	1	2
+chart	15	swept_chart	1/3	2/5	2/5	99/128	387/640	7/3	1	2
+chart	16	swept_chart	1/3	2/5	2/5	99/128	387/640	10/3	1	2
+chart	17	swept_chart	1/3	2/5	2/5	47/64	97/160	1/3	1	2
+chart	18	swept_chart	1/3	2/5	2/5	47/64	97/160	4/3	1	2
+chart	19	swept_chart	1/3	2/5	2/5	47/64	97/160	7/3	1	2
+chart	20	swept_chart	1/3	2/5	2/5	47/64	97/160	10/3	1	2
+chart	21	swept_chart	1/3	2/5	2/5	89/128	379/640	1/3	1	2
+chart	22	swept_chart	1/3	2/5	2/5	89/128	379/640	4/3	1	2
+chart	23	swept_chart	1/3	2/5	2/5	89/128	379/640	7/3	1	2
+chart	24	swept_chart	1/3	2/5	2/5	89/128	379/640	10/3	1	2
+chart	25	swept_chart	1/3	2/5	2/5	53/80	9/16	1/3	1	2
+chart	26	swept_chart	1/3	2/5	2/5	53/80	9/16	4/3	1	2
+chart	27	swept_chart	1/3	2/5	2/5	53/80	9/16	7/3	1	2
+chart	28	swept_chart	1/3	2/5	2/5	53/80	9/16	10/3	1	2
+chart	29	swept_chart	1/3	2/5	2/5	413/640	67/128	1/3	1	2
+chart	30	swept_chart	1/3	2/5	2/5	413/640	67/128	4/3	1	2
+chart	31	swept_chart	1/3	2/5	2/5	413/640	67/128	7/3	1	2
+chart	32	swept_chart	1/3	2/5	2/5	413/640	67/128	10/3	1	2
+chart	33	swept_chart	1/3	2/5	2/5	103/160	31/64	1/3	1	2
+chart	34	swept_chart	1/3	2/5	2/5	103/160	31/64	4/3	1	2
+chart	35	swept_chart	1/3	2/5	2/5	103/160	31/64	7/3	1	2
+chart	36	swept_chart	1/3	2/5	2/5	103/160	31/64	10/3	1	2
+chart	37	swept_chart	1/3	2/5	2/5	421/640	57/128	1/3	1	2
+chart	38	swept_chart	1/3	2/5	2/5	421/640	57/128	4/3	1	2
+chart	39	swept_chart	1/3	2/5	2/5	421/640	57/128	7/3	1	2
+chart	40	swept_chart	1/3	2/5	2/5	421/640	57/128	10/3	1	2
+chart	41	swept_chart	1/3	2/5	2/5	11/16	33/80	1/3	1	2
+chart	42	swept_chart	1/3	2/5	2/5	11/16	33/80	4/3	1	2
+chart	43	swept_chart	1/3	2/5	2/5	11/16	33/80	7/3	1	2
+chart	44	swept_chart	1/3	2/5	2/5	11/16	33/80	10/3	1	2
+chart	45	swept_chart	1/3	2/5	2/5	93/128	253/640	1/3	1	2
+chart	46	swept_chart	1/3	2/5	2/5	93/128	253/640	4/3	1	2
+chart	47	swept_chart	1/3	2/5	2/5	93/128	253/640	7/3	1	2
+chart	48	swept_chart	1/3	2/5	2/5	93/128	253/640	10/3	1	2
+chart	49	swept_chart	1/3	2/5	2/5	49/64	63/160	1/3	1	2
+chart	50	swept_chart	1/3	2/5	2/5	49/64	63/160	4/3	1	2
+chart	51	swept_chart	1/3	2/5	2/5	49/64	63/160	7/3	1	2
+chart	52	swept_chart	1/3	2/5	2/5	49/64	63/160	10/3	1	2
+chart	53	swept_chart	1/3	2/5	2/5	103/128	261/640	1/3	1	2
+chart	54	swept_chart	1/3	2/5	2/5	103/128	261/640	4/3	1	2
+chart	55	swept_chart	1/3	2/5	2/5	103/128	261/640	7/3	1	2
+chart	56	swept_chart	1/3	2/5	2/5	103/128	261/640	10/3	1	2
+chart	57	swept_chart	1/3	2/5	2/5	67/80	7/16	1/3	1	2
+chart	58	swept_chart	1/3	2/5	2/5	67/80	7/16	4/3	1	2
+chart	59	swept_chart	1/3	2/5	2/5	67/80	7/16	7/3	1	2
+chart	60	swept_chart	1/3	2/5	2/5	67/80	7/16	10/3	1	2
+chart	61	swept_chart	1/3	2/5	2/5	547/640	61/128	1/3	1	2
+chart	62	swept_chart	1/3	2/5	2/5	547/640	61/128	4/3	1	2
+chart	63	swept_chart	1/3	2/5	2/5	547/640	61/128	7/3	1	2
+chart	64	swept_chart	1/3	2/5	2/5	547/640	61/128	10/3	1	2
