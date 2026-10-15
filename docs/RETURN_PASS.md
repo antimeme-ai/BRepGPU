@@ -400,3 +400,8 @@ and create many shared boundary samples. Derive bounds from the actual retained
 coefficients and dual frame; do not assume exact orthogonality, snap angles or
 skip source knots. Compare complete preparation/render cost and unchanged
 source residual/mesh quality, rather than triangle count alone.
+
+The [connectivity reading](../papers/2026-10-15-om10-return-pass-connectivity-reading.md)
+records direct constrained triangulation and compact triangle/neighbor storage
+as measured candidates after delivery. Current fixed-vertex Lawson correction
+is required for completion; this subsequent preparation work remains deferred.
