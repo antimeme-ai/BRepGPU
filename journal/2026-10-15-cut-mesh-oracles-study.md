@@ -15,3 +15,12 @@ claim. Existing independent Boolean qualifier checks original history once.
 
 No product code or tests run. Await reviewed design and plan before red tests or
 oracle implementation. No dependency selected; external qualification unchanged.
+
+Reviewed docs/CUT_MESH_DESIGN.md adversarially against the actual source. Accepted
+without blocking findings; saved papers/2026-10-15-cut-mesh-design-oracle-review.md.
+Raw wall UV and original cutter Frame, actual invocation parent identity, full
+chains and rounded embedding are explicit. Await the reviewed implementation plan.
+
+Accepted docs/CUT_MESH_PLAN.md without blocking findings; saved plan oracle
+review. Begin static independent oracle/tests under assigned ownership. Parent
+will authorize fleet red after collecting all plan reviews; no execution yet.
