@@ -50,7 +50,11 @@ Each root path retains the actual ordered immediate origin and, where a feature
 entity is involved, its actual extrusion origin. Do not replace those maps with
 an unlabelled transitive parent set or flatten incompatible parameters. Preserve
 translation/axial/source_t/source_uv and domain/owner information in each step.
-Provide origin(target) with complete paths and from_input(root) with descendants.
+Provide origin(target) with complete paths and from_input(root) with complete
+HistoryRecord dispositions/images/generated targets, including deleted roots
+with no images. Every original profile and cutter root remains inventoried.
+BoreMesh exposes bore_result/body/history/composed_history; intrinsic source t
+is distinct from directed occurrence traversal.
 Validate path namespaces, actual step objects/parents and complete root/target
 coverage before publication. Original profile correspondence and cutter V/range
 are directly checked over the actual maps, not merely reciprocal key counts.
