@@ -91,3 +91,11 @@ are a harmless explicit compatibility surface; there is no subdivision budget.
 `.feature_result`, `.body` and `.history` identities are the retained contract.
 The design has a sufficient direct coverage/error mechanism and an appropriate
 bounded stopping rule. No open oracle finding.
+
+## Plan review
+
+Reviewed `docs/EXTRUSION_MESH_PLAN.md`. Accepted: genuine missing-API red precedes
+production; the independent qualifier owns whole face domains and actual float
+ratios; affected compatibility and three distinct actual callers address real
+integration obligations. No GPU/mutation/secondary certification pass is added.
+Proceeding with the bounded qualifier and direct tests only.
