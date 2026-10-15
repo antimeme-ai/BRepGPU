@@ -33,3 +33,25 @@ edge-to-pcurve parameter correspondence. Exact versioned owned binary layouts
 and per-lane written subplans precede red/implementation. The source schema
 includes13 sections after the material/style finding. Root starts the isolated
 headless reference build while owners establish actual fleet missing-API red.
+
+Initial fleet red ran six direct methods before production: four failed on the
+absent imported source/mesher/assembly modules, two on the absent native image
+executable. Original test answers covered nested noncommuting placement/repeated
+paths, invalid graph/rotation, reader/mesher input rejection, original-UV plane
+jets/reversed normal and exact tiny triangle ownership/depth. They did not yet
+exercise every eventual source family. A later source-camera sign clarification
+corrected the synthetic triangle UV after that genuine absent-executable red.
+
+Root implemented owned immutable assembly/occurrence/groups, proper rigid
+composition, whole-graph validation and world explosion with direct alpha0 tuple
+return. Independent reviewer agreed the explicit expansion budget and capped DAG
+leaf-count preflight; implemented max_occurrences=1000000 without truncation.
+Two original assembly methods passed on fleet, then five expanded independent
+methods passed. New camera/PNG tests first failed on absent om10_scene, then
+both passed after implementation: original world-up/source-bound framing and
+complete RGBA/PNG chunk/CRC content. These are synthetic fixtures, no watch render.
+
+Headless pinned OCCT prerequisite build runs on fleet with32 workers; native
+standalone work is limited to8 concurrent build workers. Source acquisition copy
+retains the pinned extracted reference and excludes Git/detritus. Root utility
+records the reproducible build options. Product triangles will remain owned.
