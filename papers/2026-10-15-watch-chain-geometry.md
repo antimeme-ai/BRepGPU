@@ -205,3 +205,14 @@ other paths are images, with modified status if any image step was modified.
 No images means deleted even if births survive. Path steps retain actual object
 identity. Implementation remains gated on root authorization after all reviews
 and the fleet red observation.
+
+## Implementation checkpoint
+
+After all plan reviews and the independently recorded fleet missing-API red,
+root authorized production implementation. Added only `feature_bore.py` and
+`feature_bore_meshing.py`: actual analytic result, immediate and ordered composed
+history, source-retaining material/trim/edge/UV/topology readers, and complete
+shared-boundary cap/side/wall meshing. Local static AST parsing and whitespace
+check pass. No local product execution and no source/library guard widening.
+Fleet direct green and independent actual-output/code review remain pending;
+root serializes execution with the independent oracle lane.
