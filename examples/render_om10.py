@@ -282,7 +282,7 @@ def main(args):
         ('independent_qualification_in_wall', args.qualify),
         ('caller_scope', ('fresh STEP ' if step else 'owned source snapshot ')+output_scope+
          '; includes requested qualification, invoked process exit and output file writes'),
-        ('derived_assets', 'Source OpenMovement; CC BY-SA 3.0 technical documentation; preserve attribution/terms')))
+        ('derived_assets', 'Association openmovement OM10 MAN VA01.3; source-derived artwork CC BY-SA 3.0; original CAD private')))
     tsv(output/'mesh-errors.tsv', ('metric', 'value', 'scope'),
         ((key, value, 'analytic bounds evaluated in binary64 or measured residual as named; no universal source certificate')
          for key, value in mesh.error_metrics))

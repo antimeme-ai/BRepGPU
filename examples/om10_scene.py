@@ -258,12 +258,15 @@ def visible_anchors(path, width, height, *, step=3, valid_ids=None):
 
 def labeled_svg(path, png_path, view, *, title, subtitle, counts, timings,
                 callouts=(), timing_header='',
-                attribution='OpenMovement OM10 MAN VA01.3 · source-derived illustration'):
+                attribution='Association openmovement · OM10 MAN VA01.3 · CC BY-SA 3.0 · BRepGPU mesh, palette, lighting and labels'):
     """Compose source-linked typography over the actual native image pixels."""
     esc = html.escape
     encoded = base64.b64encode(Path(png_path).read_bytes()).decode('ascii')
     w, h = view.width, view.height
     rows = [f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
+            f'<title>{esc(title)}</title>',
+            '<desc>Source: Association openmovement, OM10 MAN VA01.3. Owned tessellation, illustrative palette, lighting, authored explosion and labels by BRepGPU.</desc>',
+            '<metadata xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"><rdf:RDF><cc:Work rdf:about=""><dc:source rdf:resource="https://openmovement.org/project/om10/"/><dc:creator>Association openmovement (source); BRepGPU (visualization)</dc:creator><cc:license rdf:resource="https://creativecommons.org/licenses/by-sa/3.0/"/></cc:Work></rdf:RDF></metadata>',
             f'<image width="{w}" height="{h}" xlink:href="data:image/png;base64,{encoded}"/>',
             '<g font-family="DejaVu Sans,Arial,sans-serif" fill="#e5edf6">',
             f'<text x="70" y="68" font-size="19" letter-spacing="5" fill="#6cddd0">BRepGPU / OPENMOVEMENT</text>',
