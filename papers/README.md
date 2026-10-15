@@ -545,7 +545,8 @@ compares five actual movement projects/manufacturer packages, with inspected
 pages and explicit dimensional/access/reuse gaps. [Acquisition manifest](2026-10-15-watch-drawing-acquisitions.tsv)
 retains original URLs/hashes; PDFs stay ignored. OM10 is the strongest construction
 lead, with public gear data and a reported ticking prototype, but the listed
-STEP remains behind free signup and has not been acquired. The
-[next-step proposal](../docs/REAL_WATCH_NEXT.md) recommends a source inventory
+STEP was subsequently [supplied and inventoried](2026-10-15-om10-step-source-study.md).
+The original anonymous request remains a membership redirect in the manifest.
+The [next-step proposal](../docs/REAL_WATCH_NEXT.md) recommends a source inventory
 and one dimensioned thin component, alongside the broader runtime/Python and
 external-oracle tranche. No geometry implementation or dependency is selected.
