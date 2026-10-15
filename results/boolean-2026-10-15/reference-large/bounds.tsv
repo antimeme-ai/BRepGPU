@@ -1,0 +1,3 @@
+corner	x	y	z	expected_x	expected_y	expected_z
+0	-5.5	0.5	-2.0	-5.5	0.5	-2.0
+1	-2.5	3.5	0.0	-2.5	3.5	0.0
