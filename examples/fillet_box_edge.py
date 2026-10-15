@@ -86,7 +86,8 @@ def execute(args):
         now=time.perf_counter_ns();stages.append((name,(now-previous)/1e6));previous=now
     selected=EntityKey(source.body_id,source.revision,'edge',edge_id)
     result=fillet_edge(source,selected,radius);solid=result.solid
-    require(result.source is source and solid.source is source and result.edge==selected,'fillet replaced original source/selection')
+    require(result.source is source and solid.source is source and result.edge==selected and solid.edge==selected
+            and result.radius==radius and solid.radius==radius,'fillet replaced original source/selection/radius')
     phase('cpu_fillet')
     q=(edge_id-7)%4;c=F(3,4)-radius;cx,cy=rotate(c,c,q)
     def section(x,y,z=F(0)):
