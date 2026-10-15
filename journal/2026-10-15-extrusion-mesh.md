@@ -31,3 +31,18 @@ construction/sampling and canonical/cut meshing. No broad numerical or GPU run.
 Changed only the inherited SVG wording 'certified total bound' to 'total error
 bound'; no extra test needed for this caption. The three serial actual callers
 are the remaining planned execution, after which tests stop absent a real finding.
+
+All three actual caller cases passed first independent qualification and three
+subsequent full-output/indexed/history correspondences each. Outputs6/8,12/20,
+32/60 vertices/triangles; source approximation and actual rounding error0 for
+these representable recipes. Useful CPU mesh+indexed/history medians35.363,
+28.525,107.844ms; ranges retained, no causal scaling or speedup inference.
+Original feature creation, qualification and export remain separately timed.
+
+Viewed actual exported chamfer mesh PNG; direct cap triangulation and all-face
+wire view match source shape and captions. One continuing independent review
+accepted code and saved source/map/history/PLY/image/timing artifacts with no
+open findings; all12 measured source hashes match. Updated API, README graphic,
+roadmap, return-pass and issue54. Planned direct obligations, one compatibility
+run and actual callers are complete. Testing stops here; only publication and
+clean Git/fleet handoff remain. No native build or new dependency was selected.

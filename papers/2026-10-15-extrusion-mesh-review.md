@@ -88,3 +88,32 @@ preserves defaults for existing callers. Three fresh repeats are appropriately
 limited observations with source construction/checking/export separate. No open
 correctness finding. Proceed with the already planned affected compatibility
 and saved actual caller review, then stop.
+
+## Saved actual caller outputs — accepted
+
+Read saved counts, per-case qualification, raw/summary/single costs and scope;
+inspected actual chamfer exact/rounded vertices, corner UV, directed boundary
+uses, original source/frame/control tables, forward/reverse history and PLY.
+All twelve retained source hashes match current files. Viewed the actual
+`assets/extrusion-meshing/chamfer.png`: correct six-sided cap fan and complete
+wire shell, 12 shared vertices/20 triangles/36 original result coedge uses,
+truthful no-hidden-line/no-seam labels. This is artifact inspection only, not
+another geometry/test execution or new acceptance layer.
+
+The three saved source families produce 6/8, 12/20 and 32/60 vertices/triangles;
+physical-edge/coedge inventories are 9/18, 18/36 and 48/96, respectively. Saved
+chamfer source frame is origin(2,−3,1), scale1/2 and local height5/4; first lower
+world vertex(27/16,−13/4,11/16), cap UV(3/16,1/4), reversed lower use and original
+translation−5/8 agree directly. Complete original source/control/history tables
+remain present; no canonical replacement appears. Each shown source family has
+zero actual saved-coordinate roundoff and a positive exact tolerance1/1048576.
+
+Repeat complete medians are35.363276,28.524619 and107.843943ms, with observed
+ranges18.423527–37.378945,28.286744–80.947641 and101.346345–111.581049ms. These
+match raw rows and wrap new meshing plus actual indexed/history reading, while
+source preparation/extrusion, first independent checks, repeat full-output
+correspondence and export remain separate. Three repeats on a shared fleet do
+not establish causal ranking, speedup, GPU costs or general throughput.
+No open saved-output finding. The bounded unit is ready to publish once the
+parent's already planned compatibility/report steps finish; no extra campaign
+or certification mechanism is recommended.

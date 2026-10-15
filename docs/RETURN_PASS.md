@@ -323,3 +323,17 @@ This closes only the first result family. One feature-result mesh, an actual
 admitted operation chain, external adapters and runtime/Python study remain.
 Native bulk consumption, general triangulation and output quality retain their
 own future contracts. No tuning or language migration was started by this unit.
+
+
+## First feature-result mesh
+
+The [actual convex extrusion mesher](EXTRUSION_MESHING.md) is delivered: exact
+planar faces, original result/profile/history and shared boundaries, with actual
+rounded-prism/error checks. [Three CPU callers](../results/extrusion-mesh-2026-10-15/REPORT.md)
+measure mesh+indexed+typed-history medians35.363/28.525/107.844ms for8/20/60triangles.
+Only three repeats per case, shared uncontrolled host, no scaling or speedup claim.
+The largest history reader median61.942ms exceeds meshing41.470ms; retain this
+actual consumer cost for the runtime/language study rather than tuning it now.
+Feature preparation, independent checking and export are separate. Direct tests,
+one affected compatibility run and actual caller review completed; no additional
+campaign is scheduled. Further feature families and a real operation chain remain.

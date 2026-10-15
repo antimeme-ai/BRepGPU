@@ -107,6 +107,20 @@ CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
 
+## Extrusion results now become complete meshes
+
+Actual convex-profile extrusion results now feed an exact planar CPU mesher,
+retaining original profile trims, shared boundaries, per-corner UV and complete
+source history. The triangle, six-sided and16-sided examples yield8/20/60triangles;
+actual output rounding is bounded against the submitted world tolerance.
+
+[![Actual extrusion-result mesh](assets/extrusion-meshing/chamfer.png)](docs/EXTRUSION_MESHING.md)
+
+[API and direct geometry checks](docs/EXTRUSION_MESHING.md) ·
+[Actual outputs and scoped CPU costs](results/extrusion-mesh-2026-10-15/REPORT.md).
+Ten direct and48 affected compatibility methods pass. Testing stops after the
+bounded obligations and reviewed actual callers; external alpha work remains.
+
 ## Boolean results now become complete meshes
 
 The actual owned through-bore Boolean now feeds a dedicated CPU mesher, retaining

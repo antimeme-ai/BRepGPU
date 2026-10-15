@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="650" viewBox="0 0 1160 650">
+<rect width="1160" height="650" rx="18" fill="#101923"/>
+<g font-family="monospace" fill="#dce9ed">
+<text x="30" y="40" font-size="23">BRepGPU / convex extrusion / complete indexed CPU mesh</text>
+<text x="30" y="72" font-size="13">Exact source topology, rational construction and one shared rounded vertex array</text>
+<text x="80" y="112" font-size="16">Actual top-face triangles</text>
+<text x="685" y="112" font-size="16">All-face indexed wire view</text>
+<polygon points="795.625,403.125 710.625,440.000 741.875,518.125" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,403.125 741.875,518.125 865.000,535.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,403.125 865.000,535.000 969.375,505.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,403.125 969.375,505.000 944.375,442.500" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="115.000,475.000 360.000,510.000 500.000,370.000" fill="#72a6ce" fill-opacity=".37" stroke="#72a6ce" stroke-width=".65"/>
+<polygon points="795.625,178.125 944.375,217.500 969.375,280.000" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="115.000,475.000 500.000,370.000 430.000,195.000" fill="#72a6ce" fill-opacity=".37" stroke="#72a6ce" stroke-width=".65"/>
+<polygon points="795.625,178.125 969.375,280.000 865.000,310.000" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="115.000,475.000 430.000,195.000 255.000,125.000" fill="#72a6ce" fill-opacity=".37" stroke="#72a6ce" stroke-width=".65"/>
+<polygon points="795.625,178.125 865.000,310.000 741.875,293.125" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="115.000,475.000 255.000,125.000 80.000,300.000" fill="#72a6ce" fill-opacity=".37" stroke="#72a6ce" stroke-width=".65"/>
+<polygon points="795.625,178.125 741.875,293.125 710.625,215.000" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,403.125 944.375,442.500 944.375,217.500" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,403.125 944.375,217.500 795.625,178.125" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="944.375,442.500 969.375,505.000 969.375,280.000" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="944.375,442.500 969.375,280.000 944.375,217.500" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="969.375,505.000 865.000,535.000 865.000,310.000" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="969.375,505.000 865.000,310.000 969.375,280.000" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="865.000,535.000 741.875,518.125 741.875,293.125" fill="none" stroke="#82c4a0" stroke-width=".55" opacity=".60"/>
+<polygon points="865.000,535.000 741.875,293.125 865.000,310.000" fill="none" stroke="#82c4a0" stroke-width=".55" opacity=".60"/>
+<polygon points="741.875,518.125 710.625,440.000 710.625,215.000" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="741.875,518.125 710.625,215.000 741.875,293.125" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="710.625,440.000 795.625,403.125 795.625,178.125" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="710.625,440.000 795.625,178.125 710.625,215.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<text x="30" y="570" font-size="15">12 shared vertices / 20 triangles / 36 result coedge uses</text>
+<text x="30" y="600" font-size="13">World tolerance 1/1048576; total error bound 0</text>
+<text x="30" y="632" font-size="12">Colors name result faces. Straight shared source edges; no periodic seams. Wire view has no hidden-line removal.</text>
+</g></svg>
