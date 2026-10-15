@@ -51,3 +51,22 @@ source pi-volume by2.06e-8 relative, outside the planned1e-8 comparison limit.
 A requested tighter integration accuracy returned the same value. The optional
 reference disagreement is under source/runtime study; do not loosen acceptance
 or claim a foreign/alpha pass. Independent owned geometry qualification is green.
+
+All48fresh-process callers qualified with12excludedwarmups/36measured across
+three actual profiles and four placements. Best CPU medians53.963/161.197/
+361.477ms versus P1000 658.223/746.626/1008.083ms; every complete GPU range loses
+the corresponding bestCPU range. Source-derived point/normal error maxima and
+all phases are retained in the report. No integration/tuning began. Root visually
+inspected actual triangle and16-edge SVG; complete graph/history/map/SVG/native
+artifact review accepted. All five protected native hashes matched before/after.
+
+Reference source investigation found an actual API clamp at1e-8, explaining the
+unchanged tighter request without claiming that this resolves volume error.
+The adapter now preserves all planned finite/geometry criteria, writes complete
+outcomes before nonzero exit on failure, and keeps requested accuracy1e-8.
+Root reviewed this mechanism and reran actual three same-world comparisons:
+triangle exit1(volumeonly), chamfer/many16 exit0. Source preservation/manifold/
+bounds and54/108/288boundary witnesses pass for all. Issue43 tracks the exact
+triangle discrepancy; no upstream message was sent. Independent artifact review
+accepted exact input/source bindings and all450witnesses with honest red/green
+outcomes. No tolerance was widened and external alpha qualification remains open.
