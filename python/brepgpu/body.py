@@ -236,6 +236,11 @@ class BodySnapshot:
         from .intersections import FaceRef
         return contact_faces(FaceRef(self, face_id), FaceRef(other, other_face_id))
 
+    def tessellate(self, *, tolerance, max_quarter_segments=256):
+        """Construct a complete supported shared-edge CPU triangle mesh."""
+        from .meshing import tessellate
+        return tessellate(self, tolerance=tolerance, max_quarter_segments=max_quarter_segments)
+
     def arrange_face(self, face_id, sections=(), *, u_cuts=(), v_cuts=()):
         """Build supported exact regions and shared uses on one rectangular face."""
         from .arrangements import arrange_face
