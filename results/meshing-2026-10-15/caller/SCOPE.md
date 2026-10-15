@@ -1,0 +1,5 @@
+# Exact CPU mesh caller scopes
+
+Four cases each prepare one original snapshot, then construct seven fresh meshes: first after imports/preparation, one excluded warmup, five measured repeats. Complete wall directly wraps construction plus the actual full indexed consumer. Reader buffers pack shared rounded XYZ, triangle indices, face IDs and geometric facet normals; it also reads every exact corner/source/polyline/coedge occurrence and error bound.
+
+Only each first output receives independent whole-domain qualification, outside complete wall. All six later complete frozen outputs and indexed buffers are compared directly with that first qualified output outside wall; correspondence cost is named separately. Full graph/source/PLY/SVG exports retain that FIRST qualified output, after measurements. Body preparation and filesystem export are separate single observations. No native library calls, CPU24 comparison, CUDA operation or host/device/network transfer is timed. Imports, final interpreter shutdown and final timing/source-file writes are outside all measured calls. Separate medians need not sum to a complete median.

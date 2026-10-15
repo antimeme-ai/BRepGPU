@@ -1,0 +1,5 @@
+case	shape	body_id	revision	origin_x_hex	origin_y_hex	origin_z_hex	scale_hex	tolerance	max_quarter_segments
+box	box	1	1	0x0.0p+0	0x0.0p+0	0x0.0p+0	0x1.0000000000000p+0	1/256	256
+cylinder	cylinder	2	1	0x0.0p+0	0x0.0p+0	0x0.0p+0	0x1.0000000000000p+0	1/1024	256
+plate	plate	3	1	0x0.0p+0	0x0.0p+0	0x0.0p+0	0x1.0000000000000p+0	1/1024	256
+plate-fine-frame	plate	4	1	0x1.8000000000000p+1	-0x1.0000000000000p+1	0x1.0000000000000p+0	0x1.0000000000000p+2	1/16384	256

@@ -1,5 +1,26 @@
 # BRepGPU research
 
+## Complete canonical trim-aware meshing
+
+The [design](../docs/MESHING_DESIGN.md) and [plan](../docs/MESHING_PLAN.md)
+follow independent [geometry](2026-10-15-meshing-semantics-study.md),
+[whole-domain oracle](2026-10-15-meshing-oracles-study.md) and
+[runtime/ownership](2026-10-15-meshing-runtime-study.md) studies. Actual OCCT
+edge/pcurve/seam source, Triangle/CGAL domain contracts and trim tessellation
+literature inform the owned bounded construction. Bibliographies:
+[geometry](meshing-semantics.bib), [oracles](2026-10-15-meshing-oracles.bib),
+[runtime](meshing-runtime.bib). Research is explicit about read scope and
+small-loop simplifications incompatible with retained holes.
+
+[Product review](2026-10-15-meshing-code-semantics-review.md) and
+[oracle review](2026-10-15-meshing-oracle-semantics-review.md) retain the corrected
+source-slot/type and whole-domain findings. [Caller/artifact review](2026-10-15-meshing-caller-result-review.md) and
+[actual results](../results/meshing-2026-10-15/REPORT.md)
+qualify both exact/rounded geometry, shared topology and error bounds. External
+OCCT replay remains missing alpha debt. The operator's continuing NCSX trophy
+subject has a separate [reference brief](../docs/NCSX_TROPHY_BRIEF.md) and
+[acquisition inventory](ncsx-material-inventory.tsv).
+
 ## Trophy visualization studies
 
 [Two actual-geometry candidates](../docs/TROPHY_GALLERY.md) use the current CUDA

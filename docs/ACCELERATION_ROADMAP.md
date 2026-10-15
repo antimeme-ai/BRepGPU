@@ -54,7 +54,7 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Body storage and identity | Delivered CPU-built immutable packed box/cylinder/one-hole-plate snapshots and sampling/normal caller | Exact analytic/control identities, typed references, oriented loops, shared edge/coedge occurrences, declared frames and source correspondence | Incremental edits, persistent naming, broader body families and normal/row performance |
 | Model integration and interchange | One qualified reference-to-owned carrier path, with face/chart provenance and explicit unsupported faces; reproducible owned output records | Positions/derivatives agree under the established parameter map; trim preservation is checked separately and never inferred from carrier conversion | General NURBS extraction, wider import/export and cross-session identity |
 | Curves, trims and charts | Delivered line/closed-circle boundaries, planar faces with a hole and a cylindrical seam with distinct uses for the canonical body fixtures | Exact submitted-UV trim membership, loop closure and complete spatial-edge/UV identities | General trim curves, additional charts, poles and difficult parameterizations |
-| Approximation and meshing | Shared-edge, trim-aware meshing of supported planar/cylindrical bodies | Declared chord bounds, hole preservation, shared boundary agreement and supported mesh incidence/embedding | General adaptive rational meshing and broader seam/pole coverage |
+| Approximation and meshing | Delivered exact CPU shared-edge canonical box/cylinder/plate meshes with bounded rounded output | Complete chordal-domain coverage, two-sided world error, preserved hole/seam/source identity and exact/rounded closed manifold embedding | General adaptive rational meshing, quality and native/GPU placement |
 | Surface intersections | Delivered plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
 | Predicates, contacts and region classification | Delivered exact CPU material membership for all three owned solids and complete rectangular-face crossing/touch/disjoint/overlap/coincidence | Exact submitted-value truth, every incident face ID, complete closed contact corners and both original UVs; unsupported curved trims explicit | Algebraic witnesses, curved tangent contacts, near-coincidence and certified accelerator filters |
 | Face arrangements and topology construction | Delivered exact CPU rectangular grid plus separated interior circle sections, complete cell/disk/exterior regions and multi-hole boundaries | Complete source-domain region bijection, directed source ranges/maps, ordered loops/twins, all closed incident regions, exact witnesses/UV areas; no coordinate welding | Clipped/tangent/overlapping curves, source holes, general arrangements and cross-face Boolean assembly |
@@ -68,8 +68,8 @@ extrusion/revolution do not imply fillet or offset support; analytic contact
 fixtures do not establish complete general tangent surface intersection.
 Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/chart
 consumer, complete analytic plane/wall intersections, GPU edge-use adjacency
-and exact material/rectangular-face classification and bounded planar arrangements
-are delivered. The remaining
+and exact material/rectangular-face classification, bounded planar arrangements
+and complete canonical trim-aware meshes are delivered. The remaining
 beachheads are proposed; each needs its own researched design, reviewed plan,
 implementation and qualification.
 
@@ -107,8 +107,8 @@ favors CPU. Complete analytic closed plane/wall intersections are now
 [delivered](../results/intersections-2026-10-14/REPORT.md), with exact components,
 spatial/bothUV maps and a qualified CPU/P100 consumer. Native large-row evaluation
 is about15–17.5 times faster on P100, while full consumption remains CPU bound
-at2.3–2.5s and exact request preparation costs27–32s. Continue uncovered
-trim-aware meshing and narrow interchange beachheads;
+at2.3–2.5s and exact request preparation costs27–32s. Continue the uncovered
+narrow interchange beachhead;
 broader SSI or integration tuning does not displace them. GPU adjacency now
 constructs and reads packed edge-use CSR without pointer-defined identity;
 compaction, editing, resident arrangements and Booleans remain return-pass work.
@@ -117,7 +117,8 @@ Exact material/rectangular-face classification is now
 all supporting source faces and complete world/bothUV loci. Bounded face
 arrangements are also [delivered](../results/arrangements-2026-10-14/REPORT.md),
 including shared exact circle/line boundaries and complete regions/holes.
-Continue trim-aware meshing, narrow interchange and uncovered solid/feature
+Complete canonical [trim-aware meshing](MESHING.md) is now delivered on CPU.
+Continue narrow interchange and uncovered solid/feature
 themes before broadening or tuning this family.
 At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)

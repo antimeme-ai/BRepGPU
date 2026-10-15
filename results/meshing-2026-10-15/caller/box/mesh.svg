@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="650" viewBox="0 0 1160 650">
+<rect width="1160" height="650" rx="18" fill="#101923"/>
+<g font-family="monospace" fill="#dce9ed">
+<text x="30" y="40" font-size="23">BRepGPU / box / complete indexed CPU mesh</text>
+<text x="30" y="72" font-size="13">Exact source topology, rational construction and one shared rounded vertex array</text>
+<text x="80" y="112" font-size="16">Actual top-face triangles</text>
+<text x="685" y="112" font-size="16">All-face indexed wire view</text>
+<polygon points="80.000,545.000 500.000,545.000 500.000,125.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="802.500,176.250 1035.000,258.750 877.500,363.750" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="80.000,545.000 500.000,125.000 80.000,125.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="802.500,176.250 877.500,363.750 645.000,281.250" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 877.500,543.750 1035.000,438.750" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 645.000,461.250 877.500,543.750" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 1035.000,438.750 1035.000,258.750" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 1035.000,258.750 802.500,176.250" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="645.000,461.250 877.500,363.750 877.500,543.750" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="645.000,461.250 645.000,281.250 877.500,363.750" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="1035.000,438.750 877.500,543.750 877.500,363.750" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="1035.000,438.750 877.500,363.750 1035.000,258.750" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 645.000,281.250 645.000,461.250" fill="none" stroke="#82c4a0" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 802.500,176.250 645.000,281.250" fill="none" stroke="#82c4a0" stroke-width=".55" opacity=".60"/>
+<text x="30" y="555" font-size="15">8 shared vertices / 12 triangles / 24 original coedge uses</text>
+<text x="30" y="585" font-size="13">World tolerance 1/256; certified total bound 0</text>
+<text x="30" y="615" font-size="12">Colors name original faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>
+</g></svg>
