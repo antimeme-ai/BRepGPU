@@ -1,5 +1,6 @@
 """Exact whole profile/solid/history specifications; product runs fleet only."""
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError,replace
+from copy import copy
 from fractions import Fraction as F
 from unittest.mock import patch
 import math
@@ -118,6 +119,16 @@ class ExtrusionConstructionTests(unittest.TestCase):
         self.assertEqual((lower.parents,lower.orientation,lower.source_t),((EntityKey(p.body_id,1,'coedge',3),),-1,(F(0),F(1),F(0))))
         other=make_profile(TRIANGLE)
         with self.assertRaises(KeyError):h.from_input(EntityKey(other.body_id,1,'edge',1))
+        # A reciprocal history can still consistently name the wrong source.
+        # Final validation binds each target to its actual source occurrence.
+        from brepgpu.extrusion import _validate_candidate,HistoryRecord
+        bad_origins=tuple(replace(o,parents=(EntityKey(p.body_id,1,'edge',2),EntityKey(p.body_id,1,'coedge',2)))
+                          if o.target.kind=='face' and o.target.entity_id==3 else o for o in h.origins)
+        bad=copy(h)
+        object.__setattr__(bad,'origins',bad_origins)
+        object.__setattr__(bad,'records',tuple(HistoryRecord(rec.source,'modified',rec.images,
+            tuple(o.target for o in bad_origins if o.relation=='generated' and rec.source in o.parents)) for rec in h.records))
+        with self.assertRaisesRegex(ArithmeticError,'actual target/source role'):_validate_candidate(r.solid,bad,p,F(1))
 
     def test_actual_max32_and_positive_turn_winding_star(self):
         from brepgpu.extrusion import make_profile,extrude,UnsupportedExtrusion
