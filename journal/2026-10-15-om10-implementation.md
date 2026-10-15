@@ -178,3 +178,14 @@ Whole-source qualification and actual watch images remain pending.
 Corrected a public-note privacy oversight: a reference report named the fleet
 host. Removed that operational label from the current report; retain execution
 location as the fleet. Product behavior and source geometry are unchanged.
+
+Checked the association's current primary attribution terms and retained the
+General Conditions HTML intact with hash/restoration in the source-attribution
+note. Final source-derived artwork names Association openmovement and exact
+OM10 revision, describes our presentation changes, and uses CC BY-SA3.0 with
+the license/project links. Original CAD and operational snapshots remain private.
+
+SVG composition now includes visible source/license credit and structured
+source/creator/license metadata. A tiny synthetic fixture parsed successfully
+on the fleet and confirmed the exact license URI; no watch image was rendered.
+Source-derived artwork has its own asset license file, separate from software.

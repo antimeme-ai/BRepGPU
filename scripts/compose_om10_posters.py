@@ -68,7 +68,7 @@ def main(args):
             counts=(('source solids', 107), ('source faces', '9,162'), ('placed parts', 166)),
             timings=panel, timing_header=f'NATIVE PROCESS / FULL STEP→IMAGE · MEDIAN OF {n}',
             callouts=callouts,
-            attribution=f'OpenMovement OM10 MAN VA01.3 · {tolerance_um:g} μm owned mesh target · full wall ends at PNG + labeled SVG; final SVG rasterization separate')
+            attribution=f'Association openmovement / OM10 MAN VA01.3 · CC BY-SA 3.0 · {tolerance_um:g} μm mesh target · full wall ends at PNG + SVG; final SVG rasterization separate')
         shutil.copyfile(selected/f'000-{state}-callouts.tsv', args.output/(state+'-callouts.tsv'))
         # Preserve actual CPU and GPU pixels as comparison artifacts too.
         for label in ('cpu24', 'p100-0'):
