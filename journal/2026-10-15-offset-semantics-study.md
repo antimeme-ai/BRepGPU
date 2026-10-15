@@ -25,3 +25,11 @@ controls/closed graph/three-port links, all23 modified history, explicit raw wal
 face versus normalized chart domains, intrinsic boundary correspondence versus
 carrier normal feet, source-square/disk/axial distinctions and immutable rollback
 are coherent. Saved acceptance review; no blocker, plan or product code yet.
+
+Read whole docs/OFFSET_PLAN.md after all three design reviews accepted. Accepted
+complete ownership/APIs, exact source-foot/domain/normal identity consumers,
+eight/eight/twelve tests-before-actualred sequence, all23 causal/parameter images,
+actual fixedgraph costs/exports,63foreignwitnesses with originalfactory/preservation
+and unchanged criteria, community-alpha and prior-disagreement boundaries. Saved
+plan review and notified root. Explicitly awaiting tests-only release; no tests
+or production code written in this step.
