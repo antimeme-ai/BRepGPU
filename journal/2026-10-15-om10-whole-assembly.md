@@ -91,3 +91,22 @@ with no carrier/evaluator disguise. Tests cover explicit source pixels/depth/IDs
 normal-corner identity, placement/poses and direct malformed-input ownership.
 Implementation and final focused greens have been reported; root source review
 precedes the implementation checkpoint.
+
+Root accepted and checkpointed the revised explicit UV source/query design
+after independent oracle and native reviews. The corrected authored no-PC
+fixture fails at original coedge400 before implementation; the original fixture
+contained explicit pcurves and was unsuitable for that red. Source ownership
+remains one shared native unit. NVIDIA continues to import raw no-processing
+neutrals; its finite qualifier now requires the prepared query files bound to
+the owned snapshot through existing input hashes. Three focused fleet methods
+pass, and root/source-owner reviews accept that bounded consumer change.
+PR62 and issue60 now describe the actual importer/source gap and pending whole
+qualification. The issue index no longer calls the whole pipeline complete.
+No actual whole-watch NVIDIA geometry, target raster or full timing observation
+has been produced; stopped V3 remains a non-pass.
+
+Updated the X draft around the actual107-definition/166-occurrence movement,
+CPU import/meshing and measured CPU/P100/NVIDIA comparison. The old launch
+wording is labeled historical. The watch draft remains explicitly blocked on
+whole qualification, real inspected images and actual outcomes; no invented
+timing, completed-watch claim or X publication was added.
