@@ -109,6 +109,36 @@ class NvidiaProducerTests(unittest.TestCase):
 
 
 class ReferenceMeshTests(unittest.TestCase):
+    def test_real_query_process_distinguishes_quality_from_source_capability(self):
+        root=Path(__file__).resolve().parents[1]
+        import sys
+        sys.path.insert(0,str(root/'scripts'));sys.path.insert(0,str(root/'examples'))
+        from qualify_om10_nvidia import query_outcome
+        from tests.test_om10_reference import mesh
+        build=root/'build/om10-reference-geometry'
+        with tempfile.TemporaryDirectory() as directory:
+            directory=Path(directory)
+            subprocess.run([str(build/'brepgpu-reference-geometry-fixture'),str(directory/'source')],
+                check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            cases=(('box',((0.,0.,0.),(2.,0.,0.),(0.,2.,0.)),(.5,.5,0.),6,'PASS',True),
+                ('sphere',((1.,0.,0.),(-.5,math.sqrt(3)/2,0.),(-.5,-math.sqrt(3)/2,0.)),
+                 (1.,0.,0.),1,'MEASURED_QUALITY_FAIL',True),
+                ('sphere-missing',((1.,0.,0.),(0.,1.,0.),(0.,0.,1.)),
+                 (1.,0.,0.),1,'SOURCE_QUERY_PREPARATION_OR_EXCEPTION',False))
+            for kind,points,witness,faces,classification,complete in cases:
+                with self.subTest(kind=kind):
+                    work=directory/kind;work.mkdir();raw=mesh(points)
+                    data=bytearray(raw[:104]+raw[240:]);struct.pack_into('<Q',data,24,0)
+                    (work/'mesh.bgrefmesh').write_bytes(data)
+                    (work/'witness.bgprobe').write_bytes(struct.pack('<8sQQQ3d',b'BGRPROB1',1,19,0,*witness))
+                    output=work/'output'
+                    result=subprocess.run([str(build/'brepgpu-om10-reference-geometry'),
+                        '--source',str(directory/'source'/f'{kind}.brep'),'--mesh',str(work/'mesh.bgrefmesh'),
+                        '--witnesses',str(work/'witness.bgprobe'),'--tolerance','.005',
+                        '--output-directory',str(output)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                    actual=query_outcome(output/'summary.tsv',result.returncode,faces,1,.005)
+                    self.assertEqual(actual[:2],(classification,complete),result.stderr)
+
     def test_owned_witness_gate_requires_completion_and_unchanged_inputs(self):
         root=Path(__file__).resolve().parents[1]
         import sys
