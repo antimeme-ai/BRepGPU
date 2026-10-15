@@ -55,3 +55,24 @@ Headless pinned OCCT prerequisite build runs on fleet with32 workers; native
 standalone work is limited to8 concurrent build workers. Source acquisition copy
 retains the pinned extracted reference and excludes Git/detritus. Root utility
 records the reproducible build options. Product triangles will remain owned.
+
+Native owner's CPU1/CPU24/both-P100 tiny fixtures are green at the first native
+checkpoint; additional analytic/failure and memory checks continue. Root reviewed
+all native source files, scalar maps/limiting normals, exact raster predicates,
+tile scan/count/fill, CPU worker ownership, CUDA cleanup and output/timing scopes.
+Findings fixed by owner: admit zero-reference-radius cones, require proper rigid
+instance rotations, and include per-frame buffer destruction in reused wall.
+Outer caller process wall includes retained host-source destruction and final
+native timing/metadata/shutdown; native inner wall has an explicitly narrower scope.
+
+Source/mesh owner identified a genuine UV/physical singularity distinction.
+Reviewed representation retains positively oriented UV coverage cells with
+explicit collapsed physical quotient. Physical/native triangle arrays omit only
+source-supported repeated-key cells. Their curved interiors still require the
+chosen approximation error/refinement; omission from display is not permission
+to omit source coverage or error accounting. Independent owner was notified.
+
+Root complete caller now writes actual source/BOM/placement/style/layout tables,
+native inputs and actual output PNG/labeled SVG. Prepare/evaluate modes never
+rasterize the watch. It awaits whole-source integration and independent review;
+no actual watch render or timing result is claimed at this checkpoint.

@@ -108,7 +108,8 @@ Matrix/vector and depth operations have explicit evaluation order, with CPU
 --prec-div=true --prec-sqrt=true. dot3=((a0*b0+a1*b1)+a2*b2).
 Rigid position is dot3(rotation_row,XYZ)+translation; alpha0 branches before
 explosion multiplication/addition. Camera dot3 uses world-center. Projection
-uses pixel_center+pixels_per_unit*cameraXY, then multiplies by supersample.
+uses X=pixel_center_x+pixels_per_unit*camera_right and
+Y=pixel_center_y-pixels_per_unit*camera_up, then multiplies by supersample.
 Snap uses floor(256*x+0.5) for x>=0 and ceil(256*x-0.5) for x<0; bound absolute
 snapped coordinates<=2^29 before integer conversion/edge products.
 
@@ -174,7 +175,11 @@ source_jet_write (only requested diagnostics); instance_transform_project;
 triangle_setup; tile_count_scan_allocate_fill; visibility_shading_resolve;
 result_download; output_write; session_close; complete_native_wall. Host walls
 include allocations, synchronization and error/finite checks at their actual
-stages. Timings emitted after close include close. Root measures external
+stages. Timings emitted after close include close. Reused frame walls include destruction
+of frame host output arrays after their writes. The complete_native_wall row
+ends after explicit session/plugin close; it excludes retained source/request
+host destruction and final timing/metadata writes. It is not the external
+process wall. Root measures external
 process/complete STEP-to-image wall including import/mesh, Python dispatch,
 identical labels/PNG encoding and shutdown; separate static SVG composition is
 named. Reused frame includes current pose/camera/bins/render/download/outputs,

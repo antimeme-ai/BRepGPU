@@ -96,6 +96,12 @@ Refinement is conforming: split both incident interior triangles; changing a
 physical edge updates every incident face. New interior samples refer to actual
 original carrier UV/span. Handle sphere/cone singularities by their actual
 physical quotient; do not emit zero-area physical triangles.
+Retain positive UV cells which collapse under a declared physical singularity
+as explicitly marked coverage cells. Only repeated physical keys supported by
+that source quotient can mark a collapsed cell. Full UV coverage includes them;
+physical incidence/native display omit them. Their curved source interiors can
+have area despite collapsed corner XYZ, so approximation bounds/refinement still
+apply to them. This representation clarification was reviewed during implementation.
 
 Canonical spatial-curve XYZ owns shared boundary positions. Interior positions
 come from source evaluation. Mesh corners retain separate UV/carrier/orientation
