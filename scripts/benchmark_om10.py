@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Alternating complete OM10 callers; fleet-only, after geometry/display review.
+"""Actual full-task observations and repeated matched native OM10 display.
 
-Every cold record is an actual fresh STEP-to-labeled-image subprocess. Separate
-resident-frame records retain geometry inside one native process per backend.
-No stage-median addition or selected repeat is a complete-operation measurement.
+Four fresh STEP-to-labeled-image calls are single observations. Repeated native
+processes consume their unchanged prepared scene and per-pose requests. Resident
+frame walls have a separately named narrower scope. No stage-median total.
 """
 import argparse
 import csv
 import hashlib
 from pathlib import Path
 import statistics
+import struct
 import subprocess
 import sys
 import time
@@ -36,7 +37,7 @@ def main(args):
     if sys.platform != 'linux':
         raise ValueError('OM10 modeling/render/benchmarks execute on the Linux fleet')
     if args.repeats < 3 or args.resident_frames < 2:
-        raise ValueError('at least three cold repeats and two resident frames are required')
+        raise ValueError('at least three native repeats and two resident frames are required')
     args.output.mkdir(parents=True, exist_ok=False)
     script = ROOT/'examples/render_om10.py'
     pin = hashlib.sha256(script.read_bytes()).hexdigest()
@@ -51,56 +52,93 @@ def main(args):
               '--supersample', str(args.supersample), '--tolerance', str(args.tolerance),
               '--source-residual', str(args.source_residual),
               '--azimuth', str(args.azimuth), '--elevation', str(args.elevation)]
-    records, outputs, input_hashes, cold_requests = [], [], {}, {}
+    records, outputs, input_hashes, cold_requests, prepared = [], [], {}, {}, {}
+    def observations():
+        write_rows(args.output/'observations.tsv', ('scope', 'repeat', 'view', 'backend',
+            'seconds', 'description'), records)
+    for view_index, view in enumerate(('assembled', 'exploded')):
+        order = (BACKENDS[1], BACKENDS[2])
+        if view_index:
+            order = tuple(reversed(order))
+        for label, backend, threads, device in order:
+            name = f'cold-00-{view}-{label}'
+            output = args.output/name
+            command = common+['--view', view, '--backend', backend, '--threads', str(threads),
+                              '--device', str(device), '--output', str(output)]
+            start = time.perf_counter()
+            with (args.output/(name+'.log')).open('w') as log:
+                subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
+            elapsed = time.perf_counter()-start
+            hashes = tuple(hashlib.sha256((output/p).read_bytes()).hexdigest()
+                           for p in ('scene.bgmesh', 'views.bgview', 'sources.tsv'))
+            if view in input_hashes and input_hashes[view] != hashes:
+                raise ValueError('matched source/scene/view/software inputs changed across full callers')
+            if input_hashes and (hashes[0], hashes[2]) != (next(iter(input_hashes.values()))[0], next(iter(input_hashes.values()))[2]):
+                raise ValueError('assembled/exploded full callers changed source geometry/software')
+            request = (output/'views.bgview').read_bytes()
+            if request[:16] != struct.pack('<8sII', b'BGVIEW01', 1, 1) or len(request) != 208:
+                raise ValueError('full task must emit exactly one actual view request')
+            input_hashes[view] = hashes
+            cold_requests[view] = request[16:]
+            prepared.setdefault(view, output)
+            records.append(('cold_complete_process', 0, view, label, elapsed,
+                            'one observation; fresh STEP through PNG/labeled SVG and interpreter exit'))
+            outputs.append((name, view, label, output.name))
+            observations()
+            print(name, format(elapsed, '.6f'), 's; n=1', flush=True)
+    # Pin the actual product sources throughout subsequent native measurements.
+    source_pins = read_rows(prepared['assembled']/'sources.tsv')
+    def check_inputs():
+        for view, output in prepared.items():
+            current = tuple(hashlib.sha256((output/p).read_bytes()).hexdigest()
+                            for p in ('scene.bgmesh', 'views.bgview', 'sources.tsv'))
+            if current != input_hashes[view]:
+                raise ValueError('prepared native scene/view/source inputs changed')
+        if any(hashlib.sha256((ROOT/r['path']).read_bytes()).hexdigest() != r['sha256'] for r in source_pins):
+            raise ValueError('actual product source changed during benchmark')
+    def native_command(output, label, backend, threads, device, views):
+        command = [str(args.native.resolve()), '--scene', str((prepared['assembled']/'scene.bgmesh').resolve()),
+                   '--views', str(views.resolve()), '--output-directory', str(output.resolve()),
+                   '--backend', backend, '--threads', str(threads)]
+        if backend == 'cuda':
+            command += ['--device', str(device), '--plugin', str(args.plugin.resolve())]
+        return command
     for repeat in range(args.repeats):
-        # Rotate the first backend and alternate the two scene states to spread
-        # order/cache effects. Retain every result rather than search for a win.
         order = BACKENDS[repeat % len(BACKENDS):]+BACKENDS[:repeat % len(BACKENDS)]
-        views = ('assembled', 'exploded') if repeat % 2 == 0 else ('exploded', 'assembled')
-        for view in views:
+        states = ('assembled', 'exploded') if repeat % 2 == 0 else ('exploded', 'assembled')
+        for view in states:
             for label, backend, threads, device in order:
-                name = f'cold-{repeat:02d}-{view}-{label}'
+                check_inputs()
+                name = f'native-{repeat:02d}-{view}-{label}'
                 output = args.output/name
-                command = common+['--view', view, '--backend', backend, '--threads', str(threads),
-                                  '--device', str(device), '--output', str(output)]
+                command = native_command(output, label, backend, threads, device, prepared[view]/'views.bgview')
                 start = time.perf_counter()
                 with (args.output/(name+'.log')).open('w') as log:
                     subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
                 elapsed = time.perf_counter()-start
-                # Checks occur outside the directly enclosing process wall.
-                hashes = tuple(hashlib.sha256((output/p).read_bytes()).hexdigest()
-                               for p in ('scene.bgmesh', 'views.bgview', 'sources.tsv'))
-                if view in input_hashes and input_hashes[view] != hashes:
-                    raise ValueError('matched source/scene/view/software inputs changed across cold runs')
-                input_hashes[view] = hashes
-                cold_requests[view] = (output/'views.bgview').read_bytes()[16:]
-                records.append(('cold_complete_process', repeat, view, label, elapsed,
-                                'fresh STEP through PNG/labeled SVG and interpreter exit'))
+                records.append(('native_complete_process', repeat, view, label, elapsed,
+                                'prepared scene through raw image/IDs/depth and native exit; no STEP/mesh/PNG/SVG'))
                 outputs.append((name, view, label, output.name))
-                write_rows(args.output/'observations.tsv', ('scope', 'repeat', 'view', 'backend',
-                    'seconds', 'description'), records)
+                observations()
                 print(name, format(elapsed, '.6f'), 's', flush=True)
-    # Resident updates are native frame walls, with actual retained inputs and
-    # source jets on BOTH CPU and GPU. Common import/mesh remains separately named.
+    resident_views = args.output/'resident.bgview'
+    resident_views.write_bytes(struct.pack('<8sII', b'BGVIEW01', 1, 2*args.resident_frames)
+                              +b''.join(cold_requests[state] for _ in range(args.resident_frames)
+                                        for state in ('assembled', 'exploded')))
     for label, backend, threads, device in BACKENDS:
+        check_inputs()
         name = 'resident-'+label
         output = args.output/name
-        command = common+['--view', 'both', '--backend', backend, '--threads', str(threads),
-                          '--device', str(device), '--repeat-frames', str(args.resident_frames),
-                          '--output', str(output)]
+        command = native_command(output, label, backend, threads, device, resident_views)
         with (args.output/(name+'.log')).open('w') as log:
             subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
-        scene_hash = hashlib.sha256((output/'scene.bgmesh').read_bytes()).hexdigest()
-        source_hash = hashlib.sha256((output/'sources.tsv').read_bytes()).hexdigest()
-        if (scene_hash, source_hash) != (input_hashes['assembled'][0], input_hashes['assembled'][2]):
-            raise ValueError('resident and cold source/scene/software inputs differ')
-        request_bytes = (output/'views.bgview').read_bytes()
+        request_bytes = resident_views.read_bytes()
         if len(request_bytes) != 16+192*2*args.resident_frames:
             raise ValueError('resident view count/size differs')
         for frame in range(2*args.resident_frames):
             if request_bytes[16+192*frame:16+192*(frame+1)] != cold_requests[('assembled', 'exploded')[frame % 2]]:
                 raise ValueError('resident and cold actual packed view requests differ')
-        for row in read_rows(output/'native/timings.tsv'):
+        for row in read_rows(output/'timings.tsv'):
             if row['stage'] == 'reused_frame_wall':
                 frame = int(row['frame'])
                 records.append(('resident_native_frame', frame//2,
@@ -108,6 +146,8 @@ def main(args):
                                 float(row['milliseconds'])/1000,
                                 'retained scene/source jets; current placement/bins/image/download/raw writes/host frame cleanup'))
         outputs.append((name, 'both', label, output.name))
+        observations()
+    check_inputs()
     if hashlib.sha256(script.read_bytes()).hexdigest() != pin:
         raise ValueError('caller changed during benchmark')
     if hashlib.sha256(driver.read_bytes()).hexdigest() != driver_pin:

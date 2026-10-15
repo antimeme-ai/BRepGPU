@@ -124,3 +124,34 @@ and after. Reject any stage failure immediately. This is qualification work,
 not a benchmark; repeated complete cold render callers remain fresh STEP calls.
 Review this orchestration before implementation. Do not add a mesh persistence
 format, a second certificate layer or a general backend framework.
+
+### Cost-aware timing amendment (reviewed)
+
+Native-display owner reviewed and accepted this adjustment before implementation.
+
+Actual source-driven recovery and whole-face refinement make repeated complete
+model construction expensive. Replace the proposed24 full cold callers plus
+four resident rebuilds with four actual fresh full callers: CPU24 and P1000,
+each assembled and exploded. Every full-task observation still directly
+encloses fresh STEP extraction, complete owned meshing, native execution,
+PNG/labeled-SVG output and process exit. Report each as n=1; do not label it a
+median, infer a confidence interval or create a total by adding stage medians.
+
+Compare the actual source pins, scene hashes and per-pose request bytes across
+these four callers. Feed their unchanged actual native scene/view files to
+three alternating fresh native processes per pose/backend (CPU1, CPU24, P1000,
+P1001), then a repeated two-pose resident request per backend. These are existing
+display inputs, not a new product mesh cache or a second meshing mechanism.
+Direct native-process walls include input decode, evaluation, display, raw
+outputs and shutdown. Resident-frame walls retain source jets/geometry on both
+CPU and GPU and retain their existing explicitly narrower scope. Report all
+observations, median/range for repeated scopes, selected binaries and source
+pins. No benchmark starts before whole-source qualification passes and our
+diagnostic/tests/build work stops.
+
+Final graphics use the fixed first complete P1000 image for each pose. Show
+repeated native-process medians for all four backends and separate actual
+single-observation full-task CPU24/P1000 walls. The legend distinguishes these
+sample sizes and scopes. Full-task labels include CPU import/meshing; final
+static SVG-to-PNG rasterization remains separately measured. No selected fastest
+repeat, unmeasured CPU1/P1001 full wall or whole-model GPU-construction claim.

@@ -202,3 +202,37 @@ Foreign UV overshoot consistently chose the wrong nappe on every backend;
 source recovery fixes that input rather than changing native evaluator semantics.
 Preparing the complete pinned source/mesh/three-backend integration run while
 the diagnostic scan visits every face under the current implementation.
+
+Started fresh complete nonvisual qualification. STEP translation took27.042s
+and owned decoding6.745s; these are development observations, not benchmark
+results. Stopped the process deliberately after the read-only all-face scan
+found remaining failures: five faces170998/170999/171000/171002/171003 exhaust
+the finite interior-vertex budget, and171110/171115 contain axial LINE samples
+whose cylinder UV arithmetic creates redundant collinear physical triangles.
+The source owner and independent reviewer study these two concrete families
+before changing production. No cap/quality increase or face omission is allowed.
+
+Code review also found that collapsed-cell admission tests whether any corner
+is a supported pole, while the contract requires every repeated physical key
+to be supported. The independent mesh oracle already checks the stronger
+condition. Tighten the production guard with a direct unsupported-repeat fixture;
+do not weaken the physical-shell check. Product edits waited until the pinned
+run was stopped. Actual watch rasterization remains pending complete geometry.
+
+Requested review of the benchmark plan's24 full cold model rebuilds plus four
+resident rebuilds in light of actual preparation cost. The operator needs
+honest complete CPU/GPU observations and stage timings, not a prescribed repeat
+count. A smaller explicitly single-observation complete caller comparison plus
+repeated matched native work may answer that claim more directly. This remains
+a proposed plan adjustment until review; no synthetic summed total or selected
+fastest observation will replace an actual enclosing wall.
+
+Native owner accepted the written cost-aware timing amendment before code,
+then reviewed the changed driver, poster and optional second timing panel with
+no blockers. Four actual fresh full callers cover CPU24/P1000 and both poses;
+24 prepared-scene native processes provide three observations per pose/backend,
+and four native resident batches reuse identical existing input bytes. Full
+task n=1 and native medians are separate panels/scopes. Fleet CLI import checks
+passed after correcting the poster's missing Python source search path. A
+synthetic two-panel SVG parsed and retained all six timing rows and both scope
+headers; no actual watch image or performance measurement was generated.
