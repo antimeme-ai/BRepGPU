@@ -41,3 +41,13 @@ protected native hashes match the before snapshot. Public artifact scan found
 no private host/workstation paths. Root visually inspected the actual boundary/
 point SVG; the separate artifact reviewer matched every emitted coordinate to
 saved geometry. Publishing reviewed results and current docs before PR merge.
+
+Merged PR39 with merge commit feae7001cfb7c2b10b388a3d4031391e4cf26209,
+preserving all eight substantive feature commits; feature branch remains available.
+Issue38 closed automatically. Local main and the fleet source/index both matched
+that merge with clean status after source sync; protected build/toolchain/context
+paths were excluded and nothing deleted. All five native hashes were already
+verified unchanged after qualification. This journal/issue-state checkpoint is
+pushed on main and synchronized before final handoff. No code changed after the
+accepted placement tests/campaign. Remaining breadth theme is feature construction;
+its extrusion/revolution/fillet/offset units need their own research/design/plan.
