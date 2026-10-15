@@ -17,3 +17,10 @@ Both independent design reviews accepted without blockers. Wrote bounded plan
 with explicit stop rule: missing-entry red, direct geometry green, source/code
 review, affected compatibility, three actual small caller cases and publication.
 No mutation campaign, second coverage oracle or broad numerical/GPU reruns.
+
+Independent oracle/tests recorded genuine missing-entry red:10methods/23errors
+in0.661s before extrusion_meshing existed. Parent implemented actual directed-loop
+fans, full exact Gram inverse, shared original vertex/edge/coedge records and
+rounded global convex-product guard. All10 direct methods passed first green in
+4.661s. No product fix required. Code/caller review and one affected compatibility
+run follow, then the three actual caller cases. No new test layer is scheduled.
