@@ -56,3 +56,15 @@ Re-read OCR2: one end timestamp now defines both source/factory complete walls,
 so their difference is exactly the separately measured source-creation phase
 up to final decimal float formatting. These corrections preserve all useful
 work and independent qualification scopes; no reference criterion changed.
+
+Reference source-gate correction review, before final reruns: **ACCEPTED.** Root
+found the old finite source manifold/volume/bounds assertion could leave an empty
+artifact directory. Actual corrected script exports original scalar probes,
+exact world inputs, source pins and all3 measured unchanged preflight criteria
+before gating. A finite failed source emits comparison_stage=source_factory,
+offset_attempted=False, all5 output criteria explicitly NOT_RUN, source costs and
+nonzero failure. This does not claim any observed offset outcome. Structural/
+nonfinite guards remain hard errors. A passing source continues through the same
+pure operation/flags/accuracy and5 output criteria, with original tables updated
+to actual before/after epochs. No threshold/input/product/campaign change. Re-read
+actual helper/branches and journal plan before authorizing root's final3 reruns.

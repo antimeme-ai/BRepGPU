@@ -15,3 +15,10 @@ endtimestamp restoredsamecleanupendpoint/additivepertrial sourcecreationrelation
 Finalwholecaller/reference/controller ACCEPTED noopenfinding. No ownsourceedit/
 geometryexecution. Rootsampler+8test source review ACCEPTED, actualgreenspending
 geometrydependency; ownedfiles alreadyindividuallyfleet-synced.
+
+Root actualoddreference preflight finitefailure leftemptyoutdir: validadapter
+finding. Reviewed actualscript correction andsourcegatejournal BEFORE final3
+reruns: preflight3measuredunchangedcriteria/sourceworld/probes/pins exportfirst;
+sourcefailure stage/source_factory+offset_attemptedFalse+5outputsNOT_RUN andnonzero;
+success samepureAPI/flags/criteria,originalbeforeafter tables. ACCEPTED sentroot.
+No owncodeedit/rerun/product/campaignsourcechange; studying saved48costs next.
