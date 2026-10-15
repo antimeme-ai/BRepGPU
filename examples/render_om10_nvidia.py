@@ -111,7 +111,8 @@ def main(args):
            'examples/om10_scene.py','examples/render_om10.py',
            'python/brepgpu/imported_assembly.py','python/brepgpu/imported_source.py',
            'python/brepgpu/nvidia_reference.py','python/brepgpu/reference_source.py',
-           'native/om10_nvidia/main.cpp','native/reference_source/main.cpp',
+           'native/om10_nvidia/main.cpp','native/om10_nvidia/raw_mesh.hpp',
+           'native/om10_nvidia/raw_mesh.cpp','native/reference_source/main.cpp',
            'native/om10_reference/raw.hpp','native/om10_reference/main.cpp','native/om10_reference/cpu.cpp')))
     pins=tuple((name,digest(path)) for name,path in pin_paths)
     tsv(args.output/'runtime-pins.tsv',('component','sha256'),pins)
@@ -212,7 +213,8 @@ def main(args):
     require(tuple((name,digest(path)) for name,path in pin_paths)==pins,
             'reference executable/library/source changed during caller')
     metadata=(('source_sha256',source_hash),('views_sha256',hashlib.sha256(request).hexdigest()),
-        ('geometry','genuine NVIDIA definition-local f64 triangles and oriented per-corner normals'),
+        ('geometry','genuine NVIDIA definition-local f64 tessellation, official rectangle polygon triangulation and retained original oriented per-corner normals'),
+        ('polygon_triangulation','official SDK TriangulatePlanar for exact axis-extruded rectangles; per-definition counts in worker polygon-export.tsv'),
         ('scope','fresh STEP through '+('both labeled views' if args.mode=='render' else 'NVIDIA mesh only')),
         ('heal',args.heal),('chord_height_mm',args.chord_height),('curve_angle_degrees',0),
         ('surface_angle_degrees',0),('allow_partial',False),('workers',len(groups)),
