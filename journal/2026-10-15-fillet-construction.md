@@ -61,3 +61,16 @@ reproduced all1,987 admitted native rows/error maxima; all15ordinary CSR pairs/
 saved curve/native projection/order/colors. All13 source pins current. Saved
 unit artifact review; diagnostic singleCPUwall kept separate from forthcoming
 campaign/reference claims. No source changes or additional fleet job.
+
+Final reference-small/mid/large saved-artifact review complete and accepted.
+Read whole actual script and all three final TSV sets. Verified current script/
+owned input pins, exactworld box/radius/selected endpoints/allvertices, copied
+selection endpoint probes, original before/after fullbody+all12edge/range/3point
+probe preservation, all131witnesses percase (75exactedges+56nativeinteriors),
+complete finite closest-point outcomes and unchanged1e-8volume/1e-8scale bounds/
+1e-7scale boundary limits. Allfive criteria GREEN eachcase; largest relativevolume
+error5.991743010050966e-11, largestboundary2.8108601893111292e-15. Five residual
+recomputations differ by one platformULP, no criterion impact. Scope excludes
+foreignmaterial/history/externalalpha and does not resolve revolutionissue43.
+Saved final reference artifact paper; stdlib-only analysis, no source edit or
+product/reference/benchmark execution from this lane.

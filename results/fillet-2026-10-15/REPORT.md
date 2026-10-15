@@ -156,7 +156,8 @@ phases nest inside enclosing walls, and medians can select different repetitions
 Native evaluation is synchronous unprofiled wrapper wall, not isolated kernel
 time. Topology initializes a separate per-call context instead of borrowing the
 sampling Engine. [Raw observations](costs/raw.tsv), [summary](costs/summary.tsv),
-[timing scope](costs/scope.tsv), [controller pin](costs/sources.tsv).
+[timing scope](costs/scope.tsv), [controller pin](costs/sources.tsv),
+[independent final performance review](../../papers/2026-10-15-fillet-performance-runtime-review.md).
 
 ## Optional same-world foreign comparison
 
@@ -180,6 +181,7 @@ All three final adapters exited0; no accuracy setting or tolerance was changed.
 | mid | PASS | 1.50324198e-12 | 5.41752351e-12 | 2.39149358e-15 | 131 |
 | large | PASS | 1.05279696e-09 | 5.99174301e-11 | 2.81086019e-15 | 131 |
 
+[Independent reference artifact review](../../papers/2026-10-15-fillet-reference-artifact-semantics-review.md).
 All source-preservation/manifold/volume/bounds/boundary criteria pass:
 [small outcomes](reference-small/outcomes.tsv), [mid outcomes](reference-mid/outcomes.tsv),
 [large outcomes](reference-large/outcomes.tsv). Foreign material/history and full
