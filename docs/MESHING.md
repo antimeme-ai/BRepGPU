@@ -10,6 +10,10 @@ loops, hole boundaries and both sides of the periodic seam are retained.
 This is the narrow approximation/meshing beachhead, with no new native ABI or
 third-party dependency. General imported faces and arbitrary trims are unsupported.
 
+The dedicated [Boolean-result mesher](CUT_MESHING.md) now consumes the actual
+through-bore CutResult, with its own source-frame/trim contract. This canonical
+API retains its original factory-body admission.
+
 ## Use
 
 ```python

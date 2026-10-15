@@ -118,6 +118,17 @@ is proposed: result meshing, one admitted operation chain, external adapters,
 runtime/Python-role study and an owned NCSX component. Earlier scheduling notes
 do not mean breadth is unfinished. No language migration, dependency adoption,
 alpha scope change or product implementation is selected by that proposal.
+The operator authorized proceeding with the next tranche. Its first bounded
+connection is delivered: dedicated cut_meshing.tessellate(CutResult) and lazy
+CutResult.tessellate construct a closed bounded exact/rounded CPU mesh from the
+actual through-bore result. Original cutter controls/Frame/raw V[1/4,3/4], source
+history and both seam occurrences survive; canonical guards are unchanged.
+Read docs/CUT_MESHING.md and results/cut-mesh-2026-10-15/REPORT.md. Twelve direct
+methods and46 affected compatibility methods pass; four first actual callers are
+independently qualified, with24 full-output correspondences. Refined unit528
+triangles takes220.970ms median mesh+indexed/history consumption; Boolean,
+qualification/export are separate. No GPU mesher, feature-result meshing,
+composable chain, runtime rewrite or external alpha completion is implied.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

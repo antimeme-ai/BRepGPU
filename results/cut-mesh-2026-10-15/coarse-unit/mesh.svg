@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="650" viewBox="0 0 1160 650">
+<rect width="1160" height="650" rx="18" fill="#101923"/>
+<g font-family="monospace" fill="#dce9ed">
+<text x="30" y="40" font-size="23">BRepGPU / through-bore result / complete indexed CPU mesh</text>
+<text x="30" y="72" font-size="13">Exact source topology, rational construction and one shared rounded vertex array</text>
+<text x="80" y="112" font-size="16">Actual top-face triangles</text>
+<text x="685" y="112" font-size="16">All-face indexed wire view</text>
+<polygon points="500.000,125.000 290.000,195.000 430.000,335.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="877.500,363.750 787.500,305.000 917.500,297.500" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="500.000,125.000 80.000,125.000 290.000,195.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="877.500,363.750 645.000,281.250 787.500,305.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="80.000,125.000 150.000,335.000 290.000,195.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="645.000,281.250 762.500,242.500 787.500,305.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="80.000,125.000 80.000,545.000 150.000,335.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="645.000,281.250 802.500,176.250 762.500,242.500" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="80.000,545.000 290.000,475.000 150.000,335.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="802.500,176.250 892.500,235.000 762.500,242.500" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="80.000,545.000 500.000,545.000 290.000,475.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="802.500,176.250 1035.000,258.750 892.500,235.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="500.000,545.000 430.000,335.000 290.000,475.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="1035.000,258.750 917.500,297.500 892.500,235.000" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="500.000,545.000 500.000,125.000 430.000,335.000" fill="#43b7ad" fill-opacity=".37" stroke="#43b7ad" stroke-width=".65"/>
+<polygon points="1035.000,258.750 877.500,363.750 917.500,297.500" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="877.500,543.750 917.500,477.500 787.500,485.000" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="877.500,543.750 787.500,485.000 645.000,461.250" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="645.000,461.250 787.500,485.000 762.500,422.500" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="645.000,461.250 762.500,422.500 802.500,356.250" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 762.500,422.500 892.500,415.000" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 892.500,415.000 1035.000,438.750" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="1035.000,438.750 892.500,415.000 917.500,477.500" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="1035.000,438.750 917.500,477.500 877.500,543.750" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 1035.000,438.750 1035.000,258.750" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 1035.000,258.750 802.500,176.250" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="645.000,461.250 877.500,363.750 877.500,543.750" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="645.000,461.250 645.000,281.250 877.500,363.750" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="1035.000,438.750 877.500,543.750 877.500,363.750" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="1035.000,438.750 877.500,363.750 1035.000,258.750" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 645.000,281.250 645.000,461.250" fill="none" stroke="#82c4a0" stroke-width=".55" opacity=".60"/>
+<polygon points="802.500,356.250 802.500,176.250 645.000,281.250" fill="none" stroke="#82c4a0" stroke-width=".55" opacity=".60"/>
+<polygon points="917.500,477.500 787.500,305.000 787.500,485.000" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="917.500,477.500 917.500,297.500 787.500,305.000" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="787.500,485.000 762.500,242.500 762.500,422.500" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="787.500,485.000 787.500,305.000 762.500,242.500" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="762.500,422.500 892.500,235.000 892.500,415.000" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="762.500,422.500 762.500,242.500 892.500,235.000" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="892.500,415.000 917.500,297.500 917.500,477.500" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polygon points="892.500,415.000 892.500,235.000 917.500,297.500" fill="none" stroke="#ef975e" stroke-width=".55" opacity=".60"/>
+<polyline points="917.500,477.500 917.500,297.500" fill="none" stroke="#ffd166" stroke-width="2.6"/>
+<text x="30" y="570" font-size="15">16 shared vertices / 32 triangles / 30 result coedge uses</text>
+<text x="30" y="600" font-size="13">World tolerance 1/2; certified total bound 0.25</text>
+<text x="30" y="632" font-size="12">Colors name result faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>
+</g></svg>

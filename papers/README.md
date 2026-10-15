@@ -496,3 +496,18 @@ exact/raw-output qualification, compiled resource observations and complete
 matched/reversed measurements. It did not meet the performance criterion;
 the original dynamic kernel remains the product. Candidate source is preserved
 at its recorded commit rather than selected from register counts alone.
+
+
+## First post-breadth connection: actual Boolean result meshes
+
+The [source semantics](2026-10-15-cut-mesh-semantics-study.md),
+[independent oracle](2026-10-15-cut-mesh-oracles-study.md) and
+[caller/cost](2026-10-15-cut-mesh-caller-study.md) studies ground the
+[accepted design](../docs/CUT_MESH_DESIGN.md) and [plan](../docs/CUT_MESH_PLAN.md).
+[Semantics code review](2026-10-15-cut-mesh-code-semantics-review.md),
+[oracle review](2026-10-15-cut-mesh-implementation-oracle-review.md) and
+[caller review](2026-10-15-cut-mesh-caller-semantics-review.md) accepted the actual
+bounded implementation. [Results](../results/cut-mesh-2026-10-15/REPORT.md) retain
+actual CutResult geometry, original frames/raw UV/history and full indexed output.
+This is CPU meshing of one actual Boolean family, with community qualification,
+feature meshing and language/residency decisions still open.

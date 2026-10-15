@@ -1,0 +1,7 @@
+coedge_id	face_id	loop_id	edge_id	orientation	uv_kind
+1	1	1	2	1	circle_plane
+2	2	2	1	-1	circle_plane
+3	3	3	1	1	circle_wall
+4	3	3	3	1	seam_wall
+5	3	3	2	-1	circle_wall
+6	3	3	3	-1	seam_wall
