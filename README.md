@@ -19,6 +19,12 @@ after the broad-pass big rocks.
 That return pass also investigates whether Python belongs in the delivered
 system at all, and in which role.
 
+[External community qualification is mandatory before alpha](docs/ALPHA_QUALIFICATION.md).
+Development can continue while those suites are incomplete; required missing,
+unsupported, skipped or failing cases cannot count as green. The
+[OCCT, CGAL and oracle audit](papers/README.md#external-oracles-and-alpha-qualification)
+records the current gap: we have not yet replayed community cases against our output.
+
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
 target is NVIDIA P100: FP64 geometry on CUDA 12, with an owned implementation.
