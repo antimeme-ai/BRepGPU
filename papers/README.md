@@ -1,5 +1,26 @@
 # BRepGPU research
 
+## Owned convex-profile extrusion
+
+The [design](../docs/EXTRUSION_DESIGN.md) and [plan](../docs/EXTRUSION_PLAN.md)
+follow independent [geometry/history](2026-10-15-extrusion-semantics-study.md),
+[whole-feature truth](2026-10-15-extrusion-oracles-study.md) and
+[runtime/reference](2026-10-15-extrusion-runtime-study.md) studies.
+Bibliographies: [semantics](extrusion-semantics.bib), [oracles](extrusion-oracles.bib),
+[runtime](extrusion-runtime.bib). The original Sauer CAGD notes and actual pinned
+OCCT/Truck/NVIDIA sweep implementations inform exact tensor-product controls,
+source-based sharing and first/last/generated history; no dependency is adopted.
+All three design/plan reviews accepted before fleet red and product code.
+[Whole construction review](2026-10-15-extrusion-construction-oracle-code-review.md),
+[sampler review](2026-10-15-extrusion-sampler-root-review.md),
+[independent oracle review](2026-10-15-extrusion-oracle-semantics-review.md) and
+[actual caller/reference review](2026-10-15-extrusion-caller-runtime-review.md)
+retain concrete findings and fixes. [API](../docs/EXTRUSION.md) and
+[results](../results/extrusion-2026-10-15/REPORT.md) describe actual profile-driven
+solids, affine ancestry, independently bounded native normals and complete costs.
+Revolution/fillet/offset and applicable external alpha corpus remain separate.
+
+
 ## Owned through-bore Boolean and history
 
 The [design](../docs/BOOLEAN_DESIGN.md) and [plan](../docs/BOOLEAN_PLAN.md) follow

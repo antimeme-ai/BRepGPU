@@ -54,7 +54,7 @@ boundary/domain/map and cyclic-link qualification.
 Every one of3N+3 input entities has exactly two same-kind modified cap images.
 Every one of14N+6 output entities has an origin:6N+6 modified cap images and8N
 side births. Source keys name actual namespace/revision/kind/ID. Origins retain
-cap local translations, source edge/UV affine maps, normalized axial maps and
+cap local translations, source edge/UV affine maps, profile-local axial maps and
 orientation separately. Swept side uses name their owning source edge/vertex/
 coedge occurrences. Reciprocal links alone cannot validate ancestry: publication
 also checks precise generating IDs/roles. Geometrically equal profiles in other
@@ -108,5 +108,7 @@ exact same world endpoints and compare measures/boundary witnesses; they do not
 supply owned history/material or satisfy mandatory external alpha suites.
 
 [Design](EXTRUSION_DESIGN.md) · [Plan](EXTRUSION_PLAN.md) ·
-[Research](../papers/README.md) · [Return pass](RETURN_PASS.md).
+[Research](../papers/README.md) ·
+[Qualification and costs](../results/extrusion-2026-10-15/REPORT.md) ·
+[Return pass](RETURN_PASS.md).
 Revolution, fillet and offset remain separate subsequent feature units.
