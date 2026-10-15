@@ -1,0 +1,159 @@
+part_id	part	role	material	profile_body	profile_revision	extrusion_body	extrusion_revision	cutter_body	cutter_revision	result_body	result_revision	vertices	triangles	error_bound	world_tolerance	origin_x	origin_y	origin_z	scale	local_height	placement
+0	chassis	pierced structural rim	blue	1	1	2	1	3	1	4	1	192	384	2964283348484217/1517713074423857152	1/256	0.0	0.0	-0.62	2.0	1/4	actual source Frame; no instance transform
+1	upper-bridge	off-center pierced upper support	silver	5	1	6	1	7	1	8	1	76	152	35184372088839/36028797018963968	1/256	-0.1	0.87	0.43	1.0	1/4	actual source Frame; no instance transform
+2	lower-bridge	off-center pierced lower support	blue	9	1	10	1	11	1	12	1	76	152	321057395310631/328762772798046208	1/256	0.18	-0.94	0.32	1.0	1/4	actual source Frame; no instance transform
+3	barrel	pierced schematic wheel blank	gold	13	1	14	1	15	1	16	1	112	224	1407374883553391/1441151880758558720	1/256	-0.56	0.4	0.02	1.0	1/4	actual source Frame; no instance transform
+4	barrel-lug-00	separate schematic radial lug	gold	17	1	18	1			18	1	8	12	3/288230376151711744	1/256	-0.10355047651423627	0.42242392716763005	0.02	1.0	1/4	actual source Frame; no instance transform
+5	barrel-lug-01	separate schematic radial lug	gold	19	1	20	1			20	1	8	12	3/288230376151711744	1/256	-0.11669571729009343	0.5110419422157916	0.02	1.0	1/4	actual source Frame; no instance transform
+6	barrel-lug-02	separate schematic radial lug	gold	21	1	22	1			22	1	8	12	3/288230376151711744	1/256	-0.14687689304258644	0.5953926776976389	0.02	1.0	1/4	actual source Frame; no instance transform
+7	barrel-lug-03	separate schematic radial lug	gold	23	1	24	1			24	1	8	12	3/288230376151711744	1/256	-0.1929341581133453	0.6722345821530421	0.02	1.0	1/4	actual source Frame; no instance transform
+8	barrel-lug-04	separate schematic radial lug	gold	25	1	26	1			26	1	8	12	3/288230376151711744	1/256	-0.25309755763491265	0.7386146642872163	0.02	1.0	1/4	actual source Frame; no instance transform
+9	barrel-lug-05	separate schematic radial lug	gold	27	1	28	1			28	1	8	12	3/288230376151711744	1/256	-0.3250550459036977	0.7919819747701244	0.02	1.0	1/4	actual source Frame; no instance transform
+10	barrel-lug-06	separate schematic radial lug	gold	29	1	30	1			30	1	8	12	3/288230376151711744	1/256	-0.4060413369997555	0.8302856377886405	0.02	1.0	1/4	actual source Frame; no instance transform
+11	barrel-lug-07	separate schematic radial lug	gold	31	1	32	1			32	1	8	12	3/288230376151711744	1/256	-0.4929441731738997	0.852053665053905	0.02	1.0	1/4	actual source Frame; no instance transform
+12	barrel-lug-08	separate schematic radial lug	gold	33	1	34	1			34	1	8	12	3/288230376151711744	1/256	-0.5824239271676301	0.8564495234857639	0.02	1.0	1/4	actual source Frame; no instance transform
+13	barrel-lug-09	separate schematic radial lug	gold	35	1	36	1			36	1	8	12	3/288230376151711744	1/256	-0.6710419422157916	0.8433042827099066	0.02	1.0	1/4	actual source Frame; no instance transform
+14	barrel-lug-10	separate schematic radial lug	gold	37	1	38	1			38	1	8	12	3/288230376151711744	1/256	-0.7553926776976388	0.8131231069574136	0.02	1.0	1/4	actual source Frame; no instance transform
+15	barrel-lug-11	separate schematic radial lug	gold	39	1	40	1			40	1	8	12	3/288230376151711744	1/256	-0.8322345821530421	0.7670658418866547	0.02	1.0	1/4	actual source Frame; no instance transform
+16	barrel-lug-12	separate schematic radial lug	gold	41	1	42	1			42	1	8	12	3/288230376151711744	1/256	-0.8986146642872163	0.7069024423650876	0.02	1.0	1/4	actual source Frame; no instance transform
+17	barrel-lug-13	separate schematic radial lug	gold	43	1	44	1			44	1	8	12	3/288230376151711744	1/256	-0.9519819747701244	0.6349449540963024	0.02	1.0	1/4	actual source Frame; no instance transform
+18	barrel-lug-14	separate schematic radial lug	gold	45	1	46	1			46	1	8	12	35/288230376151711744	1/256	-0.9902856377886405	0.5539586630002447	0.02	1.0	1/4	actual source Frame; no instance transform
+19	barrel-lug-15	separate schematic radial lug	gold	47	1	48	1			48	1	8	12	3/288230376151711744	1/256	-1.012053665053905	0.46705582682610036	0.02	1.0	1/4	actual source Frame; no instance transform
+20	barrel-lug-16	separate schematic radial lug	gold	49	1	50	1			50	1	8	12	3/288230376151711744	1/256	-1.0164495234857638	0.3775760728323701	0.02	1.0	1/4	actual source Frame; no instance transform
+21	barrel-lug-17	separate schematic radial lug	gold	51	1	52	1			52	1	8	12	3/288230376151711744	1/256	-1.0033042827099066	0.28895805778420847	0.02	1.0	1/4	actual source Frame; no instance transform
+22	barrel-lug-18	separate schematic radial lug	gold	53	1	54	1			54	1	8	12	3/288230376151711744	1/256	-0.9731231069574138	0.20460732230236123	0.02	1.0	1/4	actual source Frame; no instance transform
+23	barrel-lug-19	separate schematic radial lug	gold	55	1	56	1			56	1	8	12	3/288230376151711744	1/256	-0.9270658418866549	0.127765417846958	0.02	1.0	1/4	actual source Frame; no instance transform
+24	barrel-lug-20	separate schematic radial lug	gold	57	1	58	1			58	1	8	12	3/288230376151711744	1/256	-0.8669024423650875	0.06138533571278382	0.02	1.0	1/4	actual source Frame; no instance transform
+25	barrel-lug-21	separate schematic radial lug	gold	59	1	60	1			60	1	8	12	3/288230376151711744	1/256	-0.7949449540963024	0.008018025229875714	0.02	1.0	1/4	actual source Frame; no instance transform
+26	barrel-lug-22	separate schematic radial lug	gold	61	1	62	1			62	1	8	12	3/288230376151711744	1/256	-0.7139586630002446	-0.030285637788640518	0.02	1.0	1/4	actual source Frame; no instance transform
+27	barrel-lug-23	separate schematic radial lug	gold	63	1	64	1			64	1	8	12	3/288230376151711744	1/256	-0.6270558268261006	-0.05205366505390485	0.02	1.0	1/4	actual source Frame; no instance transform
+28	barrel-lug-24	separate schematic radial lug	gold	65	1	66	1			66	1	8	12	3/288230376151711744	1/256	-0.5375760728323702	-0.056449523485763764	0.02	1.0	1/4	actual source Frame; no instance transform
+29	barrel-lug-25	separate schematic radial lug	gold	67	1	68	1			68	1	8	12	3/288230376151711744	1/256	-0.4489580577842085	-0.043304282709906605	0.02	1.0	1/4	actual source Frame; no instance transform
+30	barrel-lug-26	separate schematic radial lug	gold	69	1	70	1			70	1	8	12	3/288230376151711744	1/256	-0.36460732230236115	-0.013123106957413588	0.02	1.0	1/4	actual source Frame; no instance transform
+31	barrel-lug-27	separate schematic radial lug	gold	71	1	72	1			72	1	8	12	3/288230376151711744	1/256	-0.2877654178469582	0.0329341581133451	0.02	1.0	1/4	actual source Frame; no instance transform
+32	barrel-lug-28	separate schematic radial lug	gold	73	1	74	1			74	1	8	12	3/288230376151711744	1/256	-0.22138533571278385	0.09309755763491251	0.02	1.0	1/4	actual source Frame; no instance transform
+33	barrel-lug-29	separate schematic radial lug	gold	75	1	76	1			76	1	8	12	3/288230376151711744	1/256	-0.16801802522987574	0.1650550459036976	0.02	1.0	1/4	actual source Frame; no instance transform
+34	barrel-lug-30	separate schematic radial lug	gold	77	1	78	1			78	1	8	12	11/288230376151711744	1/256	-0.1297143622113595	0.24604133699975547	0.02	1.0	1/4	actual source Frame; no instance transform
+35	barrel-lug-31	separate schematic radial lug	gold	79	1	80	1			80	1	8	12	3/288230376151711744	1/256	-0.10794633494609518	0.3329441731738994	0.02	1.0	1/4	actual source Frame; no instance transform
+36	barrel-arbor	separate arbor-like post	steel	81	1	82	1			82	1	24	44	1/36028797018963968	1/256	-0.56	0.4	0.15	0.5	3/4	actual source Frame; no instance transform
+37	center-wheel	pierced schematic wheel blank	brass	83	1	84	1	85	1	86	1	112	224	74766790688773/76561193665298432	1/256	0.19	0.48	0.1	1.0	1/4	actual source Frame; no instance transform
+38	center-wheel-lug-00	separate schematic radial lug	brass	87	1	88	1			88	1	8	12	0/1	1/256	0.5514305070364496	0.5002975018998634	0.1	1.0	1/4	actual source Frame; no instance transform
+39	center-wheel-lug-01	separate schematic radial lug	brass	89	1	90	1			90	1	8	12	0/1	1/256	0.5378520705441261	0.5802144551357955	0.1	1.0	1/4	actual source Frame; no instance transform
+40	center-wheel-lug-02	separate schematic radial lug	brass	91	1	92	1			92	1	8	12	0/1	1/256	0.5068308787309689	0.6551062371320968	0.1	1.0	1/4	actual source Frame; no instance transform
+41	center-wheel-lug-03	separate schematic radial lug	brass	93	1	94	1			94	1	8	12	0/1	1/256	0.459922463687706	0.7212174612186255	0.1	1.0	1/4	actual source Frame; no instance transform
+42	center-wheel-lug-04	separate schematic radial lug	brass	95	1	96	1			96	1	8	12	0/1	1/256	0.3994790092170897	0.7752330345632522	0.1	1.0	1/4	actual source Frame; no instance transform
+43	center-wheel-lug-05	separate schematic radial lug	brass	97	1	98	1			98	1	8	12	0/1	1/256	0.32853140251616253	0.8144443907690858	0.1	1.0	1/4	actual source Frame; no instance transform
+44	center-wheel-lug-06	separate schematic radial lug	brass	99	1	100	1			100	1	8	12	0/1	1/256	0.2506372528363146	0.8368853087036014	0.1	1.0	1/4	actual source Frame; no instance transform
+45	center-wheel-lug-07	separate schematic radial lug	brass	101	1	102	1			102	1	8	12	0/1	1/256	0.1697024981001366	0.8414305070364496	0.1	1.0	1/4	actual source Frame; no instance transform
+46	center-wheel-lug-08	separate schematic radial lug	brass	103	1	104	1			104	1	8	12	0/1	1/256	0.08978554486420454	0.8278520705441261	0.1	1.0	1/4	actual source Frame; no instance transform
+47	center-wheel-lug-09	separate schematic radial lug	brass	105	1	106	1			106	1	8	12	0/1	1/256	0.014893762867903199	0.7968308787309688	0.1	1.0	1/4	actual source Frame; no instance transform
+48	center-wheel-lug-10	separate schematic radial lug	brass	107	1	108	1			108	1	8	12	0/1	1/256	-0.05121746121862544	0.749922463687706	0.1	1.0	1/4	actual source Frame; no instance transform
+49	center-wheel-lug-11	separate schematic radial lug	brass	109	1	110	1			110	1	8	12	0/1	1/256	-0.10523303456325223	0.6894790092170897	0.1	1.0	1/4	actual source Frame; no instance transform
+50	center-wheel-lug-12	separate schematic radial lug	brass	111	1	112	1			112	1	8	12	0/1	1/256	-0.14444439076908583	0.6185314025161626	0.1	1.0	1/4	actual source Frame; no instance transform
+51	center-wheel-lug-13	separate schematic radial lug	brass	113	1	114	1			114	1	8	12	0/1	1/256	-0.1668853087036014	0.5406372528363146	0.1	1.0	1/4	actual source Frame; no instance transform
+52	center-wheel-lug-14	separate schematic radial lug	brass	115	1	116	1			116	1	8	12	0/1	1/256	-0.17143050703644963	0.4597024981001366	0.1	1.0	1/4	actual source Frame; no instance transform
+53	center-wheel-lug-15	separate schematic radial lug	brass	117	1	118	1			118	1	8	12	0/1	1/256	-0.1578520705441261	0.37978554486420457	0.1	1.0	1/4	actual source Frame; no instance transform
+54	center-wheel-lug-16	separate schematic radial lug	brass	119	1	120	1			120	1	8	12	0/1	1/256	-0.12683087873096893	0.30489376286790315	0.1	1.0	1/4	actual source Frame; no instance transform
+55	center-wheel-lug-17	separate schematic radial lug	brass	121	1	122	1			122	1	8	12	0/1	1/256	-0.079922463687706	0.23878253878137456	0.1	1.0	1/4	actual source Frame; no instance transform
+56	center-wheel-lug-18	separate schematic radial lug	brass	123	1	124	1			124	1	8	12	0/1	1/256	-0.019479009217089893	0.18476696543674787	0.1	1.0	1/4	actual source Frame; no instance transform
+57	center-wheel-lug-19	separate schematic radial lug	brass	125	1	126	1			126	1	8	12	0/1	1/256	0.051468597483837586	0.1455556092309141	0.1	1.0	1/4	actual source Frame; no instance transform
+58	center-wheel-lug-20	separate schematic radial lug	brass	127	1	128	1			128	1	8	12	0/1	1/256	0.12936274716368518	0.12311469129639857	0.1	1.0	1/4	actual source Frame; no instance transform
+59	center-wheel-lug-21	separate schematic radial lug	brass	129	1	130	1			130	1	8	12	0/1	1/256	0.21029750189986351	0.11856949296355035	0.1	1.0	1/4	actual source Frame; no instance transform
+60	center-wheel-lug-22	separate schematic radial lug	brass	131	1	132	1			132	1	8	12	0/1	1/256	0.2902144551357956	0.13214792945587395	0.1	1.0	1/4	actual source Frame; no instance transform
+61	center-wheel-lug-23	separate schematic radial lug	brass	133	1	134	1			134	1	8	12	0/1	1/256	0.36510623713209667	0.163169121269031	0.1	1.0	1/4	actual source Frame; no instance transform
+62	center-wheel-lug-24	separate schematic radial lug	brass	135	1	136	1			136	1	8	12	0/1	1/256	0.43121746121862525	0.21007753631229387	0.1	1.0	1/4	actual source Frame; no instance transform
+63	center-wheel-lug-25	separate schematic radial lug	brass	137	1	138	1			138	1	8	12	0/1	1/256	0.4852330345632523	0.27052099078291036	0.1	1.0	1/4	actual source Frame; no instance transform
+64	center-wheel-lug-26	separate schematic radial lug	brass	139	1	140	1			140	1	8	12	0/1	1/256	0.5244443907690859	0.3414685974838375	0.1	1.0	1/4	actual source Frame; no instance transform
+65	center-wheel-lug-27	separate schematic radial lug	brass	141	1	142	1			142	1	8	12	0/1	1/256	0.5468853087036014	0.41936274716368516	0.1	1.0	1/4	actual source Frame; no instance transform
+66	center-wheel-arbor	separate arbor-like post	steel	143	1	144	1			144	1	24	44	1/36028797018963968	1/256	0.19	0.48	0.23	0.5	3/4	actual source Frame; no instance transform
+67	third-wheel	pierced schematic wheel blank	gold	145	1	146	1	147	1	148	1	112	224	12525636463624889/12826251738751172608	1/256	0.57	-0.055	0.19	1.0	1/4	actual source Frame; no instance transform
+68	third-wheel-lug-00	separate schematic radial lug	gold	149	1	150	1			150	1	8	12	0/1	1/256	0.8613748055856723	-0.035902286264798224	0.19	1.0	1/4	actual source Frame; no instance transform
+69	third-wheel-lug-01	separate schematic radial lug	gold	151	1	152	1			152	1	8	12	1/144115188075855872	1/256	0.8465035978125708	0.03886032386852319	0.19	1.0	1/4	actual source Frame; no instance transform
+70	third-wheel-lug-02	separate schematic radial lug	gold	153	1	154	1			154	1	8	12	0/1	1/256	0.8127891267923432	0.10722650804172387	0.19	1.0	1/4	actual source Frame; no instance transform
+71	third-wheel-lug-03	separate schematic radial lug	gold	155	1	156	1			156	1	8	12	0/1	1/256	0.76252897800922	0.16453722378386143	0.19	1.0	1/4	actual source Frame; no instance transform
+72	third-wheel-lug-04	separate schematic radial lug	gold	157	1	158	1			158	1	8	12	0/1	1/256	0.6991482975439484	0.20688684052754502	0.19	1.0	1/4	actual source Frame; no instance transform
+73	third-wheel-lug-05	separate schematic radial lug	gold	159	1	160	1			160	1	8	12	0/1	1/256	0.6269663740287095	0.23138930187774331	0.19	1.0	1/4	actual source Frame; no instance transform
+74	third-wheel-lug-06	separate schematic radial lug	gold	161	1	162	1			162	1	8	12	0/1	1/256	0.5509022862647982	0.23637480558567225	0.19	1.0	1/4	actual source Frame; no instance transform
+75	third-wheel-lug-07	separate schematic radial lug	gold	163	1	164	1			164	1	8	12	0/1	1/256	0.4761396761314768	0.2215035978125709	0.19	1.0	1/4	actual source Frame; no instance transform
+76	third-wheel-lug-08	separate schematic radial lug	gold	165	1	166	1			166	1	8	12	0/1	1/256	0.40777349195827606	0.18778912679234322	0.19	1.0	1/4	actual source Frame; no instance transform
+77	third-wheel-lug-09	separate schematic radial lug	gold	167	1	168	1			168	1	8	12	0/1	1/256	0.3504627762161385	0.13752897800922018	0.19	1.0	1/4	actual source Frame; no instance transform
+78	third-wheel-lug-10	separate schematic radial lug	gold	169	1	170	1			170	1	8	12	0/1	1/256	0.308113159472455	0.07414829754394853	0.19	1.0	1/4	actual source Frame; no instance transform
+79	third-wheel-lug-11	separate schematic radial lug	gold	171	1	172	1			172	1	8	12	0/1	1/256	0.28361069812225664	0.0019663740287094306	0.19	1.0	1/4	actual source Frame; no instance transform
+80	third-wheel-lug-12	separate schematic radial lug	gold	173	1	174	1			174	1	8	12	0/1	1/256	0.2786251944143277	-0.07409771373520171	0.19	1.0	1/4	actual source Frame; no instance transform
+81	third-wheel-lug-13	separate schematic radial lug	gold	175	1	176	1			176	1	8	12	0/1	1/256	0.29349640218742906	-0.1488603238685232	0.19	1.0	1/4	actual source Frame; no instance transform
+82	third-wheel-lug-14	separate schematic radial lug	gold	177	1	178	1			178	1	8	12	0/1	1/256	0.3272108732076566	-0.21722650804172378	0.19	1.0	1/4	actual source Frame; no instance transform
+83	third-wheel-lug-15	separate schematic radial lug	gold	179	1	180	1			180	1	8	12	0/1	1/256	0.37747102199077975	-0.2745372237838614	0.19	1.0	1/4	actual source Frame; no instance transform
+84	third-wheel-lug-16	separate schematic radial lug	gold	181	1	182	1			182	1	8	12	0/1	1/256	0.44085170245605154	-0.316886840527545	0.19	1.0	1/4	actual source Frame; no instance transform
+85	third-wheel-lug-17	separate schematic radial lug	gold	183	1	184	1			184	1	8	12	0/1	1/256	0.5130336259712904	-0.3413893018777433	0.19	1.0	1/4	actual source Frame; no instance transform
+86	third-wheel-lug-18	separate schematic radial lug	gold	185	1	186	1			186	1	8	12	0/1	1/256	0.5890977137352015	-0.3463748055856723	0.19	1.0	1/4	actual source Frame; no instance transform
+87	third-wheel-lug-19	separate schematic radial lug	gold	187	1	188	1			188	1	8	12	0/1	1/256	0.6638603238685231	-0.3315035978125709	0.19	1.0	1/4	actual source Frame; no instance transform
+88	third-wheel-lug-20	separate schematic radial lug	gold	189	1	190	1			190	1	8	12	0/1	1/256	0.7322265080417237	-0.2977891267923433	0.19	1.0	1/4	actual source Frame; no instance transform
+89	third-wheel-lug-21	separate schematic radial lug	gold	191	1	192	1			192	1	8	12	0/1	1/256	0.7895372237838614	-0.24752897800922008	0.19	1.0	1/4	actual source Frame; no instance transform
+90	third-wheel-lug-22	separate schematic radial lug	gold	193	1	194	1			194	1	8	12	0/1	1/256	0.831886840527545	-0.18414829754394843	0.19	1.0	1/4	actual source Frame; no instance transform
+91	third-wheel-lug-23	separate schematic radial lug	gold	195	1	196	1			196	1	8	12	0/1	1/256	0.8563893018777433	-0.1119663740287096	0.19	1.0	1/4	actual source Frame; no instance transform
+92	third-wheel-arbor	separate arbor-like post	steel	197	1	198	1			198	1	24	44	9/144115188075855872	1/256	0.57	-0.055	0.32	0.5	3/4	actual source Frame; no instance transform
+93	escape-study	pierced schematic wheel blank	brass	199	1	200	1	201	1	202	1	112	224	43980465111043/45035996273704960	1/256	0.27	-0.52	0.28	1.0	1/4	actual source Frame; no instance transform
+94	escape-study-lug-00	separate schematic radial lug	brass	203	1	204	1			204	1	8	12	0/1	1/256	0.5311923414380795	-0.49944371691930467	0.28	1.0	1/4	actual source Frame; no instance transform
+95	escape-study-lug-01	separate schematic radial lug	brass	205	1	206	1			206	1	8	12	0/1	1/256	0.5120564375179572	-0.4197369407203465	0.28	1.0	1/4	actual source Frame; no instance transform
+96	escape-study-lug-02	separate schematic radial lug	brass	207	1	208	1			208	1	8	12	0/1	1/256	0.4692263629872081	-0.3498446113374919	0.28	1.0	1/4	actual source Frame; no instance transform
+97	escape-study-lug-03	separate schematic radial lug	brass	209	1	210	1			210	1	8	12	0/1	1/256	0.4068946239555786	-0.29660827693922787	0.28	1.0	1/4	actual source Frame; no instance transform
+98	escape-study-lug-04	separate schematic radial lug	brass	211	1	212	1			212	1	8	12	0/1	1/256	0.33116268533024723	-0.2652390808558088	0.28	1.0	1/4	actual source Frame; no instance transform
+99	escape-study-lug-05	separate schematic radial lug	brass	213	1	214	1			214	1	8	12	0/1	1/256	0.24944371691930467	-0.2588076585619205	0.28	1.0	1/4	actual source Frame; no instance transform
+100	escape-study-lug-06	separate schematic radial lug	brass	215	1	216	1			216	1	8	12	0/1	1/256	0.1697369407203465	-0.2779435624820429	0.28	1.0	1/4	actual source Frame; no instance transform
+101	escape-study-lug-07	separate schematic radial lug	brass	217	1	218	1			218	1	8	12	0/1	1/256	0.09984461133749192	-0.3207736370127919	0.28	1.0	1/4	actual source Frame; no instance transform
+102	escape-study-lug-08	separate schematic radial lug	brass	219	1	220	1			220	1	8	12	0/1	1/256	0.046608276939227866	-0.3831053760444214	0.28	1.0	1/4	actual source Frame; no instance transform
+103	escape-study-lug-09	separate schematic radial lug	brass	221	1	222	1			222	1	8	12	0/1	1/256	0.015239080855808773	-0.45883731466975275	0.28	1.0	1/4	actual source Frame; no instance transform
+104	escape-study-lug-10	separate schematic radial lug	brass	223	1	224	1			224	1	8	12	0/1	1/256	0.00880765856192045	-0.5405562830806953	0.28	1.0	1/4	actual source Frame; no instance transform
+105	escape-study-lug-11	separate schematic radial lug	brass	225	1	226	1			226	1	8	12	0/1	1/256	0.027943562482042855	-0.6202630592796535	0.28	1.0	1/4	actual source Frame; no instance transform
+106	escape-study-lug-12	separate schematic radial lug	brass	227	1	228	1			228	1	8	12	0/1	1/256	0.0707736370127918	-0.690155388662508	0.28	1.0	1/4	actual source Frame; no instance transform
+107	escape-study-lug-13	separate schematic radial lug	brass	229	1	230	1			230	1	8	12	0/1	1/256	0.1331053760444215	-0.7433917230607723	0.28	1.0	1/4	actual source Frame; no instance transform
+108	escape-study-lug-14	separate schematic radial lug	brass	231	1	232	1			232	1	8	12	0/1	1/256	0.20883731466975264	-0.7747609191441913	0.28	1.0	1/4	actual source Frame; no instance transform
+109	escape-study-lug-15	separate schematic radial lug	brass	233	1	234	1			234	1	8	12	0/1	1/256	0.2905562830806955	-0.7811923414380795	0.28	1.0	1/4	actual source Frame; no instance transform
+110	escape-study-lug-16	separate schematic radial lug	brass	235	1	236	1			236	1	8	12	0/1	1/256	0.3702630592796534	-0.7620564375179573	0.28	1.0	1/4	actual source Frame; no instance transform
+111	escape-study-lug-17	separate schematic radial lug	brass	237	1	238	1			238	1	8	12	0/1	1/256	0.4401553886625082	-0.7192263629872081	0.28	1.0	1/4	actual source Frame; no instance transform
+112	escape-study-lug-18	separate schematic radial lug	brass	239	1	240	1			240	1	8	12	0/1	1/256	0.49339172306077206	-0.6568946239555788	0.28	1.0	1/4	actual source Frame; no instance transform
+113	escape-study-lug-19	separate schematic radial lug	brass	241	1	242	1			242	1	8	12	0/1	1/256	0.5247609191441913	-0.5811626853302472	0.28	1.0	1/4	actual source Frame; no instance transform
+114	escape-study-arbor	separate arbor-like post	steel	243	1	244	1			244	1	24	44	0/1	1/256	0.27	-0.52	0.41000000000000003	0.5	3/4	actual source Frame; no instance transform
+115	balance-rim	pierced balance-like ring	gold	245	1	246	1	247	1	248	1	128	256	879609302220843/450359962737049600	1/256	-0.49	-0.44	0.38	1.0	1/4	actual source Frame; no instance transform
+116	balance-spoke-0	separate balance-like spoke	brass	249	1	250	1			250	1	8	12	0/1	1/256	-0.36875644347017855	-0.37	0.4	1.0	1/4	actual source Frame; no instance transform
+117	balance-spoke-1	separate balance-like spoke	brass	251	1	252	1			252	1	8	12	0/1	1/256	-0.6112435565298214	-0.36999999999999994	0.4	1.0	1/4	actual source Frame; no instance transform
+118	balance-spoke-2	separate balance-like spoke	brass	253	1	254	1			254	1	8	12	0/1	1/256	-0.49	-0.5800000000000001	0.4	1.0	1/4	actual source Frame; no instance transform
+119	balance-hub	pierced balance-like hub	silver	255	1	256	1	257	1	258	1	96	192	439804651110437/450359962737049600	1/256	-0.49	-0.44	0.47	1.0	1/4	actual source Frame; no instance transform
+120	bearing-0	pierced ruby-colored bearing study	ruby	259	1	260	1	261	1	262	1	64	128	879609302220831/450359962737049600	1/256	-0.56	0.4	0.37	0.5	1/4	actual source Frame; no instance transform
+121	bearing-seat-0	separate metallic bearing seat	silver	263	1	264	1	265	1	266	1	64	128	879609302220831/450359962737049600	1/256	-0.56	0.4	0.245	0.5	1/4	actual source Frame; no instance transform
+122	bearing-1	pierced ruby-colored bearing study	ruby	267	1	268	1	269	1	270	1	64	128	1759218604441709/900719925474099200	1/256	0.19	0.48	0.45	0.5	1/4	actual source Frame; no instance transform
+123	bearing-seat-1	separate metallic bearing seat	silver	271	1	272	1	273	1	274	1	64	128	1759218604441659/900719925474099200	1/256	0.19	0.48	0.325	0.5	1/4	actual source Frame; no instance transform
+124	bearing-2	pierced ruby-colored bearing study	ruby	275	1	276	1	277	1	278	1	64	128	7036874417766611/3602879701896396800	1/256	0.57	-0.055	0.54	0.5	1/4	actual source Frame; no instance transform
+125	bearing-seat-2	separate metallic bearing seat	silver	279	1	280	1	281	1	282	1	64	128	7036874417766611/3602879701896396800	1/256	0.57	-0.055	0.41500000000000004	0.5	1/4	actual source Frame; no instance transform
+126	bearing-3	pierced ruby-colored bearing study	ruby	283	1	284	1	285	1	286	1	64	128	879609302220831/450359962737049600	1/256	0.27	-0.52	0.63	0.5	1/4	actual source Frame; no instance transform
+127	bearing-seat-3	separate metallic bearing seat	silver	287	1	288	1	289	1	290	1	64	128	879609302220831/450359962737049600	1/256	0.27	-0.52	0.505	0.5	1/4	actual source Frame; no instance transform
+128	bearing-4	pierced ruby-colored bearing study	ruby	291	1	292	1	293	1	294	1	64	128	879609302220831/450359962737049600	1/256	-0.49	-0.44	0.78	0.5	1/4	actual source Frame; no instance transform
+129	bearing-seat-4	separate metallic bearing seat	silver	295	1	296	1	297	1	298	1	64	128	879609302220831/450359962737049600	1/256	-0.49	-0.44	0.655	0.5	1/4	actual source Frame; no instance transform
+130	bearing-5	pierced ruby-colored bearing study	ruby	299	1	300	1	301	1	302	1	64	128	1759218604441659/900719925474099200	1/256	0.14	0.87	0.7	0.5	1/4	actual source Frame; no instance transform
+131	bearing-seat-5	separate metallic bearing seat	silver	303	1	304	1	305	1	306	1	64	128	1759218604441659/900719925474099200	1/256	0.14	0.87	0.575	0.5	1/4	actual source Frame; no instance transform
+132	bearing-6	pierced ruby-colored bearing study	ruby	307	1	308	1	309	1	310	1	64	128	3518437208883299/1801439850948198400	1/256	-0.1	-0.94	0.55	0.5	1/4	actual source Frame; no instance transform
+133	bearing-seat-6	separate metallic bearing seat	silver	311	1	312	1	313	1	314	1	64	128	3518437208883299/1801439850948198400	1/256	-0.1	-0.94	0.42500000000000004	0.5	1/4	actual source Frame; no instance transform
+134	fastener-00	schematic solid fastener head	silver	315	1	316	1			316	1	16	28	0/1	1/256	1.23	0.0	-0.24	0.5	1/4	actual source Frame; no instance transform
+135	fastener-slot-00	separate raised head stripe, not machined slot	steel	317	1	318	1			318	1	8	12	0/1	1/256	1.23	0.0	-0.165	0.5	1/4	actual source Frame; no instance transform
+136	fastener-01	schematic solid fastener head	silver	319	1	320	1			320	1	16	28	0/1	1/256	1.0652112466548596	0.6149999999999999	-0.24	0.5	1/4	actual source Frame; no instance transform
+137	fastener-slot-01	separate raised head stripe, not machined slot	steel	321	1	322	1			322	1	8	12	0/1	1/256	1.0652112466548596	0.6149999999999999	-0.165	0.5	1/4	actual source Frame; no instance transform
+138	fastener-02	schematic solid fastener head	silver	323	1	324	1			324	1	16	28	0/1	1/256	0.6150000000000001	1.0652112466548596	-0.24	0.5	1/4	actual source Frame; no instance transform
+139	fastener-slot-02	separate raised head stripe, not machined slot	steel	325	1	326	1			326	1	8	12	0/1	1/256	0.6150000000000001	1.0652112466548596	-0.165	0.5	1/4	actual source Frame; no instance transform
+140	fastener-03	schematic solid fastener head	silver	327	1	328	1			328	1	16	28	41053819803987/40564819207303340847894502572032	1/256	7.531577814756222e-17	1.23	-0.24	0.5	1/4	actual source Frame; no instance transform
+141	fastener-slot-03	separate raised head stripe, not machined slot	steel	329	1	330	1			330	1	8	12	41053819803987/40564819207303340847894502572032	1/256	7.531577814756222e-17	1.23	-0.165	0.5	1/4	actual source Frame; no instance transform
+142	fastener-04	schematic solid fastener head	silver	331	1	332	1			332	1	16	28	0/1	1/256	-0.6149999999999998	1.0652112466548596	-0.24	0.5	1/4	actual source Frame; no instance transform
+143	fastener-slot-04	separate raised head stripe, not machined slot	steel	333	1	334	1			334	1	8	12	0/1	1/256	-0.6149999999999998	1.0652112466548596	-0.165	0.5	1/4	actual source Frame; no instance transform
+144	fastener-05	schematic solid fastener head	silver	335	1	336	1			336	1	16	28	0/1	1/256	-1.0652112466548596	0.6149999999999999	-0.24	0.5	1/4	actual source Frame; no instance transform
+145	fastener-slot-05	separate raised head stripe, not machined slot	steel	337	1	338	1			338	1	8	12	0/1	1/256	-1.0652112466548596	0.6149999999999999	-0.165	0.5	1/4	actual source Frame; no instance transform
+146	fastener-06	schematic solid fastener head	silver	339	1	340	1			340	1	16	28	41053819803987/20282409603651670423947251286016	1/256	-1.23	1.5063155629512443e-16	-0.24	0.5	1/4	actual source Frame; no instance transform
+147	fastener-slot-06	separate raised head stripe, not machined slot	steel	341	1	342	1			342	1	8	12	29314924373677/20282409603651670423947251286016	1/256	-1.23	1.5063155629512443e-16	-0.165	0.5	1/4	actual source Frame; no instance transform
+148	fastener-07	schematic solid fastener head	silver	343	1	344	1			344	1	16	28	0/1	1/256	-1.0652112466548598	-0.6149999999999997	-0.24	0.5	1/4	actual source Frame; no instance transform
+149	fastener-slot-07	separate raised head stripe, not machined slot	steel	345	1	346	1			346	1	8	12	0/1	1/256	-1.0652112466548598	-0.6149999999999997	-0.165	0.5	1/4	actual source Frame; no instance transform
+150	fastener-08	schematic solid fastener head	silver	347	1	348	1			348	1	16	28	0/1	1/256	-0.6150000000000005	-1.0652112466548591	-0.24	0.5	1/4	actual source Frame; no instance transform
+151	fastener-slot-08	separate raised head stripe, not machined slot	steel	349	1	350	1			350	1	8	12	0/1	1/256	-0.6150000000000005	-1.0652112466548591	-0.165	0.5	1/4	actual source Frame; no instance transform
+152	fastener-09	schematic solid fastener head	silver	351	1	352	1			352	1	16	28	15395182426495/5070602400912917605986812821504	1/256	-2.2594733444268667e-16	-1.23	-0.24	0.5	1/4	actual source Frame; no instance transform
+153	fastener-slot-09	separate raised head stripe, not machined slot	steel	353	1	354	1			354	1	8	12	2197003617921/5070602400912917605986812821504	1/256	-2.2594733444268667e-16	-1.23	-0.165	0.5	1/4	actual source Frame; no instance transform
+154	fastener-10	schematic solid fastener head	silver	355	1	356	1			356	1	16	28	0/1	1/256	0.6150000000000001	-1.0652112466548596	-0.24	0.5	1/4	actual source Frame; no instance transform
+155	fastener-slot-10	separate raised head stripe, not machined slot	steel	357	1	358	1			358	1	8	12	0/1	1/256	0.6150000000000001	-1.0652112466548596	-0.165	0.5	1/4	actual source Frame; no instance transform
+156	fastener-11	schematic solid fastener head	silver	359	1	360	1			360	1	16	28	0/1	1/256	1.0652112466548591	-0.6150000000000005	-0.24	0.5	1/4	actual source Frame; no instance transform
+157	fastener-slot-11	separate raised head stripe, not machined slot	steel	361	1	362	1			362	1	8	12	0/1	1/256	1.0652112466548591	-0.6150000000000005	-0.165	0.5	1/4	actual source Frame; no instance transform

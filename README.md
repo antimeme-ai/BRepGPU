@@ -17,6 +17,17 @@ reproduces the image exactly and records evaluation,setup,qualification and CPU
 display costs. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
 remain available.
 
+[![Openwork study 01 — actual profile, extrusion, bore and mesh](assets/watch/openwork-study-01.png)](results/watch-2026-10-15/REPORT.md)
+
+**Openwork study 01:** an original watch-inspired assembly built from 158 actual
+modeled solids. Its 23 pierced parts consume the real
+[profile → extrusion → bore → mesh chain](docs/FEATURE_BORE.md), with complete
+ordered ancestry back to their original outlines and cutters. The 5,764-triangle
+scene is schematic and nonfunctional; tooth-like lugs and spokes are separate
+solids. Construction, meshing and these views run on CPU.
+[Images, source/history exports and scoped costs](results/watch-2026-10-15/REPORT.md) ·
+[Target and design notes](docs/WATCH_TARGET.md).
+
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen
 it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
@@ -38,7 +49,9 @@ is now delivered. [Convex-profile extrusion](docs/EXTRUSION.md),
 and [signed analytic offset](docs/OFFSET.md) are delivered.
 The planned breadth sweep is complete. The [stocktake and proposed next tranche](docs/POST_BREADTH_ROADMAP.md)
 cover result meshing, composable history, external qualification and measured
-runtime ownership; no language rewrite or general modeling support is implied.
+runtime ownership. Actual extrusion/bore composition is now delivered; external
+adapters and runtime/language study remain. No language rewrite or general
+modeling support is implied.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
