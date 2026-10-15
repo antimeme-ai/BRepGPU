@@ -1,5 +1,16 @@
 # Whole OM10 source capability checkpoint
 
+Later correction: the historical extraction below used a pre-read processing
+flag assignment that ReadFile discarded; default FixShape ran. Its stated
+no-processing policy was inaccurate. Both adapters now assert zero actual
+operations after read and before/after transfer. The raw reference export
+preserves original geometry and face orientations, while the owned no-processing
+path needs explicit UV reconstruction. That implementation is focused-tested
+but complete source qualification remains pending; see the
+[UV source subplan](2026-10-15-om10-explicit-uv-source-subplan.md) and
+[reader lifecycle study](../papers/2026-10-15-step-shape-processing-lifecycle.md).
+The original checkpoint text follows as historical context.
+
 2026-10-15. After reviewed design/plan and actual fleet missing-API red, the
 isolated pinned OCCT8.0.1 adapter and owned immutable BGSRC001 reader are
 implemented. This checkpoint delivers source extraction, not a completed mesh
