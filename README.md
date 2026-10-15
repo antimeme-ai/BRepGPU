@@ -32,7 +32,7 @@ actual foreign ASCII USD BRep surfaces into owned CPU/P100 patches with original
 face/chart identities and explicit unsupported outcomes. Trims remain uninterpreted.
 An owned [through-bore Boolean with complete source history](docs/BOOLEANS.md)
 is now delivered. Feature construction is underway: [convex-profile extrusion](docs/EXTRUSION.md)
-and [full profile revolution](docs/REVOLUTION.md) are delivered; fillet and offset remain separate units.
+[full profile revolution](docs/REVOLUTION.md) and a [complete box-edge fillet](docs/FILLET.md) are delivered; analytic offset is next.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -92,12 +92,29 @@ BRepGPU evaluator.
 [Owned through-bore Boolean and history](docs/BOOLEANS.md) ·
 [Owned convex-profile extrusion](docs/EXTRUSION.md) ·
 [Owned full profile revolution](docs/REVOLUTION.md) ·
+[Owned box-edge fillet](docs/FILLET.md) ·
 [Topology IDs and packed snapshots](docs/TOPOLOGY.md) ·
 [Qualified P100 CUDA toolchain](docs/CUDA_TOOLCHAIN.md)
 
 CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
+
+## Feature construction: a complete source-edge fillet
+
+One selected vertical edge of an actual owned box now rounds into a closed solid.
+The six original plane carriers retain their control and parameter bits; exact
+cap arcs, shortened side trims and a rational circular band close the boundary.
+Two complete tangent contact rails preserve both original and blend UV maps.
+
+![Actual rounded box boundaries and P100-evaluated samples](results/fillet-2026-10-15/costs/mid-cuda-device0-threads1-r1/fillet.svg)
+
+All four original vertical edges are supported. The result has 10 vertices,
+15 edges, 30 distinct uses and complete ancestry from 62 source entities to
+76 output origins. CPU constructs the feature; CPU/both-P100 native consumers
+sample its carriers and read actual adjacency. Caps meet the band sharply.
+[API/support](docs/FILLET.md) · [Qualification, foreign comparisons and complete costs](results/fillet-2026-10-15/REPORT.md).
+Analytic offset is the next breadth unit, before integration and tuning.
 
 ## Feature construction: a full profile revolution
 
@@ -114,7 +131,7 @@ CPU/both-P100 consumers evaluate actual geometry, oriented normals and adjacency
 [API/support](docs/REVOLUTION.md) · [Qualification and costs](results/revolution-2026-10-15/REPORT.md).
 The first foreign triangle agrees on bounds and boundary witnesses; its volume
 comparison remains outside the declared limit and is recorded as a failure.
-Fillet is next, followed by offset.
+The [box-edge fillet](docs/FILLET.md) is also delivered; analytic offset is next.
 
 ## Feature construction: an actual profile extrusion
 
@@ -131,7 +148,7 @@ consumers sample its carriers and read actual adjacency. Independent integer-
 square-root intervals qualify non-axis unit normals; tiny edges and 32-vertex
 profiles have direct fleet cases. [API/support](docs/EXTRUSION.md) ·
 [Qualification, foreign comparisons and complete costs](results/extrusion-2026-10-15/REPORT.md).
-Fillet and offset remain separate feature units.
+The [box-edge fillet](docs/FILLET.md) is also delivered; analytic offset remains a separate feature unit.
 
 ## Owned solid operations: a through-bore cut with history
 
