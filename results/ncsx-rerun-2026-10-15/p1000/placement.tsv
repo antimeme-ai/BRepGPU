@@ -1,0 +1,5 @@
+field	value
+requested_backend	cuda
+requested_device	0
+requested_threads	1
+observed_native_backend_tag	1

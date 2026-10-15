@@ -108,3 +108,11 @@ Source/design reviews precede this run; the final
 [artifact review](../../papers/2026-10-15-ncsx-artifact-review.md) checks the saved
 records and published scope. Full-image inspection confirmed coil/plasma
 separation, depth crossings, complete framing and readable provenance captions.
+
+
+## Preserved baseline and later rerun
+
+A [post-breadth matched CPU/P100 rerun](../ncsx-rerun-2026-10-15/REPORT.md)
+reproduces all nine original P100 artifacts byte-for-byte and adds first current
+phase timings. Original study00 remains unchanged and has no historical timing
+baseline; the later report separates actual scene equivalence from timing scope.

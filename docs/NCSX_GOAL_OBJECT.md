@@ -50,6 +50,18 @@ fit, framing, material or display sampling changes, record it as such. A new
 light/camera alone does not demonstrate a geometry-kernel improvement. Preserve
 previous scene/data snapshots so differences can be inspected directly.
 
+## Post-breadth matched rerun
+
+The [fresh CPU1/P1000 rerun](../results/ncsx-rerun-2026-10-15/REPORT.md) reproduces
+study00 exactly: P100 controls,rawjets,scene,qualification and image are byte-
+identical; CPU geometry pixels match too. New narrow feature constructors are
+not invoked by this fitted-surface scene. First matched timing observations
+separate native evaluation (CPU1:16.310ms/P1000:1.430ms), cold native setup-through-
+cleanup (119.862/570.840ms), CPU display rendering/writes (9.479/9.125s) and full
+qualified callers (41.024/40.379s). Original study00 was untimed; no historical
+speedup or visual improvement is claimed. Preserve this scene when comparing
+future geometry or integration changes.
+
 ## Work toward the complete goal
 
 Acquire and preserve a chosen engineering revision for the actual vessel,
@@ -70,7 +82,7 @@ From the owned fleet checkout, select an existing qualified core/CUDA plugin:
 
 ```sh
 PYTHONPATH=python BREPGPU_LIBRARY=build/pair-release/libbrepgpu.so \
-  python3 examples/render_ncsx.py --backend cuda --device 0 \
+  python3 examples/render_ncsx.py --backend cuda --device 0 --threads 1 \
   --output-directory results/local-ncsx/study-00
 ```
 
