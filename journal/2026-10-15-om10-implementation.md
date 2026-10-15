@@ -76,3 +76,33 @@ Root complete caller now writes actual source/BOM/placement/style/layout tables,
 native inputs and actual output PNG/labeled SVG. Prepare/evaluate modes never
 rasterize the watch. It awaits whole-source integration and independent review;
 no actual watch render or timing result is claimed at this checkpoint.
+
+First full extraction retained107 solids/9162 faces/9768 loops/51742 coedges/
+25871 edges/17129 vertices. All actual edges are SameParameter; recovered UV
+curves reach degree5, requiring that actual owned evaluator support. Independent
+original STEP checks passed source ID sets, all original vertices, analytic
+carrier frames/parameters and all635 spline control nets/degrees/knots, with
+maximum observed coordinate difference2.220446049250313e-16mm. These are direct
+original-byte checks, not reader self-parity. Raw curve/assembly checks continue.
+
+Strict translated-topology audit exposed a real sphere-pole UV connector on
+face165503. Original source has three coedges and a pole vertex; foreign import
+adds a UV-only edge. The reviewed ChartClosure amendment retains both incoming
+end/outgoing start UVs at that original vertex, preserves all original IDs and
+marks generated chart connectivity separately. Constant-pole/periodic/source
+vertex checks are mandatory. Native receives only noncollapsed physical triangles;
+coverage and approximation still account for every UV cell. All three relevant
+owners accepted this concrete correction before implementation.
+
+First whole mesh also exposed an artificial refinement-depth exhaustion on a
+thin radius14.9925 cylinder. Neighbor-driven splits had incremented a triangle's
+counter without reducing its largest span. Geometry owner changes the counter
+to actual dyadic vertex construction depth, retaining quality and max20; no
+per-face error limit is widened. Complete whole-mesh greens remain outstanding.
+
+Root caller/benchmark code review accepted source primitive mapping, binary
+request format, camera sign and measured process walls. Findings fixed: pin
+reused evaluator headers/actual selected binaries/driver, state CPU GPU-work as
+none, and compare actual resident request bytes to each cold view. Native final
+direct/failure/memory checks and both code reviews are complete; actual complete
+source evaluation/project-only qualification awaits the owned full mesh.

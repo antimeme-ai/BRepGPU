@@ -428,7 +428,15 @@ bool create(const SceneView *view, uint32_t, int32_t device, void **out,
   if (!ok) {
     Error secondary{};
     bool clean = true;
-    selected(*s, &secondary, [&] { cleanup(*s, &secondary, clean); });
+    // No allocation precedes stream creation. A rejected device owns nothing.
+    bool cleaned = !s->stream || selected(*s, &secondary, [&] {
+      cleanup(*s, &secondary, clean);
+    });
+    if ((!clean || !cleaned) && e) {
+      size_t used = std::strlen(e->message);
+      std::snprintf(e->message + used, sizeof(e->message) - used,
+                    "; cleanup: %s", secondary.message);
+    }
     delete s;
     return false;
   }

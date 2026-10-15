@@ -92,6 +92,32 @@ def scalar_pixels(points, triangles, instances, *, width=4, height=4, supersampl
     return tuple(output)
 
 
+def source_jet_scene(carrier_queries):
+    """Encode original-parameter queries without relying on the native writer."""
+    from brepgpu.imported_oracles import carrier_jet
+    vertices, carriers, controls, expected = [], [], [], []
+    control_count = 0
+    for slot, (carrier, queries) in enumerate(carrier_queries):
+        for uv in queries:
+            jet = carrier_jet(carrier, *uv)
+            point = tuple(map(float, jet[0]))
+            vertices.append(struct.pack('<5dIIQ', *point, *uv, slot, 0, len(vertices) + 1))
+            expected.append((carrier, uv, jet))
+        count = len(carrier.controls) // 4 if carrier.kind == 6 else 0
+        carriers.append(struct.pack('<QII18dQQIIQ', carrier.id, carrier.kind, 0,
+                                    *carrier.frame, *carrier.radii, *carrier.uv_bounds,
+                                    control_count, count, *carrier.degrees, 0))
+        if count:
+            controls.append(struct.pack('<' + 'd' * len(carrier.controls), *carrier.controls))
+            control_count += count
+    header = struct.pack('<8sII8Q', b'BGMESH01', 1, 0, 1, 1, len(vertices), 0,
+                         len(carriers), 1, control_count, 0)
+    definition = struct.pack('<5Q', 41, 0, len(vertices), 0, 0)
+    instance = struct.pack('<QII15d', 7, 0, 0, *MATRIX, 0., 0., 0.)
+    return (header + definition + instance + b''.join(vertices) + b''.join(carriers) +
+            struct.pack('<4d', .2, .4, .8, .5) + b''.join(controls)), tuple(expected)
+
+
 class NativeDirectTests(unittest.TestCase):
     def run_native(self, directory, *, raster, scene_bytes=None, view_bytes=None):
         directory = Path(directory)
@@ -211,6 +237,71 @@ class NativeDirectTests(unittest.TestCase):
                 self.assertEqual(row[6:9], (3.+z, 4.+y, 5.-x))
                 self.assertEqual(row[9:12], (-1., 0., 0.))
             self.assertFalse(tuple(output.glob('*.rgba')), 'project-only emitted image output')
+
+    def test_all_analytic_and_rational_original_domain_first_jets(self):
+        from brepgpu.imported_source import Carrier
+        from brepgpu.imported_oracles import cross
+        frame = (1., -2., 3., 0., 1., 0., 1., 0., 0., 0., 0., 1.)  # indirect axes
+        queries = ((-.25, -.5), (.125, .25), (.5, .375))
+        kinds = ((1, (0., 0.)), (2, (2., 0.)), (3, (1., .3)),
+                 (4, (2., 0.)), (5, (3., 1.)))
+        inputs = [(Carrier(101 + kind, kind, frame, radii, (-1., 1., -1., 1.)), queries)
+                  for kind, radii in kinds]
+        controls = (-1., -1., 0., 1., -1., 1., .25, 1.,
+                    0., -2., 1., 2., 0., 2., 2., 2.,
+                    1., -1., 0., 1., 1., 1., -.25, 1.)
+        inputs.append((Carrier(201, 6, (0.,)*12, (0., 0.), (-2., 2., 3., 5.),
+                               (2, 1), (-2., 2.), (3, 3), (3., 5.), (2, 2), (3, 2), controls),
+                       ((-2., 3.), (-.5, 3.75), (2., 5.))))
+        data, expected = source_jet_scene(tuple(inputs))
+        with tempfile.TemporaryDirectory() as directory:
+            output = self.run_native(directory, raster=False, scene_bytes=data)
+            jets = (output / 'source-jets.bin').read_bytes()
+            self.assertEqual(jets[:16], struct.pack('<8sQ', b'BGJETS01', len(expected)))
+            for index, (_, _, jet) in enumerate(expected):
+                row = struct.unpack_from('<15dII', jets, 16 + index * 128)
+                for observed, wanted in zip(row[:9], (*jet[0], *jet[1], *jet[2])):
+                    self.assertAlmostEqual(observed, float(wanted), delta=2.**-38 * max(1., abs(float(wanted))))
+                normal = tuple(map(float, cross(jet[1], jet[2])))
+                length = math.sqrt(sum(x*x for x in normal))
+                for observed, wanted in zip(row[9:12], normal):
+                    self.assertAlmostEqual(observed, wanted/length, delta=2.**-38)
+                self.assertEqual(row[15:], (0, 0))
+
+    def test_sphere_pole_and_cone_apex_limiting_normals_are_finite_and_oriented(self):
+        from brepgpu.imported_source import Carrier
+        frame = (0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.)
+        sphere = Carrier(301, 4, frame, (2., 0.), (-1., 1., -math.pi/2, math.pi/2))
+        cone = Carrier(302, 3, frame, (0., math.pi/6), (-1., 1., 0., 1.))
+        data, expected = source_jet_scene(((sphere, ((0., math.pi/2), (0., -math.pi/2))),
+                                          (cone, ((0., 0.), (.5, 0.)))))
+        wanted = ((0., 0., 1.), (0., 0., -1.),
+                  (math.cos(math.pi/6), 0., -math.sin(math.pi/6)),
+                  (math.cos(math.pi/6)*math.cos(.5), math.cos(math.pi/6)*math.sin(.5), -math.sin(math.pi/6)))
+        with tempfile.TemporaryDirectory() as directory:
+            output = self.run_native(directory, raster=False, scene_bytes=data)
+            jets = (output / 'source-jets.bin').read_bytes()
+            self.assertEqual(len(jets), 16 + 128 * len(expected))
+            for index, normal in enumerate(wanted):
+                row = struct.unpack_from('<15dII', jets, 16 + index * 128)
+                self.assertTrue(all(math.isfinite(value) for value in row[:15]))
+                self.assertEqual(row[15:], (0, 1))
+                for observed, value in zip(row[9:12], normal):
+                    self.assertAlmostEqual(observed, value, delta=2.**-38)
+
+    def test_multiblock_tiles_and_retained_request_resize_have_known_exact_pixels(self):
+        large = views(raster=True, width=1024, height=256, flags=0)
+        small = views(raster=True, width=4, height=4, flags=0)
+        requests = struct.pack('<8sII', b'BGVIEW01', 1, 2) + large[16:] + small[16:]
+        with tempfile.TemporaryDirectory() as directory:
+            output = self.run_native(directory, raster=True, view_bytes=requests)
+            for frame, count, inside in ((0, 1024*256, {0, 1, 1024}), (1, 16, {0, 1, 4})):
+                prefix = output / f'frame-{frame:06}'
+                data = prefix.with_suffix('.primitive').read_bytes()
+                self.assertEqual(len(data), count * 8)
+                ids = struct.unpack('<' + str(count) + 'Q', data)
+                self.assertEqual(tuple(i for i, id in enumerate(ids) if id != U64_MAX), tuple(sorted(inside)))
+                self.assertTrue(all(ids[i] == 0 for i in inside))
 
 
 if __name__ == '__main__':

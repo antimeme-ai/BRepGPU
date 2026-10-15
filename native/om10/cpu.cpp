@@ -191,8 +191,11 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
             "nonfinite or out-of-range projection", bad);
       return false;
     }
-    if (output->projected)
+    if (output->projected) {
+      t = Clock::now();
       std::copy(s.points.begin(), s.points.end(), output->projected);
+      times->download += elapsed(t);
+    }
     if (r.flags & PROJECT_ONLY)
       return true;
     uint32_t width = r.width * r.supersample, height = r.height * r.supersample,
