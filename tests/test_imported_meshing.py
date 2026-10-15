@@ -100,7 +100,63 @@ def tangent_circle_sheet_fixture(inner_angle=1.36):
         (Carrier(70,1,frame,(0.,0.),(-2.,2.,-2.,2.)),),curves)
 
 
+def spline_endpoint_sheet_fixture(gap=.0003,vertex_offset=.0002):
+    """Original split spline boundary with one declared off-curve shared vertex."""
+    uv=((0.,0.),(.45,0.),(1.,0.),(1.,1.),(0.,1.))
+    xyz=tuple((u,v,-vertex_offset if i==1 else 0.) for i,(u,v) in enumerate(uv))
+    spatial=[];pcurves=[];edges=[];coedges=[]
+    for i in range(5):
+        a=uv[i];b=uv[(i+1)%5]
+        if i==1:a=(a[0]+gap,a[1])
+        controls=(*a,0.,1.,*b,0.,1.)
+        spatial.append(Curve(101+i,3,5,ZERO_FRAME,(0.,0.),(0.,1.),1,
+                             (0.,1.),(2,2),controls,(CurveSpan((0.,1.),1,controls),)))
+        pcid=2**63+11+i
+        frame=(*a,0.,b[0]-a[0],b[1]-a[1],0.,0.,0.,0.,0.,0.,0.)
+        pcurves.append(Curve(pcid,2,1,frame,(0.,0.),(0.,1.)))
+        edges.append(Edge(40+i,(50+i,50+(i+1)%5),101+i,(0.,1.),True,True,False,.0005))
+        coedges.append(Coedge(11+i,40+i,60,1,pcid,(0.,1.)))
+    controls=(0.,0.,0.,1.,0.,1.,0.,1.,1.,0.,0.,1.,1.,1.,0.,1.)
+    carrier=Carrier(70,6,ZERO_FRAME,(0.,0.),(0.,1.,0.,1.),(1,1),
+                    (0.,1.),(2,2),(0.,1.),(2,2),(2,2),controls,
+                    (SurfaceSpan((0.,1.,0.,1.),(1,1),controls),))
+    return ImportedSource('ad'*32,1.,0.,10,'independent split-boundary spline sheet',
+        (Product(10,'split spline sheet','fixture',20),),
+        (SolidDefinition(20,10,(30,),tuple(e.id for e in edges),tuple(50+i for i in range(5))),),(),
+        tuple(Vertex(50+i,p,.0005) for i,p in enumerate(xyz)),tuple(edges),tuple(coedges),
+        (Loop(60,30,True,tuple(c.id for c in coedges)),),
+        (Face(30,20,70,1,(60,),0.),),(carrier,),tuple(spatial+pcurves))
+
+
 class ImportedMeshingTests(unittest.TestCase):
+    def test_same_original_spline_joint_chooses_existing_endpoint_with_source_residual(self):
+        from brepgpu.imported_oracles import qualify_domain
+        source=spline_endpoint_sheet_fixture();mesh=mesh_imported(source)
+        self.assertEqual(len(mesh.faces[0].joint_recoveries),1)
+        joint=mesh.faces[0].joint_recoveries[0]
+        self.assertEqual(joint.kind,'spline_joint_endpoint_candidate')
+        self.assertEqual((joint.source_vertex_id,joint.incoming.coedge_id,joint.outgoing.coedge_id),(51,11,12))
+        self.assertEqual(joint.uv,(.45,0.))
+        self.assertEqual(joint.outgoing.pcurve_uv,(.4503,0.))
+        self.assertGreaterEqual(dict(mesh.error_metrics)['max_edge_chord_bound_mm'],math.hypot(.0003,.0002)-2**-44)
+        qualify_domain(tuple(tuple(o.uv for o in loop) for loop in mesh.faces[0].boundary_loops),
+                       tuple(tuple(c.uv for c in t.corners) for t in mesh.triangles))
+        original=source.curve(102).controls
+        self.assertEqual(mesh.source.curve(102).controls,original)
+        for edge in source.edges:
+            record=next(r for r in mesh.edge_samples if r.edge_id==edge.id)
+            self.assertEqual((record.parameters[0],record.parameters[-1]),edge.parameter_range)
+
+    def test_actual_original_curve_endpoint_departure_is_in_world_chord_budget(self):
+        source=spline_endpoint_sheet_fixture(gap=0.,vertex_offset=0.)
+        def displaced(epsilon):
+            line=Curve(101,3,1,(0.,0.,epsilon,.45,0.,0.,0.,0.,0.,0.,0.,0.),(0.,0.),(0.,1.))
+            return replace(source,curves=tuple(line if c.id==101 else c for c in source.curves))
+        with self.assertRaisesRegex(ValueError,'original spatial endpoint'):
+            mesh_imported(displaced(.0008))  # Below source gate, above actual chord allocation.
+        mesh=mesh_imported(displaced(.0001))
+        self.assertGreaterEqual(dict(mesh.error_metrics)['max_edge_chord_bound_mm'],.0001)
+
     def test_original_tangent_circles_get_one_simple_budgeted_shared_schedule(self):
         from brepgpu.imported_oracles import qualify_domain
         source=tangent_circle_sheet_fixture();mesh=mesh_imported(source)

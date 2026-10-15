@@ -52,3 +52,15 @@ construction must still account for endpoint UV displacement in the trim bound
 and canonical XYZ displacement in the physical triangle bound. Choosing a UV,
 admitting an inverse family, or changing global numerical grades requires the
 owner's written design and review; none is selected by this study.
+
+Review also exposed a separate existing world-bound omission. Bounding original
+C(t) against the chord joining ideal C(a),C(b) does not bound it against a chord
+whose endpoints are canonical original vertices P(a),P(b). The necessary direct
+triangle-inequality term is max(||C(a)-P(a)||,||C(b)-P(b)||), added to the ideal
+spatial chord bound. The face cell's canonicalXYZ-minus-S(UV) term does not
+generally cover this: take a plane at z0, a source LINE at z=epsilon, and declared
+endpoint vertices on the plane. Ideal curve curvature, UV chord departure and
+surface-canonical displacement all vanish, while the original spatial edge is
+epsilon away. Source residual is an input-consistency limit, not an extra mesh
+error allowance. Add actual measured endpoint departure if this world-bound
+contract is completed; do not add the selected source tolerance wholesale.
