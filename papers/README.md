@@ -522,3 +522,17 @@ cover the exact convex-profile result-to-mesh connection. The
 [actual report](../results/extrusion-mesh-2026-10-15/REPORT.md) retains complete
 source/UV/history and scoped CPU consumers. Relevant direct and compatibility
 checks pass; the bounded unit stops without another certification campaign.
+
+## Actual modeling-chain watch study
+
+The [geometry/source study](2026-10-15-watch-chain-geometry.md),
+[independent oracle study](2026-10-15-watch-chain-oracles.md) and
+[horology/visual study](2026-10-15-watch-visual-study.md) ground the
+[reviewed design](../docs/WATCH_CHAIN_DESIGN.md) and
+[bounded plan](../docs/WATCH_CHAIN_PLAN.md). The continuing geometry review and
+[independent production review](2026-10-15-watch-chain-production-oracle-review.md)
+cover actual extrusion/cutter composition, ordered source maps and the complete
+cap-hole mesh. [API](../docs/FEATURE_BORE.md) and
+[watch target notes](../docs/WATCH_TARGET.md) describe the admitted family and
+schematic visual limits. Original horology sources inform layout; no watch CAD,
+image, dependency or functional mechanism is adopted.

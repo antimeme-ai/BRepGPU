@@ -4,6 +4,29 @@ Operator direction, 2026-10-15: make the next actual composition demonstration
 something unusually compelling, such as a mechanical watch; leave durable notes.
 This supplements the continuing NCSX comparison target, not replaces it.
 
+## Delivered study 01
+
+[Actual images, source/history archive and CPU costs](../results/watch-2026-10-15/REPORT.md)
+are published for158 separately constructed solids:23 actual pierced chains and
+135 convex extrusions, totaling3,152 vertices and5,764 triangles. Both oblique
+and top views display the actual bounded meshes. All158 parts passed independent
+source/geometry/history/domain checks. The [bore API](FEATURE_BORE.md) admits
+off-center circular cuts strictly inside the original convex outline and retains
+ordered actual source maps.17 direct and58 affected compatibility methods pass.
+
+Actual image inspection found overlapping source surfaces and crowded camera
+framing. Component Z placements and camera were corrected, then the actual
+caller was rerun and reviewed; no geometry admission or tolerance was widened.
+Final CPU useful construction/mesh/history work totals20.168s; independent checks
+take29.501s; oblique/top display10.017/10.292s; full caller76.674s. These are one
+final observation with the report's overlapping timing scopes, no speedup claim.
+
+Keep functional gearing, nonconvex/openworked compound bridges, multiple bores,
+interacting cuts, springs/escapement and interference/manufacturing qualification
+as later modeling work. Native/Python ownership, bulk source/history reads and
+retained GPU setup remain return-pass topics. No extra certification campaign
+follows this bounded delivery; external community alpha obligations remain open.
+
 ## Intended first scene
 
 An original skeletonized watch-inspired movement: pierced mainplate/bridges,

@@ -1,0 +1,28 @@
+field	value
+name	hero
+projection	orthographic
+azimuth_degrees	-16.0
+elevation_degrees	57.0
+width	1800
+height	1500
+pixels_per_source_unit	360.0
+center_x	900.0
+center_y	740.0
+actual_parts	158
+actual_triangles	5764
+geometry_transform	none; actual mesh rounded world coordinates
+lighting	oriented flat facets; Lambert plus directional fill and Blinn highlight
+camera_right	0.9612616959383189 -0.27563735581699916 0.0
+camera_up	0.23116893775001762 0.8061818924767714 0.5446390350150271
+camera_toward_viewer	-0.15012286348626408 -0.5235406424727543 0.838670567945424
+light_view	-0.3505965215617034 0.5008521736595763 0.7913464343821306
+ambient_gain	0.23
+diffuse_gain	0.7
+fill_gain	0.18
+fill_view	-.5 -.25 .30
+specular_gain	0.35
+specular_power	35
+depth	maximum interpolated camera Z
+pixel_rule	pixel centers; signed barycentrics; inclusive edge epsilon1e-10
+hidden_surface	CPU barycentric depth buffer
+output	RGBA8 PNG plus SVG presentation

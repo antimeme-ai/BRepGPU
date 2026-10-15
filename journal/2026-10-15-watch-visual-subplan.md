@@ -81,3 +81,25 @@ reconstructed by display. All three source ASTs pass. Root will perform one
 bounded actual-caller rerun, requalifying updated source parts, followed by
 image inspection; no extra test campaign is indicated by these recipe/camera
 changes. This owner has performed no geometry/render execution locally.
+
+## Final saved-image and camera review
+
+Independently viewed both final composed assets,
+`assets/watch/openwork-study-01.png` and `openwork-study-01-top.png`, and read
+the saved hero/top scene TSVs and materials TSV. Accepted. The oblique image
+shows the pierced chassis, layered brass/gold train, open balance-like region,
+silver/blue bridges and ruby collars with readable depth. The prior bridge and
+equal-radius bore speckles are absent. The complete hero clears the footer;
+the top view exposes the actual hole/layout relationship without clipping.
+Captions explicitly name CPU construction/mesh/display, separate parts and
+nonfunctional scope. No functional-watch or fused-gear claim is implied.
+
+Saved camera metadata matches the final source choices: orthographic hero
+azimuth-16°, elevation57°, scale360px/source-unit; top0°/90°, scale385; both
+center(900,740), dimensions1800×1500. Recorded basis vectors, oriented facet
+lighting, light/gains, material colors and depth rule agree with the display
+source. Both records and image captions name158 actual parts and5,764 indexed
+triangles. This review concerns saved presentation/camera consistency; the
+geometry and source-history claims rest on the direct fleet qualification.
+No source tuning, product execution, new tests or further campaign requested.
+Visual consumer unit complete; stop here.

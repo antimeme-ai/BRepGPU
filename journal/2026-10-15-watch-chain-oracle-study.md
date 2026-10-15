@@ -27,3 +27,36 @@ The exact immutable history paths retain actual immediate/extrusion Origin
 objects. Source-height2 has no contained canonical cutter in this bounded
 profile family; valid height511/256 and strict span rejection cover that boundary
 without inventing admissible geometry.
+
+The parent serialized first green on the fleet: all17 direct methods passed in
+36.865s. The one affected compatibility run passed58 existing methods in34.414s.
+No direct-test or production corrections were needed for those runs. This is
+bounded direct operation/mesh evidence, not broad suite certification. Reviewed
+the full production pair independently and saved
+`papers/2026-10-15-watch-chain-production-oracle-review.md`: accepted, no open
+finding. Actual watch caller qualification/rendering follows under parent control.
+
+## Final saved-output inspection
+
+Read final `results/watch-2026-10-15` artifacts only, without executing product
+geometry or extending tests. Aggregate inventory agrees:158 distinct parts,
+23 bored,3152 mesh vertices,5764 triangles; every saved per-part qualification
+is PASS, every saved bound fits world tolerance1/256, and the triangle-to-part
+inventory agrees with each part's count.
+
+Inspected the actual off-center `upper-bridge` and `chassis` source/mesh/history
+exports. Bridge namespaces are original profile5, extrusion6, actual cutter7,
+final result8. Its113 immediate inputs/109 outputs and44 root records retain
+163 ordered paths/305 actual origin steps. Chassis namespaces1,2,3,4 retain
+477 immediate inputs/473 outputs,122 roots,709 paths/1397 steps. Every exported
+ordered step for these two parts matches the corresponding exported actual
+immediate or extrusion origin, including exact map fields and owner keys.
+Original feature controls/UV/Frame and actual cutter wall controls remain in the
+saved results. Distinct seam lifts U0/U4 use opposite shared physical indices.
+
+Bridge's original cutter V is[1/4,3/4]; chassis retains[7/16,9/16] from actual
+feature scale2, cutter scale4 and height1/4. A one-off inspection initially
+assumed the bridge band for both; source-table reading corrected that inspection
+assumption, with no product finding. No product/source/result files changed.
+Saved-output review accepted, no open finding. Complete part files can now be
+packaged for publication. Stop; no second test or certification layer follows.
