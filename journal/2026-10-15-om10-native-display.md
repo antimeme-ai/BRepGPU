@@ -294,6 +294,16 @@ there is no whole-source PASS and no authorization to reuse V3 for a pilot.
 Reference owner then accepted the final poster code after the timing guard;
 root's static acceptance and focused checks complete this publication unit.
 
+While the source owner designs explicit2D trim conversion, completed a read-only
+adversarial audit of pinned OCCT FixSeam/FixShifted and ProjectCurveOnSurface,
+including their storage/status/orientation and singularity callees. The bounded
+note is papers/2026-10-15-om10-occt-2d-method-adversarial-review.md. Direct selected
+operations avoid3D setters, but same-TShape aliases, spherical nonperiodic shifts,
+partial flags, projector cache/order and minimal nudged PCurves require explicit
+original-t/chart/source-use admission. Broad fixing entry points retain topology/
+range/tolerance hazards and are outside that selection. Sent concrete facts to
+root/source owner; no CAD, tests or product edits for this review.
+
 Root completed the raw-display code review and accepted the implementation:
 explicit checked binary decoding, per-definition physical-key consistency,
 proper rigid placement, unchanged shared projection/raster math, retained CPU
@@ -302,3 +312,21 @@ keys are valid; the occurrence sentinel is UINT64_MAX, as in the owned entry.
 The independent scalar tests and focused sanitizer run already cover the changed
 unit; no additional campaign is warranted without a new finding. Actual whole
 watch rasterization remains pending complete nonvisual qualification.
+
+Reviewed the proposed explicit source-UV design/subplan against the selected
+OCCT method audit. Deep whole-definition detachment, original-t intervals,
+true-period checks and explicit pole connectors fit the native contract. Found
+one concrete wrapper failure gap: FixAddPCurve ignores projector failure and
+dereferences a possibly null seam curve before final readback can reject it.
+Sent the exact call sites and a direct checked-projector/2D-attachment option to
+root and source owner. Recorded the bounded review in
+papers/2026-10-15-om10-explicit-uv-design-native-review.md. Root's separate natural
+domain/original-column recovery finding remains open in the source lane. No CAD
+execution, new tests, source reconstruction or target raster occurred here.
+
+Source owner resolved the null seam finding in the proposed design: project and
+check output directly once, attach the single checked PCurve, then use a fresh
+FixAddPCurve only on a true seam with the same support's non-null PCurve already
+read back. Inspected HasPCurve/PCurve and projector construction: their matching
+lookup and fresh OK status exclude that null projection path and stale DONE3.
+Accepted the bounded resolution; mature torus seam handling remains in use.

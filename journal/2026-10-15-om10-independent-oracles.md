@@ -382,3 +382,17 @@ source snapshot/input metadata as well as scene/request/software pins, retain
 fixed CPU-then-GPU order without claiming flushed OS caches, and copy exact
 192-byte request rows after validating alpha/order. No product or test changes
 in this review lane.
+
+Reviewed the explicit source-UV design and subplan after the actual
+no-processing importer exposed missing nonplanar pcurves. Required complete
+ordered original-use ownership and whole-basis constant-period comparisons;
+endpoint deltas alone cannot exclude a shifted pcurve replacement. The bounded
+new-projector probe confirmed three beyond-grade natural-U excursions and the
+existing finite spline joint. The revised design retains raw projected pcurves
+for owned source-based recovery and derives a separate query copy with the
+already grounded column/joint/pole corrections. Native endpoint edits retain
+original parameter intervals and use actual carrier derivative bounds to turn
+positive-basis UV perturbations into world budgets. Query files are bound to
+the existing completed qualification inputs; raw NVIDIA neutral import pays
+none of this owned/query preparation. Revised design/subplan ACCEPT. No UV
+implementation, new test campaign or actual watch execution in this review.
