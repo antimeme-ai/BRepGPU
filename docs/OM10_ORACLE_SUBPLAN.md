@@ -133,3 +133,22 @@ metrics certification framework. CPU1/multicore/P100 comparison uses identical
 complete source, quality and output. Cold source-to-image, native stages and
 reused updates remain distinct; qualification is included only where the wall
 explicitly claims qualified work. A slowdown remains a valid outcome.
+
+## Actual thin-UV construction amendment
+
+Face165122 has adjacent binary64 Y coordinates and a shared diagonal whose
+rounded midpoint cannot yield four positive UV children. The reviewed rare
+fallback retains the exact dyadic midpoint in the owned UV partition and forces
+exact orientation whenever a coordinate is Fraction. Native export explicitly
+rounds each UV coordinate to binary64; that rounded partition is not claimed to
+be exact. Original-surface endpoint displacement from this rounding is checked
+separately against tolerance/16 and included in the product total error budget.
+
+The independent reader compares native UV to `float(ownedUV)`. For the rare
+changed spline coordinates it evaluates both endpoints using original-knot
+rational Cox data; analytic carriers use conservative global first-derivative
+norm bounds. It reports the maximum independent native UV rounding displacement
+bound. Exact UV chain coverage and physical nonzero-area/incidence obligations
+continue unchanged. Recovered foreign pcurve overhang may be corrected only at
+original carrier global endpoints with an explicit numeric grade and world
+residual, preserving raw recovered UV; original interior knots are never snapped.

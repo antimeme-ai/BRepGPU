@@ -303,6 +303,34 @@ class NativeDirectTests(unittest.TestCase):
                 self.assertEqual(tuple(i for i, id in enumerate(ids) if id != U64_MAX), tuple(sorted(inside)))
                 self.assertTrue(all(ids[i] == 0 for i in inside))
 
+    def test_actual_owned_thin_two_hole_mesh_jets_and_both_projected_poses(self):
+        from test_imported_geometry import pierced_prism_source
+        from brepgpu.imported_meshing import mesh_imported, SceneInstance, SceneMaterial
+        from brepgpu.imported_assembly import assemble, explosion
+        from brepgpu.imported_oracles import qualify_mesh, qualify_native_scene
+        source = pierced_prism_source()
+        mesh = mesh_imported(source)
+        self.assertEqual(qualify_mesh(mesh)['solid_eulers'],(-2,))
+        assembly = assemble(source)
+        state = explosion(assembly,((1.,-2.,3.),))
+        occurrence = assembly.occurrences[0]
+        instances = (SceneInstance(occurrence.id,occurrence.definition_id,occurrence.transform,state.offsets[0]),)
+        first = views(raster=True,flags=3,alpha=0.)
+        second = views(raster=True,flags=3,alpha=1.)
+        requests = struct.pack('<8sII',b'BGVIEW01',1,2)+first[16:]+second[16:]
+        with tempfile.TemporaryDirectory() as directory:
+            scene = Path(directory)/'owned.bgmesh'
+            mesh.write_scene(scene,instances,(SceneMaterial((.2,.4,.8),.5),))
+            output = self.run_native(directory,raster=True,scene_bytes=scene.read_bytes(),view_bytes=requests)
+            stats = qualify_native_scene(mesh,assembly,Path(directory)/'scene.bgmesh',output/'source-jets.bin',
+                                         (output/'frame-000000.projected',output/'frame-000001.projected'),
+                                         views_path=Path(directory)/'views.bgview',explosion=state)
+            self.assertEqual(stats['definitions'],1)
+            self.assertEqual(stats['instances'],1)
+            self.assertEqual(stats['physical_triangles'],len(mesh.triangles))
+            self.assertGreater(stats['source_jets'],len(mesh.vertices))
+            self.assertEqual(stats['projected_vertices'],2*stats['source_jets'])
+
 
 if __name__ == '__main__':
     unittest.main()
