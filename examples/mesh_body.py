@@ -166,7 +166,7 @@ def write_source(directory, body):
          for j in range(len(p.controls)//4)))
 
 
-def mesh_svg(path, mesh, reader, *, shape=None, namespace="original"):
+def mesh_svg(path, mesh, reader, *, shape=None, namespace="original", boundary_note=None):
     """Actual cap triangles and full indexed wire view; no visibility solver."""
     body = mesh.body
     shape = body.shape if shape is None else shape
@@ -201,14 +201,16 @@ def mesh_svg(path, mesh, reader, *, shape=None, namespace="original"):
         if edge.edge_id in seam_edges:
             pixels = ' '.join(f'{x:.3f},{y:.3f}' for x,y in (iso(points[j]) for j in edge.vertices))
             parts.append(f'<polyline points="{pixels}" fill="none" stroke="#ffd166" stroke-width="2.6"/>')
+    note = (f'Colors name {namespace} faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.'
+            if boundary_note is None else boundary_note)
     parts.extend((f'<text x="30" y="570" font-size="15">{len(mesh.vertices)} shared vertices / {len(mesh.triangles)} triangles / {len(mesh.boundary_uses)} {escape(namespace)} coedge uses</text>',
-                  f'<text x="30" y="600" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; certified total bound {float(mesh.error_bound):.6g}</text>',
-                  f'<text x="30" y="632" font-size="12">Colors name {escape(namespace)} faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>',
+                  f'<text x="30" y="600" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; total error bound {float(mesh.error_bound):.6g}</text>',
+                  f'<text x="30" y="632" font-size="12">{escape(note)}</text>',
                   '</g></svg>'))
     path.write_text('\n'.join(parts)+'\n')
 
 
-def export_mesh_data(directory, mesh, reader, quality, *, shape=None, namespace="original"):
+def export_mesh_data(directory, mesh, reader, quality, *, shape=None, namespace="original", boundary_note=None):
     """Export actual mesh records into an existing directory, without source claims."""
     parameter_name = 'original_parameter' if namespace == 'original' else 'intrinsic_result_parameter'
     u_name, v_name = ('original_u','original_v') if namespace == 'original' else ('retained_carrier_u','retained_carrier_v')
@@ -244,7 +246,7 @@ def export_mesh_data(directory, mesh, reader, quality, *, shape=None, namespace=
         for i,face in enumerate(reader.face_ids):
             stream.write('3 '+' '.join(str(x) for x in reader.indices[3*i:3*i+3])+f' {face} '
                          +' '.join(format(x,'.17g') for x in reader.normals[3*i:3*i+3])+'\n')
-    mesh_svg(directory/'mesh.svg',mesh,reader,shape=shape,namespace=namespace)
+    mesh_svg(directory/'mesh.svg',mesh,reader,shape=shape,namespace=namespace,boundary_note=boundary_note)
 
 
 def export_mesh(directory, mesh, reader, quality):
