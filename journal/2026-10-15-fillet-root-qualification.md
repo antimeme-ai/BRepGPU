@@ -38,3 +38,10 @@ READMEactualP100midSVG rasterizedandvisuallyinspectedlocally fromsavedartifact;
 no localproductexecution. Publishedfullcosts/source/graph/native/CSR/maps/contacts,
 reviews+roundtwonotes on featurebranch. ReadyPRmergepreservingcheckpoints;
 analytic offset next, integration/tuning/Python-role/NCSXtiming deferred.
+
+
+PR46 merged2026-10-15T10:51:29Z at90e4b5731417619928aac2925215cef4a426d00b,
+retaining featurebranch and all meaningfulcheckpoints. Issue45closed, issue43
+stillOPEN. Localmainandfleetcheckout synchronized to actualmergedsource without
+nativebuilds/toolchain/privatecontext replacement; exploratoryprobe artifacts
+movedintoremoteignoredcontext. Finalmainbookkeepingcommit records PR+handoff.
