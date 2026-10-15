@@ -179,7 +179,7 @@ class FilletConstructionTests(unittest.TestCase):
             with self.assertRaises(TypeError):s.classify_point((value,0,0))
 
     def test_complete_history_roles_owners_and_exact_forward_reverse_maps(self):
-        from brepgpu.fillet import fillet_edge
+        from brepgpu.fillet import fillet_edge,_validate_candidate
         source=make_body('box');r=fillet_edge(source,selected(source),F(17,256));s=r.solid;h=r.history
         self.assertEqual((len(h.records),len(h.origins)),(62,76))
         self.assertEqual(Counter(x.status for x in h.records),dict(retained=33,modified=24,deleted=5))
@@ -205,11 +205,23 @@ class FilletConstructionTests(unittest.TestCase):
                 self.assertEqual(o.source_uv_owner,EntityKey(source.body_id,1,'face',old.face_slot+1))
         charts=[rec for rec in h.records if rec.source.kind=='chart']
         self.assertEqual(Counter(rec.status for rec in charts),dict(retained=2,modified=4))
+        alias=copy(h.records[0].source);object.__setattr__(alias,'entity_id',float(alias.entity_id))
+        malformed=copy(h);object.__setattr__(malformed,'records',(replace(h.records[0],source=alias),)+h.records[1:])
+        with self.assertRaises(ArithmeticError):_validate_candidate(s,malformed,r.contacts)
+        contact=copy(r.contacts[0]);object.__setattr__(contact,'normal',tuple(float(x) for x in contact.normal))
+        with self.assertRaises(ArithmeticError):_validate_candidate(s,h,(contact,r.contacts[1]))
         with self.assertRaises(KeyError):h.from_input(EntityKey(make_body('box').body_id,1,'edge',11))
         with self.assertRaises(KeyError):h.origin(object())
 
     def test_frames_source_alias_rejection_immutable_publication_and_retry(self):
         from brepgpu import fillet as m
+        for kind,limit in (('affine',7),('arc',5)):
+            consumed=[]
+            def endless():
+                for i in range(limit):consumed.append(i);yield F(0)
+                raise RuntimeError('fixed-size map read past its admission budget')
+            with self.assertRaises(ValueError):m.Map2(kind,endless())
+            self.assertEqual(len(consumed),limit)
         for scale in (.25,.5,1.,2.,4.):
             source=make_body('box',Frame((16.,-16.,.125),scale));r=m.fillet_edge(source,selected(source,9),F(1,2))
             self.assertEqual((r.solid.volume.rational,r.solid.volume.pi),(2*F(scale)**3,F(1,16)*F(scale)**3))

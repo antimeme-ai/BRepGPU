@@ -16,3 +16,11 @@ realnativehandles then sameEngine/result retry. Root must record fleethealthy
 prerequisite plus missingoperation tests/caller before productionmodule creation.
 After explicitrelease implement narrow sampler, waitCPUgeometrygreen, runCPU1/24
 andexclusiveP1000/1, releaseGPU and reportactualoutcomes. Source/ASTonlylocally.
+
+Root recorded actual healthyexistingnativebody then28directmissingfilletmethods
+and realcallerred in privatecontext, and explicitly releasedimplementation.
+Implemented wholefillet_sampling.py via ownednarrowwrapper pattern, keeping old
+helpers/guards unchanged. Separate request/batch factoryfields/default17,
+cap+1/pregrid limits, actualcopiedUV exacttrims, complete nativebinding/status,
+perPatchFrame conversion/orientedrows andchildcleanup are implemented. Module+
+8tests ASTvalid only; waitinggeometry dependencyready. Rootnotified forreview.
