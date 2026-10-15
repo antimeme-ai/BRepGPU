@@ -312,3 +312,11 @@ While it runs, reread Shewchuk's same-implementation algorithm/data-structure
 comparison and saved a short return-pass reading. Keep direct constrained
 construction and compact triangle/neighbor storage as measured candidates after
 delivery. No new library, language migration or product tuning is selected.
+
+Accepted the native owner's flags-only prepared-scene pilot plan and reviewed
+the private utility statically. Actual target rasterization still requires the
+complete nonvisual run to pass; preparation does not authorize an early image.
+Updated issue60 and ISSUES.md to describe the implemented pipeline and pending
+whole-source qualification/images/measurements. Marked the original gap brief
+as historical with links to the current plan and operational guide. No product
+or binary changed, and no target image or new test campaign ran for these edits.
