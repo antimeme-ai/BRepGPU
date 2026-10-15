@@ -85,3 +85,33 @@ under study. Full watch NVIDIA execution, finite actual query pilot and actual
 watch rendering remain held. The helper's original boundary is translated OCCT
 geometry; missing pcurves must not silently turn trimmed-face distance into
 untrimmed-surface or filled-solid distance.
+
+Finished the actual NVIDIA missing-pcurve contract study. Official staging
+accepts absent UV records, retains explicit3D trim loops and recovers analytic
+domains; native import deliberately discards analytic pcurves because its own
+parameterization differs. General NURBS uses original knot bounds as parameter
+domain while keeping explicit general loops, and SMLib creates missing UV trims
+on demand from3D edges. Absence alone is not invalid NVIDIA input. The source
+owner/root withdrew the blanket input-handicap concern. Keep any owned/query
+projection preparation outside the NVIDIA timed caller unless an actual
+consumer requirement justifies it; original3D source remains fixed. Read scope
+and exact file/line behavior are in the study appendix, including outer-loop0
+fallback and periodic recovery limits.
+
+Root wrapper review added real provenance/sequencing requirements. Qualification
+now derives its source/scene from an existing completed owned qualification,
+checks its completion row and input hashes/tolerance, and cannot accept an
+arbitrary purported qualified mesh. One direct incomplete/changed-input case
+passed0.053s. Both reference policies first complete nonvisual outcomes; fresh
+images may follow complete all-parts finite FAIL as explicitly failed diagnostic,
+while missing parts or incomplete query preparation cannot render. Fresh actual
+geometry hashes reuse the prior PASS/FAIL numerical outcome; changed geometry
+is measured separately before any matched-quality claim.
+
+The helper's missing/partial summary or nonzero solver-failure count now remains
+source/query capability incomplete. Count actual completed numerical definitions,
+not requested jobs. A direct integration method passed0.102s against the real
+helper: finite box PASS, coarse sphere measured FAIL, and absent-pcurve source
+preparation failure remain distinct. Nine focused methods now have retained
+greens across the bounded runs; actual whole-watch geometry/query/render and
+complete timing observations remain outstanding and gated by source recovery.
