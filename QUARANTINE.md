@@ -97,3 +97,30 @@ Historical archived instructions are reference material. Package binaries differ
 from the installed usd-brep1.0.0 wheel and must run in their own library path;
 do not combine the package's static bridge with arbitrary wheel libraries.
 The package is a reference toolchain, not a BRepGPU product dependency.
+
+## Isolated live Python diagnostic
+
+Acquired 2026-10-15: Ben Frederickson's `py-spy` 0.4.1 Linux x86-64 wheel
+from PyPI, solely to observe the long-running owned watch qualifier without
+pausing it. No package installation or product dependency was introduced.
+The intact wheel and its extracted executable remain ignored under
+`quarantine/py-spy-diagnostic/`; upstream uses the MIT license.
+
+Wheel: `py_spy-0.4.1-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl`,
+SHA-256 `6a80ec05eb8a6883863a367c6a4d4f2d57de68466f7956b6367d4edd5c61bb29`.
+Source and usage: <https://github.com/benfred/py-spy/tree/v0.4.1>.
+
+Restore on the Linux diagnostic host:
+
+```sh
+mkdir -p quarantine/py-spy-diagnostic
+python3 -m pip download --only-binary=:all: --no-deps py-spy==0.4.1 \
+  -d quarantine/py-spy-diagnostic
+```
+
+Verify the recorded digest, then extract only the wheel's single path ending
+`/py-spy` with Python's standard-library `zipfile`, writing it as `py-spy` in
+the same ignored directory and marking it executable. Preserve the wheel.
+Use `dump --nonblocking` or a bounded `record --nonblocking` without locals,
+native frames or process launches. Nonblocking samples can be incomplete;
+these are phase observations, not full profiles or benchmark measurements.
