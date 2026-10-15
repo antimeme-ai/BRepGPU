@@ -200,9 +200,9 @@ def mesh_svg(path, mesh, reader):
         if edge.edge_id in seam_edges:
             pixels = ' '.join(f'{x:.3f},{y:.3f}' for x,y in (iso(points[j]) for j in edge.vertices))
             parts.append(f'<polyline points="{pixels}" fill="none" stroke="#ffd166" stroke-width="2.6"/>')
-    parts.extend((f'<text x="30" y="555" font-size="15">{len(mesh.vertices)} shared vertices / {len(mesh.triangles)} triangles / {len(mesh.boundary_uses)} original coedge uses</text>',
-                  f'<text x="30" y="585" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; certified total bound {float(mesh.error_bound):.6g}</text>',
-                  '<text x="30" y="615" font-size="12">Colors name original faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>',
+    parts.extend((f'<text x="30" y="570" font-size="15">{len(mesh.vertices)} shared vertices / {len(mesh.triangles)} triangles / {len(mesh.boundary_uses)} original coedge uses</text>',
+                  f'<text x="30" y="600" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; certified total bound {float(mesh.error_bound):.6g}</text>',
+                  '<text x="30" y="632" font-size="12">Colors name original faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.</text>',
                   '</g></svg>'))
     path.write_text('\n'.join(parts)+'\n')
 
