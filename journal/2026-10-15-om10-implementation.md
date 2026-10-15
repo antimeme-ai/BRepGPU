@@ -106,3 +106,37 @@ reused evaluator headers/actual selected binaries/driver, state CPU GPU-work as
 none, and compare actual resident request bytes to each cold view. Native final
 direct/failure/memory checks and both code reviews are complete; actual complete
 source evaluation/project-only qualification awaits the owned full mesh.
+
+Published the stable original-linked STEP source/reader checkpoint separately
+from the still-in-progress mesher. Independent raw-source comparison now covers
+all25,871 original spatial curves and all166 complete assembly paths, in addition
+to original vertices, carriers, loops and local frames. No actual movement image
+has been generated.
+
+Face165122 exposes a positive UV wedge whose two Y coordinates are adjacent
+binary64 values. The rounded shared-edge midpoint gives child signs0,-1,1,0;
+there is no representable binary64 interior Y for a four-child fan. Geometry,
+independent oracle and root reviewed rare exact dyadic midpoint construction.
+Exact source UV topology remains separate from explicitly rounded native UV.
+Predicates must stay exact when any input is Fraction; Hessian query boxes round
+outward. Native UV displacement has its own tolerance/16 budget inside the total
+edge/surface/native-rounding sum. Actual physical triangles must remain nonzero;
+this is not permission to omit tiny source cells or claim rounded UV partition.
+
+The same face exposes a recovered foreign pcurve overhang of8.56e-15 beyond an
+original spline carrier's global U endpoint. Original STEP contains no UV curves.
+Reviewed continuation corrects only numerically graded global-end recovery into
+the actual original knot domain, retaining raw UV and measuring world displacement
+against the unchanged source-residual budget. Interior knots remain untouched.
+The geometry owner records the concrete floating endpoint grade before code;
+the independent oracle reviews it and rejects corrections beyond that grade.
+
+Native owner reviewed the final caller/benchmark/poster connection. Fixed the
+reporting finding that prepare/evaluate metadata described PNG/SVG outputs and
+GPU raster work even though neither mode renders. Scope fields and the final
+caller timing stage now name the actual mode. Posters separately name common
+CPU STEP/trim meshing and CPU/P100 jets/placement/raster. Fixed first-repeat pixels
+are used independently of all-repeat median timing; no fastest-image search.
+The reviewed source165122 case now passes focused meshing with unchanged5μm
+target, measured native UV rounding bound1.39e-16mm and global-end recovery
+bound4.85e-16mm. Complete-source qualification remains the next gate.

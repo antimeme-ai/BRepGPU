@@ -131,7 +131,7 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--step', required=True, type=Path)
     p.add_argument('--output', required=True, type=Path)
-    p.add_argument('--adapter', type=Path, default=ROOT/'build/om10-source/brepgpu-step-source')
+    p.add_argument('--adapter', type=Path, default=ROOT/'build/om10-step-source/brepgpu-step-source')
     p.add_argument('--native', type=Path, default=ROOT/'build/om10-release/brepgpu-om10-native')
     p.add_argument('--plugin', type=Path, default=ROOT/'build/om10-release/libbrepgpu_om10_cuda.so')
     p.add_argument('--repeats', type=int, default=3)
