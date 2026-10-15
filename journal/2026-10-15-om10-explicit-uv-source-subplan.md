@@ -166,3 +166,27 @@ bounds within unchanged128ULP; preserve rawPC/sourceknots/originalt and apply
 cumulative naturalmetric/finalC–S. Add one literal8ULP middlecontrol/512ULP
 negative tensor-plane fixture before production change; no genericprojection or
 extrapolation theorem.
+
+The authored middle-control case genuinely fails before restoration (0.015s,
+`context/om10-source-uv-global-controls-red.txt`). The reviewed operation now
+accepts the8ULP control while preserving the raw middle coefficient, degree,
+poles, original interval and literal C/S agreement; the512ULP version rejects.
+Periodic/rational edits explicitly reject before segmentation. Eleven focused
+source-UV/source-reader methods pass0.274s. A fresh actual complete source/query
+attemptv3 and four bounded native ASan/UBSan methods are running; no complete
+watch qualification or render is implied.
+
+The four bounded native methods, including the new middle-control case, pass
+ASan/UBSan0.212s. Actual attemptv3 passes prior169982 and exports definitions
+1713–1790, then fails closed at170920/carrier4257/coedge143084 on a larger
+natural-domain escape; no complete snapshot is published. This is not handled
+by widening the numerical128ULP grade. Direct original-curve/projector study
+is in progress before any further production change.
+
+The reviewed global-domain coefficient operation passes11focused/affected
+methods in0.274s and four bounded native ASan/UBSan methods in0.212s. The actual
+next source/query run passes169982 and exports definitions1713–1790, then stops
+at170920/carrier4257/coedge143084 on a beyond-grade domain excursion. No source
+snapshot is published. Original ellipse1147 versus cubic tensor boundary
+approximation is the next studied source-conversion case; its new design has
+not yet been selected or implemented. The numerical grade stays unchanged.

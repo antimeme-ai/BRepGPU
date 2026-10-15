@@ -447,3 +447,10 @@ and clipping do not commute. Requested an explicit written representation
 amendment retaining original parameter/basis, cumulative metric charge and final
 in-domain finite C/S checks; no numerical grade expansion or interior carrier
 knot clipping. No new execution campaign in this review lane.
+
+Read the concrete coefficient amendment ACCEPT: actual169982 controls exceed
+globalVmax by at most4.86e-17, below the unchanged128ULP unit-scale grade.
+The direct8ULP middle-control case and512ULP rejection target this representation
+operation. Requested one code/contract alignment: reject periodic input before
+editable's segmentation, matching the newly explicit nonperiodic admission.
+Complete source extraction and independent original geometry remain next gates.
