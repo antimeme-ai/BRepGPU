@@ -6,8 +6,8 @@ the active qualification run, documentation/journal and the private pilot utilit
 may be prepared. No actual watch rasterization, product/helper/binary edits or
 rebuilds.
 
-The pilot inspects real geometry and labels before four expensive fresh full
-STEP-to-image observations. It reuses the existing private qualified display
+The pilot inspects real geometry and labels before two fresh complete
+STEP-to-both-views observations. It reuses the existing private qualified display
 inputs; it adds no product API, mesh persistence, cache or qualification mechanism.
 
 ## Inputs and exact permitted change
@@ -74,6 +74,8 @@ from unexplained visibility or missing geometry. Do not silently bless unexplain
 differences. Presentation changes require a named new view/layout revision and
 focused affected checks; preserve the original qualified pilot inputs.
 
-After root accepts the pilot, run the separately reviewed four fresh full callers
-and matched native timing matrix. The pilot never substitutes reused source
-preparation for those directly enclosed full-task observations.
+After root accepts the pilot, run the separately reviewed two fresh full callers
+(CPU24 then P1000, each producing both labeled views) and matched per-pose native
+timing matrix. See the [two-view measurement plan](OM10_TWO_VIEW_BENCHMARK_PLAN.md).
+The pilot never substitutes reused source preparation for those directly
+enclosed full-workflow observations.

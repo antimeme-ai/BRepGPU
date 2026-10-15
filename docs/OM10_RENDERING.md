@@ -99,21 +99,33 @@ PYTHONPATH=python python3 scripts/compose_om10_posters.py \
 Defaults are2400×2000 pixels,2× supersampling per dimension,5μm mesh target
 and1μm selected source residual. Input model uncertainty remains a separate
 source value. GPU0/GPU1 are measured separately against native CPU1/CPU24.
-The driver executes four fresh complete callers: CPU24 and P1000 for each pose.
-Their complete STEP-to-image walls are single observations (n=1). Each includes
-actual STEP extraction and owned meshing. It then measures three alternating
-fresh native processes per pose/backend using those unchanged actual prepared
-scene/view inputs. Native medians and ranges describe prepared-scene display,
-including raw output and shutdown; they exclude STEP, meshing, PNG and SVG.
+The driver executes two fresh complete callers in fixed CPU24 then P1000 order.
+Each extracts and meshes the actual STEP once, then produces assembled followed
+by exploded PNG/labeled-SVG views. Its complete wall is one observation (n=1)
+for **both labeled views**, including interpreter exit. Filesystem caches are not
+flushed; these two observations do not establish a statistical workflow speedup.
+The driver compares original-source metadata, source-snapshot, scene, complete
+two-view request and product-source hashes across the callers. It copies each
+exact192-byte request row under a single-view header for three alternating fresh
+native processes per pose/backend. Native medians and ranges describe prepared-
+scene display, including raw output and shutdown; they exclude STEP, meshing,
+PNG and SVG. No geometry or floating-point request field is reconstructed.
 
 Resident native runs retain actual scene/source jets symmetrically on CPU and GPU.
 Their per-frame walls include placement, bins, display, transfers and raw native
 writes. They exclude Python PNG/SVG composition and common preparation; they
 are view-update results. Native process walls include native shutdown. Complete
-STEP-to-image process walls include PNG/labeled-SVG writes and interpreter exit.
-The poster shows these single-observation full walls in a separate panel from
-the four repeated native-process medians. CPU1/P1001 have native measurements;
-no complete STEP-to-image wall is inferred for them.
+STEP-to-both-views process walls include both PNG/labeled-SVG writes and
+interpreter exit. Each poster shows the same actual full-workflow CPU24/P1000
+totals, labeled **FRESH STEP → BOTH LABELED VIEWS · n=1 · SHARED TOTAL**, in a
+separate panel from that pose's four repeated native-process medians. A shared
+total is not a measured fresh-to-single-pose wall; do not divide it or duplicate
+it as per-pose observations. The fixed complete P1000 caller supplies
+000-assembled and001-exploded artwork. CPU1/P1001 have native measurements;
+no complete workflow wall is inferred for them. Individual frame/encoding stage
+rows remain narrower diagnostics without apportioned common preparation costs.
+The [reviewed two-view measurement plan](OM10_TWO_VIEW_BENCHMARK_PLAN.md)
+records the scope and its tradeoff against separate fresh per-pose callers.
 Final SVG-to-PNG rasterization uses the existing static compositor separately
 and is named/timed separately. Stage rows overlap and cannot be summed as a
 complete operation. Native upload/download means host↔GPU transfer.

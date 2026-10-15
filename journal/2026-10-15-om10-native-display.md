@@ -209,3 +209,17 @@ imply166 individually labeled components. Long source names and leader crossings
 still require the already planned real-image inspection. The old SHARE_ON_X
 draft incorrectly says the GPU evaluator is merely proposed and must be replaced
 before sharing. No actual target execution or product changes for this review.
+
+After the reviewed two-view measurement plan was accepted, updated only the
+benchmark driver/compositor and associated documentation. Two fresh CPU24 then
+P1000 callers now each construct the whole model once and emit assembled then
+exploded labeled views. One n1 full observation per backend is keyed view=both;
+both posters show that explicitly shared total, without divided/inferred
+per-pose complete walls. Full snapshot/source-metadata/scene/two-view/source-pin
+comparisons precede exact192-byte pose-row copies for the unchanged repeated
+native matrix. Actual P1000 imagery/callouts use000-assembled and001-exploded.
+Fresh processes do not imply flushed caches or statistical full-workflow speedup.
+Both scripts' CLI help checks passed on the fleet after syncing those scripts
+only. No benchmark/raster ran, and no qualification-pinned product/helper/native
+file or binary changed. Root diff review and complete nonvisual PASS plus pilot
+acceptance remain required before actual measurement.

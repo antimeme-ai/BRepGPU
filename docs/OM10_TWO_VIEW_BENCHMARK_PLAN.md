@@ -50,3 +50,9 @@ workflow speedup claim. After implementation, root reviews the
 complete diff and native owner runs CLI checks on the fleet. Actual pilot and
 benchmark execution still wait for the complete nonvisual PASS and inspected
 pilot images. No source reuse is represented as a fresh source-to-image result.
+
+Implementation review ACCEPT: complete observations remain one row per backend
+with view=both; metadata and original snapshot/scene/request/source pins match;
+actual row offsets16/168 select alpha/flags before exact copying. The poster
+uses frame0/frame1 and the shared total, while native fresh/resident scopes stay
+separate. Both CLI checks passed on the fleet. No pinned product/helper changed.
