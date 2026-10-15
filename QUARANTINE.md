@@ -67,3 +67,33 @@ and [study findings](papers/2026-10-14-wafer-gpu-mode-study.md) record the actua
 read scope. GPU MODE includes Apache-2.0 licensing; Wafer's README declares MIT
 but its pinned archive has no LICENSE file. Acquisition selects neither for
 product reuse.
+
+## NVIDIA OM10 CPU reference package
+
+Acquired2026-10-15 from NVIDIA's official v1.0.0 release for isolated reference
+execution. The original archive is44,445,717bytes, SHA-256
+`a30bcd6f1c9028bd29092288e0963d5450ab2b9105fc92a034a6c8ce9d8de2b3`.
+The annotated v1.0.0 tag resolves to source commit
+`c9c5979f04cea8c38213004d4f04df0dcfb40d05`, already retained above; the
+binary asset's build identifier is `1.0.0.v1-0-0.7419.dbb624c8`.
+
+```sh
+mkdir -p quarantine/archives
+curl -fL 'https://github.com/NVIDIA-Omniverse/usd-brep/releases/download/v1.0.0/usd_brep%401.0.0.v1-0-0.7419.dbb624c8.gl.manylinux_2_35_x86_64.release.7z' \
+  -o quarantine/archives/nvidia-usd-brep-1.0.0-linux.7z
+printf '%s  %s\n' a30bcd6f1c9028bd29092288e0963d5450ab2b9105fc92a034a6c8ce9d8de2b3 \
+  quarantine/archives/nvidia-usd-brep-1.0.0-linux.7z | shasum -a256 -c -
+mkdir quarantine/nvidia-usd-brep-1.0.0-linux
+tar -xf quarantine/archives/nvidia-usd-brep-1.0.0-linux.7z \
+  -C quarantine/nvidia-usd-brep-1.0.0-linux
+```
+
+Use a tar implementation with7z support; the extraction destination must be
+new. No nested Git metadata or filesystem detritus was found in the extracted
+package. Retain `PACKAGE-LICENSES/LICENSE`, `THIRD_PARTY_NOTICES.md`, and all
+bundled third-party licenses. NVIDIA-authored components are Apache-2.0 except
+as stated there; OpenUSD and other bundled components keep their own licenses.
+Historical archived instructions are reference material. Package binaries differ
+from the installed usd-brep1.0.0 wheel and must run in their own library path;
+do not combine the package's static bridge with arbitrary wheel libraries.
+The package is a reference toolchain, not a BRepGPU product dependency.
