@@ -5,6 +5,7 @@ Track implementation and research in this repository's
 
 | Work | State | Deliverable |
 | --- | --- | --- |
+| [#60: Complete OM10 CPU/P100 assembly and exploded graphics](https://github.com/antimeme-ai/BRepGPU/issues/60) | Goal and source gaps recorded; import/reference dependency and implementation design remain | [Whole-assembly requirements and benchmark scopes](docs/OM10_ASSEMBLY_DELIVERY.md); [actual carrier/curve/trim gaps](papers/2026-10-15-om10-whole-assembly-geometry-gaps.md) |
 | [#1: First P100 numerical geometry unit](https://github.com/antimeme-ai/BRepGPU/issues/1) | Implemented and qualified | [Owned CPU/CUDA six-jet API](docs/ITERATION_1.md); [exact oracles and both-P100 results](results/iteration1-2026-10-13/REPORT.md) |
 | [#2: Intersections and topology architecture](https://github.com/antimeme-ai/BRepGPU/issues/2) | Architecture reviewed; breadth-first theme beachheads selected, operation designs remain | [Packed topology and identity](docs/TOPOLOGY.md); [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy) |
 | [#3: CPU phase profiles and fair comparisons](https://github.com/antimeme-ai/BRepGPU/issues/3) | Native CPU/P100 comparisons published; modeling profiles remain | [Resident/download/host timings](results/iteration1-2026-10-13/REPORT.md); broader CAD phase profiles remain |

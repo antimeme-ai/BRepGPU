@@ -4,6 +4,12 @@
 high-resolution drawing search and advice on the next move. This is a source
 study and proposal, not an accepted implementation design or new geometry claim.
 
+Subsequent operator direction sets the **whole assembled OM10, then exploded and
+labeled, with matched CPU/P100 timings in the graphics** as the delivery target.
+See [current assembly requirements and gaps](OM10_ASSEMBLY_DELIVERY.md). The
+single-part recommendation below remains a possible development fixture; it
+no longer defines completion of the requested result.
+
 ## Recommended source: OpenMovement OM10
 
 OM10 is the strongest lead for an inspectable movement reconstruction. The
