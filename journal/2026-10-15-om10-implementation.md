@@ -331,3 +331,13 @@ near-tangent curves and pressures the correction. Read and acquired the Jordan
 et al.2014 author preprint; the boundary-topology reading records its assumptions
 and why it does not certify this tolerant source. No implementation selected and
 no actual watch image authorized yet.
+
+Root and independent review accepted the written circular-joint design/subplan
+after narrowing its nominal internal-near-tangency guard, naming translated
+joint tolerances, specifying the frame grade, using one shared collar width,
+bounding candidate cardinality before enumeration and preserving globally shared
+final schedules. Reuse the existing exact domain mechanism; no new intersection
+certifier. Full incident initial schedules still cross. The first candidate
+fails the cone's unchanged allocation; its next halving passes every plane/cone/
+cylinder interval. Require meaningful direct red before production and code
+review/affected greens before the next fresh complete qualification.
