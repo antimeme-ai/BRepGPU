@@ -1,5 +1,41 @@
 # BRepGPU research
 
+## Exact planar arrangements
+
+The [complete mixed-line/circle design](../docs/ARRANGEMENT_DESIGN.md) and
+[whole-unit plan](../docs/ARRANGEMENT_PLAN.md) follow independent
+[semantics](2026-10-14-arrangement-semantics-study.md),
+[arithmetic/ownership](2026-10-14-arrangement-runtime-study.md) and
+[complete-region oracle](2026-10-14-arrangement-oracles-study.md) studies.
+Primary reading includes the official CGAL arrangement/DCEL/history contracts
+and actual pinned OCCT face/wire builder source. Neither is an adopted dependency.
+[Bibliography](arrangement-semantics.bib),
+[source catalog](arrangement-semantics-sources.tsv) and
+[runtime bibliography](arrangement-runtime.bib) retain exact reading scopes;
+the unacquired full arrangements book is on [the shopping list](SHOPPING_LIST.md).
+
+Three design reviews and three plan reviews accept a complete bounded family:
+axial grid cuts and separated circle disks strictly inside individual cells,
+including multiple holes. One physical circle edge retains every original
+piece/map/event; ordered cell/disk/exterior regions have opposite uses and exact
+source ranges, all-incident lookup, strict witnesses and rational-plus-pi areas.
+The actual caller passed separate
+[semantics](2026-10-14-arrangement-caller-semantics-review.md) and
+[runtime](2026-10-14-arrangement-caller-runtime-review.md) source reviews,
+including original boundary-curve consumption driven by emitted parameters.
+[Independent oracle/tests review](2026-10-14-arrangement-oracle-runtime-review.md)
+and [focused mutation review](2026-10-14-arrangement-mutation-runtime-review.md)
+retain whole-domain/loop/source truth and actual assertion-kill requirements.
+[Return-pass notes](2026-10-14-arrangement-round2-notes.md) record clipped/tangent
+arrangements, cross-face Boolean identity and later accelerator work without
+starting integration or the deferred Python architecture investigation.
+[Whole code semantics](2026-10-14-arrangement-code-semantics-review.md),
+[complete saved artifacts](2026-10-14-arrangement-artifact-review.md),
+[actual SVG/result semantics](2026-10-14-arrangement-result-semantics-review.md)
+and [performance review](2026-10-14-arrangement-performance-runtime-review.md)
+accept the delivered bounded claims and the
+[five full caller results](../results/arrangements-2026-10-14/REPORT.md).
+
 ## Exact material and finite-face classification
 
 The bounded [CPU design](../docs/CLASSIFICATION_DESIGN.md) and

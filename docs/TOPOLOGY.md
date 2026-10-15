@@ -11,6 +11,11 @@ coordinate proximity defines identity. Chart exclusions remain distinct from
 face/body exclusions and intersection events.
 The [GPU adjacency beachhead](ADJACENCY.md) now constructs edge-use CSR and
 reads mates/neighbor faces on CPU or P100 from these immutable records.
+The [CPU planar arrangement](ARRANGEMENTS.md) now emits immutable dense
+vertex/edge/use/loop/region tables, original source ranges/maps and exact region
+readers for its grid/disjoint-circle family. These are result-local identities;
+shared feature edges across separate face arrangements still require Boolean
+assembly and history semantics.
 General construction/edit history, radial ordering, compaction and resident
 arrangements remain proposed here.
 
@@ -118,7 +123,8 @@ loop order remains the source authority. Typed occurrence keys additionally
 name batch instance, so repeated snapshots are separate storage occurrences
 without invented body namespaces. CPU and both P100s retain semantic membership
 and mate/neighbor identity across slot permutations. Further sort/group and
-arrangement construction require their own established semantics. Compaction emits an old-slot-to-new-slot map and
+general/resident arrangement construction require their own semantics beyond
+the delivered bounded CPU arrangement. Compaction emits an old-slot-to-new-slot map and
 rewrites every dependent reference; stable entity IDs remain unchanged. Results
 carrying old slots also carry their snapshot revision and cannot silently be
 applied to a newer snapshot.

@@ -1,0 +1,10 @@
+key	value
+placement	exact CPU single process
+python	3.12.3
+system	Linux
+release	6.8.0-146-generic
+architecture	x86_64
+cpu	Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+warmup	1
+repeats	5
+qualification	after complete caller; measured separately

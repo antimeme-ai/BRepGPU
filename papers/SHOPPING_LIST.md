@@ -10,6 +10,7 @@ implementation design. Abstracts, metadata and slides are labeled in the reports
 | Hu et al. 1997, robust interval surface intersections | Publisher abstract read; full text needed | [DOI](https://doi.org/10.1016/S0010-4485(96)00099-1) |
 | Huang/Hu/Martin 2005, degree elevation and knot insertion | Free PDF inspected via browser; direct acquisition timed out | [Author archive PDF](https://archive.ymsc.tsinghua.edu.cn/pacm_download/12/444-cagd_2005_degree.pdf) |
 | Piegl/Tiller, The NURBS Book | Book access needed | [Publisher](https://doi.org/10.1007/978-3-642-59223-2) |
+| Fogel/Halperin/Wein 2012, CGAL Arrangements and Their Applications | Full book not acquired/read; publisher metadata only. Official arrangement manual and actual retained source suffice for the bounded first unit | [Publisher](https://doi.org/10.1007/978-3-642-17283-0) |
 | Ma/Hewitt 2003, control-polygon point inversion and projection | Institution record read; full article needed | [DOI](https://doi.org/10.1016/S0167-8396(03)00021-9) |
 | Li et al. 2019, geometric strategy for orthogonal projection | Publisher abstract read; full text and theorem assumptions needed | [Publisher](https://jcst.ict.ac.cn/article/doi/10.1007/s11390-019-1967-z) |
 
