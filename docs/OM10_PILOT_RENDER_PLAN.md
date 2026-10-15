@@ -18,7 +18,7 @@ Use the completed qualification directory's actual `scene.bgmesh`,
 unchanged. Require current production/helper/binary hashes to match that completed
 run. Record the private utility's own source hash and input/output hashes.
 
-The original BGVIEW01 is16 header bytes plus two192-byte requests,408 bytes total.
+The original BGVIEW01 is16 header bytes plus two192-byte requests,400 bytes total.
 Each request stores flags at row offset168. Copy its bytes, confirm original
 flags3, and change only these fields:
 
