@@ -301,3 +301,14 @@ are the diagnosed original LINE sampling family; four global-end failures are
 the verified spline-column family. No fourth failure class is known. Source/
 oracle owners confirm stable reviewed product files for the fresh retained
 whole-source/native qualification. No actual watch image has been generated.
+
+Started the fresh nonvisual integration run with matching local/fleet product
+checksums. Fresh STEP translation27.464s and owned decode6.894s completed;
+shared-edge sampling is in progress. Product/helper/binary files remain
+unchanged throughout the operation. These are qualification observations,
+separate from the later quiet benchmark.
+
+While it runs, reread Shewchuk's same-implementation algorithm/data-structure
+comparison and saved a short return-pass reading. Keep direct constrained
+construction and compact triangle/neighbor storage as measured candidates after
+delivery. No new library, language migration or product tuning is selected.
