@@ -109,6 +109,29 @@ class NvidiaProducerTests(unittest.TestCase):
 
 
 class ReferenceMeshTests(unittest.TestCase):
+    def test_completed_owned_run_requires_prepared_query_source_bytes(self):
+        root=Path(__file__).resolve().parents[1]
+        import sys
+        sys.path.insert(0,str(root/'scripts'));sys.path.insert(0,str(root/'examples'))
+        from qualify_om10_nvidia import qualified_owned_inputs
+        from render_om10_nvidia import tsv,digest
+        from brepgpu.imported_source import write_source
+        from tests.test_imported_geometry import pierced_prism_source
+        source=pierced_prism_source()
+        with tempfile.TemporaryDirectory() as directory:
+            directory=Path(directory)
+            write_source(source,directory/'source.bgsource')
+            (directory/'scene.bgmesh').write_bytes(b'qualified scene identity fixture')
+            (directory/'views.bgview').write_bytes(b'qualified view identity fixture')
+            tsv(directory/'timings.tsv',('stage','seconds','scope'),
+                (('complete_nonvisual_qualification',1.,'input gate fixture; no render'),))
+            tsv(directory/'inputs.tsv',('field','value'),(
+                ('source_sha256',source.source_sha256),('tolerance_mm',.005),
+                ('scene_sha256',digest(directory/'scene.bgmesh')),
+                ('views_sha256',digest(directory/'views.bgview'))))
+            with self.assertRaisesRegex(ValueError,'prepared query'):
+                qualified_owned_inputs(directory,source.source_sha256,.005)
+
     def test_real_query_process_distinguishes_quality_from_source_capability(self):
         root=Path(__file__).resolve().parents[1]
         import sys

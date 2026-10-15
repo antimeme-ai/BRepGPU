@@ -67,3 +67,20 @@ authored missing-PC/pole/seam red, shared preparation, focused formula/failure
 greens and code review, then one fresh source/query export with the existing
 independent source/placement checks. No whole meshing, reference query pilot or
 watch raster follows from this design review alone.
+
+## Final revised review
+
+Reread the revised study and subplan after root/source/oracle review: ACCEPT.
+The checked direct projection and fresh existing-PC-only seam path are now
+written explicitly. Complete ordered source-use ownership and whole-basis
+constant true-period comparison remove ambiguity from endpoint-only checks.
+Raw projected PCurves remain the owned snapshot input, preserving its existing
+source-grounded recoveries. The optional deep query copy applies only the
+specified column, retained-two-candidate joint and proven pole corrections;
+original-t intervals, both seam slots, unchanged3D geometry and retained-carrier
+derivative perturbation bounds remain required. No larger generic grade is
+introduced. Preparation wall times stay outside deterministic source bytes.
+One qualification export and existing source/report hashes bind the prepared
+query files to the actual source; the NVIDIA import still consumes raw neutral.
+No remaining native design/plan blocker. Implementation and its independent code
+review remain the source owner's next bounded unit, not watch render approval.

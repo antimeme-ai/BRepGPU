@@ -330,3 +330,10 @@ FixAddPCurve only on a true seam with the same support's non-null PCurve already
 read back. Inspected HasPCurve/PCurve and projector construction: their matching
 lookup and fresh OK status exclude that null projection path and stale DONE3.
 Accepted the bounded resolution; mature torus seam handling remains in use.
+
+Final reread accepted the revised source-UV study/subplan: safe projection and
+seam attachment, whole-basis true periods, ordered source-use ownership, raw PCs
+for existing owned recoveries and a separate narrowly corrected query copy.
+Deterministic source bytes exclude timings; existing qualification/report hashes
+bind one optional query export, while raw NVIDIA import remains unchanged.
+Sent final ACCEPT to root/source owner and remain available for code review.
