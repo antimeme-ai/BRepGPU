@@ -138,3 +138,28 @@ that foreign line misses.00169744mm at the failure and.00374175mm near peak,
 exceeding unchanged.001mm. This establishes a foreign UV curve defect at the
 chosen grade, not a reason to relax the source residual. Saved full data and
 recovery design considerations in the cylinder-trim study. No production change.
+
+Root accepted typed original-cylinder source inverse and JointRecovery after
+independent diagnosis and derivative-bound review. Implemented independent
+originalframe/sourceXYZ inverse, same-branch check, raw pcurve provenance,
+original loop/endpoint/vertex incidence and mandatory non-small joint metadata.
+Only explicit cylinder_source_inverse bypasses prior roundoff-only canonical UV
+grade. Corrected residual and whole-domain/physical/native checks unchanged.
+Sourceowner review and affected actual-output greens remain pending.
+
+Root reviewed cylinder/joint oracle handlers ACCEPT with one alignment finding:
+the older generic quarter-period guard contradicted the accepted nearest-branch
+half-period cylinder contract. Specialized explicit cylinder inverse to <pi;
+generic pcurve recovery retains its prior stricter bound. Affected five existing
+geometry/native integration methods passed0.282s; new cylinder/joint actual
+source path remains pending the owner's implementation/green.
+
+Independently reran current plane166230, cylinder166811 and cone166156. Plane
+zero is exact original saved-XYZ collinearity plus one-ULP foreign UV sliver.
+Cone zero is distinct interior exact UVs rounding to one binary64 UV/XYZ after
+refining a foreign seam/circle few-ULP V mismatch; original circles have exact
+constant axial height and negligible original cone residual. Source-based plane/
+cone inversion before triangulation addresses the cause. No dropped-cell or
+physical-collapse exemption is justified. Current cylinder case fails earlier
+in new edge sampling, so old scan's zero classification is stale. Saved details
+in papers/2026-10-15-om10-physical-zero-diagnosis.md and sent all facts to owners.

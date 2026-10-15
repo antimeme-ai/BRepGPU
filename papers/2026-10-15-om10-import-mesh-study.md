@@ -552,3 +552,60 @@ Default20 therefore admits20 metric halvings and1,048,576 interior constructions
 no approximation tolerance, source face, or quality allocation is relaxed.
 Budget failure rejects the complete mesh. Direct metric-floor and work-cap
 faults plus original165361 are the immediate tests before the complete rerun.
+
+
+### Original cylinder boundary inversion replaces foreign UV approximation
+
+Actual165500 declares one original vertex shared by a circle and seam line
+whose endpoints differ6.27e-7mm. Actual165590 is more decisive: original C(t)
+is within0.000141mm of its original radius2 cylinder, but OCCT's recovered UV
+line misses it by0.00661mm. Independent original-coefficient evaluation found
+that even reparameterizing that foreign line cannot meet the requested0.001mm
+source residual. SameParameter is metadata, not a residual oracle.
+
+Use one owned cylinder inverse along every original spatial edge sample, with
+the canonical original vertex XYZ at endpoints. Original frame local coordinates
+q=(x,y),z give u=atan2(y,x),v=z; select the unique angular lift nearest the
+retained pcurve branch and reject half-period ambiguity. Pinned OCCT
+ElSLib.cxx:1558 uses the same analytic parameter formula; it is studied, not
+called by the product mesher. Foreign pcurve t/s/rawUV remain provenance and
+branch guides, with their actual raw residual separately reported. Corrected
+S(UV)-canonicalXYZ still must meet the unchanged0.001mm source residual.
+
+The edge sampler must bound this OWNED inverse trim, not the foreign UV line.
+On each original curve span interval, restricted positive homogeneous controls
+bound spatial speed A1 and acceleration A2 in original t; line/circle/ellipse
+retain their own analytic parameter derivatives. Split original curve knots.
+With XY frame operator norm K, radial lower bound
+rho=norm(q(mid))-K*A1*dt/2 must be positive and finite. Angular total variation
+K*A1*dt/rho must be <pi, and both recovered endpoint lifts must agree with that
+continuous branch. Then |u''|<=K*A2/rho+2*(K*A1)^2/rho^2;
+|v''|<=norm(Zcovector)*A2. The first-partial surface metric turns their
+componentwise dt^2/8 interpolation bounds into a world trim-chord bound. Add
+the maximum endpoint metric UV displacement between inverse C(endpoint) and
+inverse original vertex, explicitly accounting for tolerant source incidence.
+Refine axis/branch ambiguity; fail when the existing edge budget exhausts.
+Root and independent oracle reviewed this complete sample-plus-trim invariant
+before implementation. No source residual or approximation allocation widens.
+
+BoundaryOccurrence adds recovery_kind='pcurve' by default or the explicit
+'cylinder_source_inverse'. FaceMesh adds joint_recoveries=().
+JointRecovery(face_id,loop_id,source_vertex_id,incoming,outgoing,uv,kind) retains
+complete original-traversal incoming/outgoing BoundaryOccurrences with foreign
+pre-inverse UV and original t/s/rawUV; its uv is canonical original-vertex
+inverse and kind='cylinder_vertex_inverse'. Metadata direction stays original
+when the polygon loops normalize. Domain chains use corrected occurrences.
+Record actual correction count, raw and corrected residual maxima, and maximum
+world correction; do not interpret a foreign approximation residual as source
+geometry corruption. Other carrier families retain their prior admission until
+actual inventory justifies an owned recovery for them.
+
+Cylinder inverse exposed original B-spline interval (-.0204465460881767,
+-.020446546088176698), whose midpoint rounds onto an interior knot. Select
+curve derivative/chord spans by exact WHOLE interval containment, never a
+tolerant midpoint lookup. Point evaluation also uses strict original-span
+membership. Root reviewed this source-domain correction; adjacent-double
+right-span regression distinguishes it. The diagnostic metric is named
+max_foreign_pcurve_to_edge_residual_mm: carrier evaluation follows the explicit
+global-end recovery first, so out-of-domain original spline UV is never claimed
+to have been evaluated.

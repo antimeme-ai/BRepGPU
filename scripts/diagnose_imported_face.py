@@ -47,6 +47,7 @@ def main():
     parser.add_argument('source',type=Path);parser.add_argument('face',type=int,nargs='?')
     parser.add_argument('--scan',action='store_true',help='diagnostic inventory only; emits no product mesh')
     parser.add_argument('--jobs',type=int,default=4)
+    parser.add_argument('--rotate-start',type=int,default=0,help='scan all faces, starting at this source index and wrapping')
     parser.add_argument('--tolerance',type=float,default=.005)
     args=parser.parse_args()
     if args.scan:
@@ -54,9 +55,11 @@ def main():
         global _SCAN_SOURCE,_SCAN_QUALITY
         _SCAN_QUALITY=MeshQuality(tolerance_mm=args.tolerance)
         _SCAN_SOURCE=load_source(args.source);begin=time.perf_counter();failures=[];count=0
-        print('DIAGNOSTIC_ONLY_ALL_FACE_SCAN',len(_SCAN_SOURCE.faces),'jobs',args.jobs,flush=True)
+        if not 0<=args.rotate_start<len(_SCAN_SOURCE.faces):parser.error('scan rotation outside face inventory')
+        ordered=_SCAN_SOURCE.faces[args.rotate_start:]+_SCAN_SOURCE.faces[:args.rotate_start]
+        print('DIAGNOSTIC_ONLY_ALL_FACE_SCAN',len(_SCAN_SOURCE.faces),'jobs',args.jobs,'rotate_start',args.rotate_start,flush=True)
         with multiprocessing.get_context('fork').Pool(args.jobs) as pool:
-            for identifier,error,vertices,triangles,seconds in pool.imap_unordered(_scan_face,(f.id for f in _SCAN_SOURCE.faces),chunksize=1):
+            for identifier,error,vertices,triangles,seconds in pool.imap_unordered(_scan_face,(f.id for f in ordered),chunksize=1):
                 count+=1
                 if error:
                     failures.append(identifier);print('FAIL',identifier,'seconds',seconds,error,flush=True)

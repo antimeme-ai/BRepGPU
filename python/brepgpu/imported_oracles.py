@@ -937,6 +937,60 @@ def _chart_closure(source, face, closure, coordinate_tolerance):
             outgoing.id, oe.parameter_range[0 if outgoing.sense > 0 else 1])
 
 
+def _cylinder_inverse(carrier, xyz, branch_seed):
+    require(carrier.kind == 2 and carrier.radii[0] > 0, 'owned cylinder inverse needs original positive-radius cylinder')
+    delta = tuple(float(a)-b for a,b in zip(xyz,carrier.frame[:3]))
+    coordinates = tuple(math.fsum(delta[k]*carrier.frame[3+3*j+k] for k in range(3))
+                        for j in range(3))
+    require(all(math.isfinite(x) for x in coordinates) and math.hypot(*coordinates[:2]) > 0,
+            'owned cylinder inverse has invalid radial projection')
+    angle = math.atan2(coordinates[1],coordinates[0])
+    angle += 2*math.pi*round((float(branch_seed)-angle)/(2*math.pi))
+    require(abs(angle-float(branch_seed)) < math.pi, 'owned cylinder inverse has ambiguous original branch')
+    return angle,coordinates[2]
+
+
+def _joint_recovery(source,face,recovery,vertices,quality,coordinate_tolerance):
+    require(recovery.kind == 'cylinder_vertex_inverse' and recovery.face_id == face.id and
+            recovery.loop_id in face.loop_ids, 'unsupported/foreign original-vertex joint recovery')
+    loop = source.loop(recovery.loop_id)
+    a,b = recovery.incoming,recovery.outgoing
+    require(a.coedge_id in loop.coedge_ids and b.coedge_id in loop.coedge_ids and
+            loop.coedge_ids[(loop.coedge_ids.index(a.coedge_id)+1)%len(loop.coedge_ids)] == b.coedge_id,
+            'joint recovery changed original incident-use order')
+    carrier = source.carrier(face.carrier_id)
+    require(carrier.kind == 2, 'cylinder joint recovery requires original cylindrical carrier')
+    vertex = source.vertex(recovery.source_vertex_id)
+    for occurrence,incoming in ((a,True),(b,False)):
+        use = source.coedge(occurrence.coedge_id)
+        edge = source.edge(use.edge_id)
+        endpoint = (1 if use.sense > 0 else 0) if incoming else (0 if use.sense > 0 else 1)
+        require(edge.vertex_ids[endpoint] == vertex.id and occurrence.edge_id == edge.id and
+                occurrence.source_parameter == edge.parameter_range[endpoint],
+                'joint recovery changed original endpoint identity or directed parameter')
+        physical = vertices.get((face.definition_id,occurrence.sample_key))
+        require(physical is not None and physical.source_kind == 1 and physical.source_id == vertex.id,
+                'joint recovery is not the same original physical source vertex')
+        require(getattr(occurrence,'recovery_kind','pcurve') == 'pcurve', 'joint recovery must retain pre-inverse occurrence')
+        raw = curve_point_float(source.curve(use.curve_id),occurrence.pcurve_parameter)
+        _near(occurrence.pcurve_uv,raw,coordinate_tolerance,'joint recovery lost raw recovered pcurve UV')
+        shifted = (raw[0]+use.periodic_shift[0]*2*math.pi,raw[1])
+        _near(occurrence.uv,shifted,coordinate_tolerance,'joint recovery changed pre-inverse branch')
+        if use.parameter_map_kind == 1:
+            require(occurrence.pcurve_parameter == occurrence.source_parameter,
+                    'joint recovery changed identity parameter correspondence')
+        endpoint_xyz = curve_point_float(source.curve(edge.curve_id),occurrence.source_parameter)
+        require(math.dist(endpoint_xyz,vertex.xyz) <= quality.source_residual_mm,
+                'original joint edge/vertex incidence exceeds selected source residual')
+        expected = _cylinder_inverse(carrier,vertex.xyz,shifted[0])
+        _near(recovery.uv,expected,coordinate_tolerance,'canonical joint is not original-vertex cylinder inverse')
+    require(a.sample_key == b.sample_key, 'joint recovery merged different physical source keys')
+    corrected = carrier_jet_float(carrier,*recovery.uv)[0]
+    require(math.dist(corrected,vertex.xyz) <= quality.source_residual_mm,
+            'corrected original-vertex joint exceeds selected source residual')
+    return recovery.loop_id,a.coedge_id,b.coedge_id
+
+
 def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
     """Actual full source→polygonal domains→closed solids, no triangulator reuse.
 
@@ -953,6 +1007,8 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
     vertices = {}
     max_vertex_error = max_uv_error = max_recovery_residual = max_probe_error = 0.
     max_rounding_bound, rounding_bounds = 0., {}
+    cylinder_recovery_count = joint_recovery_count = 0
+    max_foreign_cylinder_residual = 0.
     for vertex in mesh.vertices:
         key = (vertex.definition_id, vertex.physical_key)
         require(key not in vertices and vertex.definition_id in definitions, 'duplicate/foreign physical source key')
@@ -1012,6 +1068,12 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
         boundary_corners = set()
         closures = getattr(domain, 'chart_closures', ())
         closure_parameters = {}
+        joint_recoveries = {}
+        for recovery in getattr(domain,'joint_recoveries',()):
+            recovery_key = _joint_recovery(source,face,recovery,vertices,mesh.quality,coordinate_tolerance)
+            require(recovery_key not in joint_recoveries, 'duplicate original-vertex joint recovery')
+            joint_recoveries[recovery_key] = recovery
+        joint_recovery_count += len(joint_recoveries)
         supported_poles = {v for loop_id in face.loop_ids for cid in source.loop(loop_id).coedge_ids
                            for edge in (source.edge(source.coedge(cid).edge_id),) if edge.degenerate
                            for v in edge.vertex_ids}
@@ -1049,6 +1111,35 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                            2*math.pi if carrier.kind == 5 else 0.)
                 expected_uv = tuple(float(x) + shift*period for x, shift, period in
                                     zip(expected_uv, use.periodic_shift, periods))
+                recovery_kind = getattr(occurrence,'recovery_kind','pcurve')
+                require(recovery_kind in ('pcurve','cylinder_source_inverse'), 'unsupported owned trim recovery kind')
+                if recovery_kind == 'cylinder_source_inverse':
+                    physical = vertices.get((face.definition_id,occurrence.sample_key))
+                    require(physical is not None and physical.source_kind in (1,2),
+                            'owned trim inverse lost original spatial generator')
+                    recovered = _cylinder_inverse(carrier,physical.xyz,expected_uv[0])
+                    _near(occurrence.uv,recovered,coordinate_tolerance,
+                          'owned trim is not original-source cylinder inverse')
+                    cylinder_recovery_count += 1
+                    raw_point = carrier_jet_float(carrier,*expected_uv)[0]
+                    max_foreign_cylinder_residual = max(max_foreign_cylinder_residual,math.dist(raw_point,physical.xyz))
+                    # A non-small original-vertex joint must retain both raw
+                    # endpoint occurrences in original traversal order.
+                    start_index = 0 if use.sense > 0 else 1
+                    if occurrence.source_parameter == edge.parameter_range[start_index] and physical.source_kind == 1:
+                        previous = source.coedge(loop.coedge_ids[(loop.coedge_ids.index(use.id)-1)%len(loop.coedge_ids)])
+                        previous_edge = source.edge(previous.edge_id)
+                        end_index = 1 if previous.sense > 0 else 0
+                        recovery_key = (loop.id,previous.id,use.id)
+                        if previous.parameter_map_kind == 1:
+                            previous_uv = curve_point_float(source.curve(previous.curve_id),previous_edge.parameter_range[end_index])
+                            previous_uv = (previous_uv[0]+previous.periodic_shift[0]*2*math.pi,previous_uv[1])
+                            joint_grade = coordinate_tolerance*max(1.,*(abs(x) for x in (*carrier.uv_bounds,*expected_uv)))
+                            if max(abs(a-b) for a,b in zip(previous_uv,expected_uv)) > joint_grade:
+                                require(recovery_key in joint_recoveries,'non-small source joint lost explicit inverse provenance')
+                        if recovery_key in joint_recoveries:
+                            _near(occurrence.uv,joint_recoveries[recovery_key].uv,coordinate_tolerance,
+                                  'boundary joint differs from retained original-vertex recovery')
                 if carrier.kind == 6:
                     # Source STEP supplies no pcurves. A reconstructed UV may
                     # overhang an ORIGINAL global knot endpoint by roundoff;
@@ -1065,12 +1156,14 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                                     abs(exact(occurrence.uv[axis])-exact(recovered)) <= exact(grade),
                                     'foreign recovered UV overhang exceeds explicit global-end grade')
                 uv_grade = coordinate_tolerance*max(1., *(abs(x) for x in (*carrier.uv_bounds, *expected_uv)))
-                require(max(abs(float(a)-float(b)) for a, b in zip(occurrence.uv, expected_uv)) <= uv_grade,
-                        'canonical source joint changed more than its declared floating UV closure grade')
+                if recovery_kind == 'pcurve':
+                    require(max(abs(float(a)-float(b)) for a, b in zip(occurrence.uv, expected_uv)) <= uv_grade,
+                            'canonical source joint changed more than its declared floating UV closure grade')
                 # Canonical joint UV can close a measured foreign endpoint gap.
                 # Preserve its declared periodic lift; never silently relabel a
                 # seam occurrence by an entire revolution.
-                require(all(not period or abs(float(actual)-float(wanted)) < period/4
+                branch_divisor = 2 if recovery_kind == 'cylinder_source_inverse' else 4
+                require(all(not period or abs(float(actual)-float(wanted)) < period/branch_divisor
                             for actual, wanted, period in zip(occurrence.uv, expected_uv, periods)),
                         'canonical occurrence changed its original periodic branch')
                 if use.parameter_map_kind == 1:
@@ -1188,7 +1281,10 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
                 solid_eulers=tuple(s['euler'] for s in solid_stats), max_source_vertex_error=max_vertex_error,
                 max_pcurve_uv_error=max_uv_error, max_source_recovery_residual=max_recovery_residual,
                 max_finite_interpolation_probe_error=max_probe_error,
-                max_independent_native_uv_rounding_bound_mm=max_rounding_bound)
+                max_independent_native_uv_rounding_bound_mm=max_rounding_bound,
+                cylinder_source_inverse_occurrences=cylinder_recovery_count,
+                original_vertex_joint_recoveries=joint_recovery_count,
+                max_foreign_cylinder_pcurve_residual_mm=max_foreign_cylinder_residual)
 
 
 def _normal(carrier, uv, jet, orientation):
