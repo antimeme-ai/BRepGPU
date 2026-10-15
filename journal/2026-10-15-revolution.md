@@ -32,3 +32,22 @@ The complete geometry, sampler and independent-oracle owners are released to
 implement. Caller review found timed history reads only looked up records;
 root added actual exact affine source/periodic map evaluation and original
 profile boundary reads inside the useful wall, with retained map-reader export.
+
+Exact CPU construction and API implemented. Root/independent construction review
+accepted; one bool-alias slot check was tightened with direct rejection cases.
+Final8construction methods green0.867s. New8sampler methods each CPU1/CPU24/
+P1000/P1001 green0.479/0.391/2.241/3.619s; independent11methods green10.844/
+11.103/10.827/11.472s with zero skips. Whole independent oracle review accepted.
+Actual triangle caller qualified972rows/39origins; root inspected its SVG.
+
+Initial affected-suite command omitted the topology-library environment setting,
+causing22configuration errors; corrected explicit setting passed89methods in
+22.875s with1existingCUDA-onlyskip. That device-restoration method separately
+passedCUDA0.582s. No product correction was required for these configuration
+errors. Native binaries remain unchanged; complete cost campaign follows.
+
+First foreign triangle sweep is manifold but its volume differs from exact
+source pi-volume by2.06e-8 relative, outside the planned1e-8 comparison limit.
+A requested tighter integration accuracy returned the same value. The optional
+reference disagreement is under source/runtime study; do not loosen acceptance
+or claim a foreign/alpha pass. Independent owned geometry qualification is green.

@@ -22,3 +22,14 @@ cap+1/before-grid bounds, all descriptor/query/status checks via unchanged gener
 helpers, per-Patch source-world conversion and oriented rows, owned child scopes.
 Module and8 direct tests are AST-valid; no local product execution. Waiting actual
 geometry dependency readiness before synchronized fleet greens; root notified.
+
+Geometry owner reported final8construction tests GREEN0.867s and source ready.
+Ran own unchanged8direct sampler methods on actual fleet CPU1(0.479s),
+CPU24(0.391s),P1000(2.241s),P1001(3.619s): all GREEN. Actual nonaxis position/
+normal/Frame and sameface periodic-seam/internal-quarter joins match direct
+independent expectations;128-chart admission, full status/descriptor rejection,
+all-invalid/empty and immutable bindings pass. Late host failure closes all3
+actual native children and permits same-Engine/result retry. Announced exclusive
+GPU ownership and released to independent-oracle owner afterward. Root whole
+source/test review accepted; caller fix independently re-read and accepted.
+No source correction, extra profiling, native build, tuning or local product run.

@@ -107,6 +107,12 @@ class RevolutionConstructionTests(unittest.TestCase):
                 if g not in seen:seen.add(g);todo.extend(link[g])
             self.assertEqual(seen,germs)
         data=s.topology_input();self.assertEqual((data.edge_count,data.face_count,data.coedge_count),(6,3,12));self.assertEqual(data.snapshots,())
+        from brepgpu.revolution import _validate_candidate
+        result=revolve(make_profile(TRIANGLE))
+        for field,word in (('loop_slots',(False,)),('chart_slots',(False,1,2,3))):
+            faces=(replace(result.solid.faces[0],**{field:word}),)+result.solid.faces[1:]
+            malformed=copy(result.solid);object.__setattr__(malformed,'faces',faces)
+            with self.assertRaises(ArithmeticError):_validate_candidate(malformed,result.history,result.profile)
 
     def test_exact_material_radical_signs_all_supports_and_trim_seams(self):
         from brepgpu.revolution import revolve
@@ -185,6 +191,11 @@ class RevolutionConstructionTests(unittest.TestCase):
             with self.assertRaises(m.UnsupportedRevolution):m.revolve(make_profile(points))
         for value in (object(),make_body('box'),r.solid):
             with self.assertRaises(TypeError):m.revolve(value)
+        for changes in ({'area':float(p.area)}, {'edges':(replace(p.edges[0],start=False),)+p.edges[1:]},
+                        {'curves':(replace(p.curves[0],data=tuple(map(float,p.curves[0].data))),)+p.curves[1:]}):
+            malformed=copy(p)
+            for name,value in changes.items():object.__setattr__(malformed,name,value)
+            with self.assertRaises(ArithmeticError):m.revolve(malformed)
         for cls in (m.RevolvedSolid,m.RevolutionResult,m.History,m.PointClassification):
             with self.assertRaises(TypeError):cls()
         with self.assertRaises((FrozenInstanceError,AttributeError)):r.solid.volume=None
