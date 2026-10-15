@@ -63,6 +63,95 @@ healing policies, output quality or a full reference benchmark. The later fresh
 complete reference caller still attempts all original definitions and both
 policies; no partial watch image may masquerade as the complete comparison.
 
+Parent and independent design/subplan review ACCEPT; checkpoint `c1213a3`.
+The genuine literal fixture RED ran on the fleet against the unchanged current
+production extraction function. A private object renamed only the existing CLI
+main symbol to permit linking the authored fixture; no production source or
+binary changed. Two direct methods took 0.086 s: crossed/nonrectangle rejection
+GREEN, admitted literal rectangle FAIL with the actual production message
+`mesh_export: actual polygon is not triangular`. The input is real SDK polygon
+topology with four original physical vertices, authored normals, five untouched
+triangle parents and actual live source-face labels. Private log:
+`context/om10-nvidia-polygon-red/direct.log`.
+
+Production implementation starts only after reporting this RED. The temporary
+RED-only fixture declarations/linkage will be replaced by the selected shared
+native module header and normal target linkage; no compatibility shim ships.
+
+Implemented the accepted reference-only module after reporting RED. The native
+producer and authored fixture now link the same `raw_mesh.cpp`; the CLI and
+BGREFM01 writer remain unchanged. Exact finite directed any-axis rectangle
+admission precedes official SDK triangulation. Actual corner normals are copied
+per original parent+physical vertex, then physical identity/XYZ, source labels,
+original boundary and the two-triangle shared diagonal are checked. Temporary
+parent tags and source labels are restored through RAII; source Brep and mesh
+ownership remain with the caller. Original user fields/smoothing data are saved
+as bytes so extraction does not interpret potentially uninitialized SDK metadata.
+
+The native producer emits successful definition polygon counts in
+`polygon-export.tsv` and the actual official split wall separately as a nested
+stage inside extraction. The reference caller pins both new helper files and
+names the official post-tessellation rectangle step in metadata. No owned source,
+mesher, native display or active complete qualification pin changed.
+
+Focused three methods GREEN 0.044 s cover 24 literal axis/rotation/reversal
+inputs, the untouched shared-vertex sibling normal/user-field boundary,
+crossed/nonrectangular rejection and actual SDK noncompletion after an earlier
+completed split. In the latter, an exact nonzero rectangle with extrusion
+2^-900 is below the SDK's useful degeneracy scale: its call returns without
+triangulating it. Production correctly raises `official split left a
+nontriangle`. The fixture observes the earlier parent's two actual children and
+the failed parent's remaining polygon with restored live source labels and
+user fields before disposal; an early preflight error cannot satisfy this check.
+
+Five affected original producer/failure-continuation/box/cylinder/both-policy
+and fresh authored full-caller methods GREEN 1.385 s. Independent code review
+found one defensive null-next access risk in directed ring validation. Fixed it
+by validating every edge/start vertex/owner before adjacency access; independent
+re-review CODE ACCEPT. Bounded ownership ASan/UBSan is the remaining direct
+check before root code review. Actual 1808 reruns stay held until root approval;
+the other two bridge and two nonsimple-output definitions remain explicit
+unsupported outcomes, with no repair or hidden triangle substitute.
+
+The first bounded full ASan/UBSan run was non-green on the SDK's intentional
+`SmTArray<SmVertexuse*>`→`SmTArray<SmTopology*>` casts, beginning in its native
+box construction before extraction. Exact source: `SmVertex::GetVertexuses`,
+`SmVertex.cpp:3309`. UBSan vptr instrumentation is incompatible with that
+polymorphic container reinterpretation. Retained the failing log, then used
+address+undefined checks excluding only vptr. That isolated a 1,544-byte process
+startup allocation from unused OpenUSD `libusd_tf.so`, because the literal
+fixture unnecessarily inherited all producer USD/bridge links.
+
+Corrected fixture linkage to only its actual owned helper and SM_API/SMLib
+dependencies; producer dependencies remain unchanged. The same three bounded
+methods pass ASan+UBSan-minus-vptr and LeakSanitizer in 0.198 s, with no suppression
+file or disabled leak detection. This does not claim full UBSan or instrument
+the prebuilt SDK. Initial failed logs and final limited-scope GREEN remain
+private, named `om10-nvidia-polygon-sanitize*.txt` under context.
+
+Root static code review ACCEPT after the directed-ring fix. Its conditional go
+for actual definition 1808 only is satisfied by the bounded final sanitizer
+result; both original policies are now executing with unchanged 0.005 mm target
+and strict partial-output policy. No other original reference definition is
+being repaired, and no full reference model or rendering is claimed.
+
+Actual definition 1808 completes under both unchanged policies. Each original
+17,626-polygon SDK result contains 17,620 triangles and six admitted exact
+rectangles. Six official split calls yield 17,632 triangles over the same
+8,816 physical vertices. Both complete raw meshes pass existing exact physical
+area/opposite-edge/vertex-link/connectivity and original Euler=0 checks, and
+cover all 1,112 actual imported NVIDIA faces. Output hashes are identical
+between policies: `95a72628abc94a90faac0d60bf2128cf1e32f269baa404ebe8ed565cffbf33fd`.
+All original/raw/helper/runtime pins remain unchanged through both calls.
+
+Producer component walls were 2.286606 s and 3.972093 s under concurrent owned
+meshing. They exclude fresh STEP import, whole-movement geometry admission and
+images, and are not complete comparison times. Actual reports/pins are private
+under `context/om10-actual-nvidia-date-disc-v1`. No actual whole reference model,
+source-distance admission or rendering was run. This bounded unit stops here;
+two bridge and two nonsimple-output failures remain explicit for the later
+complete original-source reference attempt.
+
 Root review accepted the bounded design and subplan after the independent
 review refinements. This authorizes the stated RED → implementation → GREEN →
 code review sequence only. It selects neither spring-ring repair nor periodic

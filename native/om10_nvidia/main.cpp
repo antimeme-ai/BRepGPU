@@ -4,6 +4,7 @@
 #include <SmApiUsd.h>
 #include <SmBrep.h>
 #include <SmPoly.h>
+#include "raw_mesh.hpp"
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -27,7 +28,6 @@ bool ConvertOcctFileToUsd(const std::string &, const std::string &, std::string 
 }
 namespace fs = std::filesystem;
 using Clock = std::chrono::steady_clock;
-using Vec = std::array<double,3>;
 void require(bool value,const std::string &message) {
   if(!value)throw std::runtime_error(message);
 }
@@ -54,67 +54,6 @@ struct Writer {
   void f64(double d){uint64_t v;std::memcpy(&v,&d,8);u64(v);}
   void close(){stream.close();require(!stream.fail(),"mesh_export: write/close failed");}
 };
-struct Corner { Vec point,normal;uint64_t physical; };
-struct Triangle { std::array<uint32_t,3> corners;uint64_t face; };
-struct Mesh {std::vector<Corner> corners;std::vector<Triangle> triangles;uint64_t physical_count=0;};
-Vec point(const SmPoint3d &p){return {p[0],p[1],p[2]};}
-Vec normal(const SmVector3d &p){return {p[0],p[1],p[2]};}
-bool finite(const Vec &p){return std::isfinite(p[0])&&std::isfinite(p[1])&&std::isfinite(p[2]);}
-Mesh extract(SmBrep &brep,SmPolyBrep &poly) {
-  SmTArray<SmFace*> faces;brep.GetFaces(faces);
-  std::map<const SmFace*,uint64_t> face_ids;
-  for(ULONG i=0;i<faces.GetSize();++i)
-    require(faces[i] && face_ids.emplace(faces[i],i).second,"mesh_export: invalid imported face list");
-  SmTArray<SmPolyVertex*> vertices;poly.GetPolyVertices(vertices);
-  std::map<const SmPolyVertex*,uint64_t> vertex_ids;
-  for(ULONG i=0;i<vertices.GetSize();++i)
-    require(vertices[i] && vertex_ids.emplace(vertices[i],i).second,"mesh_export: invalid physical vertex list");
-  SmTArray<SmPolyFace*> polygons;poly.GetPolyFaces(polygons);
-  require(polygons.GetSize()>0,"mesh_export: empty actual tessellation");
-  require(uint64_t(polygons.GetSize())<=UINT32_MAX/3,"mesh_export: corner count exceeds native slots");
-  Mesh output;output.physical_count=vertices.GetSize();
-  output.corners.reserve(size_t(polygons.GetSize())*3);
-  output.triangles.reserve(polygons.GetSize());
-  std::vector<uint64_t> counts(faces.GetSize(),0);
-  std::set<uint64_t> used_vertices;
-  for(ULONG i=0;i<polygons.GetSize();++i){
-    auto *polygon=polygons[i];require(polygon,"mesh_export: null polygon");
-    const auto source=face_ids.find(polygon->GetOriginalFace());
-    require(source!=face_ids.end(),"mesh_export: polygon has no original imported face identity");
-    SmTArray<SmPolyLoop*> loops;polygon->GetPolyLoops(loops);
-    require(loops.GetSize()==1 && loops[0],"mesh_export: polygon must have one outer loop and no holes");
-    SmTArray<SmPolyEdge*> edges;loops[0]->GetPolyEdges(edges);
-    require(edges.GetSize()==3,"mesh_export: actual polygon is not triangular");
-    for(ULONG j=0;j<3;++j)
-      require(edges[j] && edges[j]->GetAuxData(),"mesh_export: missing actual polygon edge/corner normal");
-    Triangle triangle{{},source->second};
-    std::set<uint64_t> distinct;
-    for(ULONG j=0;j<3;++j){
-      auto key=vertex_ids.find(edges[j]->GetStartPolyVertex());
-      require(key!=vertex_ids.end(),"mesh_export: foreign physical vertex pointer");
-      Corner corner{point(key->first->GetPoint()),normal(edges[j]->GetAuxData()->m_vNormal),key->second};
-      require(finite(corner.point)&&finite(corner.normal),"mesh_export: nonfinite actual point/normal");
-      double length=std::hypot(corner.normal[0],corner.normal[1],corner.normal[2]);
-      require(std::isfinite(length)&&length>0,"mesh_export: zero actual normal");
-      distinct.insert(key->second);used_vertices.insert(key->second);
-      triangle.corners[j]=static_cast<uint32_t>(output.corners.size());
-      output.corners.push_back(corner);
-      require(edges[j]->GetEndPolyVertex()==edges[(j+1)%3]->GetStartPolyVertex(),"mesh_export: disconnected polygon loop");
-    }
-    require(distinct.size()==3,"mesh_export: collapsed physical triangle");
-    const auto &a=output.corners[triangle.corners[0]].point;
-    const auto &b=output.corners[triangle.corners[1]].point;
-    const auto &c=output.corners[triangle.corners[2]].point;
-    Vec cross={(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),
-               (b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),
-               (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])};
-    require(finite(cross)&&std::hypot(cross[0],cross[1],cross[2])>0,"mesh_export: zero/nonfinite triangle area");
-    output.triangles.push_back(triangle);++counts[source->second];
-  }
-  for(uint64_t count:counts)require(count>0,"mesh_export: imported NVIDIA face omitted from actual triangles");
-  require(used_vertices.size()==vertices.GetSize(),"mesh_export: unused actual physical vertices");
-  return output;
-}
 void write_mesh(const fs::path &path,uint64_t id,const Mesh &mesh) {
   Writer w(path);w.stream.write("BGREFM01",8);w.u32(1);w.u32(0);
   w.u64(1);w.u64(0);w.u64(mesh.corners.size());w.u64(mesh.triangles.size());w.u64(1);w.u64(0);
@@ -154,12 +93,13 @@ int main(int argc,char **argv) {
     require(have_heal&&have_chord&&!jobs.empty()&&!directory.empty(),"argument: missing required options");
     require(!fs::exists(directory),"output: destination must be new");
     fs::create_directories(directory);
-    std::ofstream timings(directory/"stages.tsv"),reports(directory/"definitions.tsv"),failures(directory/"failures.tsv"),imports(directory/"imports.tsv");
-    require(timings&&reports&&failures&&imports,"output: cannot open reports");
+    std::ofstream timings(directory/"stages.tsv"),reports(directory/"definitions.tsv"),failures(directory/"failures.tsv"),imports(directory/"imports.tsv"),polygons(directory/"polygon-export.tsv");
+    require(timings&&reports&&failures&&imports&&polygons,"output: cannot open reports");
     timings<<"definition_id\tstage\tseconds\n"<<std::setprecision(17);
     reports<<"definition_id\tstatus\theal\tchord_mm\tinput_faces\tinput_edges\tinput_vertices\tphysical_vertices\ttriangles\tlamina_edges\tspine_edges\tinput_manifold\toutput_manifold\tmessage\n"<<std::setprecision(17);
     failures<<"definition_id\tnvidia_face_ordinal\tstage\tstatus\n";
     imports<<"definition_id\tprim_path\tpacked_index\tstatus\tmessage\n";
+    polygons<<"definition_id\toriginal_sdk_polygons\toriginal_sdk_triangles\tadmitted_rectangles\tofficial_rectangle_split_calls\tproduced_triangles\n";
     auto start=Clock::now();SmApiCreateContext();
     require(SmApiUsdEnsurePluginRegistered()==SM_SUCCESS,"plugin registration failed; check isolated package runtime");
     timings<<"0\tworker_context_plugin_setup\t"<<elapsed(start)<<'\n';
@@ -188,6 +128,8 @@ int main(int argc,char **argv) {
         timings<<job.first<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';
         require(tess==SM_SUCCESS&&poly&&face_failures.GetSize()==0,"strict NVIDIA tessellation failed");
         stage="extract_f64_corner_mesh";t=Clock::now();Mesh mesh=extract(*breps.values[0],*poly);
+        polygons<<job.first<<'\t'<<mesh.original_polygons<<'\t'<<mesh.original_triangles<<'\t'<<mesh.rectangle_count<<'\t'<<mesh.official_split_calls<<'\t'<<mesh.triangles.size()<<'\n';
+        timings<<job.first<<"\tofficial_rectangle_triangulation_nested_in_extract\t"<<mesh.official_split_seconds<<'\n';
         timings<<job.first<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';stage="write_genuine_mesh";t=Clock::now();
         fs::path path=directory/("definition-"+std::to_string(job.first)+".bgrefmesh");fs::path temporary=path.string()+".tmp";
         write_mesh(temporary,job.first,mesh);fs::rename(temporary,path);
@@ -199,7 +141,7 @@ int main(int argc,char **argv) {
       }
       timings<<job.first<<"\tdefinition_complete_through_object_teardown\t"<<elapsed(begin)<<'\n';
     }
-    for(auto *stream:{&timings,&reports,&failures,&imports}){stream->close();require(!stream->fail(),"output: report write/close failed");}
+    for(auto *stream:{&timings,&reports,&failures,&imports,&polygons}){stream->close();require(!stream->fail(),"output: report write/close failed");}
     return good?0:1;
   }catch(const std::exception &error){std::cerr<<error.what()<<'\n';return 1;}
 }
