@@ -110,3 +110,9 @@ CPU import/meshing and measured CPU/P100/NVIDIA comparison. The old launch
 wording is labeled historical. The watch draft remains explicitly blocked on
 whole qualification, real inspected images and actual outcomes; no invented
 timing, completed-watch claim or X publication was added.
+
+Corrected the current rendering guide's stale complete-pipeline/reference-study
+wording and added the actual processing-policy correction above the historical
+source-capability journal. The operational guide now names the current original
+ellipse/spline-boundary source gap and keeps all complete qualification/render
+claims pending. No tests are needed for this factual documentation correction.

@@ -5,17 +5,22 @@ The target is the supplied **Association openmovement OM10 MAN VA01.3**:
 explode the same complete geometry, preserving original names, usage paths,
 rigid transforms, edge/coedge identities and per-face source mapping.
 
-The complete pipeline is implemented. Focused ring/spiral connectivity,
-axial-edge and source-owned spline-boundary checks pass; whole-source mesh
-and three-backend integration must pass before actual watch rasterization.
+The source-to-display implementation is under qualification. Actual no-processing
+STEP translation exposed missing pcurves; explicit UV preparation now passes
+focused source, seam/pole and numerical-domain tests. A fresh complete export
+still fails on an original ellipse versus spline-boundary representation case
+(face170920). That capability, whole-source mesh and three-backend integration
+must pass before actual watch rasterization. Stopped and partial runs are not
+passes. See the [source UV design and current limits](../papers/2026-10-15-om10-explicit-uv-source-preparation.md).
 The [reviewed plan](OM10_IMPLEMENTATION_PLAN.md),
 [source/recovery study](../papers/2026-10-15-om10-import-mesh-study.md) and
 [independent-oracle subplan](OM10_ORACLE_SUBPLAN.md) describe those obligations.
 
 The operator also requires **NVIDIA USD/BRep on CPU** on this same complete
 movement and both views. The owned CPU/P100 matrix isolates our acceleration;
-it does not supply that external baseline. The NVIDIA import/tessellation path
-and matching source/quality/display scopes are under study. External results
+it does not supply that external baseline. The genuine NVIDIA producer and raw CPU display are implemented and tested on
+authored geometry under both declared healing policies; complete watch
+admission and measurements remain pending. External results
 must identify their actual source translation and renderer; no OCCT or owned
 triangles may be reported as NVIDIA output. The final comparison remains
 incomplete until that reference run and its outcomes are reported.
