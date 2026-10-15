@@ -15,3 +15,20 @@ arbitrary clipped/tangent/crossing-circle decisions part of this first unit.
 Existing exact circle sections retain their original maps and events; coordinate
 welding is not a source of identity. Generalized arrangements, GPU placement and
 the operator's deferred Python/integration investigation remain later work.
+
+## Accepted bounded design and plan review
+
+All three design reviews accept a whole circle edge/anchor with retained four
+source maps/events, paired uses/exterior, every cell-minus-disks and disk region,
+ordered holes and exact all-incident lookup/UV area/witnesses. Integrated runtime
+findings: equal world-axis spans/matching UV radii are required for UV disks,
+and boundary sources carry directed original-curve t0/t1 without applying the
+original coedge orientation a second time. The full arrangement book remains
+unacquired and is explicitly on the literature shopping list; read primary
+manual/source assumptions already support this bounded algorithm.
+
+Published the whole-unit plan with conceptual product/oracle/caller owners,
+five actual caller recipes including64hole regions and32×32cells, independent
+full-domain/boundary-word truth, selected geometry/topology mutants and serial
+fleet costs. Separate semantic/oracle plan reviews accepted; runtime plan review
+finishes before the actual direct entry red. No implementation has started.

@@ -1,0 +1,4 @@
+name	kind	url	revision_or_version	retention	claim_scope
+cgal-arrangements	primary-manual	https://doc.cgal.org/latest/Arrangement_on_surface_2/index.html	6.2.1 read2026-10-14	live primary documentation	DCEL twins/cycles/holes, representation refinements, source geometry separation
+occt-builderface	quarantined-primary-source	https://github.com/Open-Cascade-SAS/OCCT/blob/b8f597c677811d1f9f4d8a97f5ae2825c0353a42/src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_BuilderFace.cxx	b8f597c677811d1f9f4d8a97f5ae2825c0353a42	quarantine/new-iteration/occt	actual source/header read; original archives and restoration manifest unchanged
+fogel2012arrangements	primary-book-metadata	https://link.springer.com/book/10.1007/978-3-642-17283-0	2012	metadata only; full book not acquired	identified follow-on reference; no full-text claim

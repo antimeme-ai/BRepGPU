@@ -39,8 +39,10 @@ Records use dense result-local IDs, never pointers/persistent edited-body IDs:
   identity; rounded/equal XYZ values never weld unrelated source namespaces.
 - `Edge(id, kind, start, end, source, piece_ids, event_ids)`. Grid segments have
   kind `line`; circle has kind `circle` and start=end at one declared anchor.
-  Boundary source is `("boundary", original_coedge_id, original_edge_id, lo,hi)`
-  with increasing exact original-edge parameter bounds. Interior lines name
+  Boundary source is `("boundary", original_coedge_id, original_edge_id, t0,t1)`
+  where t0/t1 are exact original-edge parameters at canonical start/end;
+  they may decrease when canonical traversal opposes the original edge.
+  Interior lines name
   `("u_cut", sorted_cut_index)` or `("v_cut", sorted_cut_index)`. Circle source
   is `("section", section_index, component_id)` with ordered original piece IDs
   and all original event IDs. The retained target/sections qualify every ID.
@@ -80,7 +82,9 @@ Reader qualification must use the actual source orientation, not guess by slot.
 
 Validate original full circle source/control geometry and event incidence,
 derive exact rational UV center/radius, and establish strict containment in one
-cell. Require squared center separation >(r1+r2)² for every pair, excluding
+cell. Require equal nonzero absolute world U/V spans and verify the two derived
+UV radii agree; a world circle on an anisotropic chart is an ellipse and cannot
+use this disk/area contract. Require squared center separation >(r1+r2)² for every pair, excluding
 nested, tangent and coincident disks. Anchor at the first source component
 piece's initial named event, preserve component order and all maps. Add one
 closed edge, a disk region and opposite disk/hole uses. Every contained section
