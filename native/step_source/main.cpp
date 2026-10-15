@@ -220,9 +220,6 @@ int main(int argc,char** argv){
     std::ifstream file(argv[1],std::ios::binary);if(!file)throw std::runtime_error("cannot read source");
     std::vector<unsigned char> input((std::istreambuf_iterator<char>(file)),{});if(input.empty()||input.size()>U(1)<<30)throw std::runtime_error("invalid source file size");auto digest=sha256(input);
     STEPCAFControl_Reader reader;reader.SetNameMode(true);reader.SetColorMode(true);reader.SetMatMode(true);reader.SetPropsMode(true);
-    // Source extraction does not authorize topology-changing shape processing.
-    // STEP's own carrier/pcurve translation remains foreign conversion work.
-    reader.SetShapeProcessFlags(ShapeProcess::OperationsFlags());
     if(reader.ReadFile(argv[1])!=IFSelect_RetDone)throw std::runtime_error("STEP read failed");
     NCollection_Sequence<TCollection_AsciiString> length_units,angle_units,solid_angle_units;
     reader.ChangeReader().FileUnits(length_units,angle_units,solid_angle_units);
@@ -240,8 +237,18 @@ int main(int argc,char** argv){
       source_units_mm=factor;
     }
     reader.ChangeReader().SetSystemLengthUnit(1.0);
+    // ReadFile replaces the transfer actor. A pre-read policy assignment is
+    // lost; set and verify the actual actor after read, never rely on defaults.
+    reader.SetShapeProcessFlags(ShapeProcess::OperationsFlags());
+    auto require_no_processing=[&](const char* stage){
+      const auto& flags=reader.GetShapeProcessFlags();
+      std::cout<<"shape_process_"<<stage<<"\t"<<flags.second<<"\t"<<flags.first.count()<<"\n";
+      if(!flags.second||flags.first.any())throw std::runtime_error(std::string("STEP processing policy differs at ")+stage+" supplied="+std::to_string(flags.second)+" operations="+flags.first.to_string());
+    };
+    require_no_processing("before_transfer");
     Handle(TDocStd_Document) doc;XCAFApp_Application::GetApplication()->NewDocument("BinXCAF",doc);
     if(!reader.Transfer(doc))throw std::runtime_error("STEP/XDE transfer failed");
+    require_no_processing("after_transfer");
     auto model=Handle(StepData_StepModel)::DownCast(reader.Reader().WS()->Model());
     auto tp=reader.Reader().WS()->TransferReader()->TransientProcess();
     auto shape_tool=XCAFDoc_DocumentTool::ShapeTool(doc->Main());
@@ -386,7 +393,7 @@ int main(int argc,char** argv){
       es.assign(unique_edges.begin(),unique_edges.end());vs.assign(unique_vertices.begin(),unique_vertices.end());Bytes w;w.u64(si);w.u64(solid_products.at(si));w.ids(fs);w.ids(es);w.ids(vs);tables["SOLIDS__"].push_back(w);
     }
     for(auto& s:styles)tables["STYLES__"].push_back(s.second.bytes());
-    Bytes meta;meta.text("OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; owned STEP source adapter v1; shape-processing=none");tables["META____"].push_back(meta);
+    Bytes meta;meta.text("OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; owned STEP source adapter v2; shape-processing=none; set-after-read; asserted-before-and-after-transfer");tables["META____"].push_back(meta);
     const std::vector<std::string> tags={"META____","PRODUCTS","SOLIDS__","USAGES__","VERTICES","EDGES___","COEDGES_","LOOPS___","FACES___","CARRIERS","CURVES__","STYLES__","DIAGS___"};Bytes body;
     for(auto& tag:tags){Bytes section;for(auto& row:tables[tag])section.row(row);body.raw(tag);body.u64(tables[tag].size());body.u64(section.v.size());body.v.insert(body.v.end(),section.v.begin(),section.v.end());}
     Bytes out;out.raw("BGSRC001");out.u32(1);out.u32(0);out.v.insert(out.v.end(),digest.begin(),digest.end());out.f64(source_units_mm);out.f64(uncertainty*source_units_mm);out.u64(roots[0]);out.u32(tags.size());out.u32(0);out.u64(88+body.v.size());out.v.insert(out.v.end(),body.v.begin(),body.v.end());
