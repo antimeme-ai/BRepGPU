@@ -71,3 +71,12 @@ pinned NVIDIA OCCT-to-USD bridge; direct STEP import is not exposed by that
 runtime. The concrete reference path needs source-grounded design/review before
 new adapter code. No foreign triangles have been substituted for product output,
 and no target raster has occurred.
+
+The operator further requires NVIDIA USD/BRep CPU reference times for every
+scenario presented in the README AFTER the watch pass concludes. Recorded this
+as the next required tranche in AGENTS, RETURN_PASS and issue63, with the same
+obligation for future README scenarios. The inventory must cover every advertised
+scenario, keep scopes/source/quality comparable, and expose failures/unsupported
+inputs rather than quietly omitting them. Added the README coverage pointer.
+This does not start the broad backfill while the watch is active or alter the
+external community alpha gate.
