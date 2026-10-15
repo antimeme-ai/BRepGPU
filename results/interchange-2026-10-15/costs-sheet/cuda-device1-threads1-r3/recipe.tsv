@@ -1,0 +1,16 @@
+field	value
+source_sha256	54d6e6f8457f6bb6d967389ed2c801c63d8bdf25f7fd33c8fa286e3c33250c4b
+backend	cuda
+observed_backend	1
+device	1
+threads	1
+grid	17
+faces	1
+patches	1
+queries	289
+native_components	2601
+checksum	882.875244140625
+trims	uninterpreted
+coordinates	source local; source unit/up-axis metadata retained; no unit conversion
+jets_layout	little-endian f64; component-major Sxyz,Suxyz,Svxyz
+qualification_scope	exact source Cox-de Boor and actual-control Bernstein; coefficient/frame rounding budgets

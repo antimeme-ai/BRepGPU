@@ -141,3 +141,28 @@ not an active Python rewrite/session optimization or demonstrated GPU speedup.
 The continuing NCSX trophy requires actual source geometry beyond the acquired
 engineering PDF/photo references; keep geometry revisions and rendering settings
 constant across comparison images.
+
+## NCSX scene comparison
+
+The operator deferred this comparison while continuing the breadth sweep.
+Study00 did not record rendering/evaluation timing and did not run a matched CPU
+geometry pass. Later compare the identical scene on native CPU and P100, separating
+patch preparation, context/setup, uploads, native evaluation, download, derivative
+normal construction and CPU rasterization/encoding. Time independent correctness
+checking separately from the useful caller. Do not describe the current CPU
+rasterizer as GPU rendering or infer a performance result from study00.
+
+## Carrier interchange after the breadth pass
+
+The narrow strict ASCII adapter and actual foreign source/native comparisons are
+delivered. General multispan extraction, larger models, additional formats, scene
+composition, imported trims/solid topology and cross-session naming remain. Keep
+original face/use/status and parameter-map guarantees when broadening. Native
+SDK extraction would need matching header/wheel ABI qualification; the owned
+ASCII subset avoids installing another parser or hiding reference pointers.
+
+Small cold mouse calls measured34.259ms CPU1 versus319.586/710.947ms P1000/1
+medians. GPU context setup252.560/547.433ms and cleanup33.920/108.768ms dominated
+those actual calls; do not add per-phase medians as a complete median. Study
+reuse only after the remaining themes; these are no resident/large-batch results.
+See results/interchange-2026-10-15/REPORT.md. No NCSX render timing was undertaken.

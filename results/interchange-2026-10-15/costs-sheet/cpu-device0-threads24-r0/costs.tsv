@@ -1,0 +1,14 @@
+phase	wall_ms
+read_parse_convert	5.772164
+prepare_queries	0.136102
+context_setup	2.041204
+patch_snapshot_upload	0.132654
+query_snapshot_upload	0.237139
+evaluate	1.858096
+download	0.141423
+query_patch_result_cleanup	0.046021
+validate_convert	0.104181
+consume	0.250771
+context_cleanup	0.014589
+complete_file_to_consumed_cleanup	10.735262
+independent_qualification	881.148822

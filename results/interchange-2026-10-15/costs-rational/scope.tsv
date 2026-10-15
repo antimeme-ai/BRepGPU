@@ -1,0 +1,8 @@
+field	value
+useful_caller	capped read/parse/convert/query prep/context/uploads/eval/download/required validation/source conversion/checksum/cleanup
+outside_useful_timer	module import/process launch, exact independent qualification, artifact writes, reference acquisition and scalar queries
+child_process_ms	includes all child work plus launch and wait; reported separately
+grid	17
+warmups	1
+repeats	3
+interpretation	exploratory unpinned whole input-consumer latency; no clock isolation; no general CAD speedup
