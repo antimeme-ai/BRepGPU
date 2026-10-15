@@ -91,3 +91,74 @@ XYZ/triangle/source-face records; do not rerun owned meshing merely to recover
 those witnesses. Its original mesh/error provenance remains required. Embedded
 source-export timing values are excluded from cross-run source-identity equality.
 Initial direct red precedes producer/driver implementation.
+
+## Finite geometry helper: concrete reviewed boundary
+
+Proposed appendix before helper code. Source/export owner may own this whole
+bounded checker after the exporter closes; reference owner supplies witness
+packing and actual caller integration. It is one direct actual-geometry
+mechanism, not a checker framework. Add only a separate
+`native/om10_reference_geometry` target, linked to the existing pinned OCCT8
+prefix and shared raw BGREFM01 decoder, with no NVIDIA dependency:
+
+```
+brepgpu-om10-reference-geometry --source original-definition.brep \
+  --mesh genuine-definition.bgrefmesh --witnesses source-witnesses.bgprobe \
+  --tolerance .005 --output-directory NEWDIR
+```
+
+Require one definition-local raw mesh, zero occurrences. Load the entire original
+unmeshed BinToolsV4 solid once; collect every trimmed original face into a
+boundary FACE compound (or all original boundary shells). Never query the filled
+Solid, never NVIDIA-converted surfaces, and never create an OCCT tessellation.
+Keep the boundary resident throughout this process's queries. This is the
+**translated original OCCT boundary**, whose source correspondence is checked
+separately, not a direct exact raw-STEP distance oracle.
+
+Forward selection is fixed before outcomes: group actual NVtriangle indices by
+opaque native face ordinal, select each group's middle triangle in emission
+order, and union with `min(64,N)` evenly spaced whole-mesh indices
+`floor((2*i+1)*N/(2*min(64,N)))`. Deduplicate indices, sort them, query centroid
+and all three edge midpoints. Every measured distance to original trimmed
+boundary must be finite and at most tolerance plus2^-32mm numerical grade.
+Explicitly set distance solver deflection rather than inheriting a default.
+Failure to solve is a failed check, not distance0 or a skipped probe.
+
+Reverse witness `BGRPROB1` is little endian: magic8, u64 count; each40byte row
+is u64 original STEP face ID, u64 qualified-owned triangle index, three f64
+physical-centroid XYZ. Derive the same middle-per-original-face plus64 global
+selection from already qualified BGMESH01 source-face/triangle/retainedXYZ
+records (or corresponding qualified CPU jets); no owned mesh rebuild. All
+selected triangles must be positive/noncollapsed. Source witness provenance
+includes existing scene/jet hashes. The helper evaluates distance to actual
+genuine NVIDIA triangles with a direct perdefinition point-to-triangle search,
+retains selected closest triangle ID/barycentrics/distance, and requires at most
+2*tolerance plus2^-32mm numerical grade. No BVH, fabricated source geometry or
+replacement mesh. Validate positive finite tolerance and finite witness inputs;
+check exact input lengths and bounded counts. A nearest point must actually be
+on the returned original triangle, including vertex/edge/interior cases.
+
+Write external `forward.tsv`, `reverse.tsv`, and summary/timing TSV files with
+counts, maxima, failures and query wall. Keep genuine failed probes, with
+nonzero exit; no successful qualification table on exception/partial output.
+Volume and bounds are explanatory diagnostics, not additional gates purporting
+to prove the same metric. The existing independent physical-key shell mechanism
+and source coverage checks remain outside this helper.
+
+Initial red precedes code. Bounded direct fixtures distinguish filled-solid
+zero from correct boundary distance (sphere center has distance R), known
+underresolved/shifted mesh rejection, literal triangle interior/edge/vertex
+nearest points, and malformed/nonfinite input. After greens and independent
+code review, pilot one actual complex definition and report real query cost
+before complete predetermined coverage. Do not silently reduce probes or raise
+limits if costly; return the measured problem for review. Qualification remains
+outside actual complete benchmark walls, and finite probes establish measured
+admission only, never a universal Hausdorff certificate.
+
+Root reviewed and ACCEPTED this concrete appendix before helper code. The source
+owner owns the whole native query unit after closing the exporter; the reference
+owner packs retained qualified witnesses and integrates the caller. Record the
+actual OCCT solver deflection in result metadata. Its finite numerical distance
+is a measured admission check, not a certified exact distance. The authored
+missing-entry red precedes implementation and independent code review precedes
+actual source query pilots.
