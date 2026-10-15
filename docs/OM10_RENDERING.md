@@ -7,10 +7,11 @@ rigid transforms, edge/coedge identities and per-face source mapping.
 
 The source-to-display implementation is under qualification. Actual no-processing
 STEP translation exposed missing pcurves; explicit UV preparation now passes
-focused source, seam/pole and numerical-domain tests. A fresh complete export
-still fails on an original ellipse versus spline-boundary representation case
-(face170920). That capability, whole-source mesh and three-backend integration
-must pass before actual watch rasterization. Stopped and partial runs are not
+focused source, seam/pole and numerical-domain tests. A bounded reconstruction
+for the original ellipse versus spline-boundary case at face170920 now passes
+the literal source-chart tests and independent code reviews; a fresh complete
+export remains pending. Complete source conversion, whole-source mesh and
+three-backend integration must pass before actual watch rasterization. Stopped and partial runs are not
 passes. See the [source UV design and current limits](../papers/2026-10-15-om10-explicit-uv-source-preparation.md).
 The [reviewed plan](OM10_IMPLEMENTATION_PLAN.md),
 [source/recovery study](../papers/2026-10-15-om10-import-mesh-study.md) and
