@@ -204,7 +204,7 @@ def mesh_svg(path, mesh, reader, *, shape=None, namespace="original", boundary_n
     note = (f'Colors name {namespace} faces. Gold: one physical seam / two atlas occurrences. Wire view has no hidden-line removal.'
             if boundary_note is None else boundary_note)
     parts.extend((f'<text x="30" y="570" font-size="15">{len(mesh.vertices)} shared vertices / {len(mesh.triangles)} triangles / {len(mesh.boundary_uses)} {escape(namespace)} coedge uses</text>',
-                  f'<text x="30" y="600" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; certified total bound {float(mesh.error_bound):.6g}</text>',
+                  f'<text x="30" y="600" font-size="13">World tolerance {escape(ratio(mesh.tolerance))}; total error bound {float(mesh.error_bound):.6g}</text>',
                   f'<text x="30" y="632" font-size="12">{escape(note)}</text>',
                   '</g></svg>'))
     path.write_text('\n'.join(parts)+'\n')

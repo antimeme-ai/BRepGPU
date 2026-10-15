@@ -99,3 +99,23 @@ production; the independent qualifier owns whole face domains and actual float
 ratios; affected compatibility and three distinct actual callers address real
 integration obligations. No GPU/mutation/secondary certification pass is added.
 Proceeding with the bounded qualifier and direct tests only.
+
+## Product and direct green review
+
+Reviewed the actual `extrusion_meshing.py` and lazy result adapter against the
+accepted design and independent qualifier. Accepted with no open findings.
+The factory computes exact source positions, traverses actual directed coedge
+words, and solves the full Gram system; the qualifier instead evaluates
+Bernstein source patches and complete boundary chains. Rounded production
+orientation uses a world cross-product normal, whereas the qualifier projects
+the actual oblique edge/Z rectangle. These mechanisms inspect the real output.
+
+The retained fleet green log records all10 direct methods passing in4.661s.
+The red/green sequence exercises the missing API and real independent geometric
+obligations. There is no tolerance float conversion or arbitrary tolerance floor:
+exactly representable geometry with rho0 accepts every positive Fraction,
+including one smaller than binary64 range, by the direct source comparison.
+No extra test or repeated run is warranted for that already transparent branch.
+The parent owns the single affected compatibility run and actual callers next.
+No new code changes, geometry execution or additional verification layer were
+introduced by this review.
