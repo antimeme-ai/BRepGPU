@@ -1,0 +1,4 @@
+id	kind	cell_u	cell_v	section	outer_loop	holes	witness_u	witness_v	area_rational	area_pi
+0	outside					0	-1/1	-1/1		
+1	cell	0	0		1	3	1/6	1/2	1/1	-1/36
+2	disk	0	0	0	2		1/2	1/2	0/1	1/36

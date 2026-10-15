@@ -56,6 +56,8 @@ Records use dense result-local IDs, never pointers/persistent edited-body IDs:
   next in row-major `(i,j)` with u varying fastest; disk regions follow section
   order. Cell kind `cell`, sectionNone; disk kind `disk`, cell identifies its
   containing grid cell and section its original selection index.
+  A cell region is its closed rectangle minus the OPEN disk interiors; disk
+  regions are closed disks, so circle boundaries belong to both regions.
 - `Area(rational, pi)` encodes exact normalized-UV area `rational + pi*π`.
   Exterior has no finite area. Cell rational term is its rectangle area and pi
   term minus its contained disk radii squared; disk has0 rational and +r² pi.

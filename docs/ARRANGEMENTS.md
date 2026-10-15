@@ -37,6 +37,8 @@ regions. IDs are dense local table slots. Semantic grid and section-event keys
 establish shared vertices; no rounded XYZ welding. Each edge has two opposite
 `Use` records with region, twin, next, previous and loop IDs. Every use belongs
 to one ordered loop. Exterior region0 owns the clockwise target perimeter.
+Cell regions are closed rectangles with open disk interiors removed, retaining
+each hole boundary. Disk regions are closed disks sharing those boundaries.
 Cell regions have a CCW outer loop and CW holes; disk regions have a CCW circle
 outer loop. Orientation is positive target UV, with original face orientation
 retained separately.
@@ -63,3 +65,21 @@ Input/type/arithmetic/iterator failures abort the complete request and preserve
 snapshots/sections. No new dependency, native ABI, CUDA lifetime or persistent
 edited-body naming is introduced. Python's shipping role stays after the breadth
 sweep. See the [design](ARRANGEMENT_DESIGN.md) and [plan](ARRANGEMENT_PLAN.md).
+
+Run product commands on the execution fleet. The actual caller constructs five
+recipes, qualifies every result and writes full exact graph/source tables plus
+an SVG. Use a fresh output directory:
+
+```sh
+PYTHONPATH=python python3 examples/arrange_face.py --output results/my-arrangements
+PYTHONPATH=python:tests python3 -m unittest -v test_arrangement_entry test_arrangements
+python3 scripts/run_arrangement_mutations.py \
+  --targets results/arrangements-2026-10-14/mutation-targets.tsv \
+  --output results/my-arrangement-mutants.tsv
+```
+
+First-call timings occur after imports and source preparation. Reused complete
+wall includes construction, graph/source-curve traversal and region lookup;
+source preparation, independent checking, export and SVG writing are separately
+scoped. The geometry reader includes actual original-boundary correspondence
+checks driven by emitted t0/t1. No GPU or assembled-solid speedup follows.
