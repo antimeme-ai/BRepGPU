@@ -82,7 +82,11 @@ the oracles. Public functions:
 - `qualify(conversion, local_batch, world_batch) -> dict` validates complete actual
   source/Patch/descriptor/lineage/UV/native output binding, native local grades,
   every exact source-to-emitted coefficient and conversion bound, complete face
-  inventory and source-world first-jet budgets. Return counts and max errors/
+  inventory and source-world first-jet budgets. Check all local/world descriptors, slot/UV bits, statuses, count,
+  order, terms and backend against the caller request and conversion. Require
+  converted components bitwise equal to independently correctly rounded
+  local-value×prescribed-factor, including native +0 addition for every component (position origin zero).
+  Return counts and max errors/
   budgets suitable for TSV; failures raise assertions with source identity.
 
 The oracle uses local_batch._slots/_uv only after caller/native request equality
@@ -94,7 +98,8 @@ source_jet at the actual submitted float U/V, not a nearby exact-affine point.
 Fixtures: unchanged upstream mouse.usda + upstream Apache2 license/attribution;
 literal asymmetric rational single-span degree(2,3), nonunit domains, duplicate
 geometry with distinct original face IDs/faceuses; nondyadic products; degree-zero
-axes; malformed/mixed/unsupported syntax/data. Parser tests independently assert
+axes; a non-exact span-difference witness U=[-2^-54,1] (exact span 1+2^-54,
+double span 1); malformed/mixed/unsupported syntax/data. Parser tests independently assert
 literal token/numeric values. Foreign reference reads the actual same source
 bytes using its own parser, attacking shared-parser blind spots. Do not require
 a broad external suite to pass; mark existing external alpha gap unchanged.
