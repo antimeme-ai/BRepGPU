@@ -71,3 +71,20 @@ the complete product/oracle source invariants with no new geometry finding.
 The direct test owner finishes the bounded literal/unsupported/failure corpus
 before the combined green and selected mutant campaign. No new native source
 or shipping-language decision is involved.
+
+## Whole green and focused mutant qualification
+
+Independent whole source-domain oracle and ten bounded direct methods are ready.
+Runtime code review caught a test-only unhashable IntersectionSet dictionary key;
+owner replaced it with explicit retained-source identity before execution.
+The complete fleet run passed72tests in12.881s, with one existing GPU-only skip.
+It includes eleven new entry/arrangement tests plus prior classifier/body/pair/
+intersection/adjacency compatibility. No product geometry fix was needed.
+
+Eight isolated actual product mutants were killed by direct assertions: omitted
+hole ownership, self twin, self next, reversed boundary parameters, wrong circle
+UV source side, missing grid-crossing cells, admitted tangent disks and lost
+negative use orientation. Every healthy baseline and retry passed. Controller
+review accepts exact unittest status1/completed failures-only summaries with
+no import/crash/error credit, no bytecode reuse and unchanged five protected
+native library hashes. Serial full callers/costs follow final code review.
