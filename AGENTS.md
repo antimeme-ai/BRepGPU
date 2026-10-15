@@ -158,9 +158,14 @@ and private; papers/2026-10-15-om10-step-source-study.md records the static sour
 inventory. The operator now requests the whole assembly, followed by exploded
 labels, both CPU-only and GPU-accelerated, with timings in graphics for X. Read
 docs/OM10_ASSEMBLY_DELIVERY.md and the whole-source geometry gap study. The
-clamp is a possible development fixture, not the delivery target. OCCT as an
-isolated source/reference bridge is proposed for discussion; no importer,
-dependency or implementation design is selected yet.
+clamp is a possible development fixture, not the delivery target. The operator
+subsequently authorized full implementation under Blackbird before actual watch
+rendering. Read docs/OM10_IMPLEMENTATION_DESIGN.md and OM10_IMPLEMENTATION_PLAN.md.
+Pinned OCCT8.0.1 is the discussed isolated STEP/XDE source/reference bridge;
+owned code implements trimming/meshing, assembly and native CPU/CUDA display.
+Research, design/plan review, initial red, green and adversarial code review
+precede trophy rendering. Keep complete107/9162/166 source inventories and
+private source bytes; no product OCCT triangles or unmentioned dependency.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

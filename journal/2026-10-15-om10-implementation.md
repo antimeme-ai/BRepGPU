@@ -23,3 +23,13 @@ its study. Root coordinates reviewed design, reviewed plan, source-grounded red,
 implementation, green and adversarial code review before actual image production.
 No geometry/tests/native execution on the laptop; fleet only. Static source and
 artifact inspection remain local. Feature branch feat/om10-whole-assembly.
+
+All three owners reviewed and accepted the integrated design and subsequent
+implementation plan before production. Findings incorporated: finite arithmetic
+failure, deterministic supersample metadata, evaluation/project-only native
+qualification before images, actual projected diagnostics for backend pixel
+differences, typed source styles, directed edge range and explicit nonidentity
+edge-to-pcurve parameter correspondence. Exact versioned owned binary layouts
+and per-lane written subplans precede red/implementation. The source schema
+includes13 sections after the material/style finding. Root starts the isolated
+headless reference build while owners establish actual fleet missing-API red.
