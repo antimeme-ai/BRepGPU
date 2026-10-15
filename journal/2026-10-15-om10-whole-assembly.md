@@ -80,3 +80,14 @@ scenario, keep scopes/source/quality comparable, and expose failures/unsupported
 inputs rather than quietly omitting them. Added the README coverage pointer.
 This does not start the broad backfill while the watch is active or alter the
 external community alpha gate.
+
+The standalone reference-display caller genuinely failed on its absent entry
+before implementation. Root review caught two authored-fixture mistakes before
+the first build: the hypotenuse excludes sample centers on that non-top-left
+edge, so only pixel0 is covered; distinct XYZ points need distinct physical
+keys. Corrected literal geometry and source-key expectations were rerun red.
+The consumer uses genuine raw XYZ/normals and unchanged shared raster math,
+with no carrier/evaluator disguise. Tests cover explicit source pixels/depth/IDs,
+normal-corner identity, placement/poses and direct malformed-input ownership.
+Implementation and final focused greens have been reported; root source review
+precedes the implementation checkpoint.
