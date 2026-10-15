@@ -33,7 +33,8 @@ def pin_files():
     files = tuple((ROOT/'python/brepgpu').glob('imported_*.py'))
     files += tuple((ROOT/'native/om10').glob('*'))+tuple((ROOT/'native/step_source').glob('*'))
     files += (ROOT/'examples/om10_scene.py', ROOT/'examples/render_om10.py')
-    files += tuple(ROOT/p for p in ('native/evaluator.hpp', 'native/backend_api.h', 'include/brepgpu.h'))
+    files += tuple(ROOT/p for p in ('native/evaluator.hpp', 'native/backend_api.h', 'include/brepgpu.h',
+                                    'python/brepgpu/interchange_oracles.py'))
     return tuple((str(p.relative_to(ROOT)), hashlib.sha256(p.read_bytes()).hexdigest())
                  for p in sorted(files) if p.is_file())
 
