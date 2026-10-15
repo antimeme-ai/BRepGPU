@@ -16,3 +16,10 @@ descriptor/status corruption rejects andsameEngine retry. Tests only under root
 explicitrelease. Rootmust capture actualfleet28test/callerred before productmodule
 creation. Then implementationrelease,geometryCPUgreen, ownCPU1/24+serializedP1000/1,
 GPU release tooracle andactualresults journal. No local productexecution/nativebuild.
+
+Root actualfleetred: healthynativecylinder prerequisite,28missingmodulemethods
+in0.084s andactualcallerRED captured before explicitimplementationrelease.
+Implementedwhole offset_sampling.py via ownedcompatiblewrapper pattern; separate
+factories,default17,actualcopiedUV exactlabels,cap+1/pregridbudgets,unchangedgeneric
+metadata/rows/childscopehelpers. Module+8tests ASTvalid; no local productexecution.
+Waitinggeometry dependencyready beforeCPU/serializedGPUgreens. Rootnotified.
