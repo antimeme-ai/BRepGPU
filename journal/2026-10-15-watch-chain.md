@@ -31,3 +31,16 @@ final suite will be stated separately). Geometry and visual owners began their
 respective bounded implementation units; oracle owner finishes independent
 truth/tests. Root serializes fleet qualification and actual caller, with no
 local product execution or extra certification campaign. Issue56 tracks work.
+
+First serialized fleet green: all17 direct methods passed in36.865s. The two
+original missing-module failures were the genuine initial red; the later17-method
+suite was expanded separately. Independent production-pair code review accepted
+the actual admission, source-map/history and complete mesh implementation with
+no open findings. Parent read both independent qualifiers and reviewed source
+expectations, complete positive boundary chains, physical links and output bound.
+One affected compatibility run passed all58 methods in34.414s, CPU only. No
+additional campaign is justified by those results. Actual watch caller is now
+constructing/qualifying/exporting each separate part before CPU depth display;
+the final scene contains158 recipes, correcting the earlier informal size estimate.
+Coherent oracle, production and visual-caller commits are pushed on the feature
+branch; native libraries and dependencies remain unchanged.
