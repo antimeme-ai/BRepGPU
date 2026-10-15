@@ -6,6 +6,9 @@ selection. Read the [stocktake and proposed tranche](POST_BREADTH_ROADMAP.md)
 before selecting a unit. Earlier dated notes below preserve the original
 deferral and measured opportunities; they do not reopen completed themes or
 select every recorded optimization.
+The [post-watch roadmap proposal](POST_WATCH_ROADMAP.md) orders the next broad
+cycle around actual modeling, CPU references and reusable ownership; it selects
+no implementation while the watch delivery remains active.
 
 ## Required after the watch: NVIDIA CPU references throughout the README
 
