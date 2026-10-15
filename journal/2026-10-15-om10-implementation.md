@@ -341,3 +341,12 @@ certifier. Full incident initial schedules still cross. The first candidate
 fails the cone's unchanged allocation; its next halving passes every plane/cone/
 cylinder interval. Require meaningful direct red before production and code
 review/affected greens before the next fresh complete qualification.
+
+Circular-joint implementation now passes32 direct methods and five existing
+independent integration methods. Root/oracle review accepted after fixes to
+reversed segment ownership and both stored circle radii. Final actual five-face
+rerun passes3,886 cells/all five exact domains in36.95s, with unchanged source
+curves and budgets. Before the next complete pin, the continuing inventory found
+a nonclosing UV joint on169982, a multispan cubic surface. Source/oracle owners
+are studying it read-only; no rendering is authorized and no new implementation
+is selected for that joint yet.

@@ -89,3 +89,10 @@ establish exact source validity. A substantial crossing pair outside J must
 reject without widening J or replacing an unsupported edge. Accepted this
 design and bounded subplan; production and actual whole-solid checks remain
 the owner's next steps.
+
+Subsequent narrow implementation review accepted the global schedule after
+correcting reversed-loop segment attribution and requiring both stored circle
+radii to agree. Owner32 direct methods and the existing five independent
+geometry/native integration methods pass. Those results concern the mechanism
+and affected fixtures; the complete actual assembly remains pending its
+retained source/closed-solid/native qualification run.

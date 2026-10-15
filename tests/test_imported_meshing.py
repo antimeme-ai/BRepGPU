@@ -72,10 +72,10 @@ def exact_triangle_area(points,triangles):
     return total
 
 
-def tangent_circle_sheet_fixture():
+def tangent_circle_sheet_fixture(inner_angle=1.36):
     """Original three-edge cusp sheet; not a closed-solid qualification fixture."""
     frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
-    inner_angle=.17;radius=1.0625
+    radius=1.0625
     outer_angle=math.asin(math.sin(inner_angle)/radius)
     xyz=((1.,0.,0.),(math.cos(inner_angle),math.sin(inner_angle),0.),
          (-.0625+radius*math.cos(outer_angle),radius*math.sin(outer_angle),0.))
@@ -113,6 +113,10 @@ class ImportedMeshingTests(unittest.TestCase):
             self.assertEqual(record.positions[0],source.vertex(edge.vertex_ids[0]).xyz)
             self.assertEqual(record.positions[-1],source.vertex(edge.vertex_ids[1]).xyz)
             self.assertTrue(all(a<b for a,b in zip(record.parameters,record.parameters[1:])))
+            if edge.id in (40,42):
+                radius=1. if edge.id==40 else 1.0625
+                for a,b in zip(record.parameters,record.parameters[1:]):
+                    self.assertLessEqual(radius*(1-math.cos(abs(b-a)/2)),mesh.quality.tolerance_mm/8)
             for t,xyz in zip(record.parameters[1:-1],record.positions[1:-1]):
                 if edge.id==40:expected=(math.cos(t),math.sin(t),0.)
                 elif edge.id==42:expected=(-.0625+1.0625*math.cos(t),1.0625*math.sin(t),0.)
@@ -127,6 +131,55 @@ class ImportedMeshingTests(unittest.TestCase):
             actual=tuple((o.source_parameter,o.sample_key) for loop in mesh.faces[0].boundary_loops
                          for o in loop if o.coedge_id==coedge.id)
             self.assertIn(actual,(expected,expected[::-1]))
+
+    def test_circular_joint_candidates_fail_closed_outside_the_protected_collar(self):
+        with self.assertRaisesRegex(ValueError,'circular joint shared sampling candidates exhausted'):
+            mesh_imported(tangent_circle_sheet_fixture(.17),MeshQuality(max_refinement=3))
+
+    def test_nominal_circle_guard_and_candidate_reject_wrong_family_and_unbounded_grid(self):
+        from brepgpu.imported_meshing import _circle_joint,_circle_candidate
+        source=tangent_circle_sheet_fixture();quality=MeshQuality();face=source.faces[0]
+        incoming,outgoing=source.coedges[2],source.coedges[0]
+        joint=_circle_joint(source,face,incoming,outgoing,quality)
+        self.assertIsNotNone(joint)
+        outer=source.curve(103)
+        for bad in (replace(outer,radii=(1.0625,1.1)),
+                    replace(outer,frame=(-.07,*outer.frame[1:]))):
+            wrong=replace(source,curves=tuple(bad if c.id==103 else c for c in source.curves))
+            self.assertIsNone(_circle_joint(wrong,face,incoming,outgoing,quality))
+        vertex=replace(source.vertex(50),tolerance=math.nan)
+        wrong=replace(source,vertices=(vertex,*source.vertices[1:]))
+        self.assertIsNone(_circle_joint(wrong,face,incoming,outgoing,quality))
+        params={40:(0.,.02,.1,source.edge(40).parameter_range[1]),
+                42:(0.,.1,source.edge(42).parameter_range[1])}
+        mandatory={40:(0.,.02,params[40][-1]),42:(0.,params[42][-1])}
+        self.assertIsNone(_circle_candidate(source,joint,params,mandatory,1e-9,.05,quality,{}))
+        result=_circle_candidate(source,joint,params,mandatory,.01,.05,quality,{})
+        self.assertIsNotNone(result)
+        for edge,ts in result[0].items():
+            self.assertTrue(set(mandatory[edge])<=set(ts))
+            self.assertIn(.1,ts)
+        edge=source.edge(40);coedge=source.coedge(11)
+        reversed_source=replace(source,
+            edges=(replace(edge,vertex_ids=edge.vertex_ids[::-1],parameter_range=edge.parameter_range[::-1],
+                           curve_same_sense=not edge.curve_same_sense),*source.edges[1:]),
+            coedges=(replace(coedge,sense=-1),*source.coedges[1:]))
+        reversed_joint=_circle_joint(reversed_source,face,incoming,reversed_source.coedge(11),quality)
+        self.assertIsNotNone(reversed_joint)
+        reversed_params=params|{40:params[40][::-1]}
+        result=_circle_candidate(reversed_source,reversed_joint,reversed_params,mandatory,.01,.05,quality,{})
+        self.assertIsNotNone(result)
+        self.assertEqual((result[0][40][0],result[0][40][-1]),edge.parameter_range[::-1])
+
+    def test_planar_preflight_keeps_segment_owner_when_normalizing_reversed_winding(self):
+        from brepgpu.imported_meshing import _planar_schedule_boundary,_EdgeBounds
+        source=tangent_circle_sheet_fixture()
+        parameters={e.id:(e.parameter_range[0],sum(e.parameter_range)/2,e.parameter_range[1])
+                    for e in source.edges}
+        contexts={e.id:_EdgeBounds(source,e,(),MeshQuality(),{}) for e in source.edges}
+        loops,points,owners=_planar_schedule_boundary(source,source.faces[0],parameters,contexts)
+        joint=next(i for i,p in points.items() if p==(1.,0.))
+        self.assertEqual(owners[joint],13)  # Reversed outgoing arc is original outer circle.
 
     def test_canonical_boundary_displacement_is_in_actual_cell_error_budget(self):
         from tests.test_imported_geometry import pierced_prism_source

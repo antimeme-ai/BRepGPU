@@ -966,6 +966,10 @@ collars reject explicitly. Existing finalized collars are protected from later
 optional-cut replacement. Bound global accepted adjustments by the finite count
 of original planar circle joints, and retain a per-joint candidate limit. Any
 remaining or newly exposed unsupported intersection fails the whole operation.
+Each candidate must make every affected planar loop simple before it commits;
+independent simultaneous crossings that cannot be removed by that one pair's
+bounded collar therefore reject. Protected disjoint collars permit subsequent
+admitted changes but do not promise arbitrary multi-cusp arrangement support.
 
 Reuse one existing exact segment/domain-simplicity mechanism. Cheap original
 circle-joint admission identifies candidate planes before any optional boundary
@@ -992,6 +996,13 @@ The shared incident faces are plane167654/cone167653 on91130,
 plane167654/cylinder167637 on91105, plane167656/cylinder167637 on91103, and
 plane167656/cone167657 on91134. These exploratory polygon results are not a
 closed-solid mesh or all-incident-bound acceptance claim.
+
+The direct authored regression uses longer1.36rad source arcs with exact nominal
+radii1/1.0625 and center separation.0625; the complete source topology is an open
+three-edge cusp sheet. It has a genuine pre-change exact-boundary failure. The
+earlier short.17rad source arcs remain an explicit strategy-exhaustion negative:
+quarterextent collars do not cover their more distant chord crossings. No
+generic all-cusp support, collar widening or budget increase is selected.
 
 The source study then included all five actual incident faces while constructing
 initial schedules: both circles require257 parameters, twice the isolated plane

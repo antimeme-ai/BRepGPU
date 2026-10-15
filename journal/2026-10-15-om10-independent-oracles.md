@@ -318,3 +318,26 @@ Owner owns genuine observed source reds, authored unequal-radius source case,
 substantial-crossing/mandatory-cut rejection and production. Existing independent
 source/UV/physical oracles need no new recovery kind for different original-t
 samples.
+
+Narrow circular-schedule code review found two concrete admission/provenance
+faults: normalized reversed loops attributed a segment to its original start
+point's coedge instead of its outgoing segment owner, and kind2 circle admission
+checked only one stored radius even though the evaluator consumes both. Owner
+fixed segment attribution and exact equal-positive circle radii, with literal
+joint-owner and malformed-radius regressions. Rereview ACCEPT; global bound
+contexts, before-key shared schedules and exact UV-sequence cache retain their
+intended invariants. Owner32 focused methods pass; existing five independent
+complete-domain/physical/native integration methods pass0.539s on the fleet.
+Multiple simultaneously crossing joints on one affected plane remain explicitly
+unsupported and fail closed. The complete actual-source retained run remains
+pending; no new oracle layer or watch image.
+
+After the circular correction, old inventory reported a new nonclosing joint on
+face169982. Parent held the next full pin and requested read-only source study.
+Independently identified original active-parameter gap, retained vertex
+tolerance, regular inverse conditioning and whole natural-V boundary
+coefficient correspondence. Exact original-knot polynomial difference controls
+are at most about7e-15mm; original vertex residual is0.000185..0.000212mm.
+Recorded papers/2026-10-15-om10-natural-boundary-joint-study.md. No product/oracle
+edit, new recovery selection or broad campaign; owner current-source diagnosis
+and written design remain next.
