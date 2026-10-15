@@ -16,3 +16,10 @@ Boolean result substitution. No new dependency/native build or integration lane.
 Studies will determine the final source maps/history and complete qualification
 before a reviewed design/plan. Product execution remains fleet-only. Alpha
 external suite debt, Python shipping-role study and NCSX timing stay deferred.
+
+Whole CPU feature source and sampler source reviewed. Owner strengthened final
+history validation to bind exact generating IDs/roles, beyond reciprocal links;
+consistently reciprocal wrong ancestry has a direct rejection test. Final8CPU
+construction tests passed0.762s;7sampler tests passed each CPU1/CPU24/P1000/P1001
+0.387/0.393/1.703/2.933s. Root actual CPUcaller integration is next; independent
+whole-feature qualification is running. No native or dependency changes.
