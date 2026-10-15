@@ -387,8 +387,9 @@ without an additional campaign; external alpha qualification remains incomplete.
 
 ## Whole OM10 implementation observations
 
-The supplied real movement is now exercising owned imported-solid meshing;
-complete-source qualification and trophy rendering are still pending. Early
+The supplied real movement is now exercising owned imported-solid meshing.
+Complete source conversion and original geometry/assembly checks pass; whole
+mesh/backend qualification and trophy rendering are still pending. Early
 single-face diagnostics produce80k–399k UV cells on several large carriers.
 The first complete attempt spent about42s sampling original shared edges and
 reached100 of9,162 faces at253s. These are development observations under
@@ -427,3 +428,10 @@ The [connectivity reading](../papers/2026-10-15-om10-return-pass-connectivity-re
 records direct constrained triangulation and compact triangle/neighbor storage
 as measured candidates after delivery. Current fixed-vertex Lawson correction
 is required for completion; this subsequent preparation work remains deferred.
+
+The [read-only mesher cost study](../papers/2026-10-15-om10-mesher-cost-study.md)
+records the heavy-tailed source boundaries (one face has965 uses across55 loops),
+repeated interval work, pair generation, hole/ear scans and span lookup. These
+are inferred opportunities, not measured dominant hotspots. Add useful stage
+walls and work counts before selecting an optimization; retain the existing
+exact predicates, source ownership and approximation obligations.
