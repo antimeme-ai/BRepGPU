@@ -104,7 +104,8 @@ The operator requested a frumentarius find an actual mechanical-watch TDP or
 high-resolution drawings. The [five-candidate source study](../papers/2026-10-15-watch-drawing-source-frumentarius.md)
 and [next-step proposal](REAL_WATCH_NEXT.md) are retained. OM10 has public
 technical/gear data and maker-reported working-prototype evidence; its listed
-construction STEP requires free signup and is not yet acquired. Manufacturer
+construction STEP was subsequently supplied by the operator and
+[statically inventoried](../papers/2026-10-15-om10-step-source-study.md). Manufacturer
 ETA/Sellita/MIYOTA/TMI documents offer real service/casing/detail drawings, not a
 complete internal movement package. Source access and an actual component
 inventory precede faithful reconstruction. Current thin-part/aspect restrictions

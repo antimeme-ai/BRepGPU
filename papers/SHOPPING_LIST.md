@@ -32,15 +32,14 @@ their design relevance. They do not block the positive-weight hierarchy study.
 
 ## Real mechanical watch sources, 2026-10-15
 
-- **OM10 MAN construction package:** [download index](https://openmovement.org/member-downloads/)
-  lists MAN VA01.3 dated1July2022 and other STEP revisions. The visible download
-  redirects to [membership](https://openmovement.org/membership-levels/); the
-  free User tier advertises construction access. No account was created and no
-  STEP/CAD bytes acquired. Obtain through an operator-controlled account, retain
-  original files/notices and inspect units, revision, assembly hierarchy and
-  actual part geometry. Check whether part-level PDF manufacturing drawings are
-  supplied; the public technical sheet does not establish a complete TDP.
-  This is an acquisition gap, not a request to purchase or contact anyone.
+- **OM10 MAN STEP acquired from operator:** `om10-00001_20220701_va_01_3.stp`
+  received2026-10-15; original bytes and provenance/hash retained privately.
+  [Actual source inventory](2026-10-15-om10-step-source-study.md) records named
+  parts, units, occurrences and a concrete thin fixing-clamp candidate. The
+  earlier free-membership download barrier no longer blocks this STEP revision.
+  Still missing: a complete part-level PDF manufacturing drawing set and explicit
+  fits/tolerances/feature history. STEP's geometric uncertainty is not a machining
+  tolerance. Preserve and inspect exact source notices before source redistribution.
 - Public OM10 technical/release documents and official ETA6497-1, SellitaSW210-1,
   MIYOTA9015 and TMI NH35 PDFs are acquired. Their useful scope and remaining
   dimensional/reuse gaps are in the [source report](2026-10-15-watch-drawing-source-frumentarius.md).
