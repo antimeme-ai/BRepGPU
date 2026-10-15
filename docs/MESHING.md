@@ -13,6 +13,8 @@ third-party dependency. General imported faces and arbitrary trims are unsupport
 The dedicated [Boolean-result mesher](CUT_MESHING.md) now consumes the actual
 through-bore CutResult, with its own source-frame/trim contract. This canonical
 API retains its original factory-body admission.
+The [extrusion-result mesher](EXTRUSION_MESHING.md) also consumes its actual
+convex-profile feature result, with exact planar geometry and bounded rounding.
 
 ## Use
 

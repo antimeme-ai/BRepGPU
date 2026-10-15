@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="650" viewBox="0 0 1160 650">
+<rect width="1160" height="650" rx="18" fill="#101923"/>
+<g font-family="monospace" fill="#dce9ed">
+<text x="30" y="40" font-size="23">BRepGPU / convex extrusion / complete indexed CPU mesh</text>
+<text x="30" y="72" font-size="13">Exact source topology, rational construction and one shared rounded vertex array</text>
+<text x="80" y="112" font-size="16">Actual top-face triangles</text>
+<text x="685" y="112" font-size="16">All-face indexed wire view</text>
+<polygon points="795.625,358.125 741.875,473.125 995.625,442.500" fill="none" stroke="#43b7ad" stroke-width=".55" opacity=".60"/>
+<polygon points="115.000,475.000 500.000,440.000 255.000,125.000" fill="#72a6ce" fill-opacity=".37" stroke="#72a6ce" stroke-width=".65"/>
+<polygon points="795.625,223.125 995.625,307.500 741.875,338.125" fill="none" stroke="#72a6ce" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,358.125 995.625,442.500 995.625,307.500" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="795.625,358.125 995.625,307.500 795.625,223.125" fill="none" stroke="#e9bb70" stroke-width=".55" opacity=".60"/>
+<polygon points="995.625,442.500 741.875,473.125 741.875,338.125" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="995.625,442.500 741.875,338.125 995.625,307.500" fill="none" stroke="#ad93cf" stroke-width=".55" opacity=".60"/>
+<polygon points="741.875,473.125 795.625,358.125 795.625,223.125" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<polygon points="741.875,473.125 795.625,223.125 741.875,338.125" fill="none" stroke="#dd8d9a" stroke-width=".55" opacity=".60"/>
+<text x="30" y="570" font-size="15">6 shared vertices / 8 triangles / 18 result coedge uses</text>
+<text x="30" y="600" font-size="13">World tolerance 1/1048576; total error bound 0</text>
+<text x="30" y="632" font-size="12">Colors name result faces. Straight shared source edges; no periodic seams. Wire view has no hidden-line removal.</text>
+</g></svg>

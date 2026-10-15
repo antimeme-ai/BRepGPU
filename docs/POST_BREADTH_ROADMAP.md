@@ -11,8 +11,10 @@ The operator authorized proceeding. The first bounded unit of B is now
 [delivered](CUT_MESHING.md): actual through-bore CutResult to a closed bounded
 mesh, preserving original cutter frames/UV, source history and shared boundaries.
 The canonical mesher remains factory-only; the new dedicated API consumes the
-actual retained result. Feature-result meshing, one operation chain, external
-adapters, runtime/Python study and owned NCSX geometry remain next-tranche work.
+actual retained result. The first feature-result connection, [actual convex extrusion meshing](EXTRUSION_MESHING.md),
+is also delivered. One operation chain, external adapters, runtime/Python study
+and owned NCSX geometry remain next-tranche work; further feature families are
+separate units.
 No language/dependency or alpha scope change was made.
 
 ## What the first pass established

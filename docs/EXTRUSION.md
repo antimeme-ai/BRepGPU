@@ -81,7 +81,9 @@ The separate extrusion sampler reuses owned type-agnostic provenance/row/cleanup
 machinery; it borrows Engine and owns all per-call patch/query/result children.
 Late construction failure returns no result and preserves source/prior outputs;
 consumer failure returns no partial batch and permits retry with the same retained
-feature/Engine. No native build/dependency or result mesher is introduced.
+feature/Engine. A separate [result mesher](EXTRUSION_MESHING.md) now consumes the
+actual ExtrusionResult through `feature.tessellate(tolerance=...)`. It preserves
+source trims/carriers/history without changing this constructor or native build.
 
 Independent sampled world position component limit is2^-36, oriented unit-normal
 limit2^-30 at the actual copied UV. Integer-square-root rational intervals bound

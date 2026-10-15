@@ -511,3 +511,14 @@ bounded implementation. [Results](../results/cut-mesh-2026-10-15/REPORT.md) reta
 actual CutResult geometry, original frames/raw UV/history and full indexed output.
 This is CPU meshing of one actual Boolean family, with community qualification,
 feature meshing and language/residency decisions still open.
+
+
+## Actual extrusion-result mesh
+
+[Source semantics](2026-10-15-extrusion-mesh-study.md),
+[independent geometry/oracle study](2026-10-15-extrusion-mesh-oracles.md) and
+[continuing design/plan/code review](2026-10-15-extrusion-mesh-review.md)
+cover the exact convex-profile result-to-mesh connection. The
+[actual report](../results/extrusion-mesh-2026-10-15/REPORT.md) retains complete
+source/UV/history and scoped CPU consumers. Relevant direct and compatibility
+checks pass; the bounded unit stops without another certification campaign.
