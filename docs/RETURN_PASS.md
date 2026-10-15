@@ -223,3 +223,29 @@ Partial angles/poles/axes, curved or holed profiles and result meshing are disti
 families. [Round-two notes](../papers/2026-10-15-revolution-round2-notes.md) retain
 these constraints and the non-green optional foreign triangle volume comparison.
 Fillet and offset remain ahead of integration, Python-role and NCSX timing work.
+
+
+## Complete source-edge fillet
+
+The [fillet beachhead](FILLET.md) retains six original plane carriers and exact
+changed trim domains, rounded cap arcs, a rational band and two tangent contacts.
+[48 complete callers](../results/fillet-2026-10-15/REPORT.md) have fixed seven-chart
+geometry:2023 candidates and1987/1871/1791 admitted for three radius/edge/Frame
+recipes. Best CPU prepared-source medians are286.904/299.542/399.260ms, versus
+P1000 974.977/817.285/836.671ms and P1001 1442.017/1531.336/1337.354ms.
+Every P100 complete-call range loses its corresponding best-CPU range. These
+are small fresh-process calls, no large-model or GPU constructor claim.
+
+Mid-case Engine setup medians279.024/579.819ms, separate adjacency build
+229.018/506.416ms and Engine cleanup38.810/85.079ms remain material GPU costs.
+Exact host request work is154–247ms in the four mid placements. Unpinned timing
+variation gives no causal thread/clock claim; phase medians nest and cannot be
+added. Preserve actual binary64 trim decisions, precise source-map owners,
+spine-vs-coincident semantics and both contact maps in future native/resident
+migration. [Round-two notes](../papers/2026-10-15-fillet-return-pass-runtime-notes.md)
+retain multi-edge/endpoint/general rolling-ball and ownership constraints.
+
+All three selected same-world foreign fillet comparisons pass unchanged criteria;
+the earlier revolution volume issue stays open and external alpha suites remain
+non-green. Analytic offset is next before integration, tuning, Python-role or
+matched NCSX rendering timing work.

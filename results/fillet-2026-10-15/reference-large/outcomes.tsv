@@ -1,0 +1,6 @@
+criterion	passed	observed	limit
+original_source_preservation	True	True	True
+manifold	True	True	True
+volume	True	1.0527969607210252e-09	1.75707963267949e-07
+bounds	True	2.6645352591003757e-15	2e-08
+boundary	True	2.8108601893111292e-15	2e-07
