@@ -262,6 +262,38 @@ source/build files and accepted without findings. Root review remains pending.
 No existing product/helper/native source or binary changed; no watch raster,
 NVIDIA kernel run or whole-source qualification campaign was performed here.
 
+Root/reference owner accepted the bounded NVIDIA-outcome poster subplan and
+direct reference-outcomes.tsv interface. Authored a synthetic temporary TSV/
+one-pixel-image fleet fixture first; it genuinely failed because the compositor
+lacked the required reference input. Implemented exact heal0/heal1 rows, source/
+two-view/scope/n1 checks, finite actual times, explicit failure/unsupported status
+without a comparable headline total, and retained original outcome table. The
+owned P100 actual image and per-pose native median panel remain separate.
+
+The positive fixture exposed an arithmetic error in our prior reviewed callers:
+BGVIEW01 has16 header bytes plus two192-byte records, totaling400, not408. Our
+earlier benchmark/compositor/privatepilot length guards and plan text inherited
+the wrong total. Actual encoding and offsets184/376 were already correct. Root
+and reference owner reviewed the bounded correction; changed only those guards
+and current plan wording, preserving all source/helper/native record formats.
+This note corrects the earlier review conclusions rather than claiming they had
+already exercised an actual two-view file. Three focused fleet methods then
+passed in3.076s, covering actual SVG text, four-row footer placement, correct pose
+images, retained input table and rejected invalid outcome records. CLI help also
+passed. Root static diff review accepted; reference-owner review pending. All
+synthetic timings/images remained in temporary test directories, never published
+assets/results. No actual watch raster, reference benchmark or pinned-file edit.
+
+Reference-owner code review found one direct timing consistency gap: a supplied
+complete wall could exceed its enclosing attempt wall. Added exact complete≤
+elapsed validation and one malformed record to the existing negative fixture;
+no new mechanism/campaign. Three existing focused methods passed in2.892s, and
+the affected negative method passed in2.886s after completed source/test sync.
+Root reports whole V3 stopped for a separate importer policy lifecycle issue;
+there is no whole-source PASS and no authorization to reuse V3 for a pilot.
+Reference owner then accepted the final poster code after the timing guard;
+root's static acceptance and focused checks complete this publication unit.
+
 Root completed the raw-display code review and accepted the implementation:
 explicit checked binary decoding, per-definition physical-key consistency,
 proper rigid placement, unchanged shared projection/raster math, retained CPU

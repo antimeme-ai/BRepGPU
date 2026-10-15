@@ -101,6 +101,7 @@ PYTHONPATH=python python3 scripts/benchmark_om10.py \
 
 PYTHONPATH=python python3 scripts/compose_om10_posters.py \
   --benchmark context/om10-matched-benchmark \
+  --reference-outcomes context/om10-nvidia-reference/reference-outcomes.tsv \
   --output context/om10-posters
 ```
 
@@ -134,6 +135,17 @@ no complete workflow wall is inferred for them. Individual frame/encoding stage
 rows remain narrower diagnostics without apportioned common preparation costs.
 The [reviewed two-view measurement plan](OM10_TWO_VIEW_BENCHMARK_PLAN.md)
 records the scope and its tradeoff against separate fresh per-pose callers.
+The full-workflow panel additionally retains both predeclared NVIDIA CPU
+policies,heal0 andheal1, from their actual reference-outcomes.tsv rows. Successful
+rows require the same original source/two-view hashes and completed admitted
+fresh two-view wall. Failed/unsupported rows remain explicit without a comparable
+headline total; actual elapsed and diagnostic times remain in the retained table.
+The reference baseline includes NVIDIA CPU import/tessellation and shared owned
+CPU display. Actual poster pixels remain the fixed owned P1000 images; no
+reference failure is replaced by owned triangles or hidden from the comparison.
+The [reference-poster plan](OM10_REFERENCE_POSTER_PLAN.md) records the direct
+interface. Final composition requires both actual outcomes; synthetic test
+values are confined to temporary fixture directories.
 Final SVG-to-PNG rasterization uses the existing static compositor separately
 and is named/timed separately. Stage rows overlap and cannot be summed as a
 complete operation. Native upload/download means host↔GPU transfer.

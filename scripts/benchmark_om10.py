@@ -83,7 +83,7 @@ def main(args):
         if input_hashes and hashes != next(iter(input_hashes.values())):
             raise ValueError('matched original source/snapshot/scene/two-view/software inputs changed')
         request = (output/'views.bgview').read_bytes()
-        if request[:16] != struct.pack('<8sII', b'BGVIEW01', 1, 2) or len(request) != 408:
+        if request[:16] != struct.pack('<8sII', b'BGVIEW01', 1, 2) or len(request) != 400:
             raise ValueError('full task must emit exactly two actual view requests')
         for index, view in enumerate(('assembled', 'exploded')):
             row = request[16+192*index:16+192*(index+1)]

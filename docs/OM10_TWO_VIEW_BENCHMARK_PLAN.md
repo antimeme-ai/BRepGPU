@@ -26,7 +26,7 @@ The repeated native matrix continues to measure each pose separately.
    source snapshot/BGMESH/BGVIEW/source-pin hashes and metadata source hashes
    across those two callers. Never duplicate
    the same observation as two pose rows or divide it into inferred totals.
-3. Require the actual two-view BGVIEW01 to have count2/408 bytes and the existing
+3. Require the actual two-view BGVIEW01 to have count2/400 bytes and the existing
    assembled-alpha0 then exploded-alpha1 order. Copy each exact192-byte row under
    a count1 header into a private per-pose request file for the unchanged repeated
    fresh native matrix. Do not repack floating-point fields. Retained native frame

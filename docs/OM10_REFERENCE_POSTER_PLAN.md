@@ -26,7 +26,7 @@ heal0 andheal1, in fixed display order, regardless of success. Required columns:
 |n|1 actual complete observation or failed attempt; no inferred/repeated total|
 |status|PASS,FAIL orUNSUPPORTED|
 |complete_seconds|finite nonnegative actual complete fresh source→both PNG/labeled-SVG→exit wall; required forPASS, otherwise blank unless an actual completed diagnostic render failed admission|
-|elapsed_seconds|finite nonnegative actual attempt wall; no invented elapsed value|
+|elapsed_seconds|finite nonnegative actual attempt wall, at least complete_seconds when present; no invented elapsed value|
 |source_sha256|actual original source SHA-256; must match owned full caller|
 |views_sha256|SHA-256 of actual requested two-view BGVIEW01; must match owned full caller|
 |detail|actual outcome/stage explanation, retained in the published TSV|
