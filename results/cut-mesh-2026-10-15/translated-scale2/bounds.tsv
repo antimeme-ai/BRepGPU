@@ -1,0 +1,5 @@
+field	value
+tolerance	1/4096
+curve_bound	1/8192
+rounding_bound	2169/3497045110653190144
+error_bound	426885389486201/3497045110653190144

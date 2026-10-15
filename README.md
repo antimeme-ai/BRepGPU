@@ -107,6 +107,21 @@ CUDA 12.8.1 is installed in an isolated prefix on the initial execution host.
 Both 16 GB P100s run native `sm_60` product code. The CPU core loads independently
 of CUDA; explicitly selecting CUDA loads the optional backend.
 
+## Boolean results now become complete meshes
+
+The actual owned through-bore Boolean now feeds a dedicated CPU mesher, retaining
+its original carriers, trimmed cutter UV, shared physical boundaries and complete
+source history. The refined unit result has264 shared vertices and528 triangles;
+construction plus full indexed/history consumption measured220.970ms median.
+Boolean construction, independent qualification and export are reported separately.
+
+[![Actual Boolean-result mesh](assets/cut-meshing/through-bore.png)](docs/CUT_MESHING.md)
+
+[API and source/error contract](docs/CUT_MESHING.md) ·
+[Actual mesh, qualification and scoped costs](results/cut-mesh-2026-10-15/REPORT.md).
+This closes the first post-breadth connection. Feature-result meshing and operation
+composition remain separate work; community qualification still gates alpha.
+
 ## Feature construction: signed analytic offsets
 
 An actual cylinder now offsets inward or outward into a closed owned solid,

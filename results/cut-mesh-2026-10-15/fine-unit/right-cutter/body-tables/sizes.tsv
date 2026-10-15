@@ -1,0 +1,16 @@
+table	bytes
+header	72
+vertices	64
+curves	168
+edges	60
+uv_maps	240
+coedges	168
+loops	72
+faces	132
+charts	120
+patches	288
+controls	1024
+loop_coedges	24
+face_loops	12
+face_charts	24
+shell_faces	12

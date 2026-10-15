@@ -1,0 +1,5 @@
+field	value
+tolerance	1/2
+curve_bound	1/4
+rounding_bound	0/1
+error_bound	1/4

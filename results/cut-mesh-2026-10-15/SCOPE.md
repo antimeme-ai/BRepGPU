@@ -1,0 +1,7 @@
+# Actual Boolean-result CPU mesh caller scopes
+
+Four cases prepare original box/cylinder operands and one actual CutResult each. Each constructs seven fresh meshes: first after imports/preparation, one excluded warmup and five measured repeats. Complete wall starts immediately before tessellate and ends after the actual full indexed reader and typed history lookups. The reader packs shared rounded XYZ, triangle indices, result face IDs and geometric facet normals while consuming every exact source/corner/edge/coedge record and error bound. History reading follows every forward/reverse origin to original operand entities and reads source maps, ranges and event fields.
+
+Only first outputs receive independent whole-domain/source/history qualification, outside complete wall. Six later full immutable meshes, retained input/history identity and indexed/history consumer outputs correspond directly with their first qualified outputs outside wall; those costs are reported separately. Exports retain that FIRST qualified output. Operands, Boolean construction and filesystem exports are separate single observations. Phase medians need not sum to the direct complete median.
+
+These vary resolution and frames, not Boolean complexity. Exact CPU construction; no native/CUDA mesher, multithread comparison or host/device/network transfer. Imports, final timing/source-file writes and interpreter shutdown lie outside measured calls. No GPU or whole-CAD speedup is inferred.

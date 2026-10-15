@@ -3,7 +3,9 @@
 The planned breadth sweep is complete. The [post-breadth stocktake and proposed
 next tranche](POST_BREADTH_ROADMAP.md) distinguish delivered capabilities from
 deferred composition, result meshing, external qualification and runtime work.
-That proposal selects no implementation or shipping-language change.
+The first selected connection, [actual through-bore result meshing](CUT_MESHING.md),
+is delivered. Remaining units still need their own reviewed designs/plans; no
+shipping-language change is selected.
 
 Alpha requires the applicable [external community qualification](ALPHA_QUALIFICATION.md)
 to pass. Development continues breadth first with incomplete external coverage

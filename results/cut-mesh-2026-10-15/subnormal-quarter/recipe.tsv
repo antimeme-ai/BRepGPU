@@ -1,0 +1,21 @@
+field	value
+operation	actual owned box-minus-through-cylinder
+placement	exact CPU serial
+left_body_id	10
+left_revision	1
+right_body_id	11
+right_revision	1
+result_body_id	12
+result_revision	1
+origin_x_hex	0x0.0000000000001p-1022
+origin_y_hex	0x0.0p+0
+origin_z_hex	0x0.0p+0
+box_scale_hex	0x1.0000000000000p-2
+cutter_scale_hex	0x1.0000000000000p-1
+max_quarter_segments	256
+tolerance	1/4096
+local_radius	1/2
+raw_wall_v0	1/4
+raw_wall_v1	3/4
+native_calls	0
+host_device_transfer_bytes	0
