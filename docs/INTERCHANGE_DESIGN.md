@@ -136,7 +136,11 @@ rounding and product rounding without requiring an exactly representable span
 or changing native convert(). The coefficient conversion bound uses the exact
 source span L. Compute g from the prescribed binary64 scale/span factor independently;
 check converted statuses, fields, descriptors and source UV binding match the
-request; this budget must not conceal a wrong domain factor. Record maximum
+request. Additionally require every converted component bitwise equal to the
+independently rounded product of the actual local value and prescribed g,
+followed by native +0 addition for every component (position origin zero),
+including signed-zero behavior.
+This budget must not conceal a wrong domain factor. Record maximum
 observed source errors and their per-query acceptance budgets.
 
 ## Owned consumption and output
