@@ -241,3 +241,22 @@ changing stored curves or coefficient admission. An authored nonbinary constant
 coordinate fixture must reproduce red before implementation. Root/peer design
 review is pending; production remains unchanged. Owned mesher recovery metrics
 and final actual UV rounding charges remain separate and required.
+
+Root and independent review accept the finite-probe design/subplan. The first
+single-span quadratic fixture did not expose native rounding (both dyadic and
+nonbinary active intervals), so its sensitivity assertion failed; neither run
+counts as production red. A four-control quadratic with one literal interior
+knot .37 and Greville U coefficients gives literal original LINE C(t)=(t,Vmin,0)
+on [0,1.3925571192667849], with all V coefficients exactly
+-1.7889624832941899. It genuinely fails the existing final domain checker at
+face1/carrier2/use10 in0.012s. The private red log is retained. Production is
+unchanged at this checkpoint; the accepted shared finite-probe helper follows.
+
+The shared finite-probe helper now passes thirteen focused source-UV/source-reader
+methods in0.335s, including the literal four-control original-line case. Stored
+raw/query degree, controls and active interval remain unchanged; the fixture
+explicitly observes native Value(t) outside Vmin while literal C(t) and finite
+C/S remain within their stated grade. Root/native and independent code reviews
+accept the detached active hull and fixed recovery rule without findings. One
+bounded ASan/UBSan run of that new method is pending before the fresh actualv5
+source/query attempt. No whole-source or mesh pass is claimed.

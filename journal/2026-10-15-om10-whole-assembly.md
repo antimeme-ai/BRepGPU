@@ -156,3 +156,10 @@ C(t)=(t,-1.7889624832941899,0). Earlier single-span fixtures did not reproduce
 roundoff and are not counted as red. The shared finite-probe implementation
 follows that reviewed design and genuine red. Updated current rendering notes
 and the reference requirement wording; all complete-watch outcomes remain pending.
+
+The shared finite-probe helper passes13 focused source-UV/source-reader methods
+in0.335s. Root native review and independent adversarial code review accept the
+detached active-hull checks, fixed numerical grade and unchanged retained curves.
+Conic selected probes and final query correspondence use the same helper; raw
+guide extension diagnostics remain separate. The new literal method's bounded
+sanitizer build is still running before the next fresh complete source attempt.
