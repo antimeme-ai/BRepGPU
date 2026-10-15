@@ -13,3 +13,12 @@ closed-solid material and volume contracts, exact rational native carriers and
 normal qualification before selecting support. Axis contacts, partial angles,
 general profile curves and integration tuning are independent later work.
 No library adoption, architecture rewrite or alpha scope change is selected.
+
+The three primary-source studies and independent design reviews accepted the
+actual source-XY/local+Y family: exact rational quarters, source-bound physical
+rings and same-face seams, sign-aware rational material predicates, complete
+13N output origins and4N/9N modified/generated ancestry. No code was written.
+The implementation plan now assigns complete construction/history, independent
+truth and request/lifetime units; their owners review it before tests/caller.
+Existing execution checkout was clean at the preceding main handoff; all five
+native core/CUDA/topology hashes are recorded privately for final comparison.
