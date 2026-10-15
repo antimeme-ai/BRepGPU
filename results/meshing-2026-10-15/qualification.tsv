@@ -1,0 +1,5 @@
+case	placement	methods_run	passed	skipped	seconds	result
+healthy_native_then_absent_mesh_red	CPU	1	0	0	0.054	EXPECTED_ABSENT_ENTRY_ATTRIBUTE_ERROR
+mesh_entry_green	CPU	1	1	0	0.105	PASS
+mesh_direct	CPU exact	11	11	0	2.995	PASS
+affected_compatibility	CPU exact and native CPU1	83	82	1	15.542	PASS_WITH_EXISTING_GPU_ONLY_SKIP

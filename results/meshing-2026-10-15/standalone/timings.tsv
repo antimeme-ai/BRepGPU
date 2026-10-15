@@ -1,0 +1,8 @@
+scope	milliseconds
+body_prepare	0.9191049030050635
+construct	122.45134601835161
+indexed_reader	4.855721024796367
+construct_and_reader	127.30706704314798
+independent_qualification	602.8166100149974
+filesystem_export	20.366144948638976
+prepare_through_export_including_qualification	751.4089269097894
