@@ -14,9 +14,46 @@
 #include <TopLoc_Location.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Trsf.hxx>
+#include <gp_Pln.hxx>
+#include <gp_Cylinder.hxx>
+#include <BinTools.hxx>
+#include <BRep_Tool.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <iomanip>
 #include <iostream>
+#include <string>
 
 int main(int argc,char** argv){
+  if(argc==3&&std::string(argv[1])=="--inspect"){
+    TopoDS_Shape shape;
+    if(!BinTools::Read(shape,argv[2]))return 1;
+    std::cout<<std::setprecision(17);
+    if(shape.ShapeType()!=TopAbs_SOLID||!shape.Location().IsIdentity()||shape.Orientation()!=TopAbs_FORWARD)return 1;
+    for(TopExp_Explorer e(shape,TopAbs_VERTEX);e.More();e.Next()){
+      auto p=BRep_Tool::Pnt(TopoDS::Vertex(e.Current()));
+      std::cout<<"vertex "<<p.X()<<" "<<p.Y()<<" "<<p.Z()<<"\n";
+    }
+    for(TopExp_Explorer e(shape,TopAbs_FACE);e.More();e.Next()){
+      auto face=TopoDS::Face(e.Current());TopLoc_Location location;
+      if(!BRep_Tool::Triangulation(face,location).IsNull())return 1;
+      BRepAdaptor_Surface surface(face);
+      int sign=face.Orientation()==TopAbs_FORWARD?1:-1;
+      if(surface.GetType()==GeomAbs_Plane){
+        auto plane=surface.Plane();auto p=plane.Location();auto n=plane.Axis().Direction();
+        std::cout<<"plane "<<sign<<" "<<p.X()<<" "<<p.Y()<<" "<<p.Z()<<" "<<n.X()<<" "<<n.Y()<<" "<<n.Z()<<"\n";
+      }else if(surface.GetType()==GeomAbs_Cylinder){
+        auto c=surface.Cylinder();auto p=c.Location();auto n=c.Axis().Direction();
+        std::cout<<"cylinder "<<sign<<" "<<p.X()<<" "<<p.Y()<<" "<<p.Z()<<" "<<n.X()<<" "<<n.Y()<<" "<<n.Z()<<" "<<c.Radius()<<"\n";
+      }else return 1;
+    }
+    for(TopExp_Explorer e(shape,TopAbs_EDGE);e.More();e.Next()){
+      TopLoc_Location location;
+      if(!BRep_Tool::Polygon3D(TopoDS::Edge(e.Current()),location).IsNull())return 1;
+    }
+    return 0;
+  }
   if(argc!=2)return 2;
   Handle(TDocStd_Document) doc;
   XCAFApp_Application::GetApplication()->NewDocument("BinXCAF",doc);
