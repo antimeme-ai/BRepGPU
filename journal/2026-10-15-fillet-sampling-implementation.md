@@ -24,3 +24,13 @@ helpers/guards unchanged. Separate request/batch factoryfields/default17,
 cap+1/pregrid limits, actualcopiedUV exacttrims, complete nativebinding/status,
 perPatchFrame conversion/orientedrows andchildcleanup are implemented. Module+
 8tests ASTvalid only; waitinggeometry dependencyready. Rootnotified forreview.
+
+Geometry owner final8construction CPUtests GREEN2.316s, dependencyready. Own8
+sampler methods passed unchanged CPU1(1.087s),CPU24(1.080s),P1000(3.104s),
+P1001(4.734s), actualfleet unchangednative binaries. Realrepresentable r3/8
+plane+band contacts matchpoints/normals, all4properquarterorientations match,
+nonbinary319/384 actualfloat labels unsnapped,7chartbudget/explicitnonadmitted
+rows correct. Actualdescriptor/status corruption rejects; latehostfailure closes
+all3realchildren then sameEngine/result retry succeeds. ClaimedexclusiveGPU
+beforelaunches and releasedtoindependentoracle afterbothP100greens. No product
+correction/nativebuild/extraprofiling/tuning/localgeometry/Git action.

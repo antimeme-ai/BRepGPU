@@ -51,3 +51,9 @@ certified global error bound; open revolution discrepancy remains independent.
 The adapter does not infer foreign material/history or external alpha completion.
 No geometry has yet been run by this source review; actual API/runtime outcome
 remains to be observed on the qualified caller output.
+
+Final bounded reference refinement re-read: all eight submitted source vertices
+are transformed exactly and required to survive binary64 conversion, in addition
+to lower bounds/dimensions/radius. The selected endpoints are a subset of those
+same original vertices. This strengthens the already-declared same-world input
+contract without changing thresholds, geometry family or timing claims. ACCEPTED.

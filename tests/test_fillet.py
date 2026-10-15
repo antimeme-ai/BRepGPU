@@ -218,6 +218,9 @@ class FilletTests(unittest.TestCase):
         bad.append(altered(result,solid=altered(solid,patches=tuple(patches))))
         bad.append(altered(result,solid=altered(solid,faces=solid.faces[:-1])))
         bad.append(altered(result,solid=altered(solid,revision=True)))
+        vertices=list(result.source.vertices);vertices[2]=replace(vertices[2],position=tuple(map(F,vertices[2].position)))
+        sourcealias=altered(result.source,vertices=tuple(vertices))
+        bad.append(altered(result,source=sourcealias,solid=altered(solid,source=sourcealias)))
         bad.append(altered(result,solid=altered(solid,loops=(replace(solid.loops[0],coedge_slots=(False,)+solid.loops[0].coedge_slots[1:]),)+solid.loops[1:])))
         rail=result.contacts[0]
         bad.extend(altered(result,contacts=(changed,result.contacts[1])) for changed in (replace(rail,normal=(F(-1),F(0),F(0))),replace(rail,source_face=result.contacts[1].source_face),altered(rail,blend_u=False)))
