@@ -352,3 +352,23 @@ with displaced-LINE/plane counterexample where existing cell/UV terms are zero.
 Reviewed measured max-endpoint displacement plus ideal spatial chord as the
 direct correction; no tolerance allowance. Product and oracle edits remain
 pending written plan and source endpoint inventory.
+
+Reviewed finite spline-joint design/subplan ACCEPT after the complete source
+endpoint inventory found maximum0.000211863mm, below unchanged0.000625mm
+allocation. Genuine two-method fleet red checkpoint preceded production. Extended
+the existing qualifier's directed joint handler with original-knot candidate
+membership/minimum/domain checks, mandatory endpoint-only typed records, and
+actual physical candidate displacement as an independent necessary condition.
+The existing shared-edge loop now measures original C endpoint departure against
+source/chord limits; no product metric/evaluator import or new framework.
+
+Production review ACCEPT: precomputed original endpoint choices enter all
+incident interval bounds before shared sampling; actual endpoint world departure
+is cached and added only to intervals containing those endpoints. Supplied V and
+both prechoice records survive. Owner aligned chosen-only S-to-P admission and
+separate candidate counters with the written design; owner reviewed oracle code
+ACCEPT. Seven fleet methods pass0.665s: two new direct sensitivities reject
+invented/worse UVs, wrong original vertex/raw UV and hidden original LINE
+departure, plus the five existing domain/physical/native integrations. Local and
+fleet source hashes agree. Oracle code/tests are stable for the parent's fresh
+complete retained run; no target rendering or whole-source success is implied.

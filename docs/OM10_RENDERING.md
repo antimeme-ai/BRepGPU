@@ -140,6 +140,18 @@ sample/work limits and unresolved multiple crossings reject explicitly. The
 [source study](../papers/2026-10-15-om10-tangent-boundary-study.md) records the
 observed cusp, actual coupled faces and independent review.
 
+Clamped spline joints near one natural V boundary can retain a source tolerance
+gap even when each foreign UV endpoint correctly follows its original curve.
+The owned recovery selects between those two existing endpoints at the same
+directed original vertex, within one original U-knot cell. It changes no curve,
+vertex, active interval or knot. The selected endpoint correction participates in
+every incident trim chord bound before shared sampling, with explicit joint
+provenance. Original spatial-curve chord bounds also include the measured
+departure of canonical endpoint vertices from the original curve. Both terms
+must fit the existing allocation; source tolerance supplies no extra allowance.
+The [source diagnosis and design](../papers/2026-10-15-om10-spline-joint-recovery.md)
+record the finite candidate scope and direct counterexample.
+
 All physical triangles must have nonzero area; only proven pole quotients omit
 collapsed physical cells while retaining their UV coverage/error accounting.
 

@@ -64,3 +64,14 @@ surface-canonical displacement all vanish, while the original spatial edge is
 epsilon away. Source residual is an input-consistency limit, not an extra mesh
 error allowance. Add actual measured endpoint departure if this world-bound
 contract is completed; do not add the selected source tolerance wholesale.
+
+The reviewed implementation subsequently selected only between the two retained
+admissible endpoint UVs under original clamped-cell/natural-V/source guards,
+with explicit original directed-joint provenance and pre-sampling trim endpoint
+corrections. It also completed the measured original-world endpoint chord term.
+No closest-point solver was adopted. Independent checks use original-knot
+evaluation and actual source displacement, rather than the product metric bound.
+Seven direct/affected geometry-native methods pass, including deliberate wrong
+candidate/identity/raw-record and hidden original-edge faults. This bounded
+result leaves complete original-source/closed-solid/native qualification
+pending before the actual watch render.
