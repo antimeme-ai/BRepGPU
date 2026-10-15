@@ -44,3 +44,10 @@ Independent artifact/source and final caller/report reviews accepted without
 blocking findings. Static checks passed: AST for new/changed Python,599 local
 Markdown link targets, both18-entry measured source manifests, public-path scan
 and Git whitespace. No new execution was needed after passing scoped checks.
+
+Merged PR [#53](https://github.com/antimeme-ai/BRepGPU/pull/53) at
+2026-10-15T12:51:43Z as `b9b0cb50064c296c549d58d2b693587c3a0700f5`,
+preserving six substantive feature commits and the remote branch. Local main
+and fleet matched that merge with clean worktrees; protected core/plugin hashes
+match the pre-work values. Issue52 closes this bounded delivery. This final
+bookkeeping commit is synced to both checkouts as the clean handoff.
