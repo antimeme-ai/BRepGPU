@@ -609,3 +609,81 @@ right-span regression distinguishes it. The diagnostic metric is named
 max_foreign_pcurve_to_edge_residual_mm: carrier evaluation follows the explicit
 global-end recovery first, so out-of-domain original spline UV is never claimed
 to have been evaluated.
+
+
+### Reviewed source-owned plane and cone boundary recovery
+
+Actual plane166230 contains original vertices68803/68826/68800 whose saved XYZ
+are exactly collinear; foreign UV introduces a one-ULP false sliver. Actual
+cone166156 contains a source upper circle with exactly constant saved axial Y,
+but foreign seam/circle V differ four ULPs and create a refined UV sliver whose
+distinct exact UV corners round to identical native XYZ. Recover from original
+source before triangulation; retain physical-zero rejection without exemptions.
+
+A plane uses the exact rational affine dual of its saved binary64 frame and
+saved source XYZ. Exact affine maps preserve original exact collinearity; float
+projection alone can recreate the false sliver. Plane UV is owned rational
+geometry, separately rounded for native evaluation with the already reviewed
+world displacement budget. The source-t UV chord bound uses original spatial
+curve acceleration A2: component bounds norm(dualX)*A2 and norm(dualY)*A2,
+converted through the surface first-partial metric and dt²/8. Include original
+vertex endpoint perturbation. Only original spatial knots constrain this trim.
+
+A regular cone uses actual retained-frame dual coordinates, U=atan2(y,x) with
+its original branch, and slant V=localZ/cos(semiangle). This preserves exact
+constant axial-height source circles. Nonzero signed radius R+V*sin(angle)
+selects the appropriate angle sheet; true apex admission requires an original
+source vertex matching the original analytic apex, never a nearby arbitrary
+point. All actual cones have nonzero cos(angle), minimum absolute value0.08716.
+Their ordinary angular derivative proof is the cylinder proof; V acceleration
+bound is norm(dualZ)*A2/abs(cos(angle)). Source curve spans still split at their
+original knots; foreign branch-guide knots are not product trim breakpoints.
+
+At an actual apex, the 1/rho angular bound is inapplicable. An original LINE
+generator can instead recover one constant U from the original active edge
+midpoint and V(t)=localZ(C(t))/cos(angle). Both C(t) and S(U,V(t)) are affine in
+original t. Their difference norm is bounded over the whole edge by its two
+endpoint residuals; admit this conversion only within unchanged source residual.
+The recovered UV curve is linear, so its interpolation error is zero; add the
+explicit canonical original-vertex endpoint UV perturbation. Nonpole endpoints
+use the original vertex inverse; a verified original apex retains its generator
+branch U. If this LINE profile proof fails, ordinary nonsingular inverse still
+needs the positive radial/continuous branch proof; unsupported curved singular
+source families reject rather than inventing a chart repair. Existing declared
+source-apex ChartClosure and collapsed-cell error obligations remain intact.
+
+Cone global trim/rounding metric must not use foreign carrier V bounds. Build a
+source-owned V envelope from every incident ORIGINAL active spatial curve and
+canonical endpoint vertex. A linear axial functional is bounded by restricted
+positive homogeneous control hulls for spline/Bezier curves, actual active-angle
+sinusoid extrema for circles/ellipses, and endpoint values for LINEs. Divide the
+local Z interval by retained cos(angle), ordering signs correctly. Cone Lu uses
+max abs(R+V*sin(angle)) over this envelope; Lv is independent of V. The envelope
+also covers convex-combination interior UV. Local triangle Hessian bounds already
+use actual corner V. No raw-V extent assumption remains in the owned trim bound.
+
+BoundaryOccurrence recovery_kind extends to plane_source_inverse,
+cone_source_inverse, and cone_source_generator. The last explicitly identifies
+the original-LINE affine conversion; it is not mislabeled a pointwise angular
+inverse at a singularity. JointRecovery fields stay unchanged; kinds include
+plane_vertex_inverse and cone_vertex_inverse, retaining original traversal,
+physical source vertex, both complete foreign endpoint occurrences and the
+canonical recovered UV. Pole joints continue using ChartClosure. All raw
+pcurve values/parameters remain retained. Independent checks derive the inverse
+and LINE endpoint proof directly from original coefficients, then check complete
+positive UV chains, physical incidence, native rounded UV/XYZ and source residuals.
+
+Root accepted the source family extension and metric envelope after independent
+actual-source diagnosis; implementation follows review of this written design.
+Actual CPU/P100 evaluation of the two cone apexes must inspect limiting normal
+orientation: different CPU/CUDA sin roundoff can change a tiny residual signed
+radius. Existing limiting cone jets are tested before proposing any native change.
+
+Actual native apex diagnosis resolved the signed-radius risk:48 CPU24/P1000/
+P1001 queries were byte-identical. Raw/local-axial V overshoot by7.36e-15 or
+8.36e-16 selects the opposite cone nappe on every backend. Verified ORIGINAL
+apex endpoints therefore use canonical analytic V=-R/math.sin(angle), retaining
+original XYZ and generator U. Include this endpoint UV perturbation and include
+canonical apex V in the source-owned cone metric envelope. Independent native
+checks require the limiting-normal flag at that explicit source pole. No native
+evaluator change was needed; no generic nearby-point canonicalization is added.

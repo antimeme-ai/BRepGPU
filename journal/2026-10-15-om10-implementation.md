@@ -189,3 +189,16 @@ SVG composition now includes visible source/license credit and structured
 source/creator/license metadata. A tiny synthetic fixture parsed successfully
 on the fleet and confirmed the exact license URI; no watch image was rendered.
 Source-derived artwork has its own asset license file, separate from software.
+
+Source-owned plane/cone recovery passed its reviewed focused obligations:
+21 direct methods plus five affected independent closed-plane/native methods.
+Actual old-failure faces166230,165591,166142,166156 and both apex faces166149/
+171148 now mesh at unchanged quality, preserving physical-zero rejection.
+The larger cone166156 produces99,384 UV cells; the first apex produces171,239.
+Verified original apex V is the canonical analytic representative. Native owner
+checked48 actual-source queries on CPU and both P100s: complete jets match
+byte-for-byte, and canonical apex normals match the positive-radius interior.
+Foreign UV overshoot consistently chose the wrong nappe on every backend;
+source recovery fixes that input rather than changing native evaluator semantics.
+Preparing the complete pinned source/mesh/three-backend integration run while
+the diagnostic scan visits every face under the current implementation.

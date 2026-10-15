@@ -172,3 +172,23 @@ and parameters, original endpoint incidence, and canonical original-vertex UV.
 Non-small raw joints require that metadata. All exact domain, physical solid
 and native input/jet/placement checks continue unchanged. Foreign residuals
 remain diagnostics; they are not confused with corrected source residuals.
+
+The accepted original-source recovery now includes plane_source_inverse,
+cone_source_inverse and cone_source_generator. Independent saved-frame inverse
+uses exact rational Gauss-Jordan elimination, separately from the mesher's dual
+construction. Plane UV must equal the exact affine source-XYZ inverse, preserving
+exact collinearity. Cone inversion checks signed-radius sheet and axial/slant V.
+Generator occurrences require original LINE, original active-midpoint branch,
+and both endpoint residuals of the affine C(t)-S(U,V(t)) conversion; true apex
+endpoints must be the original incident vertex at the original analytic apex.
+Plane/cone JointRecovery kinds retain the same incidence/provenance obligations.
+Only existing declared pole ChartClosure can replace ordinary joint metadata.
+No source points or UV cells are omitted and physical-zero rejection remains.
+
+Verified original cone-pole endpoints canonicalize V to the host analytic
+`-R/sin(angle)`, preserving original XYZ and counting the endpoint perturbation.
+An equally close raw/local inverse can lie on the wrong signed-radius side and
+give a reversed normal. Independent boundary checks therefore require this V
+exactly. Actual native declared pole vertices retain the same V, must emit the
+limiting-normal flag, and compare against the original positive-interior normal
+limit; numeric position closeness alone is insufficient.

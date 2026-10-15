@@ -5,7 +5,7 @@ import unittest
 
 from brepgpu.imported_source import (Curve,CurveSpan,Carrier,SurfaceSpan,ZERO_FRAME,ImportedSource,
     Product,SolidDefinition,Vertex,Edge,Coedge,Loop,Face)
-from brepgpu.imported_meshing import evaluate_curve,evaluate_carrier,_triangulate,_orient,_surface_error,_positive_midpoint,_recover_global_uv,_uv_rounding_bound,_guard_carrier_refinement,_cylinder_uv,_curve_derivative_bounds,_cylinder_trim_bound,_curve_interval_span,MeshQuality,mesh_imported
+from brepgpu.imported_meshing import evaluate_curve,evaluate_carrier,_triangulate,_orient,_surface_error,_positive_midpoint,_recover_global_uv,_uv_rounding_bound,_guard_carrier_refinement,_cylinder_uv,_curve_derivative_bounds,_cylinder_trim_bound,_curve_interval_span,_plane_uv,_cone_uv,_cone_generator,_source_uv,_curve_scalar_range,_cone_v_envelope,MeshQuality,mesh_imported
 
 
 def sphere_cap_fixture():
@@ -203,6 +203,62 @@ class ImportedMeshingTests(unittest.TestCase):
         self.assertIs(_curve_interval_span(curve,a,b),right)
         with self.assertRaisesRegex(ValueError,'crosses original spans'):
             _curve_interval_span(curve,.5,1.5)
+
+    def test_exact_oblique_plane_inverse_preserves_original_collinearity(self):
+        c,s=math.cos(.3),math.sin(.3)
+        plane=Carrier(1,1,(1.7,.5,-2.1,c,0.,s,0.,1.,0.,-s,0.,c),(0.,0.),(-20.,20.,-20.,20.))
+        points=((3.14824785219045,-.87,-11.7860620895614),
+                (3.14824785219045,6.6441495727456e-17,-11.7860620895614),
+                (3.14824785219045,-.3,-11.7860620895614))
+        uv=tuple(_plane_uv(plane,p) for p in points)
+        self.assertTrue(all(type(x) is Fraction for p in uv for x in p))
+        self.assertEqual(_orient(*uv),0)
+        self.assertEqual(uv[0][0],uv[1][0]);self.assertEqual(uv[1][0],uv[2][0])
+
+    def test_cone_inverse_retains_slant_signed_sheet_and_zero_reference_radius(self):
+        frame=(0.,0.,0.,1.,0.,0.,0.,0.,1.,0.,1.,0.)
+        cone=Carrier(1,3,frame,(.3,math.pi/3),(0.,2*math.pi,-1.,1.))
+        for u,v in ((.7,-.1),(.7,-1.),(.7,.2)):
+            p=evaluate_carrier(cone,u,v)[0];actual=_cone_uv(cone,p,(u,v))
+            self.assertAlmostEqual(actual[0],u,places=14);self.assertAlmostEqual(actual[1],v,places=14)
+        zero=replace(cone,radii=(0.,math.pi/3))
+        actual=_cone_uv(zero,evaluate_carrier(zero,.7,.2)[0],(.7,.2))
+        self.assertAlmostEqual(actual[0],.7,places=14);self.assertAlmostEqual(actual[1],.2,places=14)
+        with self.assertRaisesRegex(ValueError,'axis ambiguity'):_cone_uv(zero,(0.,0.,0.),(0.,0.))
+
+    def test_source_active_axial_ranges_ignore_foreign_cone_v_bounds(self):
+        frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+        circle=Curve(1,3,2,frame,(2.,2.),(0.,2*math.pi))
+        lo,hi=_curve_scalar_range(circle,math.pi/4,3*math.pi/4,(0.,1.,0.),(0.,0.,0.))
+        self.assertLessEqual(lo,math.sqrt(2));self.assertGreaterEqual(hi,2.)
+        self.assertLess(hi,2.00000000000001)
+        source=sphere_cap_fixture()
+        cone=Carrier(70,3,frame,(.3,math.pi/3),(0.,2*math.pi,-1.,-.9))
+        v0,v1=_cone_v_envelope(source,cone,(40,41))
+        self.assertLessEqual(v0,0.);self.assertGreaterEqual(v1,1/math.cos(math.pi/3))
+        self.assertGreater(v1,cone.uv_bounds[3])
+
+    def test_original_line_cone_generator_has_whole_edge_endpoint_residual_proof(self):
+        source=sphere_cap_fixture();frame=(0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+        cone=Carrier(70,3,frame,(.3,math.pi/3),(0.,2*math.pi,-1.,1.))
+        u=.7;v0=.2;v1=-.3/math.sin(math.pi/3)
+        a,b=[evaluate_carrier(cone,u,v)[0] for v in (v0,v1)]
+        direction=tuple(y-x for x,y in zip(a,b))
+        line=Curve(999,3,1,(*a,*direction,0.,0.,0.,0.,0.,0.),(0.,0.),(0.,1.))
+        edge=Edge(777,(50,51),999,(0.,1.),True,True,False,0.)
+        source=replace(source,curves=(*source.curves,line))
+        profile=_cone_generator(source,edge,cone,MeshQuality(),{})
+        self.assertIsNotNone(profile);self.assertLess(profile[1],2**-32)
+        for t in (.125,.5,.875):
+            xyz=evaluate_curve(line,t)
+            uv,kind=_source_uv(source,edge,cone,t,xyz,(u,0.),MeshQuality(),{})
+            self.assertEqual(kind,'cone_source_generator')
+            self.assertLess(math.dist(evaluate_carrier(cone,*uv)[0],xyz),2**-32)
+        apex_uv,kind=_source_uv(source,edge,cone,1.,b,(u,0.),MeshQuality(),{})
+        self.assertEqual(kind,'cone_source_generator')
+        self.assertEqual(apex_uv[1],-.3/math.sin(math.pi/3))
+        bad=replace(line,frame=(*line.frame[:3],direction[0]+.1,*direction[1:],*line.frame[6:]))
+        self.assertIsNone(_cone_generator(replace(source,curves=tuple(bad if c.id==999 else c for c in source.curves)),edge,cone,MeshQuality(),{}))
 
     def test_original_sphere_pole_needs_generated_chart_connector(self):
         mesh=mesh_imported(sphere_cap_fixture(),MeshQuality(tolerance_mm=.05))

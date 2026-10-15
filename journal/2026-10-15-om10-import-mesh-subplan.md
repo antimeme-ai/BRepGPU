@@ -194,3 +194,30 @@ introduced. Replaced old four-worker diagnostic scan with eight workers on the
 current code, visiting source indices3000..end then0..2999, every face once.
 Complete-source and native qualification remain pending, with known plane/cone
 recovery work under study. No target rendering has occurred.
+
+Next written extension: source-owned exact rational plane inverse and cone
+axial/slant inverse, original-LINE generator proof at verified actual apexes,
+source-owned cone V metric envelope. Root reviewed the family/metric design;
+independent oracle has actual plane collinearity/cone axial-height witnesses.
+Focused tests attack exact oblique-plane collinearity, source analytic/control
+axial extrema, cone slant/sign/axis branch, whole LINE endpoint residual proof
+and endpoint perturbation; real166230/165591/166142/166156/apex faces follow.
+No collapse exemption, source omission, or quality widening. Native limiting
+apex normals remain an actual evaluate-stage obligation before graphics.
+
+Native owner independently evaluated48 actual apex queries CPU24/P1000/P1001:
+all jets identical; canonical analytic apex V selects correct limiting normals,
+while tiny imported/local-axial overshoot flips the nappe. Root directed verified
+original source-apex endpoint V=-R/sin(angle); originalXYZ/rawmetadata remain,
+endpoint perturbation and cone metric envelope include this explicit correction.
+
+Plane/cone checkpoint:21 focused methods pass in1.067s; independent closed-plane
+UV/physical/native integration5 methods pass in0.549s. Actual source cases:
+166230 plane6cells/0.013s;165591 plane375cells/1.63s;166142 cone240cells/0.098s;
+166156 cone99384cells/20.27s; canonical apex166149171239cells/34.79s and
+17114867669cells/13.47s, each with one source-linked ChartClosure. Old foreign-UV
+slivers no longer cause physical-zero triangles in these cases. The two apex
+endpoints now use exact canonical host -R/sin V; originalXYZ remains unchanged.
+Restarted complete eight-worker diagnostic scan with current source-owned
+recovery, rotating source index6000 then wrapping all prior faces. Complete
+whole-source/native qualification remains pending; no trophy image yet.
