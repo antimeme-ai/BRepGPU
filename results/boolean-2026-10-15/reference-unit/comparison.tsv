@@ -1,0 +1,18 @@
+field	value
+recipe	unit
+reference	usd-brep
+version	1.0.0
+manifold	True
+reference_volume	1.4646018362013005
+analytic_volume	1.4646018366025517
+owned_volume	1.4646018366025517
+reference_volume_absolute_error	4.0125125444490095e-10
+boundary_witnesses	146
+max_boundary_distance	2.7336071744532853e-16
+max_boundary_residual	2.7336071744532853e-16
+volume_relative_limit	1e-08
+boundary_world_limit	1e-07
+input_preservation	original reference inputs unchanged; copies consumed
+material_membership	not compared; no public material classifier established
+source_history	not compared; owned full history has independent qualification
+alpha	not external corpus qualification

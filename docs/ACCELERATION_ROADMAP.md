@@ -6,7 +6,7 @@ visible; narrow local model tests and selected mutant kills cannot satisfy that
 release gate. Community replay and independent-kernel adapters remain open.
 
 
-Design direction, updated 2026-10-14. The operator selected an intentional
+Design direction, updated 2026-10-15. The operator selected an intentional
 breadth-first pass: establish a working beachhead in each major theme before
 returning to deepen individual capabilities. Scope is narrow; correctness is
 not relaxed. This roadmap assigns no calendar dates or unmeasured speedups.
@@ -58,7 +58,7 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Surface intersections | Delivered plane/cylinder intersection components, including closed circles and boundary-clipped arcs, with one spatial and both UV representations | Every expected component in the admitted family is present, with bounded geometric correspondence | General transverse rational pairs, small loops and singular branch discovery |
 | Predicates, contacts and region classification | Delivered exact CPU material membership for all three owned solids and complete rectangular-face crossing/touch/disjoint/overlap/coincidence | Exact submitted-value truth, every incident face ID, complete closed contact corners and both original UVs; unsupported curved trims explicit | Algebraic witnesses, curved tangent contacts, near-coincidence and certified accelerator filters |
 | Face arrangements and topology construction | Delivered exact CPU rectangular grid plus separated interior circle sections, complete cell/disk/exterior regions and multi-hole boundaries | Complete source-domain region bijection, directed source ranges/maps, ordered loops/twins, all closed incident regions, exact witnesses/UV areas; no coordinate welding | Clipped/tangent/overlapping curves, source holes, general arrangements and cross-face Boolean assembly |
-| Solid operations and history | One supported box-minus-through-cylinder Boolean, assembled on CPU using owned events/arrangements | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
+| Solid operations and history | Delivered owned box-minus-through-cylinder Boolean, assembled on CPU from actual events/arrangements with complete six-kind history | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
 | Feature construction | Construct an extrusion and revolution of supported profiles; separately construct a declared circular fillet and analytic offset | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
 | GPU topology and residency | Delivered owned count/scan/fill of edge-use CSR and an actual mate/face-neighbor reader; per-call device storage | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
 
@@ -69,8 +69,9 @@ fixtures do not establish complete general tangent surface intersection.
 Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/chart
 consumer, complete analytic plane/wall intersections, GPU edge-use adjacency
 and exact material/rectangular-face classification, bounded planar arrangements
-and complete canonical trim-aware meshes are delivered. The remaining
-beachheads are proposed; each needs its own researched design, reviewed plan,
+and complete canonical trim-aware meshes, carrier interchange and the first
+owned Boolean/history are delivered. Feature construction remains; its separate
+extrusion/revolution/fillet/offset units are proposed; each needs its own researched design, reviewed plan,
 implementation and qualification.
 
 ## First pass across the themes
@@ -107,7 +108,7 @@ favors CPU. Complete analytic closed plane/wall intersections are now
 [delivered](../results/intersections-2026-10-14/REPORT.md), with exact components,
 spatial/bothUV maps and a qualified CPU/P100 consumer. Native large-row evaluation
 is about15–17.5 times faster on P100, while full consumption remains CPU bound
-at2.3–2.5s and exact request preparation costs27–32s. Continue the uncovered solid/history and feature beachheads;
+at2.3–2.5s and exact request preparation costs27–32s. Continue the remaining feature beachheads;
 broader SSI or integration tuning does not displace them. GPU adjacency now
 constructs and reads packed edge-use CSR without pointer-defined identity;
 compaction, editing, resident arrangements and Booleans remain return-pass work.
@@ -122,7 +123,11 @@ foreign single-span rational surfaces become owned patches with complete source
 face/use identity and explicit unsupported carriers. Exact source/native geometry,
 foreign scalar correspondence and complete CPU/P100 costs are published. Trims
 remain uninterpreted; this does not import a solid or complete general USD/STEP
-exchange. Continue Boolean/history and features before broadening or tuning.
+exchange. The [owned Boolean/history beachhead](BOOLEANS.md) now constructs a
+closed through-bore result using actual source sections/arrangements and complete
+input/output origins. Its CPU/P100 consumers and same-sized foreign comparisons
+are [qualified and measured](../results/boolean-2026-10-15/REPORT.md).
+Continue the remaining feature units before broadening or tuning.
 At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane
@@ -170,7 +175,7 @@ before general NURBS solid modeling is complete.
 | Pair beachhead — implemented | Discover conservative carrier chart pairs over immutable body scenes in a common world frame | Exact outward world bounds; resident CPU/CUDA bit pages, explicit coverage and retained typed sources | 13 direct pair cases, 60 native sanitizer cases, 68 focused family tests per P100, preserved-binary/mutation checks and eight measured complete-shortlist cases |
 | 3b — bounded approximation | Produce error-bounded meshes for a declared carrier/face family | Reuse conservative bounds; add adaptive subdivision scheduling, shared-edge sampling and trim-aware face data | Actual approximation bound, edge agreement and mesh embedding checks. A fast preview grid is a different output contract |
 | 4 — regular surface intersection | Obtain all branches, including interior closed loops, in a declared transverse family with established regularity/separation bounds, with matching spatial and both UV curve representations | Branch/event graph, domain provenance, subdivision exclusions, coupled fitting and seam treatment | Known component counts/connectivity, residual bounds and coverage of the remaining domain; unestablished assumptions or unresolved boxes fail the complete operation. Finite sampling or one successful Newton path cannot establish completeness |
-| 5 — first owned curved Boolean | Cut/fuse/intersect a narrow analytic/low-degree solid family; topology may initially be assembled on CPU | Per-face arrangements, region classification, shared edge/coedge identities, transactional candidate body and history | Material membership, expected components/cavities, geometric correspondence and supported manifold topology; measure complete modeling tasks including CPU work |
+| 5 — first owned curved Boolean, narrow cut implemented | Construct the supported strict through-bore difference on CPU, with complete source history; broader cut/fuse/intersect remain | Per-face arrangements, region classification, shared edge/coedge identities, transactional candidate body and history | Material membership, expected components/cavities, geometric correspondence and supported manifold topology; measure complete modeling tasks including CPU work |
 | 6 — GPU topology construction | Keep established Boolean stages resident and emit packed adjacency on GPU | Count/scan/fill, event grouping, arrangement construction, classification and snapshot publication | Semantic geometry/topology preserved across scheduling and compaction; actual end-to-end benefit on modeling workloads |
 | 7 — broader coverage and features | Extend regularity/separation coverage to tighter transverse loops, tangencies, coincidence and additional seams/poles, and broaden independently scoped sweeps/fillets/offsets | Stronger predicates and bounds, chart/overlap semantics, feature construction on the same geometry/topology model | A direct oracle for each new family; unsupported/unresolved cases remain visible. Add features in an order informed by measured workload value |
 

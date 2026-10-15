@@ -1,0 +1,23 @@
+field	value
+recipe	small
+backend	cuda
+device	0
+threads	1
+grid	17
+left_body	1
+right_body	2
+output_body	3
+origin_x_hex	0x1.0000000000000p+1
+origin_y_hex	-0x1.8000000000000p+1
+origin_z_hex	0x1.0000000000000p+0
+scale_hex	0x1.0000000000000p-2
+volume_rational	9/256
+volume_pi	-1/256
+observed_backend	cuda
+observed_device	0
+samples	2890
+evaluated_samples	2712
+checksum	2.6423307986078726e-14
+constructor	owned CPU exact through-bore
+native_consumers	first jets/oriented normals and edge-use adjacency
+general_result_mesher	not implemented

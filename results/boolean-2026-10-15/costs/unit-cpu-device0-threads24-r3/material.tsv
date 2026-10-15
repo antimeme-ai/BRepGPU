@@ -1,0 +1,7 @@
+probe	x	y	z	label	boundary_faces
+0	0	0	0	exterior	
+1	5/8	0	0	interior	
+2	1/2	0	0	boundary	7
+3	1/2	0	1/2	boundary	1,7
+4	3/4	3/4	1/2	boundary	1,4,5
+5	1	0	0	exterior	

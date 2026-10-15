@@ -1,0 +1,8 @@
+field	value
+useful_timer	CPU cut/material/boundary/history reads/request/context/sampling/cleanup/topology library/adjacency/actual mates and neighbors
+outside_useful_timer	operand preparation/module imports/process launch/independent qualification/artifact writes/reference experiment
+child_process_ms	includes all child work plus process launch/wait
+grid	17
+warmups	1
+repeats	3
+interpretation	exploratory fresh-process small operation; no GPU Boolean construction or full CAD speedup; clocks unpinned
