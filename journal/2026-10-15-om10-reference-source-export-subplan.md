@@ -81,6 +81,23 @@ journal. No actual watch raster or benchmark. The fresh owned snapshot remains
 blocked on missing foreign pcurves; this source export's success is not a claim
 that owned full qualification or the whole watch delivery is complete.
 
+Follow-up NVIDIA input-contract study establishes that absent pcurves are an
+intended bridge input, including general NURBS: explicit source loops survive,
+and NVIDIA/SMLib constructs its UV trims from original 3D edges. The raw
+no-processing neutral remains the selected NVIDIA input; do not add unrelated
+owned projection work to its fresh wall. Its absence is not by itself a kernel
+failure or evidence that NVIDIA ignores trims. Actual output still requires
+finite geometry/physical admission. A separate owned/query-only UV preparation
+unit is being designed for the source extractor and OCCT boundary queries.
+
+The official bridge's unmeasurable-pcurve outer-wire fallback uses index0.
+Static original source metadata check finds375 multi-loop faces with981 loops;
+all have exactly one original FaceOuterBound and it is index0, no exceptions.
+Pinned no-processing TranslateFace adds bound wires in original order and
+BinTools preserves child order, so no source wire reordering is needed for
+that fallback on the supplied watch. This is a source-order check, not a new
+render or whole geometry qualification campaign.
+
 Root design/plan review ACCEPT after reading the complete source/serialization,
 manifest and single-import design. Implementation may proceed after meaningful
 fleet red. Distinguish source identity from embedded run timings and keep all

@@ -264,3 +264,48 @@ zero instances and one placeholder material. Physical keys and actual NVface
 ordinals are definition-local. TSV files are external human-readable reports,
 not an IPC model. The complete driver aggregates actual binary mesh records,
 assigns source materials and exact placements, and adds no geometric vertices.
+
+## Missing pcurves are an explicit NVIDIA input path
+
+The corrected OCCT no-processing lifecycle exposed absent recovered pcurves on
+all 24,602 nonplanar coedge uses. This must not automatically be called invalid
+NVIDIA input or used to force owned projection costs into its benchmark.
+Pinned official behavior is explicit:
+
+* `OcctStagingDriver.cpp2338–2340` obtains analytic trim bounds from ordered 3D
+  boundary curves when pcurve boxes are absent. `StageEdgeuseUvCurve3856–3860`
+  leaves the missing curve's `(0,0)` placeholder without deleting 3D topology.
+* `SmuConvert.cpp882–884` accepts zero UV order/count as absent. Lines901–908
+  deliberately discard even supplied pcurves on analytic surfaces, whose
+  internal SMLib parameterization differs; SMLib reconstructs their trims from
+  the 3D edges. Import2852–2865 explicitly defers UV creation instead of eagerly
+  constructing every curve, independently of the chosen healing policy.
+* The NURBS path also supports absence: `ComputeNaturalDomain1442–1464` obtains
+  the natural parameter box from source knots. Lines2592–2595 explicitly warn
+  that valid open NURBS faces may have an explicit wire and no pcurves; they
+  must keep that outer wire, rather than become a whole implied surface.
+  Lines2628–2631 may supply the natural **parameter domain**, while original
+  explicit loops remain general trims. Implied outer boundaries have separate
+  closed/periodic-source admission conditions.
+* `SmuConvert.cpp3829–3859` records missing edgeuse UV as `SM_NO_OBJECT`.
+  `SmEdgeuse.cpp4255–4310` creates an absent UV curve on demand;
+  `CreateUVTrimCurve1230+` uses the original edge curve, interval, owning generic
+  surface and face domain. This is an intended projection path for general
+  surfaces, not merely a planar exception. Failure remains an actual import/
+  boundary/tessellation result; support is not a guarantee that every source
+  curve projects successfully.
+
+An identified bridge limitation is outer-loop selection: `OcctFileSource.cpp411`
+falls back to source loop 0 when missing pcurves prevent measuring all loop
+boxes. Periodic recovery may also synthesize boundary/chart topology. Actual
+whole-source counts, closed physical shells and finite original-boundary
+coverage must judge those results. No unmentioned repair, dropped source face
+or universal success claim follows from the intended missing-pcurve path.
+
+The numerical OCCT distance checker has a different input requirement: trimmed
+face classification needs usable pcurves. Its explicit source-query-preparation
+failure is **not** a NVIDIA quality failure. Any output-only 2D preparation for
+the owned source reader or distance checker needs separate declared scope and
+preservation of original 3D curves/ranges, carriers, vertices, topology and
+orientations. Do not add that CPU work to the NVIDIA fresh caller unless the
+actual NVIDIA input contract requires it. No such blanket requirement was found.
