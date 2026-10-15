@@ -13,3 +13,12 @@ Root will record fleet healthy old Patch followed by missing-revolution failures
 no production module before that release. Then implement own sampler only, run
 CPU1/CPU24/both P100 contract tests after geometry dependency ready, serializeGPU
 lane, and report exact observed results. No local geometry or native build.
+
+Root recorded actual fleet healthy existing body prerequisite,27 direct new test
+missing-module failures and real missing-revolution caller red before release.
+After explicit release implemented revolution_sampling.py: separate factory
+request/batch types, defaultgrid9, complete chart squares, copied binary64 UV,
+cap+1/before-grid bounds, all descriptor/query/status checks via unchanged generic
+helpers, per-Patch source-world conversion and oriented rows, owned child scopes.
+Module and8 direct tests are AST-valid; no local product execution. Waiting actual
+geometry dependency readiness before synchronized fleet greens; root notified.
