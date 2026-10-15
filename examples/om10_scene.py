@@ -280,11 +280,11 @@ def labeled_svg(path, png_path, view, *, title, subtitle, counts, timings,
         rows.append(f'<text x="{w-570}" y="{h-190}" font-size="14" fill="#6cddd0">{esc(timing_header)}</text>')
     for i, (label, value) in enumerate(timings):
         x = w-570
-        rows.append(f'<text x="{x}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)} </tspan>{esc(value)}</text>')
+        rows.append(f'<text x="{x}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)}</tspan><tspan dx="12">{esc(value)}</tspan></text>')
     if task_timing_header:
         rows.append(f'<text x="{w-1390}" y="{h-190}" font-size="14" fill="#6cddd0">{esc(task_timing_header)}</text>')
     for i, (label, value) in enumerate(task_timings):
-        rows.append(f'<text x="{w-1390}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)} </tspan>{esc(value)}</text>')
+        rows.append(f'<text x="{w-1390}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)}</tspan><tspan dx="12">{esc(value)}</tspan></text>')
     for text, x, y, ax, ay, anchor in callouts:
         elbow = x+12 if anchor == 'start' else x-12
         rows.extend((f'<path d="M {ax:.2f} {ay:.2f} L {elbow:.2f} {y-8:.2f} L {x:.2f} {y-8:.2f}" stroke="#6cddd0" stroke-width="1.2" opacity=".65" fill="none"/>',
