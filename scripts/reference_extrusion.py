@@ -48,8 +48,9 @@ def execute(args):
     before=curve_records();create_ms=(time.perf_counter_ns()-start)/1e6
     start=time.perf_counter_ns();body=sm.linear_sweep(list(curves),(0.,0.,1.),distance,cap_ends=True)
     sweep_ms=(time.perf_counter_ns()-start)/1e6
+    start=time.perf_counter_ns()
     require(curve_records()==before,'pure reference sweep changed original source curves')
-    start=time.perf_counter_ns();volume=float(body.volume(relative_accuracy=1e-8))
+    volume=float(body.volume(relative_accuracy=1e-8))
     manifold=bool(body.is_manifold_solid());bounds=tuple(tuple(float(x) for x in p) for p in body.bounding_box(tight=True))
     require(len(bounds)==2 and all(len(p)==3 for p in bounds) and all(math.isfinite(x) for p in bounds for x in p),'invalid returned reference bounds')
     area=sum((a[0]*b[1]-a[1]*b[0] for a,b in zip(points,points[1:]+points[:1])),F(0))/2
@@ -95,7 +96,7 @@ def execute(args):
     tsv(out/'bounds.tsv',('corner','x','y','z','expected_x','expected_y','expected_z'),((i,*p,*q) for i,(p,q) in enumerate(zip(bounds,boundtruth))))
     tsv(out/'closest-points.tsv',('kind','key','x','y','z','reference_x','reference_y','reference_z','distance','residual'),queries)
     tsv(out/'costs.tsv',('phase','wall_ms'),(('reference_import',import_ms),('reference_curves_and_before_probes',create_ms),
-        ('reference_linear_sweep',sweep_ms),('reference_measure',measure_ms),('reference_boundary_queries',query_ms)))
+        ('reference_linear_sweep',sweep_ms),('reference_input_preservation_and_measure',measure_ms),('reference_boundary_queries',query_ms)))
     tsv(out/'sources.tsv',('path','sha256'),(('scripts/reference_extrusion.py',hashlib.sha256(Path(__file__).read_bytes()).hexdigest()),
         *((name,hashlib.sha256((case/name).read_bytes()).hexdigest()) for name in ('recipe.tsv','quality.tsv','profile-points.tsv','edge-points.tsv','samples.tsv'))))
     print(f'reference {recipe["recipe"]}: volume_error={abs(volume-float(expected)):.3g} boundary_max={max(q[-1] for q in queries):.3g} witnesses={len(queries)}',flush=True)

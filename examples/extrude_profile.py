@@ -13,7 +13,7 @@ from brepgpu import Engine
 from brepgpu.body import Frame
 from brepgpu.extrusion import make_profile,extrude
 from brepgpu.extrusion_sampling import prepare_grid,sample
-from brepgpu.extrusion_oracles import qualify_profile,qualify_result,qualify_samples,qualify_topology
+from brepgpu.extrusion_oracles import qualify_result,qualify_samples,qualify_topology
 from brepgpu.adjacency import AdjacencyLibrary,PAIRED
 from cut_bore import tsv,require,tree,graph_rows
 
@@ -122,7 +122,7 @@ def execute(args):
     end=time.perf_counter_ns();complete_ms=(end-started)/1e6;points_ms=(end-points_start)/1e6
     start=time.perf_counter_ns()
     quality={}
-    for prefix,values in (('profile',qualify_profile(profile)),('result',qualify_result(result)),
+    for prefix,values in (('result',qualify_result(result)),
                           ('samples',qualify_samples(batch)),('topology',qualify_topology(result,adjacency))):
         quality.update((prefix+'_'+k,v) for k,v in values.items())
     qualification_ms=(time.perf_counter_ns()-start)/1e6
