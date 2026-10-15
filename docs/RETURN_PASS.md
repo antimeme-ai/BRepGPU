@@ -141,3 +141,13 @@ not an active Python rewrite/session optimization or demonstrated GPU speedup.
 The continuing NCSX trophy requires actual source geometry beyond the acquired
 engineering PDF/photo references; keep geometry revisions and rendering settings
 constant across comparison images.
+
+## NCSX scene comparison
+
+The operator deferred this comparison while continuing the breadth sweep.
+Study00 did not record rendering/evaluation timing and did not run a matched CPU
+geometry pass. Later compare the identical scene on native CPU and P100, separating
+patch preparation, context/setup, uploads, native evaluation, download, derivative
+normal construction and CPU rasterization/encoding. Time independent correctness
+checking separately from the useful caller. Do not describe the current CPU
+rasterizer as GPU rendering or infer a performance result from study00.
