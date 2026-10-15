@@ -27,3 +27,24 @@ conic selection and cumulative QueryBudget; inspected owned
 `_uv_rounding_bound`. A genuine literal native constant-coordinate RED precedes
 production. Bounded code review and actual complete source/query conversion
 remain pending; this acceptance says nothing about whole-watch mesh or images.
+
+## Code review
+
+Reviewed the implementation after genuine authored RED commit `db1416c`.
+Code ACCEPT: `spline_probe` rejects nonfinite evaluation; recovery requires a
+nonrational, nonperiodic B-spline, a detached copy segmented to the exact saved
+interval, and finite control coordinates exactly inside the original carrier
+rectangle. Each escaped finite coordinate retains the existing 128 ULP gate.
+Only a local UV value changes. No stored pcurve, knot, original range, source ID,
+source tree or query tree mutation occurs in this helper.
+
+Selected conic endpoints and original-per-span finite probes, plus final query
+correspondence, share the helper. The original unconstrained guide continues to
+feed the explicitly named extension diagnostic. Cumulative coefficient change
+accounting is unchanged. The new authored fixture checks literal query controls
+and original spatial LINE values, preserves raw nonbinary V, and requires an
+actual native constant-coordinate escape so an insensitive fixture cannot pass.
+Existing beyond-grade coefficient negatives remain in the focused run. No
+blocking findings. This is static code acceptance; the owner/root run the
+already planned focused fleet checks and bounded sanitizer case before the next
+complete source/query attempt. No broader test campaign is requested.
