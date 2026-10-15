@@ -1,5 +1,14 @@
 # BRepGPU research
 
+## Trophy visualization studies
+
+[Two actual-geometry candidates](../docs/TROPHY_GALLERY.md) use the current CUDA
+patch evaluator and exact CPU arrangements. The [gallery plan](../docs/TROPHY_GALLERY_PLAN.md),
+[surface design review](2026-10-14-trophy-surface-design-review.md),
+[surface caller/display review](2026-10-14-trophy-surface-code-review.md) and
+[arrangement design](2026-10-14-trophy-arrangement-design.md) retain source,
+admission and display semantics. No new kernel or rendering dependency is adopted.
+
 ## External oracles and alpha qualification
 
 The operator requires [external community qualification before alpha](../docs/ALPHA_QUALIFICATION.md),
