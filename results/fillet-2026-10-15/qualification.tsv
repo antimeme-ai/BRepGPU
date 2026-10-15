@@ -1,0 +1,12 @@
+unit	placement	methods	passed	skipped	seconds
+construction	CPU	8	8	0	2.407
+sampling	CPU1	8	8	0	1.087
+sampling	CPU24	8	8	0	1.08
+sampling	P1000	8	8	0	3.104
+sampling	P1001	8	8	0	4.734
+independent	CPU1	12	12	0	6.845
+independent	CPU24	12	12	0	6.554
+independent	P1000	12	12	0	7.469
+independent	P1001	12	12	0	7.474
+affected-existing	CPU	116	115	1	35.412
+device-restoration	P1000	1	1	0	0.457

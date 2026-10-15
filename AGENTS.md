@@ -89,7 +89,15 @@ ring edges and distinct same-face seams, sign-aware exact radical material,
 consumers are independently qualified. Read docs/REVOLUTION.md and its result
 report. The optional foreign triangle volume comparison fails its declared limit;
 retain the disagreement explicitly rather than widening tolerance. Continue
-independently scoped fillet, then offset before integration/tuning.
+the independently scoped analytic offset before integration/tuning.
+The complete box-edge fillet is delivered: one actual full vertical edge9..12,
+exact radius1/256grid[1/16,1/2], retained six source plane carriers/Frames,
+rounded cap loops, two tangent contact rails and a rational quarter band.
+All62 source dispositions and76 output origins retain precise original source
+parameter/UV owners; deleted selected-edge occurrences can parent births.
+Read docs/FILLET.md and results/fillet-2026-10-15/REPORT.md. CPU construction
+and CPU/both-P100 consumers are independently qualified. Cap joins stay sharp;
+there is no general rolling-ball solver or GPU fillet construction. Offset next.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

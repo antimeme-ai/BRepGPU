@@ -1,0 +1,12 @@
+probe	x	y	z	label	boundary_faces
+0	2	-3	1	interior	
+1	19/8	-21/8	1	exterior	
+2	35/16	-45/16	1	interior	
+3	2	-45/16	1	interior	
+4	19/8	-45/16	1	boundary	5,7
+5	35/16	-21/8	1	boundary	4,7
+6	23/10	-213/80	1	boundary	7
+7	23/10	-213/80	3/4	boundary	2,7
+8	23/10	-213/80	5/4	boundary	1,7
+9	19/8	-45/16	3/4	boundary	2,5,7
+10	35/16	-21/8	5/4	boundary	1,4,7

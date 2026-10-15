@@ -1,0 +1,26 @@
+field	value
+recipe	large
+reference	usd-brep
+version	1.0.0
+overall_pass	True
+source_preserved	True
+manifold	True
+reference_volume	17.570796327847695
+analytic_volume_float	17.5707963267949
+owned_exact_rational	16
+owned_exact_pi	1/2
+volume_absolute_error	1.0527969607210252e-09
+volume_relative_error	5.991743010050966e-11
+bounds_absolute_error	2.6645352591003757e-15
+boundary_witnesses	131
+max_boundary_distance	2.8108601893111292e-15
+max_boundary_residual	2.8108601893111292e-15
+reference_volume_requested_accuracy	1e-08
+volume_relative_limit	1e-08
+bounds_world_limit	2e-08
+boundary_world_limit	2e-07
+world_input_rounding	exact binary64 box/selected endpoints/radius
+ownership	deep copy original; select copied edge by exact endpoints; mutate copy; discard copied child handles
+source_preservation_scope	original volume/manifold/bounds/all12edge endpoints/ranges/3point probes before and after
+material_history	not compared; no foreign material/history adapter established
+alpha	not external corpus qualification

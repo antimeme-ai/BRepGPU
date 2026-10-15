@@ -1,0 +1,24 @@
+field	value
+recipe	small
+backend	cpu
+device	0
+threads	24
+grid	17
+source_body	1
+output_body	2
+source_edge	9
+radius	1/16
+origin_x_hex	0x0.0p+0
+origin_y_hex	0x0.0p+0
+origin_z_hex	0x0.0p+0
+scale_hex	0x1.0000000000000p+0
+world_volume_rational	575/256
+world_volume_pi_coefficient	1/1024
+observed_backend	cpu
+observed_device	0
+samples	2023
+evaluated_samples	1987
+checksum	-692.4348550722705
+construction	owned CPU complete constant-radius box-edge fillet
+native_consumers	first jets/oriented normals and adjacency
+mesher	not implemented
