@@ -166,9 +166,28 @@ def authored_layout(assembly, definition_bounds):
             tier, reason = 5.8, 'fastener layer'
         else:
             tier, reason = .8, 'source component layer'
-        # Small source-linked separation inside an expanded subassembly.
-        detail = (1.8 if 'vis' in name else 1. if any(s in name for s in ('pierre', 'rubis', 'palette'))
-                  else .6 if 'planche' in name else 0.) if len(occurrence.path) > 1 else 0.
+        # Separate the actual internal leaves as well as root subassemblies.
+        # These authored offsets expose the barrel/spring/cover and oscillator;
+        # the geometry and source placement at alpha0 stay unchanged.
+        detail = 0.
+        if len(occurrence.path) > 1:
+            if 'couvercle' in name:
+                detail = 4.5
+            elif 'ressort de barillet' in name:
+                detail = 2.4
+            elif any(s in name for s in ('arbre', 'axe', 'tige')):
+                detail = -2.
+            elif 'vis' in name:
+                detail = 3.
+            elif any(s in name for s in ('pierre', 'rubis', 'palette', 'cheville')):
+                detail = 1.6
+            elif any(s in name for s in ('spiral', 'virole')):
+                detail = 2.8
+            elif 'planche' in name:
+                detail = 1.2
+            elif 'pignon' in name:
+                detail = -.8
+            reason += f'; authored internal leaf lift {detail:g} mm'
         local_center = tuple((bounds[occurrence.definition_id][i]+bounds[occurrence.definition_id][i+3])/2 for i in range(3))
         world_center = transform_point(occurrence.transform, local_center)
         radial = tuple(world_center[i]-center[i] for i in range(3))
@@ -206,7 +225,7 @@ def authored_material(name):
     return 0
 
 
-def visible_anchors(path, width, height, *, step=3):
+def visible_anchors(path, width, height, *, step=3, valid_ids=None):
     """Select actual visible source-instance samples near their visible centroid."""
     ids = array('Q')
     ids.frombytes(Path(path).read_bytes())
@@ -214,6 +233,8 @@ def visible_anchors(path, width, height, *, step=3):
         ids.byteswap()
     if len(ids) != width*height:
         raise ValueError('native instance-ID image has wrong length')
+    if valid_ids is not None and set(ids)-set(valid_ids)-{(1 << 64)-1}:
+        raise ValueError('native image contains an unknown source occurrence ID')
     totals = {}
     for y in range(0, height, step):
         for x in range(0, width, step):
@@ -236,7 +257,8 @@ def visible_anchors(path, width, height, *, step=3):
 
 
 def labeled_svg(path, png_path, view, *, title, subtitle, counts, timings,
-                callouts=(), attribution='OpenMovement OM10 MAN VA01.3 · source-derived illustration'):
+                callouts=(), timing_header='',
+                attribution='OpenMovement OM10 MAN VA01.3 · source-derived illustration'):
     """Compose source-linked typography over the actual native image pixels."""
     esc = html.escape
     encoded = base64.b64encode(Path(png_path).read_bytes()).decode('ascii')
@@ -251,6 +273,8 @@ def labeled_svg(path, png_path, view, *, title, subtitle, counts, timings,
         x = 70+i*270
         rows.extend((f'<text x="{x}" y="{h-146}" font-size="30" font-weight="600">{esc(str(value))}</text>',
                      f'<text x="{x}" y="{h-116}" font-size="16" fill="#8fa7bc">{esc(label)}</text>'))
+    if timing_header:
+        rows.append(f'<text x="{w-570}" y="{h-190}" font-size="14" fill="#6cddd0">{esc(timing_header)}</text>')
     for i, (label, value) in enumerate(timings):
         x = w-570
         rows.append(f'<text x="{x}" y="{h-155+i*29}" font-size="20"><tspan fill="#8fa7bc">{esc(label)} </tspan>{esc(value)}</text>')

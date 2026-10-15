@@ -109,3 +109,15 @@ Sent three concrete reporting/reproducibility findings: CPU metadata should not
 claim GPU work; resident packed view rows should match corresponding cold view
 bytes, not just scene/software hashes; and the benchmark driver should pin its
 own executed source alongside the render caller. Root owns those changes.
+
+Final static review of caller/benchmark/presentation updates: original-source and
+actual native qualifier wiring matches their public APIs; source/primitive maps
+remain in actual writer order. Read the poster compositor's192-byte view decode,
+fixed firstGPU0 image choice, actual repeat medians, copied CPU/P100 comparison
+pixels, footer scopes and source-linked callout coordinates. No geometry/raster
+execution occurred in this review. Sent one valid reporting finding: prepare/
+evaluate currently inherit image-producing caller scope/timer names and CUDA
+raster-stage descriptions despite producing no images. Root should make these
+mode-specific. Recommended a short CPU-preparation/CUDA-stage legend in the final
+poster; actual long-name/leader readability remains planned post-qualification
+image inspection. Parent owns all presentation edits; no new tests/mechanisms.

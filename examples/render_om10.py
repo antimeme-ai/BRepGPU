@@ -163,13 +163,21 @@ def main(args):
     definition_bounds = mesh.definition_bounds
     layout, records, axes = authored_layout(assembly, definition_bounds)
     times.append(('owned_assembly_explosion_layout', time.perf_counter()-start))
+    qualification_rows = []
     if args.qualify:
         start = time.perf_counter()
-        from brepgpu.imported_oracles import qualify_source, qualify_mesh
-        source_checks = qualify_source(source, step)
-        mesh_checks = qualify_mesh(mesh)
-        tsv(output/'qualification.tsv', ('field', 'value'),
-            (*source_checks.items(), *mesh_checks.items()))
+        from brepgpu.imported_oracles import (qualify_mesh,
+            qualify_original_geometry, qualify_original_assembly)
+        mesh_checks = qualify_mesh(mesh, original_path=step)
+        qualification_rows.extend(('mesh/'+key, value) for key, value in mesh_checks.items())
+        if step is not None:
+            for prefix, checks in (
+                ('original_geometry', qualify_original_geometry(source, step)),
+                ('original_assembly', qualify_original_assembly(source, step, assembly))):
+                qualification_rows.extend((prefix+'/'+key, value) for key, value in checks.items())
+        else:
+            qualification_rows.append(('original_bytes_comparison', 'NOT_RUN; source snapshot input'))
+        tsv(output/'qualification.tsv', ('field', 'value'), qualification_rows)
         times.append(('independent_source_mesh_qualification', time.perf_counter()-start))
     start = time.perf_counter()
     instances = tuple(SceneInstance(o.id, o.definition_id, o.transform, layout.offsets[o.id-1])
@@ -208,6 +216,16 @@ def main(args):
             subprocess.run(command, stdout=log, check=True)
         process_seconds = time.perf_counter()-start
         times.append(('complete_native_process_including_exit', process_seconds))
+        if args.qualify and args.mode == 'evaluate':
+            start = time.perf_counter()
+            from brepgpu.imported_oracles import qualify_native_scene
+            native_checks = qualify_native_scene(mesh, assembly, output/'scene.bgmesh',
+                output/'native/source-jets.bin',
+                tuple(output/'native'/f'frame-{i:06d}.projected' for i in range(len(requested_views))),
+                views_path=output/'views.bgview', explosion=layout)
+            qualification_rows.extend(('native/'+key, value) for key, value in native_checks.items())
+            tsv(output/'qualification.tsv', ('field', 'value'), qualification_rows)
+            times.append(('independent_actual_native_geometry_qualification', time.perf_counter()-start))
         if args.mode == 'render':
             for i, view in enumerate(requested_views):
                 start = time.perf_counter()
@@ -215,7 +233,8 @@ def main(args):
                 prefix = output/'native'/f'frame-{i:06d}'
                 png = output/(name+'.png')
                 write_png(png, view.width, view.height, prefix.with_suffix('.rgba').read_bytes())
-                anchors = visible_anchors(prefix.with_suffix('.instance'), view.width, view.height)
+                anchors = visible_anchors(prefix.with_suffix('.instance'), view.width, view.height,
+                                          valid_ids=tuple(o.id for o in assembly.occurrences))
                 labels, label_rows = callouts(assembly, anchors, view.width, view.height)
                 tsv(output/(name+'-callouts.tsv'), ('label', 'visible_anchor_occurrence_id',
                     'source_group_occurrence_ids', 'anchor_x', 'anchor_y', 'label_x', 'label_y'), label_rows)
@@ -233,6 +252,18 @@ def main(args):
     require(binary_pins(args) == executable_pins, 'selected product binaries changed during operation')
     tsv(output/'sources.tsv', ('path', 'sha256'), pins)
     tsv(output/'binaries.tsv', ('role', 'sha256'), executable_pins)
+    output_scope = {
+        'prepare': 'through owned mesh, scene, source tables and view requests; no native process',
+        'evaluate': 'through native first jets and placed/projected geometry; no raster images',
+        'render': 'through PNG and labeled SVG; excludes static SVG rasterization',
+    }[args.mode]
+    gpu_work = 'none; native process not invoked'
+    if args.mode != 'prepare':
+        gpu_work = 'none; CPU-only native consumer'
+        if args.backend == 'cuda':
+            gpu_work = 'original-UV first jets; rigid placement; projection'
+            if args.mode == 'render':
+                gpu_work += '; tile bins; visibility; shading; resolve'
     tsv(output/'metadata.tsv', ('field', 'value'), (
         ('source_sha256', source.source_sha256), ('source_revision', 'OM10 MAN VA01.3'),
         ('owned_source_snapshot_sha256', hashlib.sha256(binary_source.read_bytes()).hexdigest()),
@@ -244,17 +275,19 @@ def main(args):
         ('tolerance_mm', args.tolerance), ('source_residual_limit_mm', args.source_residual),
         ('foreign_preparation', 'CPU STEP/XDE; original pcurves absent and reconstructed'),
         ('owned_mesh', 'CPU shared-edge/trim-domain construction'),
-        ('native_gpu_work', 'original-UV first jets; rigid placement; tile bins; visibility; shading; resolve'
-         if args.backend == 'cuda' else 'none; CPU-only native consumer'),
+        ('native_gpu_work', gpu_work),
         ('explosion', 'authored world offsets over actual source hierarchy; illustrative'),
         ('palette', 'authored illustrative; original styles retained separately'),
         ('independent_qualification_in_wall', args.qualify),
-        ('caller_scope', ('fresh STEP' if step else 'owned source snapshot')+
-         ' through PNG and labeled SVG; includes source checks, process exit and file writes; excludes static SVG rasterization'),
+        ('caller_scope', ('fresh STEP ' if step else 'owned source snapshot ')+output_scope+
+         '; includes requested qualification, invoked process exit and output file writes'),
         ('derived_assets', 'Source OpenMovement; CC BY-SA 3.0 technical documentation; preserve attribution/terms')))
+    tsv(output/'mesh-errors.tsv', ('metric', 'value', 'scope'),
+        ((key, value, 'analytic bounds evaluated in binary64 or measured residual as named; no universal source certificate')
+         for key, value in mesh.error_metrics))
     # The caller row directly encloses all useful output above. Its own small
     # timing-file write and interpreter shutdown are measured by the outer driver.
-    times.append(('caller_through_complete_images_and_metadata', time.perf_counter()-begin))
+    times.append((f'caller_{args.mode}_through_complete_outputs_and_metadata', time.perf_counter()-begin))
     tsv(output/'timings.tsv', ('stage', 'seconds', 'scope'),
         ((stage, seconds, 'completed host wall; nested stages not additive') for stage, seconds in times))
     print(f'{args.mode}: 107 solids / 9,162 faces / 166 occurrences; {placed_triangles:,} placed triangles', flush=True)
@@ -266,7 +299,7 @@ def parser():
     source = p.add_mutually_exclusive_group(required=True)
     source.add_argument('--step', type=Path)
     source.add_argument('--source', type=Path)
-    p.add_argument('--adapter', type=Path, default=ROOT/'build/om10-source/brepgpu-step-source')
+    p.add_argument('--adapter', type=Path, default=ROOT/'build/om10-step-source/brepgpu-step-source')
     p.add_argument('--native', type=Path, default=ROOT/'build/om10-release/brepgpu-om10-native')
     p.add_argument('--plugin', type=Path, default=ROOT/'build/om10-release/libbrepgpu_om10_cuda.so')
     p.add_argument('--output', type=Path, required=True)
