@@ -1,0 +1,5 @@
+backend	device	threads	samples	median_complete_ms	min_complete_ms	max_complete_ms
+cpu	0	1	3	34.258673	27.471218	37.879532
+cpu	0	24	3	34.835116	29.540951	76.746319
+cuda	0	1	3	319.585585	294.240865	325.877439
+cuda	1	1	3	710.947107	583.395007	872.20628

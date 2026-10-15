@@ -1,0 +1,11 @@
+field	value
+os	Linux
+machine	x86_64
+python	3.12.3
+reference_version	usd-brep 1.0.0
+native_source	unchanged existing pair-release core/CUDA plugin
+cpu	two Xeon E5-2697 v2 sockets;24 physical cores;48 logical CPUs
+isolation	no CPU affinity or clock/host-load isolation; fresh processes
+reference_diagnostics	native loader reported missing optional pxr Python modules; source import/export and scalar queries succeeded
+gpu	0, Tesla P100-PCIE-16GB, 580.178.04
+gpu	1, Tesla P100-PCIE-16GB, 580.178.04
