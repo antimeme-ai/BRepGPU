@@ -75,3 +75,11 @@ unpacked originals remain privately retained. Public artifacts total~9.6MiB plus
 ~572KiB presentation PNGs. Static links, whitespace, AST, source hashes and
 private-operational-path scan pass. No native rebuild, product changes after
 final run or further tests are needed. Proceed to preserving merge and clean sync.
+
+Merged PR57 with all10 substantive feature commits preserved, mergec2045a5;
+issue56 closed. Feature branch remains available. Local main fast-forwarded and
+fleet tracked artifacts synchronized before a non-destructive mixed index reset;
+both clean at the merge. Ignored initial/final unpacked exports remain retained,
+native builds untouched. This final issue/journal handoff update is the only
+post-merge bookkeeping. Sync it, verify clean main on both checkouts, and stop.
+No next unit, additional tests, tuning or certification is started implicitly.
