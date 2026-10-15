@@ -3,7 +3,7 @@
 Source: private OM10 STEP, SHA256
 `c60675abe3314dca55a31da0406deef851e128e2ee8608536525f926f56d61e3`,
 reviewed BGSRC snapshot already independently compared against all original
-carrier/curve coefficients. Investigation executes on fleetbox, not the laptop.
+carrier/curve coefficients. Investigation executes on the fleet.
 No production evaluator was used for these answers.
 
 Face165590 uses original cylinder14608, radius2mm, source edge85311 and original

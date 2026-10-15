@@ -174,3 +174,7 @@ surface-bound allocation. Both reviewers accepted the correction. The continuing
 scan exposed original tolerant incidence and defective foreign cylinder UV lines;
 these require a separately reviewed source-cylinder inverse trim capability.
 Whole-source qualification and actual watch images remain pending.
+
+Corrected a public-note privacy oversight: a reference report named the fleet
+host. Removed that operational label from the current report; retain execution
+location as the fleet. Product behavior and source geometry are unchanged.
