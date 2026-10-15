@@ -307,3 +307,19 @@ original study00 was untimed. Native residency, host packing, CPU display and
 source-to-owned CAD integration remain candidates for separately designed work.
 This requested rerun adds measurement and comparison, without starting tuning
 or changing the Python-role decision.
+
+
+## First result-meshing connection
+
+Actual strict through-bore CutResult meshes are now [delivered](CUT_MESHING.md),
+with exact/rounded complete domains, shared physical boundaries and retained
+original history. [Four CPU caller cases](../results/cut-mesh-2026-10-15/REPORT.md)
+measure complete prepared-result mesh+indexed+typed-history medians37.965,
+220.970,433.318 and234.100ms for32/528/1040/528triangles. Boolean construction
+(~54–57ms), first independent qualification and export are separate. These vary
+resolution/frames, not Boolean complexity; no GPU or old/new speedup is shown.
+
+This closes only the first result family. One feature-result mesh, an actual
+admitted operation chain, external adapters and runtime/Python study remain.
+Native bulk consumption, general triangulation and output quality retain their
+own future contracts. No tuning or language migration was started by this unit.

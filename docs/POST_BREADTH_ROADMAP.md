@@ -5,6 +5,16 @@ proposal, not an accepted implementation design, a shipping-language decision,
 an alpha scope change or a promise of speedup. Individual units still require
 source study, reviewed design/plan and direct qualification before implementation.
 
+## First selected connection delivered
+
+The operator authorized proceeding. The first bounded unit of B is now
+[delivered](CUT_MESHING.md): actual through-bore CutResult to a closed bounded
+mesh, preserving original cutter frames/UV, source history and shared boundaries.
+The canonical mesher remains factory-only; the new dedicated API consumes the
+actual retained result. Feature-result meshing, one operation chain, external
+adapters, runtime/Python study and owned NCSX geometry remain next-tranche work.
+No language/dependency or alpha scope change was made.
+
 ## What the first pass established
 
 Every theme in the [breadth map](ACCELERATION_ROADMAP.md) has a working beachhead.
@@ -19,8 +29,10 @@ CPU-constructed solids do not imply GPU solid construction.
 Typed immutable identity, source parameters and occurrence multiplicity are a
 substantive foundation. The topology work avoids pointer-defined identity; it
 does not yet provide a general editor, persistent naming or composable history.
-Each delivered operation retains its declared narrow input family. The existing
-mesher admits factory BodySnapshot values, not arbitrary feature/Boolean results.
+Each delivered operation retains its declared narrow input family. The canonical
+mesher admits factory BodySnapshot values; the separate through-bore result
+mesher now admits its actual CutResult. Arbitrary feature/Boolean results remain
+unsupported.
 
 The major performance lesson is the difference between accelerated stages and
 whole operations. Cached pair discovery already has a measured complete-shortlist

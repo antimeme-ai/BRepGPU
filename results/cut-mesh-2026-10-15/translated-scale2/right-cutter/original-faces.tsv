@@ -1,0 +1,4 @@
+face_id	name	kind	orientation	loop_ids	chart_ids
+1	top	disk	1	1	1
+2	bottom	disk	-1	2	2
+3	wall	cylinder	1	3	3,4,5,6

@@ -1,0 +1,10 @@
+scope	milliseconds
+operand_prepare	1.199465
+cpu_boolean	53.190008
+mesh_construct	228.565153
+indexed_reader	9.260148
+history_reader	16.345996
+prepared_result_to_consumed	254.171297
+independent_qualification	853.318124
+filesystem_export	58.694557
+prepare_through_export_including_qualification	1220.573451

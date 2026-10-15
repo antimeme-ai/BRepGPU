@@ -1,0 +1,15 @@
+key	value
+placement	exact CPU, one process, serial cases
+python	3.12.3
+system	Linux
+release	6.8.0-146-generic
+architecture	x86_64
+cpu	Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+first	after imports; original operands and CutResult prepared once per case
+warmup	1
+repeats	5
+qualification	first output only, outside complete wall
+repeat_correspondence	full frozen mesh and actual consumer outputs, outside wall
+export	first independently qualified output after repeated measurements
+native_calls	0
+host_device_transfer_bytes	0
