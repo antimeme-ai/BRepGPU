@@ -260,3 +260,32 @@ C/S remain within their stated grade. Root/native and independent code reviews
 accept the detached active hull and fixed recovery rule without findings. One
 bounded ASan/UBSan run of that new method is pending before the fresh actualv5
 source/query attempt. No whole-source or mesh pass is claimed.
+
+The new literal method passes ASan/UBSan in0.042s without suppressions. Fresh
+actual source/query attemptv5 completes conversion in17.346s and the complete
+source/oracle/delta run in65.261s. It retains107 definitions,9162 faces,9768 loops,
+51742 uses,25871 edges and17129 vertices, and exports107 unmeshed query BReps
+(12,520,993 bytes total). Original-source geometry qualification passes every
+carrier and all25871 spatial curves: maximum coordinate difference
+8.881784197001252e-16mm, original local placement difference
+2.220446049250313e-16. All166 original leaf paths/composed placements pass,
+maximum composed difference1.7763568394002505e-15. Input code, binary, original
+source and retained source/query hashes remain unchanged over the run.
+
+There are14 explicitly recorded source-chart approximations, maximum metric
+admission1.0883359328218638e-5mm. Query maximum cumulative UV metric is
+.00011192338626706225mm, below the unchanged.000625mm allocation; maximum
+finite selected query C/S residual is.00025951786446235718mm, below.001mm.
+The adapter reports zero vertex displacement and no non-SameParameter edges.
+
+Against the historical default-processed snapshot, all table inventories and
+IDs match. Products, definitions, usages, coedge records, loops, face records
+and219 styles are identical; all25871 spatial curve records and vertex XYZ are
+identical.2122 vertex and1302 edge rows differ only in stored tolerance;
+1073 carrier rows differ only in UV bounds;5374 of51742 two-dimensional curve
+records differ in their reconstructed representation. These are actual
+extraction/UV deltas, not a claim that historical native face orientation or
+processing behavior was identical. Original-value qualification of the new
+source supplies the geometric answer. The complete source conversion unit is
+closed; whole owned mesh, CPU/P100 integration, NVIDIA outcomes and actual watch
+images/timings remain pending. No raster or mesh was executed in this unit.
