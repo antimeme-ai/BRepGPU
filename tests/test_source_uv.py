@@ -101,6 +101,19 @@ class SourceUVTests(unittest.TestCase):
                 [(.01,0.,.04)])
             self.assertEqual([row[1:] for row in rows if row[0]=='original_uses'],[['10','11','12','13']])
             self.assertEqual([row[1:] for row in rows if row[0]=='ordered_uses'],[['4']])
+            provenance=[tuple(map(float,row[1:])) for row in rows if row[0]=='source_chart']
+            self.assertEqual(len(provenance),1)
+            self.assertEqual(provenance[0][:4],(1.,10.,0.,1.))
+            delta,charge,guide_residual,selected_residual=provenance[0][4:]
+            self.assertGreater(delta,128*math.ulp(1.))
+            self.assertGreaterEqual(charge,delta)  # Literal tensor plane has |Su|=1.
+            self.assertLessEqual(charge,.005/8)
+            self.assertLessEqual(guide_residual,.001)
+            self.assertLessEqual(selected_residual,.001)
+            query_charge=[float(row[1]) for row in rows if row[0]=='query_uv_metric']
+            self.assertEqual(len(query_charge),1)
+            self.assertGreaterEqual(query_charge[0],charge)
+            self.assertLessEqual(query_charge[0],.005/8)
             raw=[row for row in rows if row[0]=='raw_boundary']
             self.assertEqual(len(raw),17)
             self.assertTrue(all(float(row[2])==1. for row in raw),'owned source retained unconstrained guide')
@@ -117,7 +130,11 @@ class SourceUVTests(unittest.TestCase):
             bad=subprocess.run((str(executable),'conic-boundary-too-far',str(Path(directory)/'bad.brep')),
                 capture_output=True,text=True)
             self.assertNotEqual(bad.returncode,0)
-            self.assertIn('allocation',bad.stderr)
+            self.assertIn('source grade',bad.stderr)
+            tight=subprocess.run((str(executable),'conic-boundary-tight-budget',str(Path(directory)/'tight.brep')),
+                capture_output=True,text=True)
+            self.assertNotEqual(tight.returncode,0)
+            self.assertIn('allocation',tight.stderr)
 
     def test_reversed_cylinder_preserves_all_native_seam_uses(self):
         executable=Path(os.environ.get('BREPGPU_SOURCE_UV_FIXTURE',

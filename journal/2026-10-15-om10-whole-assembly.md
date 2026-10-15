@@ -116,3 +116,25 @@ wording and added the actual processing-policy correction above the historical
 source-capability journal. The operational guide now names the current original
 ellipse/spline-boundary source gap and keeps all complete qualification/render
 claims pending. No tests are needed for this factual documentation correction.
+
+The operator reiterated the post-watch requirement for actual NVIDIA USD/BRep
+CPU reference times for every README scenario. Verified that issue63, AGENTS,
+README and RETURN_PASS already retain that requirement, including future
+scenarios and explicit unsupported/failed outcomes. The watch remains first.
+
+Checkpointed the reviewed missing-conic source-chart design and genuine literal
+bulge RED before its helper implementation. Root and both peer reviews found
+the same admission-order issue: test escape on the copied guide segmented to
+the original active interval, rather than inactive controls outside it. The
+owner corrected that scope and is running the focused geometry checks. Full
+source conversion, whole nonvisual qualification and target images remain
+pending; no watch timing is inferred from authored fixtures.
+
+After the server restart, checked fleet process state before resuming: no source
+conversion or whole qualification was still running. The final focused log
+survived and reports12 methods GREEN in0.368s. Both independent reviewers
+accepted the corrected implementation. The small-conic budget negative uses
+tolerance1e-7; the initial1e-6 legitimately admitted its measured1.18048e-7mm
+guide charge. The large-conic case separately rejects the unchanged source
+residual limit. Resumed the source owner for the bounded sanitizer method and
+one fresh complete source/query conversion; no target images or mesh run yet.
