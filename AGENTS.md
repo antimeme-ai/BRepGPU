@@ -60,9 +60,12 @@ Straight circular chords approximate the analytic trim; do not claim all triangl
 interiors are exactly material-IN. No GPU mesher or general triangulator is
 established. Continue narrow interchange and uncovered solid/feature themes.
 The operator selected NCSX as the continuing trophy subject; read
-docs/NCSX_TROPHY_BRIEF.md. Acquired material is documentary PDF/photo content,
-not native geometry. Preserve source/revision/camera/lighting between comparison
-images and name changes. Existing synthetic trophies remain historical studies.
+docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
+centerlines and a plasma boundary; the original documentary pack has no native
+CAD. Coil-pack sections are illustrative; plasma is not the vacuum vessel.
+Existing P100 first jets supply the displayed geometry and normals, with CPU
+rasterization. Preserve source/revision/camera/lighting between comparison images
+and name changes. Existing synthetic trophies remain historical studies.
 GPU product implementation follows researched and adversarially reviewed design
 and plan. Initial hardware target is P100 / CUDA 12 / sm_60; support scope and
 numerical contracts must be explicit. Performance claims must name the qualified batch operation and timing scope;

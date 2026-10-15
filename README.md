@@ -2,11 +2,18 @@
 
 **Building a GPU boundary representation kernel, one useful operation at a time.**
 
-[![Orbital reliquary — P100-evaluated rational surfaces](assets/trophies/orbital.png)](docs/TROPHY_GALLERY.md)
+[![NCSX — our goal object, first source-based P100 surface study](assets/ncsx/goal-object.png)](docs/NCSX_GOAL_OBJECT.md)
 
-Two new [geometry trophy candidates](docs/TROPHY_GALLERY.md): a P100-evaluated
-orbital surface sculpture and an exploded exact arrangement lattice. Runnable
-recipes, original inputs and geometric checks accompany both.
+**Our goal object is NCSX, PPPL's National Compact Stellarator Experiment.**
+Its nonplanar coils, shaped vessel, ports and assembly topology give us a complex,
+consistent target to revisit as the kernel grows.
+
+This first [source-based NCSX study](docs/NCSX_GOAL_OBJECT.md) renders all eighteen
+modular-coil envelopes and a separately sourced plasma boundary through our P100
+patch evaluator. Coil sections are illustrative; the inner surface is plasma.
+[Scene, sources and reproduction](docs/NCSX_GOAL_OBJECT.md) record the baseline
+for comparable iterations. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
+remain available.
 
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen

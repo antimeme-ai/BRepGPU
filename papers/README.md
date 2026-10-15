@@ -1,5 +1,20 @@
 # BRepGPU research
 
+## NCSX goal object
+
+The [first source-based rendering](../docs/NCSX_GOAL_OBJECT.md) follows the
+[scientific geometry study](2026-10-15-ncsx-source-geometry-study.md),
+[visual study](2026-10-15-ncsx-visual-study.md) and
+[rendering contract study](2026-10-15-ncsx-rendering-design-study.md).
+[Source catalog](ncsx-geometry-sources.tsv) and [bibliography](ncsx-geometry.bib)
+retain the pinned original Fourier/symmetry conventions. Data plus original
+license are redistributed without adopting the reference library.
+The [reviewed plan](../docs/NCSX_RENDER_PLAN.md),
+[source review](2026-10-15-ncsx-source-code-review.md),
+[caller/display review](2026-10-15-ncsx-caller-display-review.md) and
+[actual results](../results/ncsx-2026-10-15/REPORT.md) distinguish native arithmetic,
+sampled source fitting and illustrative engineering choices.
+
 ## Complete canonical trim-aware meshing
 
 The [design](../docs/MESHING_DESIGN.md) and [plan](../docs/MESHING_PLAN.md)
