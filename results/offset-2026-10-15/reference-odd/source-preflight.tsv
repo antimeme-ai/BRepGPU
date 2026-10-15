@@ -1,0 +1,4 @@
+criterion	passed	observed	limit
+source_manifold	True	True	True
+source_volume	False	2.034659463134858e-08	1.5707963267948965e-08
+source_bounds	True	2.220446049250313e-16	2e-08

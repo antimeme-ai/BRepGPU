@@ -88,8 +88,7 @@ ring edges and distinct same-face seams, sign-aware exact radical material,
 4N modified/9N generated origins with consumed source interiors. CPU/both-P100
 consumers are independently qualified. Read docs/REVOLUTION.md and its result
 report. The optional foreign triangle volume comparison fails its declared limit;
-retain the disagreement explicitly rather than widening tolerance. Continue
-the independently scoped analytic offset before integration/tuning.
+retain the disagreement explicitly rather than widening tolerance. The signed analytic offset is also delivered as a separate feature unit.
 The complete box-edge fillet is delivered: one actual full vertical edge9..12,
 exact radius1/256grid[1/16,1/2], retained six source plane carriers/Frames,
 rounded cap loops, two tangent contact rails and a rational quarter band.
@@ -97,7 +96,23 @@ All62 source dispositions and76 output origins retain precise original source
 parameter/UV owners; deleted selected-edge occurrences can parent births.
 Read docs/FILLET.md and results/fillet-2026-10-15/REPORT.md. CPU construction
 and CPU/both-P100 consumers are independently qualified. Cap joins stay sharp;
-there is no general rolling-ball solver or GPU fillet construction. Offset next.
+there is no general rolling-ball solver or GPU fillet construction.
+The signed sharp-cylinder offset is delivered: actual canonical cylinder, nonzero
+d/256 in[-1/8,+1/8], explicit intersection joins, exact changed radius/height and
+23modified same-kind images. source_foot exposes exact original analytic-carrier
+normal feet with separate original-square/effective-trim status, allowing honest
+extensions. Positive sharp offset is not Euclidean round dilation; negative
+admitted results equal erosion. Read docs/OFFSET.md and its results report.
+CPU/both-P100 consumers preserve closed rings and distinct seam occurrences.
+Optional offset reference comparisons remain non-green: inset/outset volume and
+boundary fail unchanged criteria; odd source-volume preflight fails so all output
+criteria are NOT_RUN. Track issue48, source investigation and full retained
+outcomes; source/query/integration paths do not isolate an upstream defect.
+Prior revolution issue43 remains open separately.
+The extrusion/revolution/fillet/offset breadth sequence is complete. Broader
+geometry, community qualification, source-map composition and result meshing
+remain. Revisit the breadth map and recorded return-pass opportunities before
+selecting the next implementation unit; this delivery starts no tuning/rewrite.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

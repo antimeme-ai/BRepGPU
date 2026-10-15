@@ -18,6 +18,14 @@ reds and the real caller red. [Sampler source review](2026-10-15-offset-sampler-
 and [caller/reference review](2026-10-15-offset-caller-runtime-review.md) retain
 actual numerical, ownership and timing-scope contracts. Original OCCT offset
 case parameters and missing runners/adapters are recorded without claiming replay.
+[API](../docs/OFFSET.md) and [actual results](../results/offset-2026-10-15/REPORT.md)
+retain qualified owned geometry and all48caller costs.
+[Final performance review](2026-10-15-offset-performance-runtime-review.md) checks
+actual complete costs, stable sources and explicit failed/unrun foreign criteria. [Saved geometry review](2026-10-15-offset-unit-artifact-semantics-review.md)
+and [reference artifact review](2026-10-15-offset-reference-artifact-semantics-review.md)
+keep two offset comparisons red and the third source-blocked. [Pinned source investigation](2026-10-15-offset-reference-tolerance-investigation.md)
+limits attribution without changing any failed threshold. [Round-two notes](2026-10-15-offset-return-pass-runtime-notes.md)
+retain broader geometry,source maps and later integration constraints.
 No dependency is adopted; required external alpha qualification remains non-green.
 
 ## Complete source-edge box fillet
