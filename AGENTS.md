@@ -166,6 +166,13 @@ owned code implements trimming/meshing, assembly and native CPU/CUDA display.
 Research, design/plan review, initial red, green and adversarial code review
 precede trophy rendering. Keep complete107/9162/166 source inventories and
 private source bytes; no product OCCT triangles or unmentioned dependency.
+The operator clarified that this watch comparison requires NVIDIA USD/BRep CPU
+reference runs in addition to owned CPU/P100. After the watch pass concludes,
+run NVIDIA USD/BRep CPU reference timings for EVERY scenario presented in the
+README, with matched source/quality/operation scopes and explicit unsupported
+or failed outcomes. This is the next required tranche, tracked in issue63 and
+docs/RETURN_PASS.md; do not start that broad backfill before finishing the watch.
+An owned CPU/GPU comparison alone does not replace the external baseline.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

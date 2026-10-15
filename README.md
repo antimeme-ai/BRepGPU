@@ -70,6 +70,10 @@ unsupported, skipped or failing cases cannot count as green. The
 [OCCT, CGAL and oracle audit](papers/README.md#external-oracles-and-alpha-qualification)
 records the current gap: we have not yet replayed community cases against our output.
 
+[NVIDIA USD/BRep CPU reference timings are required for every README scenario](https://github.com/antimeme-ai/BRepGPU/issues/63).
+Complete the OM10 watch comparison first, then backfill all advertised scenarios
+with comparable scopes and explicit unsupported or failed reference outcomes.
+
 BRepGPU is an early research and engineering project working toward a solid
 modeling kernel whose geometry and topology operations run on GPUs. The first
 target is NVIDIA P100: FP64 geometry on CUDA 12, with an owned implementation.

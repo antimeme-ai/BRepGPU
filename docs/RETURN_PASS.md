@@ -7,6 +7,28 @@ before selecting a unit. Earlier dated notes below preserve the original
 deferral and measured opportunities; they do not reopen completed themes or
 select every recorded optimization.
 
+## Required after the watch: NVIDIA CPU references throughout the README
+
+The operator requires NVIDIA USD/BRep CPU reference times for **every scenario
+presented in the README**, after the complete OM10 watch pass concludes. The
+watch itself already includes that external baseline alongside owned CPU/P100.
+This follow-on tranche takes priority as an explicit obligation; it does not
+start while the watch delivery is active. Tracked in
+[issue63](https://github.com/antimeme-ai/BRepGPU/issues/63).
+
+Enumerate all advertised scenarios against the README revision and run their
+actual NVIDIA counterparts with comparable original sources, units, placements,
+quality, queries/operations and output scopes. Record version/hardware, input
+translation, complete caller and meaningful stage times, repeats and ranges.
+Identify shared display machinery. Keep missing adapters, unsupported operations,
+source/quality disagreement, failures and timeouts visible; they do not supply
+successful reference ratios. Do not quietly shrink the inventory to supported
+examples. Deliver a scenario-to-reference-results map and scoped timings beside
+the corresponding README claims. New README scenarios retain this obligation.
+This benchmark work is separate from the community-suite alpha gate.
+
+## Earlier sequencing notes
+
 2026-10-14. The operator explicitly placed setup/teardown, residency reuse and
 making the application pleasant **after the big rocks of the breadth-first
 pass**. Record opportunities now; do not start their implementation or a new
