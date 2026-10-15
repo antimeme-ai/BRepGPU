@@ -59,7 +59,7 @@ adapter is a separate input path; general import must not block owned fixtures.
 | Predicates, contacts and region classification | Delivered exact CPU material membership for all three owned solids and complete rectangular-face crossing/touch/disjoint/overlap/coincidence | Exact submitted-value truth, every incident face ID, complete closed contact corners and both original UVs; unsupported curved trims explicit | Algebraic witnesses, curved tangent contacts, near-coincidence and certified accelerator filters |
 | Face arrangements and topology construction | Delivered exact CPU rectangular grid plus separated interior circle sections, complete cell/disk/exterior regions and multi-hole boundaries | Complete source-domain region bijection, directed source ranges/maps, ordered loops/twins, all closed incident regions, exact witnesses/UV areas; no coordinate welding | Clipped/tangent/overlapping curves, source holes, general arrangements and cross-face Boolean assembly |
 | Solid operations and history | Delivered owned box-minus-through-cylinder Boolean, assembled on CPU from actual events/arrangements with complete six-kind history | Material membership, closed supported solid topology, boundary correspondence and input-to-output history; failures preserve inputs | More Boolean operations, interacting cutters and difficult contacts |
-| Feature construction | Construct an extrusion and revolution of supported profiles; separately construct a declared circular fillet and analytic offset | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
+| Feature construction | Delivered strict convex-profile extrusion; next revolution, then separate declared circular fillet and analytic offset units | Expected analytic surfaces, joins, material and topology for each explicitly admitted feature family | General profile sweeps, fillets, offsets and interacting features |
 | GPU topology and residency | Delivered owned count/scan/fill of edge-use CSR and an actual mate/face-neighbor reader; per-call device storage | Same semantic adjacency and identities as CPU construction across scheduling; complete-caller timing and transfer accounting | Resident arrangements/Booleans, compaction, incremental updates and queue tuning |
 
 Each row is a theme, not one oversized implementation assignment. Rows naming
@@ -70,8 +70,8 @@ Numerical geometry, single-patch bounds, pair culling, the narrow body/trim/char
 consumer, complete analytic plane/wall intersections, GPU edge-use adjacency
 and exact material/rectangular-face classification, bounded planar arrangements
 and complete canonical trim-aware meshes, carrier interchange and the first
-owned Boolean/history are delivered. Feature construction remains; its separate
-extrusion/revolution/fillet/offset units are proposed; each needs its own researched design, reviewed plan,
+owned Boolean/history and convex-profile extrusion are delivered. Feature
+construction continues with separate revolution/fillet/offset units; each needs its own researched design, reviewed plan,
 implementation and qualification.
 
 ## First pass across the themes
@@ -127,7 +127,9 @@ exchange. The [owned Boolean/history beachhead](BOOLEANS.md) now constructs a
 closed through-bore result using actual source sections/arrangements and complete
 input/output origins. Its CPU/P100 consumers and same-sized foreign comparisons
 are [qualified and measured](../results/boolean-2026-10-15/REPORT.md).
-Continue the remaining feature units before broadening or tuning.
+The [owned extrusion](EXTRUSION.md) now turns actual convex profiles into complete
+closed solids with exact affine ancestry and qualified CPU/P100 consumers.
+Continue revolution/fillet/offset before broadening or tuning.
 At the operator's explicit
 direction, [GPU setup/teardown, scene residency and integration polish](RETURN_PASS.md)
 are notes for AFTER the broad-pass big rocks. They are not an active tuning lane

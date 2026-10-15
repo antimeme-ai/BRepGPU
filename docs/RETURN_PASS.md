@@ -191,3 +191,18 @@ General/off-axis/partial/contact Booleans, result meshing, persistent naming and
 history composition are distinct later units. See the
 [Boolean round-two notes](../papers/2026-10-15-boolean-round2-notes.md). Complete
 the remaining feature units before starting integration polish or tuning.
+
+## Convex-profile feature construction
+
+Owned convex-profile extrusion is now [qualified and measured](../results/extrusion-2026-10-15/REPORT.md).
+Actual 3/6/16-vertex profiles yield 1,445/2,312/5,202 candidates. Best CPU complete
+profile→consumed medians are 85.106 ms (CPU1), 190.853 ms (CPU24), 558.940 ms (CPU24),
+versus 677.379/822.236/1033.111 ms P1000 and 1157.871/1396.118/1477.176 ms P1001.
+These shared-fleet unpinned small cells establish no CPU thread/clock cause and
+no GPU feature construction/win. Contexts/cleanup, exact host decisions/history
+and row work remain later candidates; prepared-profile and input-points scopes,
+profile preparation and independent checking stay separately visible.
+Preserve full affine ancestry and exact generating IDs through any native/GPU/
+resident migration. [Broader-family notes](../papers/2026-10-15-extrusion-round2-notes.md)
+retain holes/concavity/curves/directions and meshing. Finish revolution/fillet/
+offset breadth units before beginning those integrations or the Python-role study.

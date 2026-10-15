@@ -1,0 +1,18 @@
+field	value
+recipe	many16
+reference	usd-brep
+version	1.0.0
+manifold	True
+reference_volume	17.25
+exact_analytic_volume	69/4
+owned_exact_volume	69/4
+volume_absolute_error	0.0
+boundary_witnesses	384
+max_boundary_distance	2.482534153247273e-16
+max_boundary_residual	2.482534153247273e-16
+volume_relative_limit	1e-08
+boundary_world_limit	2e-07
+world_endpoint_rounding	exact binary64 endpoints and distance
+input_curves	original domains and3points each unchanged after pure sweep
+material_history	not compared; no public material/history reference adapter established
+alpha	not external corpus qualification

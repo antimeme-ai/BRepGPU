@@ -1,0 +1,24 @@
+field	value
+recipe	triangle
+backend	cuda
+device	1
+threads	1
+grid	17
+profile_body	1
+output_body	2
+vertices	3
+origin_x_hex	0x0.0p+0
+origin_y_hex	0x0.0p+0
+origin_z_hex	0x0.0p+0
+scale_hex	0x1.0000000000000p+0
+height	3/4
+profile_area	53/64
+world_volume	159/256
+observed_backend	cuda
+observed_device	1
+samples	1445
+evaluated_samples	979
+checksum	-55.96953613481228
+construction	owned CPU centered extrusion
+native_consumers	first jets/oriented normals and adjacency
+mesher	not implemented
