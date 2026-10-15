@@ -114,7 +114,7 @@ class ReferenceMeshTests(unittest.TestCase):
         import sys
         sys.path.insert(0,str(root/'scripts'));sys.path.insert(0,str(root/'examples'))
         from qualify_om10_nvidia import qualified_owned_inputs
-        from render_om10_nvidia import tsv,digest
+        from render_om10_nvidia import tsv,digest,read_tsv
         from brepgpu.imported_source import write_source
         from tests.test_imported_geometry import pierced_prism_source
         source=pierced_prism_source()
@@ -130,6 +130,39 @@ class ReferenceMeshTests(unittest.TestCase):
                 ('scene_sha256',digest(directory/'scene.bgmesh')),
                 ('views_sha256',digest(directory/'views.bgview'))))
             with self.assertRaisesRegex(ValueError,'prepared query'):
+                qualified_owned_inputs(directory,source.source_sha256,.005)
+            base=tuple((r['field'],r['value']) for r in read_tsv(directory/'inputs.tsv'))
+            query_directory=directory/'query-source';query_directory.mkdir()
+            definition=source.definitions[0]
+            query=query_directory/f'definition-{definition.id}.brep'
+            query.write_bytes(b'prepared query identity fixture; no CAD execution')
+            fields=base+(('source_snapshot_path','source.bgsource'),
+                ('source_snapshot_sha256',digest(directory/'source.bgsource')),
+                ('query_source_directory','query-source'),('query_definition_count',1),
+                (f'query_definition_{definition.id}_path',f'query-source/{query.name}'),
+                (f'query_definition_{definition.id}_sha256',digest(query)))
+            tsv(directory/'inputs.tsv',('field','value'),fields)
+            tsv(directory/'sources.tsv',('path','sha256'),(('fixture.py','1'*64),))
+            tsv(directory/'binaries.tsv',('role','sha256'),(('fixture_executable','2'*64),))
+            actual=qualified_owned_inputs(directory,source.source_sha256,.005)
+            self.assertEqual(actual[0],source)
+            self.assertEqual(actual[3],{definition.id:query})
+            query.write_bytes(b'changed prepared query')
+            with self.assertRaisesRegex(ValueError,'prepared query.*bytes changed'):
+                qualified_owned_inputs(directory,source.source_sha256,.005)
+            query.write_bytes(b'prepared query identity fixture; no CAD execution')
+            for old,new,error in (
+                ('source_snapshot_sha256','0'*64,'snapshot identity'),
+                ('query_definition_count','2','inventory'),
+                (f'query_definition_{definition.id}_path','../escape.brep','path'),
+            ):
+                with self.subTest(field=old):
+                    tsv(directory/'inputs.tsv',('field','value'),
+                        ((k,new if k==old else v) for k,v in fields))
+                    with self.assertRaisesRegex(ValueError,error):
+                        qualified_owned_inputs(directory,source.source_sha256,.005)
+            tsv(directory/'inputs.tsv',('field','value'),fields+(fields[-1],))
+            with self.assertRaisesRegex(ValueError,'duplicate'):
                 qualified_owned_inputs(directory,source.source_sha256,.005)
 
     def test_real_query_process_distinguishes_quality_from_source_capability(self):

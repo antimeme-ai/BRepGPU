@@ -155,10 +155,29 @@ limits if costly; return the measured problem for review. Qualification remains
 outside actual complete benchmark walls, and finite probes establish measured
 admission only, never a universal Hausdorff certificate.
 
-Root reviewed and ACCEPTED this concrete appendix before helper code. The source
-owner owns the whole native query unit after closing the exporter; the reference
+Root reviewed and ACCEPTED this concrete appendix before helper code. The native
+display owner implements the whole native query unit; the reference
 owner packs retained qualified witnesses and integrates the caller. Record the
 actual OCCT solver deflection in result metadata. Its finite numerical distance
 is a measured admission check, not a certified exact distance. The authored
 missing-entry red precedes implementation and independent code review precedes
 actual source query pilots.
+
+## Prepared query-source consumption
+
+The raw no-processing neutral files remain the NVIDIA worker's input. The
+finite OCCT boundary query instead consumes the completed owned qualification's
+explicitly prepared `query-source/definition-<id>.brep` files. This adds no STEP
+read or preparation to the NVIDIA benchmark wall.
+
+Use existing `inputs.tsv` fields: original `source_sha256`,
+`source_snapshot_path=source.bgsource`, `source_snapshot_sha256`,
+`query_source_directory=query-source`, `query_definition_count`, and each
+`query_definition_<id>_path`/`query_definition_<id>_sha256`. Require the exact
+owned definition inventory and fixed relative paths without escapes, every
+actual byte hash, the completed nonvisual timing row and final source/binary
+reports. Duplicate fields, missing files and changed snapshots fail before
+queries. Recheck prepared query hashes after the numerical processes finish.
+There is no raw-neutral fallback. The translated original 3D boundary remains
+unchanged; query-only reconstructed 2D trims and their admitted corrections are
+named separately from the raw NVIDIA input and finite measured quality result.
