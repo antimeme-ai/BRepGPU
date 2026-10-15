@@ -687,3 +687,93 @@ original XYZ and generator U. Include this endpoint UV perturbation and include
 canonical apex V in the source-owned cone metric envelope. Independent native
 checks require the limiting-normal flag at that explicit source pole. No native
 evaluator change was needed; no generic nearby-point canonicalization is added.
+
+### Complete-source scan: connectivity and projected LINE bounds
+
+The next complete diagnostic scan exposes ordinary thin full-period ring faces
+170998..171003, plus face171044 (original C1 cubic carrier4262,87 V spans, a
+thin extruded spiral). The existing ear construction emits long skinny fans.
+Face170999 starts with2064 boundary nodes and2062 triangles, some spanning2pi.
+At a deliberately smaller diagnostic4096-construction cap, its selected free
+edge already spans0.76699 radians and0.16625 axial units; its triangle bound is
+0.801524mm. Thus simply ranking angular instead of first-partial edge length
+would still split that edge. Original default cap20 and quality remain unchanged.
+
+Read Shewchuk, *Triangle: Engineering a2D Quality Mesh Generator and Delaunay
+Triangulator* (1996), sections2,3,6, at
+https://www.cs.cmu.edu/~quake/tripaper/triangle2.html,
+https://www.cs.cmu.edu/~quake/tripaper/triangle3.html and
+https://www.cs.cmu.edu/~quake/tripaper/triangle6.html. Its triangle/edge incidence
+representation and immutable constrained edges fit our existing construction.
+Its distinction between reliable predicates and inexact constructions matters:
+we require exact orientation and exact incircle signs, while retaining our
+separately bounded vertex constructions. No Triangle dependency or source copy.
+Acquired2026-10-15 into ignored `quarantine/sources/om10-triangulation/`, unchanged
+HTML SHA256 respectively f5a26891e6b22fe16395f3ff93885d55da33fe094c1d84161b1b7c6b1b5dce41,
+f20d0eabc3c31daec6f0ea93284f72b64fba6d8e91280b443766bbac7dcfd93b,
+f8052ba557261d6b2667960ef188aaab5f64d93ae34966ef0901d0a98424a37a.
+Restore with urllib.request.urlopen at those URLs; originals have no Git metadata.
+
+Proposed connectivity design: after positive ears, when an initial whole-cell
+surface bound exceeds its unchanged budget, improve this fixed-vertex mesh by
+owned Lawson flips in the existing positive diagonal metric `(Lu*U,Lv*V)`.
+Each candidate is an interior edge with exactly two incident positive triangles.
+Only a strictly convex four-distinct-node UV quadrilateral may flip; the new
+pair must both have exact positive UV orientation. Every sampled original
+boundary segment is constrained and cannot flip. A bridge introduced solely
+by hole triangulation is an interior edge and may flip when this local test
+passes. The replacement pair covers exactly the same convex quadrilateral;
+outer/hole chains, all source samples, UV area and physical keys are preserved.
+The independent complete UV partition checker remains the output oracle.
+
+For CCW(a,b,c), evaluate the translated incircle determinant against d with
+squared lift `Lu^2*du^2+Lv^2*dv^2`. Compute all differences, weights and arithmetic
+as exact Fractions of saved inputs (cache exact points); no filtered predicate
+on already rounded metric coordinates. Flip only when determinant is strictly
+positive. Zero is a deterministic no-op. Positive metric scaling preserves UV
+orientation. Exact strict Lawson improvement prevents cocircular cycles on this
+finite vertex set. Also bound accepted flips by8*N*N (N initial UV nodes), a
+separate finite construction guard; reaching it rejects the complete mesh.
+This is a fail-closed work allowance, not a minimum-angle or complexity promise.
+No new point is added and existing2^max_refinement interior-creation cap remains.
+After this initial connectivity stage the existing conforming refinement and
+whole-cell/source/chord/rounding acceptance run unchanged. No surface defect is
+accepted merely because triangulation is locally Delaunay.
+
+Separate exact-source LINE bound finding: original edges100910 and100925 are
+incident only to one plane and one cylinder, all incident pcurves linear, no
+knots. Their original spatial LINE directions have cylinder dual-XY norms
+1.54e-33 and3.27e-33, while full3D speed is1. Current angular bounds substitute
+operator-norm times fullspeed, creating unnecessary axial edge samples; those
+canonical source positions are exactly collinear and form a zero physical
+triangle when owned atan2 varies one ULP. For original LINE only, use its actual
+constant dual-XY projected direction as B1 and exact B2=0. The existing original-t
+atan2/radial/branch proof then directly bounds this same curve. Plane A2=0 adds
+no shared cuts, so these actual edges require only their endpoints. This neither
+snaps U nor exempts physical zeros; union sampling from other families may still
+force cuts and remains checked. Other curve families keep existing uniform
+bounds. The physical-zero rejection remains mandatory.
+
+Also tighten the source-pole quotient guard: EVERY repeated physical key in a
+collapsed UV cell must be a supported original pole, rather than accepting an
+unrelated repeated pair when another corner is a pole. Independent qualification
+already imposes this stronger condition; no new collapsed-cell family is added.
+
+Measured first original ring170999:2048 final cells in156.1s, of which the
+fixed2050-node Lawson stage takes128.6s. This removes its million-construction
+failure without changing geometry or tolerance, but repeated Fraction GCD work
+is excessive for complete-source preparation. Arithmetic-only replacement:
+choose common positive denominators Du,Dv of each fixed saved UV coordinate,
+store exact integers Iu=Du*U,Iv=Dv*V. Set exact rational weights
+wu=Lu^2/Du^2,wv=Lv^2/Dv^2, then multiply both by their common positive denominator
+W to obtain positive integers Wu,Wv. Incircle lifts become
+Wu*dIu^2+Wv*dIv^2 and crosses are dIu*dIv differences. This determinant equals
+the original exact weighted determinant times positive W*Du*Dv. Its sign is
+identical, including exact zero. Local orientation likewise scales by positive
+Du*Dv, so its saved-value sign is also computed with these exact integers. All per-candidate arithmetic becomes integer
+addition/multiplication; initial denominator conversion is exact and occurs
+once. Metric, orientation, queue, constraints, convexity and guards are unchanged.
+No rounded transformed points or approximate filter enters. Direct anisotropic
+quad A(0,0),B(2,0),C(2,1),D(.5,2) has determinant1.5*Lu^2-4*Lv^2, so the selected
+diagonal must change between metrics(1,1) and(2,1). Existing exact area/chain,
+constraint, degeneracy and actual-source tests apply unchanged.

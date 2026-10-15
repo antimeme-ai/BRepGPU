@@ -250,3 +250,15 @@ the owner added it and a direct overlapping-pair case. Root also requested
 original face IDs on connectivity failures; integrated. Initial source LINE
 actual cases now pass at unchanged quality; ring/spiral and whole-source output
 remain to be checked. No actual watch rasterization has occurred.
+
+Measured exact-Fraction Lawson on the first ring:128.6s for fixed2050 UV nodes,
+2048 final cells. Reviewed arithmetic-only acceleration with both owners:
+convert fixed rational coordinates and positive metric weights once to common-
+denominator integers. Exact determinant signs/zeros and geometry remain the
+same. Both integer incircle and orientation passed code review;25 focused tests,
+including an anisotropic sign change and rational translation, are green.
+First three original rings now pass at default quality with2048 cells each;
+the first integer stage took34.6s. These concurrent development observations
+are not headline benchmarks. Remaining rings/spirals and complete source remain
+pending. Publish this coherent geometry checkpoint before the separately
+studied spline-boundary recovery extension; keep all source and quality guards.
