@@ -28,3 +28,22 @@ outline is available. This is a source review, not a newly run geometry test.
 Do not silently stretch thickness, infer unknown dimensions from pixels, assume
 involute teeth, or treat a source CAD model as an independent manufactured-part
 oracle. No product code, build, benchmark or test is run by this study.
+
+
+Frumentarius completed a bounded five-candidate study: OM10, ETA6497-1,
+SellitaSW210-1, MIYOTA9015 and TMI NH35. Original primary PDFs acquired unchanged
+and actually read; report and URL/SHA manifest retained. OM10 current timeline
+reports ticking manual prototype27May2023; free User membership offers construction
+access, but the visible STEP request returned a membership page, not STEP bytes.
+Parent read those current primary pages and inspected technical-informationp4.
+The2021 dossier's future promises are kept distinct from current access.
+
+Parent reviewed the report, corrected an ambiguous p4 clamp/dial description
+into actual casing-clamp coordinates, and wrote REAL_WATCH_NEXT. Recommended
+source acquisition/inventory and one fully described thin bridge/plate; actual
+part/prerequisite selection waits on source geometry. The next broader engineering
+lane proposed is measured runtime/Python ownership, preserving external adapter
+and NCSX work. This is advice, no new implementation selection. Source confidentiality
+and stated licenses are recorded without republishing source illustrations.
+Acquisition gaps entered existing papers/SHOPPING_LIST; study linked from paper
+index and continuing watch notes. No product runs, new tests or dependencies.

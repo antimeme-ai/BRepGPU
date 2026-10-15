@@ -96,3 +96,16 @@ failed-call preservation. Actual watch parts must pass their appropriate direct
 qualifiers. Review actual rendered output and disclose schematic limitations.
 Then publish and stop this bounded delivery; no mutation-score, broad numerical
 rerun or certification campaign follows just because the image is impressive.
+
+
+## Follow-up: a real documented movement
+
+The operator requested a frumentarius find an actual mechanical-watch TDP or
+high-resolution drawings. The [five-candidate source study](../papers/2026-10-15-watch-drawing-source-frumentarius.md)
+and [next-step proposal](REAL_WATCH_NEXT.md) are retained. OM10 has public
+technical/gear data and maker-reported working-prototype evidence; its listed
+construction STEP requires free signup and is not yet acquired. Manufacturer
+ETA/Sellita/MIYOTA/TMI documents offer real service/casing/detail drawings, not a
+complete internal movement package. Source access and an actual component
+inventory precede faithful reconstruction. Current thin-part/aspect restrictions
+need a reviewed dimensional contract; study01 remains schematic and unchanged.
