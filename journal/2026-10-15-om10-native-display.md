@@ -172,3 +172,20 @@ full P1000 imagery and separates native medians from full n1 observations. The
 default2400px layout separates counts, full task and native panels without six-row
 footer stacking. Command/build paths and actual primitive/source mapping remain
 consistent. Static review only; no watch target execution or new test mechanism.
+
+While the full nonvisual V2 run remains active, prepared only a pilot-render plan
+in docs/OM10_PILOT_RENDER_PLAN.md. Exact BGVIEW flags offsets184/376 change3→0;
+all qualified scene/camera/pose/source values stay unchanged. Proposed two fresh
+native CPU24/P1000 processes for both poses and existing PNG/SVG/anchor helpers,
+with no remesh/new API/cache. Actual rasterization waits for root's explicit
+complete V2 PASS and plan approval. Product/helper/binary files were not changed,
+and no product/geometry/render/test command was executed for this planning turn.
+
+Root accepted the written pilot plan and authorized preparing its private utility
+while V2 runs. Prepared context/om10-native/pilot_qualified_om10.py for source
+review: exact two flags-only changes, unchanged qualified inputs and production
+pins, existing source/BOM and presentation helpers, two fresh prepared native
+processes, and explicit input/output hash and scoped timing manifests. Local AST
+inspection passed; the utility was not executed or synced to the fleet. Product,
+helper and binary files remain unchanged. Actual raster still waits for root's
+explicit complete V2 PASS and review of this utility.
