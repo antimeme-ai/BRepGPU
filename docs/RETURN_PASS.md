@@ -384,3 +384,19 @@ view/explosion updates, while a fresh source-to-image caller must still report
 it. Native view batches already retain actual geometry symmetrically on CPU and
 GPU. Further mesh persistence, preparation acceleration and language changes
 remain deferred decisions supported by the completed target's measurements.
+
+Later complete-face diagnostics made initial connectivity a correctness blocker:
+ordinary rings and extruded spirals exhausted the finite construction budget.
+The implementation therefore adds constrained metric Lawson flips before
+refinement, preserving all initial samples and unchanged error acceptance.
+Face170999 now produces2,048 cells instead of exhausting the million-interior-
+vertex allowance. This is a development geometry result, not a benchmark.
+Further density/shape tuning still belongs to the return pass.
+
+Investigate tighter original-curve/inverse angular derivative bounds after
+delivery. A circular source edge on a cylinder can have nearly affine angular
+parameters, while separate norm bounds lose cancellations in atan2 derivatives
+and create many shared boundary samples. Derive bounds from the actual retained
+coefficients and dual frame; do not assume exact orthogonality, snap angles or
+skip source knots. Compare complete preparation/render cost and unchanged
+source residual/mesh quality, rather than triangle count alone.
