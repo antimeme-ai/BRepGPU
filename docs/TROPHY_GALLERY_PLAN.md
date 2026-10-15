@@ -24,3 +24,14 @@ Review rendered images, source-derived bounds and factual captions. This is
 artwork over existing operations: no new kernel behavior or redundant test suite.
 Publish meaningful design, sample/render and gallery checkpoints on a feature
 branch, preserving their commits at merge.
+
+## Visual review correction
+
+The first surface preview showed mean-depth polygon sorting breaks occlusion
+where carriers cross. Replace that display mechanism with a small owned
+orthographic triangle depth buffer, interpolating native positions and vertex
+colors from checked first-jet normals. Use standard-library PNG encoding and
+embed that raster in the labeled SVG; the installed standalone SVG renderer
+exports the share image. Retain the actual native samples and original recipe.
+This corrects display visibility without adding a kernel mesh/chord claim or a
+library. Review source and actual image again before publication.
