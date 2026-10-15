@@ -17,6 +17,10 @@ fleet tests and the actual caller red. [Sampler review](2026-10-15-fillet-sample
 and [caller/reference review](2026-10-15-fillet-caller-runtime-review.md) preserve
 concrete findings. [API](../docs/FILLET.md) and [results](../results/fillet-2026-10-15/REPORT.md)
 retain complete original-source maps, native/CSR artifacts and full caller costs.
+[Saved geometry review](2026-10-15-fillet-unit-artifact-semantics-review.md),
+[reference artifact review](2026-10-15-fillet-reference-artifact-semantics-review.md)
+and [final performance review](2026-10-15-fillet-performance-runtime-review.md)
+accept the actual retained outputs and timing scope.
 [Round-two notes](2026-10-15-fillet-return-pass-runtime-notes.md) defer broader families and
 integration until after analytic offset. No dependency is adopted and selected
 foreign comparisons do not complete external alpha qualification.

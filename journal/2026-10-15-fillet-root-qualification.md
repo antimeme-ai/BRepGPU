@@ -24,3 +24,17 @@ Three recipes vary corner/radius/Frame, same10V/15E/7charttopology; no larger
 model claim. Oneexcludedwarmup/3measuredeachCPU1/24/P1000/1. No tuning,
 newdependency/nativebuild or laptop product execution. Await measured artifacts,
 allthree foreigncomparisons and actual artifact/performance reviews before merge.
+
+
+All48finalcalls qualified,12warmups/36measured, all13caller sourcepins invariant
+and current; allfiveprotectednativehashes unchanged aftercampaign+references.
+BestCPUmedians286.904/299.542/399.260ms; P1000 974.977/817.285/836.671ms,
+P1001 1442.017/1531.336/1337.354ms. EveryGPUcompletecallrange loses its bestCPU
+range, with uncontrolled CPUvariation; no scaling/clock cause inferred.
+All3finalforeigncomparisons pass unchanged5criteria/131witnesseseach.
+Priorrevolutionvolumeissue43 remainsOPEN and alphaexternalcorporemainnon-green.
+Actualgeometry/SVG, foreignartifact and finalperformancereviews ACCEPTED.
+READMEactualP100midSVG rasterizedandvisuallyinspectedlocally fromsavedartifact;
+no localproductexecution. Publishedfullcosts/source/graph/native/CSR/maps/contacts,
+reviews+roundtwonotes on featurebranch. ReadyPRmergepreservingcheckpoints;
+analytic offset next, integration/tuning/Python-role/NCSXtiming deferred.
