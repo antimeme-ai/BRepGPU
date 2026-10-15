@@ -41,3 +41,33 @@ returned the expected cap boundary face. Only then BodySnapshot.arrange_face
 failed with the intended missing-entry AttributeError: one test0.064s. No new
 product/oracle implementation existed before this red. The complete product
 and independent oracle/test units may now implement; root owns adapter/caller.
+
+## Product entry green and real caller
+
+Implemented the complete owned arrangement and exact graph/source/region readers;
+the direct fleet entry test passes1test0.084s, including actual perforated cap
+regions, area and closed circle/boundary lookup. Root source review found the
+shared grid/exterior/circle and witness/reader invariants coherent. Independent
+source-domain oracle and focused direct tests remain a separate owner.
+
+The actual caller prepares five real recipes including64holes and32×32cells,
+reads all emitted tables and next/twin cycles, exact edge and retained source
+curve maps, and all region/vertex lookup points. Exports retain full graph,
+source controls/maps/events, areas/witnesses and queries for all five recipes;
+SVG consumes actual loop/edge reader values. Runtime review adds original
+boundary curve/coedge evaluation driven by emitted t0/t1, avoiding applying
+source orientation twice. No performance run precedes qualification/review.
+Eight focused production mutant sites are unique and syntactically valid;
+actual geometry assertion kills remain a fleet qualification step.
+
+## Source review before broader execution
+
+Caller semantic/runtime reviews accepted exact input/source binding, full graph/
+source-map/control export and actual geometry-derived SVG. Integrated source
+boundary curve/coedge evaluation at the emitted directed parameters; those
+actual correspondence checks are inside geometry-reader wall, while the
+independent model remains separately timed. Root and semantic review accepted
+the complete product/oracle source invariants with no new geometry finding.
+The direct test owner finishes the bounded literal/unsupported/failure corpus
+before the combined green and selected mutant campaign. No new native source
+or shipping-language decision is involved.
