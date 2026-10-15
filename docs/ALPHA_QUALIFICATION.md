@@ -86,3 +86,14 @@ qualify general B-rep behavior. A selected eight-of-eight kill result describes
 eight injected faults; it is not a mutation coverage score or alpha readiness.
 Reports should lead with geometry coverage, independent truth and external
 qualification status; targeted mutant outcomes are supporting detail.
+
+## Narrow carrier exchange evidence
+
+The interchange beachhead now reads a pinned upstream mouse fixture and an
+actually exported foreign sheet, checks owned source/control/native jets and
+compares scalar reference outputs on the actual same sources. This is real
+limited exchange evidence; it does not replay the complete required OCCT/NIST/
+CAx-IF exchange corpus or establish applicable alpha coverage. Two multispan
+mouse faces and every source trim remain unsupported/uninterpreted. Required
+missing adapters/data/cases continue to be non-green; no alpha scope is changed.
+See docs/INTERCHANGE.md and results/interchange-2026-10-15/REPORT.md.

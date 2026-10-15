@@ -50,15 +50,22 @@ rectangular grids and separated interior circle sections, complete regions,
 holes/twins/exterior, directed original boundary ranges, retained whole source
 maps, exact areas/witnesses and closed-region lookup. See docs/ARRANGEMENTS.md
 and results/arrangements-2026-10-14/REPORT.md. It does not assemble a Boolean or
-perform GPU construction. Continue uncovered interchange
-plus solid/feature themes; general clipped/tangent arrangements are later work.
+perform GPU construction. Continue uncovered solid/feature themes; general clipped/tangent arrangements are later work.
 The complete canonical mesh beachhead is delivered on CPU: exact rational
 box/cylinder/one-hole-plate shells, source-keyed shared boundaries and original
 coedge/chart/seam occurrences, whole chordal-domain coverage and bounded actual
 binary64 output. See docs/MESHING.md and results/meshing-2026-10-15/REPORT.md.
 Straight circular chords approximate the analytic trim; do not claim all triangle
 interiors are exactly material-IN. No GPU mesher or general triangulator is
-established. Continue narrow interchange and uncovered solid/feature themes.
+established. The interchange beachhead is delivered: strict owned static ASCII
+USD BRep subset parsing and complete source-face inventory, admitted single-span
+positive rational carrier conversion, exact coefficient/frame rounding budgets,
+and an independently qualified CPU/P100 first-jet consumer. See docs/INTERCHANGE.md
+and results/interchange-2026-10-15/REPORT.md. Actual foreign mouse and reference-
+exported sheet comparisons are distinct from exact source/native truth. Trims
+remain uninterpreted, multispans and analytic carriers explicitly unsupported;
+there is no general USD/STEP import or imported solid. Continue uncovered
+Boolean/history and feature themes.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native

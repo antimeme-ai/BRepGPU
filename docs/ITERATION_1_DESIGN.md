@@ -450,3 +450,12 @@ need their own supported-family designs and reviews.
 - [Numerical algorithms, contracts and direct fixtures](../papers/2026-10-13-first-iteration-numerical-study.md).
 - [Host/device boundary and hardware](../papers/2026-10-13-first-iteration-runtime-study.md).
 - [Reference integration and topology](../papers/2026-10-13-acceleration-roadmap-study.md).
+
+## Subsequent carrier-interchange delivery
+
+The later breadth-first [interchange unit](INTERCHANGE.md) implements an explicit
+strict static ASCII USD BRep subset reader with a lexer, typed immutable records
+and whole-file rejection of unsupported scene syntax. Actual foreign source
+carriers and separate reference outputs qualify that path; no ad hoc array
+scraping, SMLib pointer access or new dependency was used. General native SDK
+extraction and imported trim/solid support remain future, as scoped above.
