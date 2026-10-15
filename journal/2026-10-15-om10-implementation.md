@@ -281,3 +281,23 @@ checks pass all four outputs, and five affected closed geometry/native methods
 pass. Root requested source carrier/coedge/face/loop IDs on the new failures;
 integrated without geometry changes. Source and oracle files are ready for a
 fresh whole-source integration run. No actual watch rasterization has occurred.
+
+Final owner review caught an intended approximation term missing from code:
+canonical boundary XYZ can differ from S(ownedUV). Both reviewers accepted
+per-cell ideal interpolation bound plus maximum corner displacement, by the
+barycentric norm inequality. Added this to initial connectivity selection,
+refinement acceptance and final combined accounting, with separate diagnostic
+metrics. Fixed boundary errors above the allocation reject immediately with
+original source IDs; nonfinite errors reject explicitly. A genuinely red planar
+source with displaced carrier exercised the prior false acceptance.28 direct
+methods now pass; five affected independent integration methods pass with the
+actual physical probe limit tightened to requested tolerance plus the existing
+coordinate grade, without an added source-residual allowance.
+
+All initial ring/spiral failures and a later larger-radius ring now pass at
+default quality. The read-only scan's ten construction-cap cases are ordinary
+full-period strips or the two cubic spiral faces; its60 physical-zero cases
+are the diagnosed original LINE sampling family; four global-end failures are
+the verified spline-column family. No fourth failure class is known. Source/
+oracle owners confirm stable reviewed product files for the fresh retained
+whole-source/native qualification. No actual watch image has been generated.

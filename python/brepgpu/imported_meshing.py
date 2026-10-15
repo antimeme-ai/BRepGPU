@@ -939,6 +939,7 @@ def mesh_imported(source,quality=None,*,progress=None):
     carrier_slots={c.id:i for i,c in enumerate(source.carriers)}
     metric_cache={};derivative_cache={};profiles={};carrier_edges={};next_key=1
     errors={'max_edge_chord_bound_mm':0.0,'max_source_endpoint_residual_mm':0.0,
+            'max_boundary_vertex_displacement_mm':0.0,'max_surface_plus_canonical_bound_mm':0.0,
             'max_foreign_pcurve_to_edge_residual_mm':0.0,'max_source_joint_gap_mm':0.0,
             'max_surface_interpolation_bound_mm':0.0,'max_native_uv_rounding_bound_mm':0.0,
             'foreign_uv_recovery_count':0,'max_foreign_uv_recovery_shift_mm':0.0,
@@ -1163,11 +1164,20 @@ def mesh_imported(source,quality=None,*,progress=None):
         holes=[b for is_outer,b in boundaries if not is_outer]
         if len(outer)!=1:raise ValueError(f'face {face.id}: expected one outer UV chart boundary')
         boundary_loops=(outer[0],*holes)
-        points={};keys={};levels={};node=0;node_loops=[];boundary_edges=set()
+        points={};keys={};levels={};displacements={};node=0;node_loops=[];boundary_edges=set()
         for boundary in boundary_loops:
             ids=[]
             for occurrence in boundary:
-                points[node]=occurrence.uv;keys[node]=occurrence.sample_key;levels[node]=0;ids.append(node);node+=1
+                ids.append(node);points[node]=occurrence.uv;keys[node]=occurrence.sample_key;levels[node]=0
+                physical=vertex_by_key[occurrence.sample_key]
+                displacement=_distance(physical.xyz,evaluate_carrier(carrier,*occurrence.uv)[0])
+                if not math.isfinite(displacement):
+                    raise ValueError(f'face {face.id} coedge {occurrence.coedge_id}: nonfinite canonical boundary displacement')
+                if displacement>quality.tolerance_mm*.75:
+                    raise ValueError(f'face {face.id} coedge {occurrence.coedge_id} source {(physical.source_kind,physical.source_id)}: canonical boundary displacement {displacement} exceeds surface budget {quality.tolerance_mm*.75}')
+                displacements[node]=displacement
+                errors['max_boundary_vertex_displacement_mm']=max(errors['max_boundary_vertex_displacement_mm'],displacement)
+                node+=1
             for a,b in zip(ids,ids[1:]+ids[:1]):
                 if points[a]==points[b]:raise ValueError(f'face {face.id}: duplicate adjacent UV occurrence')
                 boundary_edges.add(tuple(sorted((a,b))))
@@ -1189,7 +1199,7 @@ def mesh_imported(source,quality=None,*,progress=None):
                 raise ValueError(f'face {face.id}: hole outside source outer boundary')
         try:initial=_triangulate(node_loops,points)
         except ValueError as exc:raise ValueError(f'face {face.id}: {exc}') from None
-        if any(_surface_error(carrier,[points[i] for i in tri],derivative_cache)>quality.tolerance_mm*.75 for tri in initial):
+        if any(_surface_error(carrier,[points[i] for i in tri],derivative_cache)+max(displacements[i] for i in tri)>quality.tolerance_mm*.75 for tri in initial):
             try:initial=_improve_connectivity(initial,points,boundary_edges,metric_cache[carrier.id])
             except ValueError as exc:raise ValueError(f'face {face.id}: {exc}') from None
         active={i:(tri,0) for i,tri in enumerate(initial)};next_tri=len(active)
@@ -1209,7 +1219,9 @@ def mesh_imported(source,quality=None,*,progress=None):
             if tid not in active:continue
             tri,depth=active[tid];uvs=[points[i] for i in tri]
             error=_surface_error(carrier,uvs,derivative_cache)
-            if error<=quality.tolerance_mm*0.75:
+            cell_bound=error+max(displacements[i] for i in tri)
+            if cell_bound<=quality.tolerance_mm*0.75:
+                errors['max_surface_plus_canonical_bound_mm']=max(errors['max_surface_plus_canonical_bound_mm'],cell_bound)
                 errors['max_surface_interpolation_bound_mm']=max(errors['max_surface_interpolation_bound_mm'],error)
                 continue
             candidates=[]
@@ -1236,7 +1248,7 @@ def mesh_imported(source,quality=None,*,progress=None):
                                         tuple((vertex_by_key[keys[i]].source_kind,vertex_by_key[keys[i]].source_id,vertex_by_key[keys[i]].source_parameter) for i in (a,b)))
                                        for a,b in zip(tri,tri[1:]+tri[:1]))
                     raise ValueError(f'face {face.id}: {exc}; UV={uvs!r}; error={error!r}; selected={(points[a],points[b])!r}; all_edges={edges_detail!r}; carrier={(carrier.id,carrier.kind,carrier.radii)!r}') from None
-                new=node;node+=1;points[new]=uv;levels[new]=new_level;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
+                new=node;node+=1;points[new]=uv;levels[new]=new_level;displacements[new]=0.;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
                 for old in affected:
                     oldtri,olddepth=remove_triangle(old)
                     for j in range(3):
@@ -1253,7 +1265,7 @@ def mesh_imported(source,quality=None,*,progress=None):
                 diameter=max(math.hypot(mu*float(a[0]-b[0]),mv*float(a[1]-b[1])) for a,b in zip(uvs,uvs[1:]+uvs[:1]))
                 try:_guard_carrier_refinement(diameter,metric_scale,quality.max_refinement,node-initial_node_count)
                 except ValueError as exc:raise ValueError(f'face {face.id}: {exc}; centroid UV={uvs!r}') from None
-                new=node;node+=1;points[new]=uv;levels[new]=new_level;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
+                new=node;node+=1;points[new]=uv;levels[new]=new_level;displacements[new]=0.;keys[new]=make_vertex(face.definition_id,evaluate_carrier(carrier,*uv)[0],3,face.id,uv=uv)
                 oldtri,olddepth=remove_triangle(tid)
                 for a,b in zip(oldtri,oldtri[1:]+oldtri[:1]):
                     replacement=(a,b,new);active[next_tri]=(replacement,max(levels[i] for i in replacement))
@@ -1282,7 +1294,7 @@ def mesh_imported(source,quality=None,*,progress=None):
             triangles.append(MeshTriangle(face.id,physical,tuple(MeshCorner(uv,slot,face.orientation) for uv in uvs),collapsed))
         face_meshes.append(FaceMesh(face.id,tuple(boundary_loops),tuple(indices),tuple(chart_closures),tuple(joint_recoveries)))
         if progress is not None and (face_index+1)%100==0:progress('faces',face_index+1,len(source.faces),face.id)
-    if (2*errors['max_edge_chord_bound_mm']+errors['max_surface_interpolation_bound_mm']
+    if (2*errors['max_edge_chord_bound_mm']+errors['max_surface_plus_canonical_bound_mm']
             +errors['max_native_uv_rounding_bound_mm']>quality.tolerance_mm):
         raise ValueError('combined mesh approximation components exceed quality')
     end=time.perf_counter()

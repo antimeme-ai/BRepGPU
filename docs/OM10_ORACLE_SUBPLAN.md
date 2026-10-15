@@ -205,3 +205,11 @@ joint metadata is mandatory even for tiny raw gaps. Generic128ULP admission
 remains unchanged. Raw out-of-domain S is never evaluated; its occurrence count
 is explicit. Existing full physical/domain/native checks remain the only output
 qualification layer.
+
+Canonical boundary-to-surface displacement belongs to the physical approximation
+budget. The product accepts a cell only when its ideal-surface interpolation
+bound plus maximum canonical corner displacement fits the cell allocation;
+final accounting adds edge/chord and native-UV rounding once. Independent direct
+physical probes, including collapsed UV cells, now require requested tolerance
+plus the existing2^-32mm numeric comparison grade. source_residual_mm remains
+an input consistency limit and supplies no extra output error allowance.

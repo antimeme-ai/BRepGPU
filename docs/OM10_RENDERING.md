@@ -136,6 +136,10 @@ Exact owned UV coverage and separately rounded native UV are distinct claims.
 Native rounding has a displacement allocation, and corrected boundary source
 residuals remain explicit. Numerical bounds are evaluated in binary64 with
 stated limitations; finite probes do not establish universal certification.
+Per-cell acceptance includes the ideal surface interpolation bound plus the
+largest canonical-corner displacement from that surface. The final bound adds
+twice the shared-edge chord bound and native UV rounding. Source-consistency
+residual is a separate gate; it is not added to the requested mesh tolerance.
 Unsupported parameter correspondence, topology, branch, quality, resolution or
 work-cap conditions fail the whole caller. No face is silently omitted.
 
