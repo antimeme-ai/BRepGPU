@@ -443,3 +443,31 @@ repeated interval work, pair generation, hole/ear scans and span lookup. These
 are inferred opportunities, not measured dominant hotspots. Add useful stage
 walls and work counts before selecting an optimization; retain the existing
 exact predicates, source ownership and approximation obligations.
+
+## Native direct connectivity follow-up
+
+The operator subsequently selected direct CDT and native ownership before watch
+delivery, superseding the earlier deferral above. Read DIRECT_CDT_STRATEGY.md and
+the direct constructor design/results. The current explicit direct branch uses
+alternating-cut initial Delaunay construction and special-cavity recovery,
+filtered exact metric predicates and indexed topology; Python Lawson remains an
+explicit old-path comparison.
+
+The first independent 904-site/225-hole pilot exposes input validation rather
+than direct construction: about .317s validating versus .010s constructing,
+.366s complete call (one shared-host observation). The reused exact reader
+checks holes pairwise. A general planar point-location/sweep with winding sums
+is a serious next contender, preserving closed touching and original hole
+owners; dispatching only specially arranged benchmark holes is not the answer.
+Compare complete exact admission plus construction on arbitrary simple holes,
+not an internal triangulation-only speedup. Source-oracle pair enumeration also
+needs a conservative independent broad phase if it blocks actual large-model
+qualification. Replacing that mechanism must retain every exact candidate and
+original-value crossing/containment test.
+
+Further numerical work includes per-point homogeneous rational coordinates
+instead of a face-wide denominator LCM on hard rational families, and checked
+fixed-width predicates when actual intermediate bit bounds permit them. Keep
+lossless source values and exact zero behavior; rounding a family to fit a fast
+path would answer a different problem. GPU CDT still needs exact-source fallback,
+P100 support, conflict ownership and complete packing/transfer/cleanup timings.

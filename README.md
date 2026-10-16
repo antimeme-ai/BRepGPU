@@ -28,14 +28,33 @@ solids. Construction, meshing and these views run on CPU.
 [Images, source/history exports and scoped costs](results/watch-2026-10-15/REPORT.md) ·
 [Target and design notes](docs/WATCH_TARGET.md).
 
-The supplied real OM10 movement is driving the first
-[C++20 meshing transition](docs/NATIVE_FACE_DOMAINS.md). Its reproduced8,300-node
-spring-face domain now triangulates in **18.754s median** on one CPU core;
-the explicit Python reference timed out at300s. Independent geometry checks,
-all58 performance outcomes and the remaining quadratic behavior are in the
-[report](results/native-face-domain-2026-10-16/REPORT.md). The complete main plate
-still exceeds its300s construction budget, exposing Python connectivity work.
-The full OM10 render remains pending.
+The supplied real OM10 movement is driving an owned
+[C++20 direct constrained Delaunay constructor](docs/DIRECT_CDT.md):
+alternating-cut initial triangulation, randomized constraint recovery, compact
+indexed topology and filtered exact metric predicates. An **8,192-site forced
+recovery** call takes **0.326–0.337s** on one CPU across three seeds, recovering
+more than8,000 crossed edges; the old ear-plus-Python-Lawson worker is censored
+at30s. Exact independent qualification is timed separately. The
+[107-observation report](results/direct-cdt-2026-10-16/REPORT.md) retains all
+outcomes, setup costs and the remaining quadratic many-hole admission cost.
+These are CPU sampled-domain calls; GPU CDT remains future work.
+
+```mermaid
+flowchart LR
+  A[Original exact UVs and constraints] --> B[Exact domain admission]
+  B --> C[Alternating-cut Delaunay]
+  C --> D[Special-cavity constraint recovery]
+  D --> E[Original source-ID triangles]
+  E --> F[Existing carrier refinement]
+  F --> G[Independent complete mesh checks]
+```
+
+Explicit imported-mesh direct mode now constructs all **438 main-plate faces**
+and191,688 triangles in209.608s at unchanged quality. Complete independent
+part qualification is still pending. The earlier
+[native ear results](results/native-face-domain-2026-10-16/REPORT.md) remain
+available, including the main-plate300s construction censor. The full OM10
+render remains pending.
 
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen

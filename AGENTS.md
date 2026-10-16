@@ -240,7 +240,15 @@ Wall-clock budgets bound experiments; they are not the meaning of this mandate.
 Read docs/DIRECT_CDT_STRATEGY.md and DIRECT_CDT_ORACLE_DESIGN.md before selecting
 the next connectivity implementation. The prior native-Lawson proposal is an
 option/control, superseded as the default next-constructor choice. The current
-study implements an independent CDT oracle, not a new native CDT constructor.
+study now has an owned native direct CDT constructor and independent oracle.
+Read docs/DIRECT_CDT.md and results/direct-cdt-2026-10-16/REPORT.md. Explicit
+`domain_backend='direct'` uses the actual carrier metric and retains source
+sampling/refinement; old native ears remain the default. Keep whole sampled-domain,
+complete-part and whole-watch/render claims separate. The shared signed-cap
+helper has actual semantic/sanitizer evidence; public marked-fan execution is
+not observed in the current workload cohort. Many-hole admission remains a
+measured quadratic cost. No new alpha or GPU CDT claim follows from these CPU
+results.
 
 ## Development workflow
 

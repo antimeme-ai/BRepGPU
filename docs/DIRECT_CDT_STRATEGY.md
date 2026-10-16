@@ -16,6 +16,12 @@ loop plus disjoint holes with protected collinear boundary samples, no Steiner
 insertion and a constant positive diagonal metric. Stronger algorithms do not
 require widening that public contract to arbitrary intersecting PSLGs.
 
+The [owned CPU implementation](DIRECT_CDT.md) now follows this lead. Its
+[measured workloads](../results/direct-cdt-2026-10-16/REPORT.md) retain complete
+call costs and independent actual-output qualification. GPU CDT and full Chew
+construction remain contenders; the reused many-hole admission cost prevents
+attributing the literature's constructor bound to the complete current call.
+
 | Contender | Structural reason to study it | Conditions and unresolved costs |
 | --- | --- | --- |
 | Full constrained divide-and-conquer, Chew1989 | Complete CDT has deterministic O(n log n) construction in its model | Constrained strip regions/merge and degeneracies are substantive machinery; ordinary initial DT followed by arbitrary recovery does not inherit this bound. |
