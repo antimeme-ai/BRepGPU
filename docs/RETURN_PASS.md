@@ -461,9 +461,23 @@ is a serious next contender, preserving closed touching and original hole
 owners; dispatching only specially arranged benchmark holes is not the answer.
 Compare complete exact admission plus construction on arbitrary simple holes,
 not an internal triangulation-only speedup. Source-oracle pair enumeration also
-needs a conservative independent broad phase if it blocks actual large-model
-qualification. Replacing that mechanism must retain every exact candidate and
-original-value crossing/containment test.
+blocked actual large-model qualification. The independent
+[ranked closed-box sweep](IMPORTED_DOMAIN_ORACLE_SWEEP_PLAN.md) now replaces that
+enumeration while retaining original-value crossing/containment tests. Its
+[captured-domain results](../results/domain-oracle-2026-10-16/REPORT.md) measure
+admission separately from construction and whole-mesh qualification. Dense
+projection overlap can still produce quadratic active work; do not claim a
+general segment-intersection bound or add another validation layer around it.
+
+The complete438-face main-plate trial makes the remaining production split
+concrete:146.189s validation/sampling versus63.391s connectivity/refinement
+inside a209.608s construction wall. A second unchanged construction took208.258s.
+These shared-host single-CPU observations do not profile every geometry family
+or establish whole-watch performance. Source preparation, tighter general curve
+bounds and native batching/ownership are candidates to study with the existing
+original-value and physical/source checks. Preserve exact shared samples and
+source uncertainty; reducing work by silently coarsening the watch is not an
+admitted optimization. Qualifier time stays separate from product time.
 
 Further numerical work includes per-point homogeneous rational coordinates
 instead of a face-wide denominator LCM on hard rational families, and checked
