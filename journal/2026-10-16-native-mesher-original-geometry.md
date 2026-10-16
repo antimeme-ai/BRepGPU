@@ -280,3 +280,15 @@ Added common face-vertex joint selection: choose one stored UV then verify all
 incident uses at exactly that UV; authoritative raw endpoint identities remain
 distinct from chosen dyadic sites. The topology-owned frozen source boundary
 snapshot supplies the same physical identities/XYZ and exact master t.
+
+Recovery/joint ASan/UBSan and actual-source tidy GREEN. Strengthened its direct
+oracle with the independently authored POWER polynomial at the actual stored
+UV, not merely the producer's returned residual; closed authoritative joints
+pass and raw authoritative endpoint gaps are rejected. Root review correctly
+requires authoritative relocation to remain a proposal until original-domain
+B/T maps/protection exist; this module emits no publishable snapshot. Root also
+found unselected joint requests were not admitted before owner-affine
+comparisons. A foreign-owner second occurrence produced actual fleet RED
+`rational arithmetic allocator mismatch`. All occurrences now pass owner,
+allowance, precision and original-t/map coverage admission before endpoint
+selection or arithmetic; GREEN is running.
