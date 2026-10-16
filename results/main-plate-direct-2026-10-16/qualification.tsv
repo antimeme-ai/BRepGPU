@@ -1,0 +1,27 @@
+field	value
+products	1
+definitions	1
+usages	0
+vertices	844
+edges	1266
+coedges	2532
+loops	532
+faces	438
+carriers	438
+curves	3798
+mesh_vertices	95766
+uv_triangles	191688
+collapsed_uv_cells	0
+physical_triangles	191688
+solid_eulers	(-78,)
+max_source_vertex_error	5.329070518200751e-15
+max_pcurve_uv_error	2.6645352591003757e-15
+max_source_recovery_residual	0.00015436281687890502
+max_original_edge_endpoint_departure_mm	9.995460652028057e-14
+max_finite_interpolation_probe_error	0.0018741119990367053
+max_independent_native_uv_rounding_bound_mm	3.076740298213703e-15
+cylinder_source_inverse_occurrences	90255
+original_vertex_joint_recoveries	228
+max_foreign_cylinder_pcurve_residual_mm	8.708233005519105e-14
+owned_source_recovery_counts	(('cylinder_source_inverse', 90255), ('plane_source_inverse', 92203), ('spline_boundary_generator', 114), ('spline_boundary_vertex_inverse', 114))
+owned_spline_foreign_outside_domain_occurrences	126
