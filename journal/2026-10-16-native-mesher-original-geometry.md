@@ -170,3 +170,36 @@ resource handle by const reference. No warning suppression or math change.
 The numerical owner authorized updating its single constructor fixture caller.
 Core original fixture strict debug GREEN3899255work/228432peak after these
 explicit tuple copies. Root owns the narrow tidy rerun and coherent commit.
+
+Root accepted chosen-chart/envelope ownership: geometry prepares finite original
+face envelopes, original occurrence maps/lifts and the optional checked plane
+profile. Default UV remains admitted when the optional profile fails; source and
+resource errors do not become a fallback. No root coordinator infers the
+carrier's adapter hint as a natural domain. WorkingChart/FaceEnvelope retain
+GeometryStore and exact owner-local values; later cross-owner serialization
+freezes them through the shared exact table. Native recovered node/use/trace
+records follow this chart choice, before defining reconstructed polygons.
+
+Authored actual writer fixtures for a nonlinear regular planar square and the
+same natural-boundary square with an interior height bubble. The latter prevents
+boundary-only planarity from establishing a full original-image height bound.
+Genuine fleet syntax RED: geometry_charts.hpp absent. This subunit will implement
+source envelopes and finite plane-profile procedures, not another evaluator.
+
+Performed root-requested narrow independent scheduler source review during the
+geometry build wait. Queue capacity/owner exclusion, cancellation publication,
+partial construction/destruction joins and retained reservations are coherent;
+ACCEPT in `papers/2026-10-16-native-mesher-scheduler-code-review.md`. Concrete
+steps must respect temporary JobContext ownership and the coordinator must sum
+per-step work. No additional execution or certification campaign was added.
+
+Actual-source analytic/jets Clang-tidy initially found swappable atan/norm/tensor
+parameters and unchecked optional access. Named request/degree tuples now carry
+these arguments; Taylor obtains stored references directly from successful
+emplace calls. A narrow norm-span admission closes the analyzer's potential
+coordinate-index escape. No warning suppression was added. Both actual source
+translation units now pass the repository's native-cpu Clang-tidy profile and
+the named 100-column format profile. Final pre-cleanup jets/chord ASan/UBSan
+GREEN was3295656 work,21528 peak; only signatures/storage references and the
+internal span guard changed for these code checks. Root owns integrated builds
+and the reviewed geometry checkpoint.

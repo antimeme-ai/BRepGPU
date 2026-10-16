@@ -69,13 +69,14 @@ Net curve_derivative(std::span<const Rational> net, uint32_t degree, std::size_t
 struct Tensor final {
   uint32_t p, q;
   Net values;
-  Tensor(uint32_t u, uint32_t v, Net net) : p(u), q(v), values(std::move(net)) {}
+  Tensor(std::array<uint32_t, 2> degrees, Net net)
+      : p(degrees[0]), q(degrees[1]), values(std::move(net)) {}
 };
 Tensor tensor_derivative(const Tensor &net, bool u, const Rational &width) {
   auto &b = width.budget();
   const auto degree = u ? net.p : net.q;
   if (degree == 0)
-    return {0, 0, zero_net(b, 4)};
+    return {{0, 0}, zero_net(b, 4)};
   const uint32_t p = net.p - static_cast<uint32_t>(u), q = net.q - static_cast<uint32_t>(!u);
   const auto factor = Rational(b, degree).divide(width);
   Net out(&b);
@@ -88,7 +89,7 @@ Tensor tensor_derivative(const Tensor &net, bool u, const Rational &width) {
         const auto step = u ? stride * 4 : 4;
         out.push_back(net.values[a + step].subtract(net.values[a]).multiply(factor));
       }
-  return {p, q, std::move(out)};
+  return {{p, q}, std::move(out)};
 }
 ExactEnclosure zero(bgfd::Budget &b) { return ExactEnclosure(Rational(b, 0)); }
 Axes zero_axes(bgfd::Budget &b) { return {zero(b), zero(b), zero(b)}; }
@@ -162,7 +163,7 @@ SurfaceJetEnclosure enclose_rational_surface_jet(const BezierSurface &source,
   const auto root = restrict_surface(source, bounds);
   auto &b = bounds[0].budget();
   const auto uw = bounds[1].subtract(bounds[0]), vw = bounds[3].subtract(bounds[2]);
-  const Tensor net(root.p, root.q, centered(root.controls, 4));
+  const Tensor net({root.p, root.q}, centered(root.controls, 4));
   const auto nu = tensor_derivative(net, true, uw), nv = tensor_derivative(net, false, vw);
   const auto nuu = tensor_derivative(nu, true, uw), nuv = tensor_derivative(nu, false, vw),
              nvv = tensor_derivative(nv, false, vw);
@@ -321,7 +322,13 @@ SurfaceJetEnclosure enclose_original_surface_jet(GeometryContext &context,
   return enclose_rational_surface_jet(root, bounds);
 }
 namespace {
-Rational norm_upper(const Axes &value, uint32_t dimension, uint32_t fractional_bits) {
+struct NormRequest final {
+  uint32_t dimension, fractional_bits;
+};
+Rational norm_upper(const Axes &value, NormRequest request) {
+  const auto [dimension, fractional_bits] = request;
+  if (dimension > value.size())
+    throw Error(ErrorCode::internal_error, "geometry norm dimension exceeds its coordinate span");
   auto &b = value[0].lower.budget();
   Rational squared_norm(b, 0);
   for (uint32_t axis = 0; axis < dimension; ++axis) {
@@ -373,11 +380,13 @@ Rational analytic_curve_chord_upper(GeometryContext &context, const Curve &curve
     const Axes residual{difference(point.position[0], ExactEnclosure(actual[endpoint])),
                         difference(point.position[1], ExactEnclosure(actual[endpoint + 1])),
                         difference(point.position[2], ExactEnclosure(actual[endpoint + 2]))};
-    return norm_upper(residual, curve.dimension, precision.norm_fractional_bits);
+    return norm_upper(residual, {.dimension = curve.dimension,
+                                 .fractional_bits = precision.norm_fractional_bits});
   };
   const auto a = departure(begin, 0), z = departure(end, 3);
   const auto endpoint_error = a.compare(z) > 0 ? a : z;
-  auto curvature = norm_upper(jet.second, curve.dimension, precision.norm_fractional_bits);
+  auto curvature = norm_upper(jet.second, {.dimension = curve.dimension,
+                                           .fractional_bits = precision.norm_fractional_bits});
   if (curve.kind != 1) {
     const auto gram = gram_curvature_upper(b, curve, precision.norm_fractional_bits);
     if (gram.compare(curvature) < 0)

@@ -73,7 +73,12 @@ ExactEnclosure square(const ExactEnclosure &a, uint32_t bits) {
                                                              : right;
   return compressed(lo, hi, bits);
 }
-ExactEnclosure atan_reciprocal(bgfd::Budget &b, int64_t divisor, uint32_t bits) {
+struct AtanRequest final {
+  int64_t divisor;
+  uint32_t bits;
+};
+ExactEnclosure atan_reciprocal(bgfd::Budget &b, AtanRequest request) {
+  const auto [divisor, bits] = request;
   const auto d = Rational(b, divisor), d2 = d.multiply(d);
   auto power = d;
   Rational total(b, 0);
@@ -101,15 +106,16 @@ ExactEnclosure taylor(const ExactEnclosure &x, bool cosine, uint32_t bits) {
   const auto xx = square(x, bits);
   const uint32_t n = bits / 4 + 8;
   std::optional<ExactEnclosure> term, total;
-  term.emplace(cosine ? ExactEnclosure(Rational(b, 1)) : ExactEnclosure(x));
-  total.emplace(*term);
+  auto *term_value = &term.emplace(cosine ? ExactEnclosure(Rational(b, 1)) : ExactEnclosure(x));
+  auto *total_value = &total.emplace(*term_value);
   for (uint32_t k = 1; k < n; ++k) {
     const auto twice = 2 * static_cast<int64_t>(k);
     const auto divisor = cosine ? (twice - 1) * twice : twice * (twice + 1);
-    auto next = negative(divide_positive(multiply(*term, xx, bits), Rational(b, divisor), bits));
-    term.emplace(std::move(next));
-    auto sum = add(*total, *term, bits);
-    total.emplace(std::move(sum));
+    auto next =
+        negative(divide_positive(multiply(*term_value, xx, bits), Rational(b, divisor), bits));
+    term_value = &term.emplace(std::move(next));
+    auto sum = add(*total_value, *term_value, bits);
+    total_value = &total.emplace(std::move(sum));
   }
   // Taylor/Lagrange bound on |x|<=1. The omitted odd/even zero coefficient
   // permits order2n+1 for sine and order2n for cosine.
@@ -117,7 +123,8 @@ ExactEnclosure taylor(const ExactEnclosure &x, bool cosine, uint32_t bits) {
   const uint32_t order = cosine ? 2 * n : 2 * n + 1;
   for (uint32_t k = 2; k <= order; ++k)
     remainder = remainder.divide(Rational(b, k));
-  return compressed(total->lower.subtract(remainder), total->upper.add(remainder), bits);
+  return compressed(total_value->lower.subtract(remainder), total_value->upper.add(remainder),
+                    bits);
 }
 uint32_t work_bits(const GeometryContext &context) {
   if (context.bits() > std::numeric_limits<uint32_t>::max() - 32)
@@ -174,8 +181,8 @@ const ExactEnclosure &GeometryContext::pi(uint32_t required_bits) {
     if (cached.bits == required_bits)
       return cached.enclosure;
   {
-    const auto a = atan_reciprocal(budget_, 5, required_bits);
-    const auto b = atan_reciprocal(budget_, 239, required_bits);
+    const auto a = atan_reciprocal(budget_, {.divisor = 5, .bits = required_bits});
+    const auto b = atan_reciprocal(budget_, {.divisor = 239, .bits = required_bits});
     auto next = subtract(scale(a, Rational(budget_, 16), required_bits + 16),
                          scale(b, Rational(budget_, 4), required_bits + 16), required_bits + 16);
     pi_cache_.push_back({required_bits, std::move(next)});
