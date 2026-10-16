@@ -42,3 +42,22 @@ control count and original knot multiplicities. Explicit rectangles remain
 explicit query inputs. The independent source writer now optionally authors a
 deliberately wrong hint; this caller's default-domain test uses it on all three
 families, so a hint-based crop cannot silently pass as a complete requested patch.
+
+Actual kernel/source review found two bound hazards, sent to the geometry owner:
+the torus radius sum must be enclosed before multiplication, and interval
+operations cannot erase NaN through min/max or zero shortcuts. The owner fixed
+both in the common RN kernel and added cases to its existing direct vectors.
+Review also separated source immersion from nonzero emitted triangles. The
+first patch contract now explicitly admits local immersion, with finite
+analytic guards and rational derivative/cofactor bounds in the SAME adaptive
+cache. This does not introduce a second subdivision tree or a global embedded
+solid qualification claim. Runtime acceptance must consume that source flag.
+
+Algorithm peer review suggested a stronger cheap oracle within the existing
+reader. Replaced sampled-only polynomial checks with the exact whole-facet
+variance bound range(U)^2/4 plus maximum actual corner departure. The C0 family
+checks original knot separation and exact affine interpolation within each
+span. Weighted-rational interior samples remain explicitly falsification checks;
+its whole-cell bound has separate original-coefficient numerical vectors. No
+second validator, extra campaign or general certifier was added. Caller strict
+syntax and Clang analyzer checks passed; integrated GREEN is still pending.

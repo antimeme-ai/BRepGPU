@@ -40,6 +40,15 @@ class Reader:
         return F(sign*n, d)
 
 
+def source_value(kind, u, v):
+    if kind == 'weighted':
+        denominator = 1+14*u-14*u*u
+        return ((8*u-7*u*u)/denominator, v, 16*u*(1-u)/denominator)
+    if kind == 'c0':
+        return (u, v, u/2 if u <= F(1, 2) else (1-u)/2)
+    return (u, v, u*u)
+
+
 def read_patch(path, kind, epsilon):
     raw = path.read_bytes()
     reader = Reader(raw)
@@ -75,19 +84,31 @@ def read_patch(path, kind, epsilon):
         assert any(cross), "physically collapsed actual facet"
         for i in range(3):
             edges[(ids[i], ids[(i+1)%3])] += 1
+        if kind != 'weighted':
+            # Independent whole-facet model: E[u²]-E[u]² is bounded
+            # by range(u)²/4. The spanwise C0 source is exactly affine.
+            lo, hi = min(q[0] for q in uv), max(q[0] for q in uv)
+            if kind == 'c0':
+                assert hi <= F(1, 2) or lo >= F(1, 2), 'facet crosses original C0 knot'
+                source_error = F(0)
+            else:
+                source_error = (hi-lo)**2/4
+            remaining = F(epsilon)-source_error
+            assert remaining >= 0, 'whole-facet source variance exceeds allowance'
+            for xyz, (u, v) in p:
+                expected = source_value(kind, u, v)
+                assert sum((xyz[j]-expected[j])**2 for j in range(3)) <= remaining**2, (
+                    'whole-facet variance plus constructed-corner departure exceeds allowance', kind)
+            continue
+        # Weighted rational interiors are falsification samples; the product
+        # whole-cell bound is independently attacked by its numerical vectors.
         for weights in ((1, 0, 0), (0, 1, 0), (0, 0, 1),
                         (F(1, 3),)*3, (F(1, 2), F(1, 4), F(1, 4)),
                         (F(1, 4), F(1, 2), F(1, 4)),
                         (F(1, 4), F(1, 4), F(1, 2))):
             u, v = (sum(weights[i]*uv[i][j] for i in range(3)) for j in range(2))
             actual = [sum(weights[i]*p[i][0][j] for i in range(3)) for j in range(3)]
-            if kind == 'weighted':
-                denominator = 1+14*u-14*u*u
-                expected = ((8*u-7*u*u)/denominator, v, 16*u*(1-u)/denominator)
-            elif kind == 'c0':
-                expected = (u, v, u/2 if u <= F(1, 2) else (1-u)/2)
-            else:
-                expected = (u, v, u*u)
+            expected = source_value(kind, u, v)
             assert sum((actual[j]-expected[j])**2 for j in range(3)) <= epsilon2, (
                 "original source -> SAME actual affine facet exceeds positional allowance", kind, u, v)
     assert area == 2, "patch does not cover requested exact unit rectangle"

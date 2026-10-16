@@ -293,7 +293,7 @@ void run(const Options &o, std::string_view &stage) {
   queries << std::setprecision(17)
           << "query\tpositional_mm\tsource_digest\tnumeric_"
              "profile\tbackend\tthreads"
-             "\tu0\tu1\tv0\tv1\tprepared_roots\toriginal_roots\tpoints\tfacets"
+             "\tsource_units_mm\tu0\tu1\tv0\tv1\tprepared_roots\toriginal_roots\tpoints\tfacets"
              "\tnodes_created\tnodes_reused\tpoint_evaluations\tpoint_"
              "hits\tcontrol_restrictions"
              "\texact_fallbacks\tdevice_points\tdevice_bounds\tdevice_"
@@ -340,7 +340,7 @@ void run(const Options &o, std::string_view &stage) {
       queries << query << '\t' << o.positional[query] << '\t';
       digest(queries, source.view().source_digest);
       queries << "\trn64_anchor32_p128_v1\t" << (o.p100 ? "p100" : "cpu")
-              << '\t' << o.threads;
+              << '\t' << o.threads << '\t' << source.view().units_mm;
       for (double value : rectangle)
         queries << '\t' << value;
       queries << '\t' << cache.roots().size() << '\t'
