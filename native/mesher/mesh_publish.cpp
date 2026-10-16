@@ -48,6 +48,10 @@ class Publisher final {
   std::pmr::map<uint64_t, MasterEdge> masters;
   std::pmr::map<ExactTableKey, uint64_t> tables;
   std::pmr::map<std::pair<StyleId, ProductId>, MAppearance> appearances;
+  std::pmr::map<std::pair<uint32_t, uint64_t>, Range<VertexId>> alias_components;
+  std::pmr::vector<MSite> source_sites;
+  std::pmr::map<MNode, MQuotient> face_quotients;
+  std::array<ExactRef, 2> unit_interval{};
   void retain(const ExactTable &table) {
     if (table.resource() != run->resource)
       invalid("publisher exact table belongs to another run");
@@ -118,34 +122,16 @@ class Publisher final {
       invalid("publisher physical node absent from canonical index");
     return {static_cast<uint64_t>(found - originals.begin()) + 1};
   }
-  MEdgeSample master(MEdge id, ExactRef t, const PhysicalNodeKey &key) {
+  MEdgeSample master(MEdge id, ExactRef t, const PhysicalNodeKey &key, std::size_t ordinal) {
     const auto &m = masters.at(id.value);
     const auto values = slice(m.owner->nodes, m.row.nodes);
-    const auto target = read(t);
-    const auto first = parameter(values.front(), m.owner->parameters);
-    const auto last = parameter(values.back(), m.owner->parameters);
-    const int direction = last.compare(first);
-    if (!direction)
-      invalid("publisher ordinary master edge has zero parameter extent");
-    std::size_t lo = 0, hi = values.size();
-    while (lo < hi) {
-      const auto mid = lo + (hi - lo) / 2;
-      const auto value = parameter(values[mid], m.owner->parameters);
-      if (value.compare(target) * direction < 0)
-        lo = mid + 1;
-      else
-        hi = mid;
-    }
-    if (lo == values.size() || values[lo].key != key ||
-        parameter(values[lo], m.owner->parameters).compare(target) != 0)
-      invalid("publisher occurrence parameter/physical identity is not a settled master sample");
+    if (ordinal >= values.size() || values[ordinal].key != key ||
+        parameter(values[ordinal], m.owner->parameters).compare(read(t)) != 0)
+      invalid("publisher occurrence is not its ordered settled master sample");
     const auto &row = d.edges[static_cast<std::size_t>(id.value - 1)];
-    return d.edge_sample_refs[static_cast<std::size_t>(row.samples.first) + lo];
+    return slice(d.edge_sample_refs, row.samples)[ordinal];
   }
-  MeshLocator locator(const FaceResult &result, uint32_t slot, MChart chart) {
-    if (slot >= result->sites.size() || result->sites[slot].site.value != slot)
-      invalid("publisher site slot not append ordered");
-    const auto &site = result->sites[slot];
+  template <class Site> MeshLocator locator(const Site &site, WorkingChartKind kind, MChart chart) {
     MeshLocator value;
     value.kind = MeshLocatorKind::direct_original_uv;
     value.chart = chart;
@@ -163,9 +149,139 @@ class Publisher final {
         value.enclosure[2 * axis + 1] =
             read((*site.original_uv_enclosure)[2 * axis + 1]).bounds().upper;
       }
-    } else if (result->boundary->chart_kind == WorkingChartKind::physical_plane_convex_q)
+    } else if (kind == WorkingChartKind::physical_plane_convex_q)
       invalid("publisher plane site lost its actual inverse enclosure");
+    const auto q = face_quotients.find(node(site.node.key));
+    if (q != face_quotients.end() &&
+        d.quotients[static_cast<std::size_t>(q->second.value - 1)].pole != MeshPole::none) {
+      // The finite locator wire stores quotient/period in its analytic branch.
+      // Regular incident-face joint quotients live on Joint/Closure/Node; an
+      // inverse-projection locator keeps its distinct recovery interpretation.
+      value.kind = MeshLocatorKind::analytic_branch;
+      value.quotient = q->second;
+    }
     return value;
+  }
+  MeshLocator locator(const FaceResult &result, uint32_t slot, MChart chart) {
+    if (slot >= result->sites.size() || result->sites[slot].site.value != slot)
+      invalid("publisher site slot not append ordered");
+    return locator(result->sites[slot], result->boundary->chart_kind, chart);
+  }
+  MSite source_site(uint32_t slot) const {
+    if (slot >= source_sites.size())
+      invalid("publisher source occurrence outside explicit site map");
+    return source_sites[slot];
+  }
+  static MeshPole pole_kind(AnalyticPoleKind kind) {
+    switch (kind) {
+    case AnalyticPoleKind::sphere_north:
+      return MeshPole::sphere_north;
+    case AnalyticPoleKind::sphere_south:
+      return MeshPole::sphere_south;
+    case AnalyticPoleKind::cone_apex:
+      return MeshPole::cone_apex;
+    }
+    invalid("publisher unknown original analytic pole");
+  }
+  template <class Ref, class Setter>
+  void quotient_members(std::pmr::vector<Ref> &pool, std::pmr::vector<std::pair<MNode, Ref>> &rows,
+                        Setter set) {
+    std::sort(rows.begin(), rows.end(), [&](const auto &a, const auto &b) {
+      budget.charge(1);
+      return a < b;
+    });
+    budget.charge(rows.size());
+    rows.erase(std::unique(rows.begin(), rows.end()), rows.end());
+    budget.charge(rows.size());
+    std::size_t first = 0;
+    while (first < rows.size()) {
+      const auto key = rows[first].first;
+      const auto it = face_quotients.find(key);
+      if (it == face_quotients.end())
+        invalid("publisher quotient membership has no owner");
+      const Range<Ref> range{pool.size(), 0};
+      auto out = range;
+      do {
+        pool.push_back(rows[first++].second);
+        ++out.count;
+      } while (first < rows.size() && rows[first].first == key);
+      set(d.quotients[static_cast<std::size_t>(it->second.value - 1)], out);
+    }
+  }
+  void publish_quotients(const FaceResult &result, MFace face, uint64_t sitebase) {
+    const auto &seed = *result->boundary;
+    face_quotients.clear();
+    std::pmr::map<MNode, MeshPole> kinds(&budget);
+    for (const auto &site : seed.sites) {
+      budget.charge(1);
+      if (site.node.key.generator == NodeGenerator::declared_quotient)
+        kinds.emplace(node(site.node.key), MeshPole::none);
+    }
+    for (const auto &cap : seed.pole_caps) {
+      if (cap.pole_site >= seed.sites.size())
+        invalid("publisher cap pole source site outside table");
+      const auto physical = node(seed.sites[cap.pole_site].node.key);
+      const auto pole = pole_kind(cap.kind);
+      const auto [it, inserted] = kinds.emplace(physical, pole);
+      if (!inserted) {
+        if (it->second != MeshPole::none && it->second != pole)
+          invalid("publisher conflicting poles at one face physical key");
+        it->second = pole;
+      }
+    }
+    for (const auto &[physical, pole] : kinds) {
+      const MQuotient self{d.quotients.size() + 1};
+      face_quotients.emplace(physical, self);
+      const auto &key = originals[static_cast<std::size_t>(physical.value - 1)].key;
+      const auto found = alias_components.find({key.definition, key.source});
+      Range<VertexId> vertices{d.source_vertex_refs.size(), 0};
+      if (found != alias_components.end()) {
+        // All incident face quotients borrow the one immutable component list.
+        vertices = found->second;
+      } else {
+        if (key.generator != NodeGenerator::original_vertex)
+          invalid("publisher declared component absent from source alias owner");
+        vertices = one(d.source_vertex_refs, VertexId{key.source});
+      }
+      const auto kind = pole == MeshPole::cone_apex ? MeshQuotientKind::apex
+                        : pole == MeshPole::none    ? MeshQuotientKind::joint
+                                                    : MeshQuotientKind::pole;
+      d.quotients.push_back({face,
+                             source.faces[seed.face.value].carrier_id,
+                             kind,
+                             vertices,
+                             {},
+                             {},
+                             physical,
+                             {},
+                             pole});
+      auto &output = d.nodes[static_cast<std::size_t>(physical.value - 1)];
+      if (!output.quotient.value) {
+        output.quotient = self;
+        if (key.generator == NodeGenerator::declared_quotient)
+          output.generator = QuotientGenerator{self};
+      }
+    }
+    std::pmr::vector<std::pair<MNode, MSite>> sites(&budget);
+    for (uint64_t i = sitebase; i < d.sites.size(); ++i) {
+      const auto physical = d.sites[static_cast<std::size_t>(i)].node;
+      if (face_quotients.contains(physical))
+        sites.emplace_back(physical, MSite{i + 1});
+    }
+    quotient_members(d.site_refs, sites, [](auto &q, auto range) { q.sites = range; });
+    std::pmr::vector<std::pair<MNode, MUse>> uses_by_node(&budget);
+    for (const auto &loop : seed.loops) {
+      const auto segments = slice(seed.segments, loop.segments);
+      for (std::size_t i = 0; i < segments.size(); ++i) {
+        const auto use = uses.at(source.coedges[segments[i].use.value].id);
+        for (const auto slot : {segments[i].site, segments[(i + 1) % segments.size()].site}) {
+          const auto physical = d.sites[static_cast<std::size_t>(source_site(slot).value - 1)].node;
+          if (face_quotients.contains(physical))
+            uses_by_node.emplace_back(physical, use);
+        }
+      }
+    }
+    quotient_members(d.use_refs, uses_by_node, [](auto &q, auto range) { q.uses = range; });
   }
   void inventory() {
     for (const auto &[id, slot] : source.definition_index.entries) {
@@ -204,6 +320,38 @@ class Publisher final {
         snapshot->definition.value >= source.definitions.size())
       invalid("publisher foreign definition boundary");
     retain(snapshot->parameters);
+    if (!snapshot->vertex_aliases.empty() &&
+        (!snapshot->vertex_alias_owner || snapshot->vertex_alias_owner->resource != run->resource ||
+         snapshot->vertex_alias_owner->rows.data() != snapshot->vertex_aliases.data() ||
+         snapshot->vertex_alias_owner->rows.size() != snapshot->vertex_aliases.size()))
+      invalid("publisher source aliases lost their immutable owner");
+    std::pmr::vector<std::pair<VertexId, VertexId>> components(&budget);
+    for (const auto &alias : snapshot->vertex_aliases) {
+      budget.charge(1);
+      if (alias.original.value >= source.vertices.size() ||
+          alias.representative.value >= source.vertices.size())
+        invalid("publisher original alias vertex outside source");
+      components.emplace_back(source.vertices[alias.representative.value].id,
+                              source.vertices[alias.original.value].id);
+    }
+    std::sort(components.begin(), components.end(), [&](const auto &a, const auto &b) {
+      budget.charge(1);
+      return a < b;
+    });
+    std::size_t component_first = 0;
+    while (component_first < components.size()) {
+      const auto representative = components[component_first].first;
+      Range<VertexId> range{d.source_vertex_refs.size(), 0};
+      do {
+        d.source_vertex_refs.push_back(components[component_first++].second);
+        ++range.count;
+      } while (component_first < components.size() &&
+               components[component_first].first == representative);
+      if (!alias_components
+               .emplace(std::pair{snapshot->definition.value, representative.value}, range)
+               .second)
+        invalid("publisher duplicate definition alias component");
+    }
     const auto def = source.definitions[snapshot->definition.value].id;
     EdgeId previous_edge{};
     for (const auto &row : snapshot->edges) {
@@ -219,7 +367,10 @@ class Publisher final {
         invalid("publisher duplicate definition edge");
       masters.emplace(self.value, MasterEdge{snapshot.get(), row});
       const auto values = slice(snapshot->nodes, row.nodes);
-      if (values.size() < 2 || row.intervals.count + 1 != values.size())
+      const auto &original_edge = source.edges[row.edge.value];
+      if (values.size() < 2 ||
+          (original_edge.degenerate ? (values.size() != 2 || row.intervals.count != 0)
+                                    : row.intervals.count + 1 != values.size()))
         invalid("publisher incomplete source master chain");
       MeshEdge output{id,
                       definitions.at(def),
@@ -230,6 +381,7 @@ class Publisher final {
         const auto &node = values[i];
         if (node.key.definition != snapshot->definition.value || !node.original_parameter)
           invalid("publisher master sample lacks definition/parameter");
+        const auto original_parameter = node.original_parameter.value();
         collect_node(node);
         const auto pathIndex = static_cast<std::size_t>(row.nodes.first) + i;
         if (pathIndex >= snapshot->sample_paths.size())
@@ -242,7 +394,7 @@ class Publisher final {
           d.interval_paths.push_back(bit);
         }
         d.edge_sample_refs.push_back({d.edge_samples.size() + 1});
-        d.edge_samples.push_back({self, *node.original_parameter, {}, path});
+        d.edge_samples.push_back({self, original_parameter, {}, path});
       }
       d.edges.push_back(output);
     }
@@ -284,9 +436,10 @@ class Publisher final {
                                           *value.original_parameter};
       } else if (key.generator == NodeGenerator::face_site)
         generator = FaceSiteGenerator{};
+      else if (key.generator == NodeGenerator::declared_quotient)
+        generator = QuotientGenerator{};
       else if (key.generator != NodeGenerator::original_vertex)
-        throw Error(ErrorCode::unsupported,
-                    "publisher declared quotient requires retained singular coverage records");
+        invalid("publisher unknown physical node generator");
       d.nodes.push_back(
           {definitions.at(source.definitions[key.definition].id), value.xyz, generator, {}});
     }
@@ -397,8 +550,50 @@ class Publisher final {
         generator = FaceSiteGenerator{self, site, lineage};
       }
     }
-    publish_domain(result, self, chart, sitebase);
-    publish_loops(result, self, chart, sitebase);
+    source_sites.clear();
+    source_sites.reserve(seed.sites.size());
+    if (result->source_sites.size() != seed.sites.size())
+      invalid("publisher complete source-to-active map missing");
+    for (std::size_t i = 0; i < seed.sites.size(); ++i) {
+      budget.charge(1);
+      const auto &source_site = seed.sites[i];
+      if (result->source_sites[i]) {
+        const auto slot = result->source_sites[i]->value;
+        if (slot >= result->sites.size())
+          invalid("publisher source-to-active slot outside result");
+        const auto &active = result->sites[slot];
+        if (active.node.key != source_site.node.key ||
+            !same_xyz(active.node.xyz, source_site.node.xyz))
+          invalid("publisher source-to-active physical identity changed");
+        for (std::size_t axis = 0; axis < 2; ++axis)
+          if (read(active.chart[axis]).compare(read(source_site.chart[axis])) ||
+              read(active.original_uv[axis]).compare(read(source_site.original_uv[axis])))
+            invalid("publisher source-to-active coordinate changed");
+        if (active.original_uv_enclosure.has_value() !=
+            source_site.original_uv_enclosure.has_value())
+          invalid("publisher source-to-active inverse enclosure presence changed");
+        if (active.original_uv_enclosure)
+          for (std::size_t axis = 0; axis < 4; ++axis)
+            if (read((*active.original_uv_enclosure)[axis])
+                    .compare(read((*source_site.original_uv_enclosure)[axis])))
+              invalid("publisher source-to-active inverse enclosure changed");
+        source_sites.push_back({sitebase + slot + 1});
+      } else {
+        const MSite site{d.sites.size() + 1};
+        const MLineage lineage{d.lineage.size() + 1};
+        d.lineage.push_back({self,
+                             seed.face_generation,
+                             MeshLineageOperation::initial,
+                             {},
+                             one(d.site_refs, site)});
+        d.sites.push_back(
+            {self, chart, source_site.chart, node(source_site.node.key), {}, lineage});
+        source_sites.push_back(site);
+      }
+    }
+    publish_quotients(result, self, sitebase);
+    publish_domain(result, self, chart);
+    publish_loops(result, self, chart);
     face.cells = {d.cell_refs.size(), result->triangles.size()};
     face.facets = {d.facet_refs.size(), result->triangles.size()};
     const auto definition = source.definitions[seed.definition.value];
@@ -406,6 +601,7 @@ class Publisher final {
     const auto look =
         appearance(original.style_id ? original.style_id : product.style_id, product.id);
     const auto allowance = run->assembly.view().definitions[seed.definition.value].positional;
+    std::pmr::vector<std::pair<MNode, MCell>> quotient_cells(&budget);
     for (const auto &triangle : result->triangles) {
       budget.charge(1);
       const MCell cell{d.cells.size() + 1};
@@ -431,17 +627,71 @@ class Publisher final {
       else if (triangle.map_kind == CellMapKind::plane_xy_triangle &&
                seed.chart_kind == WorkingChartKind::physical_plane_convex_q)
         d.cell_maps.push_back({cell, PlaneTriangleMap{roles, chart}});
-      else
+      else if (triangle.map_kind == CellMapKind::analytic_pole_fan_quad && triangle.pole_piece) {
+        if (*triangle.pole_piece >= seed.pole_pieces.size())
+          invalid("publisher pole piece outside retained source transport");
+        const auto &piece = seed.pole_pieces[*triangle.pole_piece];
+        if (piece.cap >= seed.pole_caps.size())
+          invalid("publisher pole piece has foreign cap");
+        const auto &cap = seed.pole_caps[piece.cap];
+        if (*triangle.pole_piece < cap.pieces.first ||
+            *triangle.pole_piece - cap.pieces.first >= cap.pieces.count ||
+            cap.pole_site >= seed.sites.size() || piece.cut_sites[0] >= seed.sites.size() ||
+            piece.cut_sites[1] >= seed.sites.size())
+          invalid("publisher pole piece escaped cap source roles");
+        const std::array original_roles{source_site(cap.pole_site), source_site(piece.cut_sites[0]),
+                                        source_site(piece.cut_sites[1])};
+        for (std::size_t i = 0; i < 3; ++i)
+          if (piece.positive_chart_roles[i] >= 3 ||
+              roles[i] != original_roles[piece.positive_chart_roles[i]])
+            invalid("publisher pole map role permutation changed actual connectivity");
+        const auto pole_node = d.sites[static_cast<std::size_t>(original_roles[0].value - 1)].node;
+        const auto quotient = face_quotients.at(pole_node);
+        const std::array cut_sites{original_roles[1], original_roles[2]};
+        const auto cut_chain = append(d.site_refs, std::span<const MSite>(cut_sites));
+        d.cell_maps.push_back(
+            {cell, PoleFanMap{quotient,
+                              pole_kind(cap.kind),
+                              {piece.cut_uv[0], piece.cut_uv[2]},
+                              {d.sites[static_cast<std::size_t>(original_roles[1].value - 1)].node,
+                               d.sites[static_cast<std::size_t>(original_roles[2].value - 1)].node},
+                              piece.cut_uv,
+                              cut_chain,
+                              unit_interval,
+                              unit_interval,
+                              seed.face_generation}});
+      } else
         throw Error(ErrorCode::unsupported, "publisher cell map/source chart mismatch");
       if (triangle.lineage >= result->lineages.size())
         invalid("publisher triangle lineage outside retained history");
       const auto association = one(d.cell_facet_refs, MCellFacet{d.cell_facets.size() + 1});
-      const auto component = one(d.component_refs, MComponent{d.components.size() + 1});
-      d.components.push_back(
-          {cell, MeshComponentKind::actual_cell_position, MeshValueRole::allowance, allowance, {}});
+      Range<MComponent> component{d.component_refs.size(), 0};
+      const bool pole = triangle.map_kind == CellMapKind::analytic_pole_fan_quad;
+      if (pole) {
+        const auto &piece = seed.pole_pieces[*triangle.pole_piece];
+        for (const auto &[kind, value] :
+             {std::pair{MeshComponentKind::actual_cell_position, piece.position_upper},
+              std::pair{MeshComponentKind::pole_band_position, piece.band_upper}}) {
+          d.component_refs.push_back({d.components.size() + 1});
+          ++component.count;
+          d.components.push_back({cell, kind, MeshValueRole::canonical_upper, value, {}});
+        }
+      } else {
+        component = one(d.component_refs, MComponent{d.components.size() + 1});
+        d.components.push_back({cell,
+                                MeshComponentKind::actual_cell_position,
+                                MeshValueRole::allowance,
+                                allowance,
+                                {}});
+      }
+      for (const auto physical : xyz)
+        if (face_quotients.contains(physical))
+          quotient_cells.emplace_back(physical, cell);
       d.cells.push_back(
           {self, chart, {linebase + triangle.lineage + 1}, map, association, component});
-      d.cell_facets.push_back({cell, facet, MeshInterpolant::barycentric_triangle});
+      d.cell_facets.push_back(
+          {cell, facet,
+           pole ? MeshInterpolant::pole_bilinear_fan : MeshInterpolant::barycentric_triangle});
       if (original.orientation < 0) {
         std::swap(roles[1], roles[2]);
         std::swap(xyz[1], xyz[2]);
@@ -457,8 +707,9 @@ class Publisher final {
       d.cell_refs.push_back(cell);
       d.facet_refs.push_back(facet);
     }
+    quotient_members(d.cell_refs, quotient_cells, [](auto &q, auto range) { q.cells = range; });
   }
-  void publish_domain(const FaceResult &result, MFace face, MChart chart, uint64_t sitebase) {
+  void publish_domain(const FaceResult &result, MFace face, MChart chart) {
     const auto &seed = *result->boundary;
     const auto &map = seed.domain_map;
     if (!map)
@@ -501,7 +752,7 @@ class Publisher final {
     const auto site_ref = [&](uint32_t slot) {
       if (slot >= seed.sites.size())
         invalid("publisher domain support site outside selected boundary");
-      return MSite{sitebase + slot + 1};
+      return source_site(slot);
     };
     for (const auto &fan : map->fans) {
       budget.charge(1);
@@ -537,7 +788,7 @@ class Publisher final {
                                    strip.w0}});
     }
   }
-  void publish_loops(const FaceResult &result, MFace face, MChart chart, uint64_t sitebase) {
+  void publish_loops(const FaceResult &result, MFace face, MChart chart) {
     const auto &seed = *result->boundary;
     if (seed.trace_maps.size() != seed.segments.size() ||
         result->traversal_adapters.size() != seed.loops.size())
@@ -559,14 +810,14 @@ class Publisher final {
       output.normalized_sites = {d.site_refs.size(), segments.size()};
       for (std::size_t j = 0; j < segments.size(); ++j) {
         const auto index = output.traversal_adapter == 1 || j == 0 ? j : segments.size() - j;
-        d.site_refs.push_back({sitebase + segments[index].site + 1});
+        d.site_refs.push_back(source_site(segments[index].site));
       }
       output.closures = {d.closure_refs.size(), dispositions.size()};
       for (std::size_t ui = 0; ui < dispositions.size(); ++ui) {
         const auto &disposition = dispositions[ui];
-        if (disposition.kind != FaceUseKind::ordinary_chain)
-          throw Error(ErrorCode::unsupported,
-                      "publisher singular use has no frozen coverage record");
+        const bool collapsed = disposition.kind == FaceUseKind::declared_quotient;
+        if (!collapsed && disposition.kind != FaceUseKind::ordinary_chain)
+          invalid("publisher unknown source use kind");
         const auto &original = source.coedges[disposition.source_use.value];
         if (!original.reconstructed && !seed.domain_map)
           invalid("publisher authoritative face lacks its retained B/T realization");
@@ -578,7 +829,11 @@ class Publisher final {
         if (disposition.segments.count + 1 != master_samples.size())
           invalid("publisher use omits a settled shared master sample");
         use.samples = {d.use_sample_refs.size(), disposition.segments.count + 1};
-        use.profiles = {d.profile_refs.size(), disposition.segments.count};
+        const auto &edgeSource = source.edges[source.edge_index.find(original.edge_id).value];
+        if (collapsed && (!edgeSource.degenerate || !disposition.quotient_pcurve_parameter ||
+                          disposition.segments.count != 1))
+          invalid("publisher quotient lost its literal source pcurve interval");
+        use.profiles = {d.profile_refs.size(), collapsed ? 0 : disposition.segments.count};
         const auto chain = slice(seed.segments, disposition.segments);
         if (chain.empty())
           invalid("publisher ordinary use has no selected chain");
@@ -592,8 +847,10 @@ class Publisher final {
               (index - static_cast<std::size_t>(loop.segments.first) + 1) % segments.size();
           const auto slot = finish ? segments[next].site : segment.site;
           const auto t = segment.source_parameter[finish ? 1 : 0];
-          const auto parameter = trace.mapped_pcurve_parameter[finish ? 1 : 0];
-          const auto &site = result->sites[slot];
+          const auto parameter = collapsed
+                                     ? (*disposition.quotient_pcurve_parameter)[finish ? 1 : 0]
+                                     : trace.mapped_pcurve_parameter[finish ? 1 : 0];
+          const auto &site = seed.sites[slot];
           MeshLocator raw;
           raw.kind = MeshLocatorKind::unavailable_guide;
           // Source definition + exact mapped s + branch lift retain the raw
@@ -602,17 +859,25 @@ class Publisher final {
           raw.chart = chart;
           raw.lift = original.periodic_shift;
           d.use_sample_refs.push_back({d.use_samples.size() + 1});
-          auto recovered = locator(result, slot, chart);
+          auto recovered = locator(site, seed.chart_kind, chart);
           recovered.lift = original.periodic_shift;
-          const auto selected_master = master(use.edge, t, site.node.key);
-          const auto expected_master =
-              master_samples[original.sense == 1 ? j : master_samples.size() - 1 - j];
-          if (selected_master != expected_master)
-            invalid("publisher use changes settled shared master order");
+          const auto selected_master = master(
+              use.edge, t, site.node.key, original.sense == 1 ? j : master_samples.size() - 1 - j);
           d.use_samples.push_back(
-              {self, selected_master, {sitebase + slot + 1}, parameter, raw, recovered});
+              {self, selected_master, source_site(slot), parameter, raw, recovered});
           if (finish)
             break;
+          if (collapsed) {
+            if (trace.trace_position_upper) {
+              use.components = one(d.component_refs, MComponent{d.components.size() + 1});
+              d.components.push_back({self,
+                                      MeshComponentKind::trace_position_residual,
+                                      MeshValueRole::canonical_upper,
+                                      *trace.trace_position_upper,
+                                      {}});
+            }
+            continue;
+          }
           const auto endslot = segments[next].site;
           const auto first = read(segment.source_parameter[0]),
                      last = read(segment.source_parameter[1]);
@@ -621,8 +886,8 @@ class Publisher final {
               forward ? segment.source_parameter
                       : std::array{segment.source_parameter[1], segment.source_parameter[0]};
           const std::array<MNode, 2> endpoints =
-              forward ? std::array{node(site.node.key), node(result->sites[endslot].node.key)}
-                      : std::array{node(result->sites[endslot].node.key), node(site.node.key)};
+              forward ? std::array{node(site.node.key), node(seed.sites[endslot].node.key)}
+                      : std::array{node(seed.sites[endslot].node.key), node(site.node.key)};
           std::variant<AffineParameterProfile, GeometricLineProfile, CylinderArcProfile>
               correspondence = AffineParameterProfile{};
           if (trace.kind == TraceCorrespondence::geometric_line) {
@@ -643,19 +908,22 @@ class Publisher final {
                                     MeshValueRole::canonical_upper, *trace.trace_position_upper,
                                     profile});
           }
-          const auto &edgeSource = source.edges[source.edge_index.find(original.edge_id).value];
           d.profiles.push_back({face, self, edgeSource.curve_id,
                                 source.faces[seed.face.value].carrier_id, interval, correspondence,
                                 trace_components});
           if (j != 0)
-            d.sites[static_cast<std::size_t>(sitebase + slot)].branch = self;
+            d.sites[static_cast<std::size_t>(source_site(slot).value - 1)].branch = self;
         }
         const auto slot = chain.front().site;
-        const auto &node = result->sites[slot].node;
-        if (node.key.generator != NodeGenerator::original_vertex)
-          invalid("publisher ordinary source joint lacks original vertex identity");
+        const auto &physical_node = seed.sites[slot].node;
+        if (physical_node.key.generator != NodeGenerator::original_vertex &&
+            physical_node.key.generator != NodeGenerator::declared_quotient)
+          invalid("publisher source joint lacks original vertex identity");
+        const auto original_vertex = edgeSource.vertex_ids[original.sense == 1 ? 0u : 1u];
+        const auto q = face_quotients.find(node(physical_node.key));
+        const MQuotient quotient = q == face_quotients.end() ? MQuotient{} : q->second;
         const MJoint joint{d.joints.size() + 1};
-        const MSite site{sitebase + slot + 1};
+        const MSite site = source_site(slot);
         const auto previous =
             uses.at(source
                         .coedges[dispositions[(ui + dispositions.size() - 1) % dispositions.size()]
@@ -663,25 +931,22 @@ class Publisher final {
                         .id);
         const std::array incident{previous, self};
         const auto incidentRange = append(d.use_refs, std::span<const MUse>(incident));
-        d.joints.push_back({face,
-                            {node.key.source},
-                            chart,
-                            original.id.value,
-                            site,
-                            incidentRange,
-                            locator(result, slot, chart),
-                            {}});
+        d.joints.push_back({face, original_vertex, chart, original.id.value, site, incidentRange,
+                            locator(seed.sites[slot], seed.chart_kind, chart), quotient});
         d.sites[static_cast<std::size_t>(site.value - 1)].branch = joint;
         d.closure_refs.push_back({d.closures.size() + 1});
-        d.closures.push_back({face,
-                              output.source,
-                              {node.key.source},
-                              previous,
-                              self,
-                              {site, site},
-                              MeshClosureKind::joint,
-                              {},
-                              {}});
+        d.closures.push_back(
+            {face,
+             output.source,
+             original_vertex,
+             previous,
+             self,
+             {site, site},
+             quotient.value ? static_cast<MeshClosureKind>(
+                                  d.quotients[static_cast<std::size_t>(quotient.value - 1)].kind)
+                            : MeshClosureKind::joint,
+             quotient,
+             {}});
       }
       d.loop_refs.push_back(id);
     }
@@ -709,9 +974,14 @@ public:
       : budget(scratch), run(prepared), source(prepared->geometry.view().source.view()),
         builder(prepared->resource, prepared->geometry.view().source), d(builder.data()),
         definitions(&scratch), faces(&scratch), uses(&scratch), loops(&scratch), edges(&scratch),
-        originals(&scratch), masters(&scratch), tables(&scratch), appearances(&scratch) {
+        originals(&scratch), masters(&scratch), tables(&scratch), appearances(&scratch),
+        alias_components(&scratch), source_sites(&scratch), face_quotients(&scratch) {
     d.quality = quality;
     retain(run->assembly.view().values);
+    // Reserved publication namespace; numerical service run IDs are bounded u32.
+    ExactBuilder constants(run->resource, {{OwnerKind::run, UINT32_MAX, UINT64_MAX}, 0, 1});
+    unit_interval = {constants.append(Rational(budget)), constants.append(Rational(budget, 1))};
+    retain(constants.seal());
     inventory();
   }
   NativeMesh finish(std::span<const DefinitionBoundarySnapshot> boundaries,
@@ -734,6 +1004,8 @@ public:
       if (!r)
         invalid("publisher null face result");
       reserve_nodes(r->sites.size());
+      if (r->boundary)
+        reserve_nodes(r->boundary->sites.size());
     }
     originals.reserve(node_capacity);
     std::sort(bs.begin(), bs.end(), [&](const auto &a, const auto &b) {
@@ -756,9 +1028,13 @@ public:
         invalid("publisher face result escaped original geometry/source owner");
       retain(r->boundary->values);
       retain(r->values);
-      if (r->boundary->source_generation != run->geometry.view().table.key().generation ||
-          r->boundary->sites.size() > r->sites.size())
-        invalid("publisher face source generation/site prefix mismatch");
+      if (r->boundary->source_generation != run->geometry.view().table.key().generation)
+        invalid("publisher face source generation mismatch");
+      for (const auto &site : r->boundary->sites) {
+        if (site.node.key.definition != r->boundary->definition.value)
+          invalid("publisher source occurrence physical node has foreign definition");
+        collect_node(site.node);
+      }
       for (const auto &segment : r->boundary->segments)
         if (segment.site >= r->boundary->sites.size() || segment.use.value >= source.coedges.size())
           invalid("publisher source segment site/use outside table");

@@ -229,6 +229,7 @@ void run(const std::filesystem::path &fixtures, const std::filesystem::path &out
     const auto copy = std::allocate_shared<FaceResultData>(RunAllocator<FaceResultData>(resource),
                                                            seed, results[0]->values);
     copy->sites = results[0]->sites;
+    copy->source_sites = results[0]->source_sites;
     copy->lineages = results[0]->lineages;
     copy->triangles = results[0]->triangles;
     copy->traversal_adapters = results[0]->traversal_adapters;

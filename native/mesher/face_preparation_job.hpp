@@ -10,6 +10,7 @@ struct FacePreparationInput final {
   SourceBoundarySnapshot boundary;
   uint64_t generation, seed;
   bool allow_plane_profile = true;
+  PoleCutControl pole_control{};
 };
 struct FacePreparationLimits final {
   uint64_t bytes, work;
@@ -22,6 +23,7 @@ struct FacePreparationEvent final {
   FacePreparationEventKind kind = FacePreparationEventKind::unstarted;
   std::optional<BoundBatch> curves;
   std::optional<BoundaryKey> boundary;
+  PoleCutControl pole_control{};
 };
 // One retained owner through all chord-bound yields. It releases its mutable
 // arithmetic when replaced by the face-refinement owner at the same task key.

@@ -181,13 +181,63 @@ void epochs(const bgmesh::SourceStore &source,
               forest.sample(chain[0]).key.definition == 0,
           "physical identity leaked across definitions");
 }
+void declared_quotients(const bgmesh::SourceStore &source,
+                        const std::shared_ptr<bgmesh::RunResource> &resource) {
+  bgfd::Budget budget({1u << 27, uint64_t{1} << 32});
+  bgmesh::DefinitionBoundaryForest forest(budget, source, {0}, resource);
+  if (const auto pending = forest.pending_evaluations())
+    (void)forest.complete_evaluations(pending->epoch(), evaluate_literal(budget, *pending));
+  const bgmesh::PhysicalNodeKey expected{0, bgmesh::NodeGenerator::declared_quotient, 310, 0, 0};
+  for (const uint64_t id : {405u, 406u}) {
+    const auto chain = forest.chain(source.view().edge_index.find(bgmesh::EdgeId{id}));
+    require(chain.size() == 2, "declared quotient lost original endpoint occurrences");
+    for (const auto sample : chain) {
+      const auto node = forest.sample(sample);
+      require(node.key == expected && node.xyz == bgmesh::Vec3{.125, .25, 0},
+              "declared connectivity did not select minimum-ID original XYZ authority");
+    }
+  }
+  const auto incident = forest.chain(source.view().edge_index.find(bgmesh::EdgeId{407}));
+  require(forest.sample(incident[0]).key == expected &&
+              forest.sample(incident[1]).key.generator == bgmesh::NodeGenerator::original_vertex &&
+              forest.sample(incident[1]).key.source == 313,
+          "regular endpoint failed to inherit declared relation or coordinates welded aliases");
+  const auto same = forest.chain(source.view().edge_index.find(bgmesh::EdgeId{408}));
+  require(forest.sample(same[0]).key.generator == bgmesh::NodeGenerator::original_vertex &&
+              forest.sample(same[0]).key.source == 300,
+          "same-ID collapsed edge unnecessarily changed original vertex identity");
+  const auto frozen = forest.freeze_definition_boundary();
+  require(frozen->vertex_aliases.size() == 3,
+          "source quotient aliases were erased or proximity joined");
+  const auto face_snapshot = forest.freeze_face_boundary({0});
+  require(face_snapshot->vertex_alias_owner == frozen->vertex_alias_owner &&
+              face_snapshot->vertex_aliases.data() == frozen->vertex_aliases.data(),
+          "each face duplicated the whole definition source alias relation");
+  for (std::size_t i = 0; i < frozen->vertex_aliases.size(); ++i) {
+    const auto &alias = frozen->vertex_aliases[i];
+    require(source.view().vertices[alias.original.value].id.value == 310 + i &&
+                source.view().vertices[alias.representative.value].id.value == 310,
+            "source alias transport lost original member or minimum-ID representative");
+  }
+  require(
+      source.view().vertices[source.view().vertex_index.find(bgmesh::VertexId{311}).value].xyz !=
+          forest.sample(incident[0]).xyz,
+      "quotient authority overwrote original source endpoint values");
+  bgmesh::DefinitionBoundaryForest second(budget, source, {1}, resource);
+  const auto second_chain = second.chain(source.view().edge_index.find(bgmesh::EdgeId{405}));
+  require(second.sample(second_chain[0]).key.definition == 1 &&
+              second.sample(second_chain[0]).key.source == 310,
+          "declared quotient physical identity escaped definition ownership");
+}
 } // namespace
 int main(int argc, char **argv) {
   try {
-    require(argc == 2, "expected source fixture path");
+    require(argc == 2 || argc == 3, "expected source fixture path and optional quotient fixture");
     auto resource = std::make_shared<bgmesh::RunResource>(uint64_t{1} << 28);
     const auto source = bgmesh::load_source(argv[1], resource);
     epochs(source, resource);
+    if (argc == 3)
+      declared_quotients(bgmesh::load_source(argv[2], resource), resource);
     std::cout << "native shared boundary forest: complete/stale epoch cases PASS\n";
   } catch (const std::exception &error) {
     std::cerr << error.what() << '\n';

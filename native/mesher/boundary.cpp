@@ -76,6 +76,8 @@ struct DefinitionBoundaryForest::Impl final {
   std::pmr::vector<Interval> leaves;
   std::pmr::vector<BoundaryKey> requests;
   std::pmr::vector<Proposal> proposals;
+  std::pmr::vector<SourceVertexAlias> vertex_aliases;
+  std::shared_ptr<const SourceVertexAliasData> vertex_alias_owner;
   std::optional<BoundaryEvaluationBatch> pending;
   Phase phase = Phase::initial;
   BoundaryEpoch epoch{};
@@ -84,7 +86,7 @@ struct DefinitionBoundaryForest::Impl final {
   BoundaryStats counters;
   Impl(bgfd::Budget &b, SourceStore original, Slot<DefinitionTag> d, std::shared_ptr<RunResource> r)
       : budget(b), source(std::move(original)), definition(d), resource(std::move(r)), edges(&b),
-        faces(&b), samples(&b), leaves(&b), requests(&b), proposals(&b) {
+        faces(&b), samples(&b), leaves(&b), requests(&b), proposals(&b), vertex_aliases(&b) {
     if (!resource || definition.value >= data().definitions.size())
       invalid("invalid boundary definition");
     std::pmr::vector<uint32_t> edge_order(data().definition_edges.at(d.value).begin(),
@@ -93,6 +95,13 @@ struct DefinitionBoundaryForest::Impl final {
       budget.charge(1);
       return a < c;
     });
+    build_vertex_aliases(edge_order);
+    if (!vertex_aliases.empty()) {
+      budget.charge(vertex_aliases.size());
+      vertex_alias_owner = std::allocate_shared<SourceVertexAliasData>(
+          RunAllocator<SourceVertexAliasData>(resource), resource,
+          std::span<const SourceVertexAlias>(vertex_aliases));
+    }
     for (const auto slot : data().definition_faces.at(d.value)) {
       budget.charge(1);
       faces.push_back({Slot<FaceTag>{slot}, 0, absent});
@@ -156,9 +165,14 @@ struct DefinitionBoundaryForest::Impl final {
         const auto sample = BoundarySampleSlot{checked_slot(samples.size())};
         if (i == 0 || i + 1 == points.size()) {
           const auto vertex = edge.vertex_ids[i == 0 ? 0 : 1];
-          const auto &original_vertex = data().vertices[data().vertex_index.find(vertex).value];
+          const auto original_slot = data().vertex_index.find(vertex);
+          const auto representative = canonical_vertex(original_slot);
+          const auto &original_vertex = data().vertices[representative.value];
           samples.push_back({Rational::from_double(budget, points[i]),
-                             {definition.value, NodeGenerator::original_vertex, vertex.value, 0, 0},
+                             {definition.value,
+                              representative == original_slot ? alias_generator(original_slot)
+                                                              : NodeGenerator::declared_quotient,
+                              original_vertex.id.value, 0, 0},
                              original_vertex.xyz,
                              true});
         } else {
@@ -189,6 +203,86 @@ struct DefinitionBoundaryForest::Impl final {
       pending = make_batch(evaluations);
   }
   const SourceData &data() const { return source.view(); }
+  void build_vertex_aliases(std::span<const uint32_t> edge_order) {
+    const auto inventory = data().definition_vertices.at(definition.value);
+    std::pmr::vector<uint32_t> vertices(inventory.begin(), inventory.end(), &budget);
+    std::sort(vertices.begin(), vertices.end(), [&](auto a, auto b) {
+      budget.charge(1);
+      return a < b;
+    });
+    std::pmr::vector<uint32_t> parents(&budget), representatives(&budget);
+    std::pmr::vector<uint8_t> ranks(vertices.size(), uint8_t{0}, &budget);
+    parents.reserve(vertices.size());
+    representatives.reserve(vertices.size());
+    for (std::size_t i = 0; i < vertices.size(); ++i) {
+      budget.charge(1);
+      parents.push_back(checked_slot(i));
+      representatives.push_back(vertices[i]);
+    }
+    auto root = [&](uint32_t index) {
+      while (parents[index] != index) {
+        budget.charge(1);
+        parents[index] = parents[parents[index]];
+        index = parents[index];
+      }
+      return index;
+    };
+    auto local = [&](VertexId vertex) {
+      const auto slot = data().vertex_index.find(vertex).value;
+      const auto it = std::lower_bound(vertices.begin(), vertices.end(), slot, [&](auto a, auto b) {
+        budget.charge(1);
+        return a < b;
+      });
+      if (it == vertices.end() || *it != slot)
+        invalid("declared edge vertex outside definition");
+      return checked_slot(static_cast<std::size_t>(it - vertices.begin()));
+    };
+    for (const auto slot : edge_order) {
+      budget.charge(1);
+      const auto &edge = data().edges[slot];
+      if (!edge.degenerate)
+        continue;
+      auto a = root(local(edge.vertex_ids[0])), b = root(local(edge.vertex_ids[1]));
+      if (a == b)
+        continue;
+      if (ranks[a] < ranks[b])
+        std::swap(a, b);
+      parents[b] = a;
+      if (ranks[a] == ranks[b])
+        ++ranks[a];
+      if (data().vertices[representatives[b]].id < data().vertices[representatives[a]].id)
+        representatives[a] = representatives[b];
+    }
+    // Include the representative itself so lookup distinguishes a true
+    // multi-vertex component from an unchanged same-ID degenerate edge.
+    std::pmr::vector<uint32_t> sizes(vertices.size(), uint32_t{0}, &budget);
+    for (std::size_t i = 0; i < vertices.size(); ++i) {
+      budget.charge(1);
+      ++sizes[root(checked_slot(i))];
+    }
+    for (std::size_t i = 0; i < vertices.size(); ++i) {
+      budget.charge(1);
+      const auto component = root(checked_slot(i));
+      if (sizes[component] > 1)
+        vertex_aliases.push_back({{vertices[i]}, {representatives[component]}});
+    }
+  }
+  auto vertex_alias(Slot<VertexTag> vertex) const {
+    return std::lower_bound(vertex_aliases.begin(), vertex_aliases.end(), vertex,
+                            [&](const auto &row, auto key) {
+                              budget.charge(1);
+                              return row.original < key;
+                            });
+  }
+  Slot<VertexTag> canonical_vertex(Slot<VertexTag> vertex) const {
+    const auto it = vertex_alias(vertex);
+    return it != vertex_aliases.end() && it->original == vertex ? it->representative : vertex;
+  }
+  NodeGenerator alias_generator(Slot<VertexTag> vertex) const {
+    const auto it = vertex_alias(vertex);
+    return it != vertex_aliases.end() && it->original == vertex ? NodeGenerator::declared_quotient
+                                                                : NodeGenerator::original_vertex;
+  }
   void check() const {
     if (phase == Phase::failed)
       internal("boundary generation failed");
@@ -688,6 +782,9 @@ DefinitionBoundaryForest::freeze_rows(std::span<const Slot<EdgeTag>> incident) c
   result->intervals.assign(interval_rows.begin(), interval_rows.end());
   result->sample_paths.assign(paths.begin(), paths.end());
   result->path_bits.assign(bits.begin(), bits.end());
+  result->vertex_alias_owner = impl_->vertex_alias_owner;
+  if (result->vertex_alias_owner)
+    result->vertex_aliases = result->vertex_alias_owner->rows;
   return result;
 }
 BoundaryStats DefinitionBoundaryForest::stats() const {

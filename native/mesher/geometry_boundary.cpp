@@ -79,6 +79,52 @@ Rational mapped_parameter(bgfd::Budget &budget, const UseSource &source, const R
   }
   throw Error(ErrorCode::invalid_source, "source parameter map does not cover sample");
 }
+Slot<VertexTag> endpoint_representative(GeometryContext &ctx, const WorkingChart &chart,
+                                        const UseSource &source, const UseNodeRequest &request) {
+  if (!request.endpoint)
+    throw Error(ErrorCode::invalid_source, "missing explicit source endpoint binding");
+  const auto &binding = *request.endpoint;
+  const auto &snapshot = binding.boundary;
+  if (!snapshot || &snapshot->source.view() != &source.source ||
+      snapshot->face != chart.envelope.face ||
+      snapshot->definition.value >= source.source.definitions.size() ||
+      source.source.definitions[snapshot->definition.value].id !=
+          source.source.faces[snapshot->face.value].definition_id ||
+      binding.original_endpoint > 1 ||
+      request.source_parameter.compare(Rational::from_double(
+          ctx.budget(), source.edge.parameter_range[binding.original_endpoint])) != 0)
+    throw Error(ErrorCode::invalid_source, "explicit source endpoint/forest binding mismatch");
+  if (!snapshot->vertex_aliases.empty() &&
+      (!snapshot->vertex_alias_owner ||
+       snapshot->vertex_aliases.data() != snapshot->vertex_alias_owner->rows.data() ||
+       snapshot->vertex_aliases.size() != snapshot->vertex_alias_owner->rows.size()))
+    throw Error(ErrorCode::invalid_source, "source alias span lacks its retained immutable owner");
+  const auto original =
+      source.source.vertex_index.find(source.edge.vertex_ids[binding.original_endpoint]);
+  const auto row =
+      std::lower_bound(snapshot->vertex_aliases.begin(), snapshot->vertex_aliases.end(), original,
+                       [&](const auto &a, auto value) {
+                         ctx.budget().charge(1);
+                         return a.original < value;
+                       });
+  if (row == snapshot->vertex_aliases.end() || row->original != original)
+    return original;
+  if (row->representative.value >= source.source.vertices.size())
+    throw Error(ErrorCode::invalid_source, "declared source representative outside vertex pool");
+  return row->representative;
+}
+Rational request_parameter(GeometryContext &ctx, const WorkingChart &chart, const UseSource &source,
+                           const UseNodeRequest &request) {
+  if (!source.edge.degenerate)
+    return mapped_parameter(ctx.budget(), source, request.source_parameter);
+  if (!request.endpoint)
+    throw Error(ErrorCode::invalid_source, "missing explicit quotient endpoint binding");
+  static_cast<void>(endpoint_representative(ctx, chart, source, request));
+  // Quotient-only sense composition; ordinary literal t above already contains
+  // the original geometric sense and must never apply it a second time.
+  return original_quotient_parameter(ctx.budget(), chart.envelope.geometry.view().source,
+                                     request.use, request.endpoint->original_endpoint);
+}
 void validate_request(GeometryContext &ctx, const WorkingChart &chart,
                       const UseNodeRequest &request) {
   if (&request.source_parameter.budget() != &ctx.budget() ||
@@ -89,6 +135,8 @@ void validate_request(GeometryContext &ctx, const WorkingChart &chart,
       request.precision.transcendental_bits > ctx.maximum_bits() ||
       request.precision.norm_fractional_bits > ctx.maximum_bits())
     throw Error(ErrorCode::invalid_source, "invalid source recovery precision profile");
+  if (request.endpoint)
+    static_cast<void>(endpoint_representative(ctx, chart, use_source(chart, request.use), request));
 }
 Point source_curve_point(GeometryContext &ctx, const WorkingChart &chart, Slot<CurveTag> curve,
                          const Rational &parameter, GeometryBoundPrecision precision) {
@@ -105,8 +153,10 @@ Target target(GeometryContext &ctx, const WorkingChart &chart, const UseSource &
   auto &budget = ctx.budget();
   const auto a = Rational::from_double(budget, source.edge.parameter_range[0]);
   const auto b = Rational::from_double(budget, source.edge.parameter_range[1]);
-  const bool first = request.source_parameter.compare(a) == 0,
-             last = request.source_parameter.compare(b) == 0;
+  const bool first = request.endpoint ? request.endpoint->original_endpoint == 0
+                                      : request.source_parameter.compare(a) == 0,
+             last = request.endpoint ? request.endpoint->original_endpoint == 1
+                                     : request.source_parameter.compare(b) == 0;
   if (first || last) {
     auto point = vertex_point(
         budget,
@@ -287,7 +337,12 @@ UV chart_coordinate(GeometryContext &ctx, const WorkingChart &chart, const Point
   }
   return result;
 }
-Slot<VertexTag> endpoint_vertex(bgfd::Budget &budget, const UseSource &source, const Rational &t) {
+Slot<VertexTag> endpoint_vertex(GeometryContext &ctx, const WorkingChart &chart,
+                                const UseSource &source, const UseNodeRequest &request) {
+  if (request.endpoint)
+    return endpoint_representative(ctx, chart, source, request);
+  auto &budget = ctx.budget();
+  const auto &t = request.source_parameter;
   if (t.compare(Rational::from_double(budget, source.edge.parameter_range[0])) == 0)
     return source.source.vertex_index.find(source.edge.vertex_ids[0]);
   if (t.compare(Rational::from_double(budget, source.edge.parameter_range[1])) == 0)
@@ -297,8 +352,8 @@ Slot<VertexTag> endpoint_vertex(bgfd::Budget &budget, const UseSource &source, c
 void authoritative_agreement(GeometryContext &ctx, const WorkingChart &chart,
                              const UseNodeRequest &first, const UseNodeRequest &second) {
   const auto a = use_source(chart, first.use), b = use_source(chart, second.use);
-  const auto s = mapped_parameter(ctx.budget(), a, first.source_parameter);
-  const auto t = mapped_parameter(ctx.budget(), b, second.source_parameter);
+  const auto s = request_parameter(ctx, chart, a, first);
+  const auto t = request_parameter(ctx, chart, b, second);
   if (a.pcurve == b.pcurve && s.compare(t) == 0 && a.use.periodic_shift == b.use.periodic_shift)
     return;
   if (a.use.periodic_shift != b.use.periodic_shift)
@@ -313,7 +368,59 @@ void authoritative_agreement(GeometryContext &ctx, const WorkingChart &chart,
                   "authoritative pcurve endpoints do not form a common face joint");
   }
 }
+std::optional<Point> canonical_target(GeometryContext &ctx, const WorkingChart &chart,
+                                      const UseSource &source, const UseNodeRequest &request) {
+  if (!request.endpoint)
+    return std::nullopt;
+  const auto representative = endpoint_representative(ctx, chart, source, request);
+  const auto original =
+      source.source.vertex_index.find(source.edge.vertex_ids[request.endpoint->original_endpoint]);
+  if (original == representative)
+    return std::nullopt;
+  return vertex_point(ctx.budget(), source.source.vertices[representative.value]);
+}
+struct CanonicalChecks final {
+  std::optional<Rational> source, carrier;
+};
+CanonicalChecks canonical_checks(GeometryContext &ctx, const WorkingChart &chart,
+                                 const UseSource &source, const UseNodeRequest &request,
+                                 const Point &original, const UV &uv) {
+  const auto q = canonical_target(ctx, chart, source, request);
+  if (!q)
+    return {};
+  const auto norm = [&](const Point &other) {
+    const Point delta{difference((*q)[0], other[0]), difference((*q)[1], other[1]),
+                      difference((*q)[2], other[2])};
+    return enclosure_norm_upper(ctx.budget(), delta, request.precision.norm_fractional_bits);
+  };
+  auto source_upper = norm(original);
+  if (source.spatial) {
+    const auto curve = source_curve_point(ctx, chart, *source.spatial, request.source_parameter,
+                                          request.precision);
+    const auto upper = norm(curve);
+    if (upper.compare(source_upper) > 0)
+      source_upper = upper;
+  }
+  const auto carrier_upper = source_residual(ctx, chart, uv, *q, request.precision);
+  if (source_upper.compare(request.node_source_allowance) > 0 ||
+      carrier_upper.compare(request.node_source_allowance) > 0)
+    unresolved(
+        "declared canonical source representative exceeds independent node source allowance");
+  return {std::move(source_upper), carrier_upper};
+}
 } // namespace
+Rational original_quotient_parameter(bgfd::Budget &budget, const SourceStore &store,
+                                     Slot<CoedgeTag> slot, uint32_t original_endpoint) {
+  const auto &source = store.view();
+  if (slot.value >= source.coedges.size() || original_endpoint > 1)
+    throw Error(ErrorCode::invalid_source, "quotient occurrence endpoint outside source");
+  const auto &use = source.coedges[slot.value];
+  const auto &edge = source.edges[source.edge_index.find(use.edge_id).value];
+  if (!edge.degenerate)
+    throw Error(ErrorCode::invalid_source, "ordinary use passed to collapsed pcurve mapping");
+  const auto from = (original_endpoint == 0) == edge.curve_same_sense ? 0U : 1U;
+  return Rational::from_double(budget, use.parameter_range[from]);
+}
 Rational map_original_use_parameter(GeometryContext &ctx, const WorkingChart &chart,
                                     OriginalUsePoint point) {
   if (&point.source_parameter.budget() != &ctx.budget())
@@ -338,11 +445,13 @@ BoundarySiteChoice locate_boundary_site(GeometryContext &ctx, const WorkingChart
                                         const UseNodeRequest &request) {
   validate_request(ctx, chart, request);
   const auto source = use_source(chart, request.use);
-  const auto parameter = mapped_parameter(ctx.budget(), source, request.source_parameter);
+  const auto parameter = request_parameter(ctx, chart, source, request);
   const auto original = target(ctx, chart, source, request);
   const auto seed = guide(ctx, chart, source, parameter, request.precision);
-  auto uv = recover({ctx, chart, source, request, original.point, seed});
-  const auto xy = chart_coordinate(ctx, chart, original.point, uv);
+  const auto canonical = canonical_target(ctx, chart, source, request);
+  const auto &proposal = canonical ? *canonical : original.point;
+  auto uv = recover({ctx, chart, source, request, proposal, seed});
+  const auto xy = chart_coordinate(ctx, chart, proposal, uv);
   std::optional<std::array<Rational, 4>> enclosure;
   if (chart.kind == WorkingChartKind::physical_plane_convex_q) {
     const auto inverse = recover_plane_chart_locator(ctx, chart, xy, request.precision);
@@ -352,8 +461,17 @@ BoundarySiteChoice locate_boundary_site(GeometryContext &ctx, const WorkingChart
   const auto residual = source_residual(ctx, chart, uv, original.point, request.precision);
   if (residual.compare(request.node_source_allowance) > 0)
     unresolved("chosen inverse locator exceeds original node source allowance");
-  return {request.use, request.source_parameter,      parameter,           xy, uv,
-          residual,    original.endpoint_curve_upper, std::move(enclosure)};
+  const auto canonical_bounds = canonical_checks(ctx, chart, source, request, original.point, uv);
+  return {request.use,
+          request.source_parameter,
+          parameter,
+          xy,
+          uv,
+          residual,
+          original.endpoint_curve_upper,
+          std::move(enclosure),
+          canonical_bounds.source,
+          canonical_bounds.carrier};
 }
 BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingChart &chart,
                                           std::span<const UseNodeRequest> requests) {
@@ -363,16 +481,14 @@ BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingCha
   // values. An unselected request is still part of this common joint.
   for (const auto &item : requests) {
     validate_request(ctx, chart, item);
-    static_cast<void>(
-        mapped_parameter(ctx.budget(), use_source(chart, item.use), item.source_parameter));
+    static_cast<void>(request_parameter(ctx, chart, use_source(chart, item.use), item));
   }
   std::size_t selected = 0;
   std::optional<std::size_t> authoritative;
-  const auto vertex = endpoint_vertex(ctx.budget(), use_source(chart, requests[0].use),
-                                      requests[0].source_parameter);
+  const auto vertex = endpoint_vertex(ctx, chart, use_source(chart, requests[0].use), requests[0]);
   for (std::size_t i = 0; i < requests.size(); ++i) {
     const auto source = use_source(chart, requests[i].use);
-    if (endpoint_vertex(ctx.budget(), source, requests[i].source_parameter) != vertex)
+    if (endpoint_vertex(ctx, chart, source, requests[i]) != vertex)
       throw Error(ErrorCode::invalid_source,
                   "incident face joint occurrences name different original vertices");
     if (!source.use.reconstructed) {
@@ -393,7 +509,7 @@ BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingCha
   occurrences.reserve(requests.size());
   for (const auto &item : requests) {
     const auto source = use_source(chart, item.use);
-    const auto parameter = mapped_parameter(ctx.budget(), source, item.source_parameter);
+    const auto parameter = request_parameter(ctx, chart, source, item);
     const auto original = target(ctx, chart, source, item);
     const auto seed = guide(ctx, chart, source, parameter, item.precision);
     if (!same_branch({ctx, chart, source, item, original.point, seed}, chosen_site.original_uv))
@@ -402,9 +518,12 @@ BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingCha
         source_residual(ctx, chart, chosen_site.original_uv, original.point, item.precision);
     if (residual.compare(item.node_source_allowance) > 0)
       unresolved("common face-vertex joint exceeds an incident node source allowance");
+    const auto canonical_bounds =
+        canonical_checks(ctx, chart, source, item, original.point, chosen_site.original_uv);
     occurrences.push_back({item.use, item.source_parameter, parameter, chosen_site.chart,
                            chosen_site.original_uv, residual, original.endpoint_curve_upper,
-                           chosen_site.original_uv_enclosure});
+                           chosen_site.original_uv_enclosure, canonical_bounds.source,
+                           canonical_bounds.carrier});
   }
   return {vertex, chosen_site.chart, chosen_site.original_uv, std::move(occurrences),
           chosen_site.original_uv_enclosure};

@@ -404,12 +404,21 @@ struct Builder final {
       for (const auto &x : a.source_parameter)
         if (&x.budget() != &budget)
           invalid("domain source parameter owner mismatch");
-      if (a.source_parameter[0].compare(a.source_parameter[1]) == 0)
+      const auto &edge = source().edges[source().edge_index.find(u.edge_id).value];
+      if (a.declared_quotient != edge.degenerate)
+        invalid("domain quotient disposition differs from original declaration");
+      if (!a.declared_quotient && a.source_parameter[0].compare(a.source_parameter[1]) == 0)
         invalid("ordinary domain arc has zero source extent");
-      for (std::size_t endpoint = 0; endpoint < 2; ++endpoint)
-        if (map_original_use_parameter(ctx, r.chart, {a.use, a.source_parameter[endpoint]})
-                .compare(a.pcurve_parameter[endpoint]) != 0)
+      for (std::size_t endpoint = 0; endpoint < 2; ++endpoint) {
+        const auto original_endpoint = u.sense == 1 ? endpoint : 1 - endpoint;
+        const auto mapped =
+            a.declared_quotient
+                ? original_quotient_parameter(budget, r.chart.envelope.geometry.view().source,
+                                              a.use, static_cast<uint32_t>(original_endpoint))
+                : map_original_use_parameter(ctx, r.chart, {a.use, a.source_parameter[endpoint]});
+        if (mapped.compare(a.pcurve_parameter[endpoint]) != 0)
           invalid("domain mapped pcurve parameter differs from original source map");
+      }
     }
     // Arc rows follow the complete original face loop/coedge inventory.  A map
     // cannot silently omit a hole, reorder uses, or jump over a source-map piece.
@@ -425,12 +434,20 @@ struct Builder final {
         const auto &edge = source().edges[source().edge_index.find(use.edge_id).value];
         if (use.sense != 1 && use.sense != -1)
           invalid("domain original use sense invalid");
-        if (edge.degenerate)
-          unsupported("domain quotient use requires explicit mapped coverage");
+
         const auto from = use.sense == 1 ? 0U : 1U;
         auto current = Rational::from_double(budget, edge.parameter_range[from]);
         const auto finish = Rational::from_double(budget, edge.parameter_range[1 - from]);
         const auto direction = current.compare(finish);
+        if (edge.degenerate) {
+          if (cursor >= r.arcs.size() || r.arcs[cursor].use != slot ||
+              !r.arcs[cursor].declared_quotient ||
+              r.arcs[cursor].source_parameter[0].compare(current) != 0 ||
+              r.arcs[cursor].source_parameter[1].compare(finish) != 0)
+            invalid("domain omits literal collapsed source-use coverage");
+          ++cursor;
+          continue;
+        }
         if (direction == 0)
           invalid("domain ordinary source use has zero extent");
         const auto first = cursor;
@@ -493,6 +510,9 @@ struct Builder final {
     for (const auto &site : incident)
       if (site[0] == UINT32_MAX || site[1] == UINT32_MAX)
         invalid("domain source site is unreferenced or open");
+    for (const auto &site : incident)
+      if (!equal(point(r.arcs[site[0]].selected, 0), point(r.arcs[site[1]].selected, 1)))
+        invalid("domain source site has inconsistent selected coordinates");
   }
   void source_index() {
     for (uint32_t i = 0; i < request.arcs.size(); ++i) {
@@ -869,6 +889,32 @@ struct Builder final {
   DomainMap run() {
     source_index();
     const BoxIndex original(budget, arc_boxes);
+    if (std::any_of(request.arcs.begin(), request.arcs.end(),
+                    [](const auto &a) { return a.declared_quotient; })) {
+      // Finite cap profile: the original reference boundary must ALREADY be
+      // the selected ordered polygon.  The source finite-to-ideal band belongs
+      // to its explicit pole cells; no nontrivial B/T map is hidden here.
+      for (uint32_t i = 0; i < request.arcs.size(); ++i)
+        if (authoritative(i)) {
+          const auto &arc = request.arcs[i];
+          const auto source_curve = curve(i);
+          for (std::size_t endpoint = 0; endpoint < 2; ++endpoint) {
+            const auto a =
+                source_curve.range(arc.pcurve_parameter[endpoint], arc.pcurve_parameter[endpoint]);
+            for (std::size_t axis = 0; axis < 2; ++axis)
+              if (a[axis].lower.compare(arc.selected[2 * endpoint + axis]) != 0 ||
+                  a[axis].upper.compare(arc.selected[2 * endpoint + axis]) != 0)
+                unsupported(
+                    "nontrivial authoritative endpoint map coupled to a pole is not admitted");
+          }
+          if (!line_image(source_curve, arc))
+            unsupported("nontrivial authoritative trim coupled to a pole is not admitted");
+        }
+      const std::span<const DBox> empty;
+      const BoxIndex identity(budget, empty);
+      reference_admission(identity);
+      return seal();
+    }
     build_fans(original);
     separate_fans();
     std::pmr::vector<DBox> fan_boxes(&budget);
@@ -1071,7 +1117,8 @@ BoundaryKey classify_coarse_domain_issue(bgfd::Budget &budget, const FaceBoundar
       invalid("coarse domain issue references foreign source segment");
     const auto &segment = seed.segments[ordinal];
     const auto &trace = seed.trace_maps[ordinal];
-    if(segment.use.value>=source.coedges.size())invalid("coarse domain trace references foreign source use");
+    if (segment.use.value >= source.coedges.size())
+      invalid("coarse domain trace references foreign source use");
     if (!trace.trace_position_upper) {
       missing = true;
       return;
@@ -1127,7 +1174,9 @@ BoundaryKey classify_coarse_domain_issue(bgfd::Budget &budget, const FaceBoundar
   if (declared)
     unsupported(
         "declared physical contact requires another admitted chart/occurrence representation");
-  throw Error(ErrorCode::unresolved,"zero physical trace deviation does not establish a faithful source chart or hole ownership");
+  throw Error(
+      ErrorCode::unresolved,
+      "zero physical trace deviation does not establish a faithful source chart or hole ownership");
 }
 std::optional<BoundaryKey> protected_domain_point(bgfd::Budget &b, const DomainMap &lease,
                                                   const UV &point) {
@@ -1139,17 +1188,21 @@ std::optional<BoundaryKey> protected_domain_point(bgfd::Budget &b, const DomainM
   const auto &map = *lease;
   std::optional<BoundaryKey> feature;
   const Box rectangle{point[0], point[0], point[1], point[1]};
-  const auto choose=[&](BoundaryKey key) {
-    if(!feature)feature=key;
-    else if(key<feature.value())feature=key;
+  const auto choose = [&](BoundaryKey key) {
+    if (!feature)
+      feature = key;
+    else if (key < feature.value())
+      feature = key;
   };
   for (const auto ordinal : query(b, map, rectangle)) {
     if (ordinal < map.fans.size()) {
       const auto &f = map.fans[ordinal];
-      if (in_polygon(point, load(b, map.values, f.polygon), true))choose(f.feature);
+      if (in_polygon(point, load(b, map.values, f.polygon), true))
+        choose(f.feature);
     } else {
       const auto &s = map.strips[ordinal - map.fans.size()];
-      if (in_polygon(point, strip_polygon(b, map, s), true))choose(s.feature);
+      if (in_polygon(point, strip_polygon(b, map, s), true))
+        choose(s.feature);
     }
   }
   return feature;

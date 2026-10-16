@@ -1,5 +1,6 @@
 #include "meshing_run.hpp"
 #include "boundary_evaluation.hpp"
+#include "geometry_pole_control.hpp"
 #include <algorithm>
 #include <bit>
 #include <chrono>
@@ -24,8 +25,14 @@ uint64_t mix(uint64_t value) {
   return value ^ (value >> 31);
 }
 class NodeRegistry final {
-  struct Row final { PhysicalNodeKey key; Vec3 xyz; };
-  struct Bucket final { uint64_t hash = 0; uint32_t row = UINT32_MAX; };
+  struct Row final {
+    PhysicalNodeKey key;
+    Vec3 xyz;
+  };
+  struct Bucket final {
+    uint64_t hash = 0;
+    uint32_t row = UINT32_MAX;
+  };
   bgfd::Budget &budget_;
   std::pmr::vector<Row> rows_;
   std::pmr::vector<Bucket> buckets_;
@@ -55,8 +62,10 @@ class NodeRegistry final {
       ++distance;
     }
   }
+
 public:
-  explicit NodeRegistry(bgfd::Budget &budget) : budget_(budget), rows_(&budget), buckets_(&budget) {}
+  explicit NodeRegistry(bgfd::Budget &budget)
+      : budget_(budget), rows_(&budget), buckets_(&budget) {}
   NodeSlot find_or_insert(const PhysicalNode &value, bool existing) {
     budget_.charge(1);
     const auto h = hash(value.key);
@@ -103,6 +112,7 @@ public:
 class ContactPairJob final : public NativeTask {
   ContactPairBatch input_;
   std::optional<ContactPairCompleted> output_;
+
 public:
   ContactPairJob(NativeTaskKey identity, ContactPairBatch input)
       : NativeTask(identity), input_(std::move(input)) {}
@@ -222,9 +232,11 @@ struct FaceState final {
   Slot<FaceTag> source;
   uint64_t generation = 0, boundary_generation = 0;
   SourceBoundarySnapshot snapshot;
+  FaceBoundarySnapshot prepared_boundary;
   std::shared_ptr<FacePreparationJob> preparation;
   std::shared_ptr<FaceOwnerJob> owner;
   std::optional<BoundaryKey> request;
+  PoleCutControl pole_control{};
   FaceHorizon processed;
   std::pmr::vector<std::optional<ContactFacetInput>> facets;
   explicit FaceState(Slot<FaceTag> slot, bgfd::Budget &budget) : source(slot), facets(&budget) {}
@@ -279,8 +291,9 @@ struct DefinitionOwner final {
       : root(parent), definition(slot),
         forest(root.budget, root.run->geometry.view().source, slot, root.run->resource),
         contacts(root.budget, root.run->resource, root.run->geometry.view().source, slot,
-                 root.limits.contacts), faces(&root.budget), node_registry(root.budget),
-        facet_generations(&root.budget), free_facets(&root.budget) {
+                 root.limits.contacts),
+        faces(&root.budget), node_registry(root.budget), facet_generations(&root.budget),
+        free_facets(&root.budget) {
     for (const auto face : source().definition_faces.at(slot.value))
       faces.emplace_back(Slot<FaceTag>{face}, root.budget);
     std::sort(faces.begin(), faces.end(), [&](const auto &a, const auto &b) {
@@ -299,7 +312,8 @@ struct DefinitionOwner final {
   }
   FaceFrontierIdentity identity(const FaceState &face) const {
     return {{OwnerKind::face, definition.value, source().faces[face.source.value].id.value},
-            face.generation, face.boundary_generation};
+            face.generation,
+            face.boundary_generation};
   }
   BoundaryUpdate evaluate_boundary(const BoundaryEvaluationBatch &batch) {
     std::pmr::vector<BoundaryEvaluationResult> results(&root.budget);
@@ -308,14 +322,16 @@ struct DefinitionOwner final {
     while (first < batch.tasks().size()) {
       std::pmr::vector<std::shared_ptr<NativeTask>> work(&root.budget);
       while (first < batch.tasks().size() && work.size() < root.scheduler.limits().threads) {
-        const auto count = std::min<uint64_t>(root.limits.point_batch, batch.tasks().size() - first);
+        const auto count =
+            std::min<uint64_t>(root.limits.point_batch, batch.tasks().size() - first);
         auto child = std::allocate_shared<BoundaryPointJob>(
             RunAllocator<BoundaryPointJob>(root.run->resource), root.run->resource,
             root.run->geometry, batch, Range<BoundaryEvaluationTask>{first, count},
             // Immutable chunks have independent arithmetic owners. Their
             // payload retains the original source/definition/epoch identity.
             NativeTaskKey{{OwnerKind::boundary, definition.value, root.next_child()},
-                          batch.epoch().value, 0});
+                          batch.epoch().value,
+                          0});
         work.push_back(std::move(child));
         first += count;
       }
@@ -339,10 +355,11 @@ struct DefinitionOwner final {
     face.boundary_generation = face.snapshot->boundary_generation;
     face.request.reset();
     face.owner.reset();
+    face.prepared_boundary.reset();
     face.preparation = std::allocate_shared<FacePreparationJob>(
         RunAllocator<FacePreparationJob>(root.run->resource), root.run->resource,
         FacePreparationInput{root.run, face.snapshot, face.generation, root.limits.seed,
-                             root.limits.allow_plane_profile},
+                             root.limits.allow_plane_profile, face.pole_control},
         root.limits.preparation, root.scheduler.stop_token());
   }
   void drive(std::pmr::deque<ReadyTask> ready) {
@@ -361,7 +378,8 @@ struct DefinitionOwner final {
         ready.push_back({root.services[i], RouteKind::service, i});
       }
       if (ready.empty()) {
-        if (!pending.empty() || std::any_of(active.begin(), active.end(), [](const auto &v) { return v.has_value(); }))
+        if (!pending.empty() ||
+            std::any_of(active.begin(), active.end(), [](const auto &v) { return v.has_value(); }))
           internal("whole face coordinator lost a queued continuation");
         return;
       }
@@ -374,9 +392,8 @@ struct DefinitionOwner final {
         routes.push_back(std::move(value));
       }
       for (const auto &completion : root.wave(tasks)) {
-        const auto found = std::find_if(routes.begin(), routes.end(), [&](const auto &r) {
-          return r.task == completion.task;
-        });
+        const auto found = std::find_if(routes.begin(), routes.end(),
+                                        [&](const auto &r) { return r.task == completion.task; });
         if (found == routes.end())
           internal("worker completion lost its coordinator route");
         const auto route = *found;
@@ -397,7 +414,8 @@ struct DefinitionOwner final {
             face.preparation->finish_curves(std::get<BoundCompleted>(reply.output));
             ready.push_back({face.preparation, RouteKind::preparation, current->face});
           } else {
-            face.owner->finish_cells(std::get<std::shared_ptr<const CellBatchResult>>(reply.output)->cells);
+            face.owner->finish_cells(
+                std::get<std::shared_ptr<const CellBatchResult>>(reply.output)->cells);
             ready.push_back({face.owner, RouteKind::face, current->face});
           }
           service->release_result();
@@ -415,6 +433,8 @@ struct DefinitionOwner final {
           const auto &event = face.preparation->event();
           if (event.kind == FacePreparationEventKind::ready) {
             auto input = face.preparation->result();
+            face.pole_control = input.boundary->pole_control;
+            face.prepared_boundary = input.boundary;
             face.preparation.reset();
             face.owner = std::allocate_shared<FaceOwnerJob>(
                 RunAllocator<FaceOwnerJob>(root.run->resource), root.run->resource,
@@ -422,9 +442,10 @@ struct DefinitionOwner final {
             ready.push_back({face.owner, RouteKind::face, route.index});
           } else if (event.kind == FacePreparationEventKind::curves && event.curves)
             pending.push_back({route.index, true, *event.curves});
-          else if (event.kind == FacePreparationEventKind::boundary_horizon && event.boundary)
+          else if (event.kind == FacePreparationEventKind::boundary_horizon && event.boundary) {
             face.request = event.boundary;
-          else
+            face.pole_control = event.pole_control;
+          } else
             internal("unexpected face preparation event");
         } else {
           const auto &event = face.owner->event();
@@ -434,9 +455,16 @@ struct DefinitionOwner final {
             auto child = std::allocate_shared<CandidatePointJob>(
                 RunAllocator<CandidatePointJob>(root.run->resource), event.candidate);
             ready.push_back({std::move(child), RouteKind::candidate, route.index});
-          } else if (event.kind == FaceOwnerEventKind::boundary_horizon && event.boundary)
+          } else if (event.kind == FaceOwnerEventKind::boundary_horizon && event.boundary) {
             face.request = event.boundary;
-          else if (event.kind != FaceOwnerEventKind::settled)
+            if (!face.prepared_boundary)
+              internal("face cut request lost its immutable source preparation");
+            if (!face.prepared_boundary->pole_caps.empty())
+              face.pole_control =
+                  continue_pole_cut(root.budget, face.prepared_boundary, *event.boundary);
+            else if (event.boundary->kind != BoundaryOwnerKind::source_edge)
+              invalid("ordinary face requested a private pole cut");
+          } else if (event.kind != FaceOwnerEventKind::settled)
             internal("unexpected face refinement event");
         }
       }
@@ -447,14 +475,22 @@ struct DefinitionOwner final {
       root.budget.charge(1);
       const auto epoch = forest.begin_epoch();
       drive(std::move(ready));
-      bool requested = false;
-      for (const auto &face : faces) {
+      bool source_requested = false;
+      std::pmr::vector<uint32_t> cuts(&root.budget);
+      for (uint32_t at = 0; at < faces.size(); ++at) {
+        const auto &face = faces[at];
         if (face.request) {
-          if (face.request->kind != BoundaryOwnerKind::source_edge)
-            throw Error(ErrorCode::unsupported, "face-cut generation rebuild is not connected");
-          const std::array one{*face.request};
-          forest.arrive(epoch, face.source, face.boundary_generation, one);
-          requested = true;
+          if (face.request->kind == BoundaryOwnerKind::source_edge) {
+            const std::array one{*face.request};
+            forest.arrive(epoch, face.source, face.boundary_generation, one);
+            source_requested = true;
+          } else if (face.request->kind == BoundaryOwnerKind::face_cut) {
+            if (face.request->owner != source().faces[face.source.value].id.value)
+              invalid("private cut request escaped its original face");
+            forest.arrive(epoch, face.source, face.boundary_generation, {});
+            cuts.push_back(at);
+          } else
+            invalid("unknown boundary request owner kind");
         } else {
           if (!face.owner || face.owner->event().kind != FaceOwnerEventKind::settled)
             internal("definition lost a face before the complete boundary horizon");
@@ -464,23 +500,38 @@ struct DefinitionOwner final {
       const auto batch = forest.prepare_splits(epoch);
       const auto update = evaluate_boundary(batch);
       ++root.stats.boundary_rounds;
-      if (!requested) {
+      if (!source_requested && cuts.empty()) {
         if (!update.changed_faces.empty())
           internal("empty request horizon changed a shared boundary");
         return;
       }
-      if (update.changed_faces.empty())
+      if (source_requested && update.changed_faces.empty())
         internal("shared request horizon did not advance any incident face");
-      ready = std::pmr::deque<ReadyTask>(&root.budget);
+      std::pmr::vector<uint8_t> rebuild(faces.size(), uint8_t{0}, &root.budget);
+      std::pmr::vector<uint64_t> expected(&root.budget);
+      expected.reserve(faces.size());
+      for (const auto &face : faces)
+        expected.push_back(face.boundary_generation);
       for (const auto &change : update.changed_faces) {
         const auto at = face_index(change.face);
+        if (faces[at].boundary_generation != change.old_generation)
+          internal("source split did not name the current boundary generation");
+        rebuild[at] = 1;
+        expected[at] = change.generation;
+      }
+      for (const auto at : cuts)
+        rebuild[at] = 1;
+      ready = std::pmr::deque<ReadyTask>(&root.budget);
+      for (uint32_t at = 0; at < faces.size(); ++at) {
+        if (!rebuild[at])
+          continue;
         auto &face = faces[at];
-        if (face.boundary_generation != change.old_generation || face.generation == UINT64_MAX)
-          internal("boundary update did not advance the current face generation");
+        if (face.generation == UINT64_MAX)
+          throw Error(ErrorCode::resource_exhausted, "face generation exhausted");
         ++face.generation;
         prepare(at);
-        if (face.boundary_generation != change.generation)
-          internal("fresh source boundary lost its generation");
+        if (face.boundary_generation != expected[at])
+          internal("fresh cut/source preparation has the wrong boundary generation");
         ready.push_back({face.preparation, RouteKind::preparation, at});
       }
     }
@@ -505,10 +556,12 @@ struct DefinitionOwner final {
     return {{slot}, 0};
   }
   ContactProposedFacet geometry(const std::array<PhysicalNode, 3> &nodes,
-                                 const std::array<DeclaredContactEdge, 3> &edges,
-                                 bool existing = false) {
-    return {{definition.value, {node(nodes[0], existing), node(nodes[1], existing), node(nodes[2], existing)},
-              {nodes[0].xyz, nodes[1].xyz, nodes[2].xyz}}, edges,
+                                const std::array<DeclaredContactEdge, 3> &edges,
+                                bool existing = false) {
+    return {{definition.value,
+             {node(nodes[0], existing), node(nodes[1], existing), node(nodes[2], existing)},
+             {nodes[0].xyz, nodes[1].xyz, nodes[2].xyz}},
+            edges,
             {nodes[0].key, nodes[1].key, nodes[2].key}};
   }
   std::pmr::vector<CellResultKey> contact_horizon() {
@@ -522,7 +575,8 @@ struct DefinitionOwner final {
       if (!horizon || horizon->face != identity(face))
         internal("settled face has no matching immutable contact horizon");
       auto delta = std::allocate_shared<ContactFaceDeltaData>(
-          RunAllocator<ContactFaceDeltaData>(root.run->resource), root.run->resource, identity(face));
+          RunAllocator<ContactFaceDeltaData>(root.run->resource), root.run->resource,
+          identity(face));
       auto erase = [&](const ContactFacetInput &input) {
         delta->removed.push_back(input.facet);
         retired.push_back(input.facet.slot.value);
@@ -545,7 +599,7 @@ struct DefinitionOwner final {
           const auto *found = face.find(cell.cell.triangle);
           const auto handle = found ? found->facet : allocate_facet();
           const ContactFacetInput input{handle, cell.cell, proposed.geometry, proposed.edges,
-                                         proposed.node_keys};
+                                        proposed.node_keys};
           face.insert(input);
           delta->inserted.push_back(input);
         }
@@ -565,8 +619,9 @@ struct DefinitionOwner final {
           break;
         work.push_back(std::allocate_shared<ContactPairJob>(
             RunAllocator<ContactPairJob>(root.run->resource),
-            NativeTaskKey{{OwnerKind::contact, definition.value, root.next_child()},
-                          epoch.value, 0}, std::move(*batch)));
+            NativeTaskKey{
+                {OwnerKind::contact, definition.value, root.next_child()}, epoch.value, 0},
+            std::move(*batch)));
       }
       if (work.empty())
         break;
@@ -581,7 +636,10 @@ struct DefinitionOwner final {
   }
   void optimize() {
     using QueueKey = std::pair<FaceId, uint64_t>;
-    struct QueuedEdge final { uint32_t face; EdgeHandle edge; };
+    struct QueuedEdge final {
+      uint32_t face;
+      EdgeHandle edge;
+    };
     std::pmr::map<QueueKey, QueuedEdge> queue(&root.budget);
     auto enqueue = [&](uint32_t at) {
       const auto &reply = faces[at].owner->event().optimizer;
@@ -647,7 +705,7 @@ struct DefinitionOwner final {
       std::array<ContactFacetInput, 2> replacement;
       for (std::size_t i = 0; i < 2; ++i)
         replacement[i] = {allocate_facet(), (*reply->committed)[i], proposed[i].geometry,
-                           proposed[i].edges, proposed[i].node_keys};
+                          proposed[i].edges, proposed[i].node_keys};
       contacts.commit_replacement(*approval, replacement);
       for (std::size_t i = 0; i < 2; ++i) {
         face.erase(proposal->old_cells[i].triangle);
@@ -674,10 +732,11 @@ struct DefinitionOwner final {
         break;
       ready = std::pmr::deque<ReadyTask>(&root.budget);
       for (uint32_t at = 0; at < faces.size(); ++at) {
-        const auto first = std::lower_bound(marks.begin(), marks.end(), identity(faces[at]),
-                                             [](const auto &a, const auto &b) { return a.face < b; });
+        const auto first =
+            std::lower_bound(marks.begin(), marks.end(), identity(faces[at]),
+                             [](const auto &a, const auto &b) { return a.face < b; });
         const auto last = std::upper_bound(first, marks.end(), identity(faces[at]),
-                                            [](const auto &a, const auto &b) { return a < b.face; });
+                                           [](const auto &a, const auto &b) { return a < b.face; });
         if (first != last) {
           faces[at].owner->mark_contacts(std::span<const CellResultKey>(first, last));
           ready.push_back({faces[at].owner, RouteKind::face, at});
@@ -703,13 +762,14 @@ struct DefinitionOwner final {
 };
 } // namespace
 MeshedRun mesh_prepared_run(const PreparedRun &input, NativeScheduler &scheduler,
-                             const MeshingRunLimits &limits) {
+                            const MeshingRunLimits &limits) {
   if (!input)
     invalid("whole native mesher requires a prepared original source");
   const auto started = std::chrono::steady_clock::now();
   Root root(input, scheduler, limits);
   try {
-    auto result = std::allocate_shared<MeshedRunData>(RunAllocator<MeshedRunData>(input->resource), input);
+    auto result =
+        std::allocate_shared<MeshedRunData>(RunAllocator<MeshedRunData>(input->resource), input);
     for (uint32_t i = 0; i < input->geometry.view().source.view().definitions.size(); ++i) {
       DefinitionOwner definition(root, {i});
       definition.finish(*result);
@@ -717,14 +777,16 @@ MeshedRun mesh_prepared_run(const PreparedRun &input, NativeScheduler &scheduler
     root.close_services();
     root.stats.owner_work += root.budget.work();
     root.stats.owner_peak = std::max(root.stats.owner_peak, root.budget.peak());
-    root.stats.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
+    root.stats.seconds =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
     result->stats = root.stats;
     return result;
   } catch (...) {
     const auto failure = std::current_exception();
     scheduler.stop();
     scheduler.drain();
-    while (scheduler.take()) {}
+    while (scheduler.take()) {
+    }
     for (const auto &service : root.services)
       service->close();
     std::rethrow_exception(failure);

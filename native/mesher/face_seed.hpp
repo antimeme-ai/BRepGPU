@@ -3,6 +3,7 @@
 #include "geometry_charts.hpp"
 #include "geometry_correspondence.hpp"
 #include "mesh_values.hpp"
+#include "pole_seed.hpp"
 #include "topology.hpp"
 
 namespace bgmesh {
@@ -46,6 +47,7 @@ struct FaceUseDisposition final {
   FaceUseKind kind;
   Range<FaceBoundarySegment> segments;
   std::array<ExactRef, 2> original_parameter;
+  std::optional<std::array<ExactRef, 2>> quotient_pcurve_parameter{};
 };
 struct FaceBoundaryLoop final {
   Slot<LoopTag> source_loop;
@@ -78,12 +80,19 @@ struct FaceBoundarySnapshotData final {
   std::optional<FrozenPlaneChart> plane;
   std::shared_ptr<const BoundaryProtectionData> protection;
   std::shared_ptr<const DomainMapData> domain_map;
+  SourceBoundarySnapshot source_boundary;
   std::pmr::vector<FaceBoundarySite> sites;
   std::pmr::vector<FaceBoundarySegment> segments;
   std::pmr::vector<FaceBoundaryLoop> loops;
   std::pmr::vector<FaceUseDisposition> uses;
   // One finite selected correspondence per segment in identical index order.
   std::pmr::vector<FaceTraceMap> trace_maps;
+  PoleCutControl pole_control{};
+  bool construction_domain_present = false;
+  std::pmr::vector<FaceConstructionSegment> construction_segments;
+  std::pmr::vector<FaceConstructionLoop> construction_loops;
+  std::pmr::vector<FrozenPoleCap> pole_caps;
+  std::pmr::vector<FrozenPolePiece> pole_pieces;
 
   FaceBoundarySnapshotData(std::shared_ptr<RunResource> owner, GeometryStore store,
                            Slot<DefinitionTag> definition_slot, Slot<FaceTag> face_slot,
@@ -93,7 +102,9 @@ struct FaceBoundarySnapshotData final {
         face(face_slot), source_generation(generations[0]), face_generation(generations[1]),
         boundary_generation(generations[2]), chart_kind(kind), values(std::move(table)),
         sites(resource.get()), segments(resource.get()), loops(resource.get()),
-        uses(resource.get()), trace_maps(resource.get()) {}
+        uses(resource.get()), trace_maps(resource.get()), construction_segments(resource.get()),
+        construction_loops(resource.get()), pole_caps(resource.get()), pole_pieces(resource.get()) {
+  }
   FaceBoundarySnapshotData(const FaceBoundarySnapshotData &) = delete;
   FaceBoundarySnapshotData &operator=(const FaceBoundarySnapshotData &) = delete;
 };

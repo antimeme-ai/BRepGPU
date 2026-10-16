@@ -86,7 +86,8 @@ struct FacePreparationJob::Impl final {
     std::pmr::polymorphic_allocator<FaceBoundaryPreparation> allocator(&budget);
     auto *value = allocator.allocate(1);
     try {
-      std::construct_at(value, budget, context, input.run->geometry, input.boundary, request);
+      std::construct_at(value, budget, context, input.run->geometry, input.boundary, request,
+                        input.pole_control);
     } catch (...) {
       allocator.deallocate(value, 1);
       throw;
@@ -148,8 +149,10 @@ StepState FacePreparationJob::step(JobContext &job) {
       return StepState::wait_child;
     }
     case FacePreparationState::boundary_request:
-      impl_->event = {
-          FacePreparationEventKind::boundary_horizon, {}, impl_->preparation->boundary_request()};
+      impl_->event = {FacePreparationEventKind::boundary_horizon,
+                      {},
+                      impl_->preparation->boundary_request(),
+                      impl_->preparation->next_pole_control()};
       if (!impl_->event.boundary)
         throw Error(ErrorCode::internal_error, "face preparation lost shared boundary request");
       return StepState::wait_barrier;
