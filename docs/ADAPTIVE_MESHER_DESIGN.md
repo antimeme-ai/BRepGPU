@@ -33,6 +33,14 @@ independent measured workloads, not arguments for silently restoring the old
 constructor. No watch names, source IDs, dimensions or sample counts select an
 algorithm, tolerance or resource limit.
 
+The first untrimmed patch checkpoint admits local source immersion, separately
+from actual-facet noncollapse. Analytic roots check their finite frame/radius/
+pole conditions; rational nodes use conservative derivative/cofactor bounds on
+the same restricted controls. Ambiguity drives that cache's refinement or a
+typed finite failure. This is not a global injectivity or embedded-solid proof.
+Shared trims, finite quotients and complete component publication follow their
+explicit later checkpoints.
+
 ## Source and error meaning
 
 Original binary64 source coefficients, frames, topology, pcurves and assembly

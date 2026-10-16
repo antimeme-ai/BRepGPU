@@ -16,7 +16,12 @@ resolve concrete engineering decisions rather than request permission again.
    side schedules and positive packet triangulation. A source patch must really
    reach triangles and measurable output; an evaluator or allocation demo alone
    does not complete this checkpoint. Scope is explicit untrimmed patches, not
-   a complete imported component.
+   a complete imported component. Regularity means local source immersion:
+   finite analytic admission excludes singular rectangles, while conservative
+   rational derivative/cofactor bounds run in the same adaptive node cache.
+   Ambiguous regularity refines or returns a typed exhausted/unsupported outcome;
+   positional acceptance and nonzero emitted triangles alone do not prove it.
+   Global source embedding/injectivity is not claimed by this patch checkpoint.
 2. **Shared curves and chosen domains.** Connect original curve caches to the
    single physical source-edge sample authority, efficient source-node recovery,
    selected trace correspondence, whole-interval chord/domain bounds, original
