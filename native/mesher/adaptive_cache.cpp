@@ -1,4 +1,5 @@
 #include "adaptive_cache.hpp"
+#include "adaptive_device_owner.hpp"
 #include "adaptive_geometry.hpp"
 #include "adaptive_numeric.hpp"
 #include "cuda/adaptive_api.h"
@@ -148,67 +149,11 @@ struct BoundTier {
   uint32_t signature, next;
   NodeBounds value;
 };
-// Preregistered, intrusive ownership: failed final drains need no allocation.
-struct ExternalLease {
-  ExternalLease *next = nullptr;
-  std::shared_ptr<ResourceReservation> reservation;
-};
-struct DeviceOwner {
-  DeviceOwner *next = nullptr;
-  std::shared_ptr<RunResource> resource;
-  std::shared_ptr<ResourceReservation> reservation;
-  void *module = nullptr;
-  const AdaptiveCudaAPI *api = nullptr;
-  DeviceSession *session = nullptr;
-  ExternalLease *leases = nullptr;
-  explicit DeviceOwner(std::shared_ptr<RunResource> r) : resource(std::move(r)) {}
-};
-void *reserve_external(void *context, uint64_t bytes) noexcept {
-  auto &owner = *static_cast<DeviceOwner *>(context);
-  ExternalLease *record = nullptr;
-  try {
-    record = static_cast<ExternalLease *>(
-        owner.resource->allocate(sizeof(ExternalLease), alignof(ExternalLease)));
-    new (record) ExternalLease;
-    record->reservation = reserve_resource(owner.resource, bytes);
-    record->next = owner.leases;
-    owner.leases = record;
-    return record;
-  } catch (...) {
-    if (record) {
-      record->~ExternalLease();
-      owner.resource->deallocate(record, sizeof(ExternalLease), alignof(ExternalLease));
-    }
-    return nullptr;
-  }
-}
-void release_external(DeviceOwner &owner, ExternalLease *token) noexcept {
-  auto **at = &owner.leases;
-  while (*at && *at != token)
-    at = &(*at)->next;
-  if (!*at)
-    return;
-  auto *record = *at;
-  *at = record->next;
-  record->~ExternalLease();
-  owner.resource->deallocate(record, sizeof(ExternalLease), alignof(ExternalLease));
-}
-std::atomic<DeviceOwner *> poisoned{nullptr};
-void retain_poison(DeviceOwner *owner) noexcept {
-  auto *previous = poisoned.load(std::memory_order_relaxed);
-  do {
-    owner->next = previous;
-  } while (!poisoned.compare_exchange_weak(previous, owner, std::memory_order_release,
-                                           std::memory_order_relaxed));
-  std::fputs(
-      "adaptive CUDA final drain failed: retaining poisoned device owner until process exit\n",
-      stderr);
-}
-void device_check(int32_t status, const DeviceError &error) {
-  if (status)
-    throw Error(status == 2 ? ErrorCode::resource_exhausted : ErrorCode::device_failure,
-                error.message[0] ? error.message : "adaptive CUDA failure");
-}
+using DeviceOwner = detail::DeviceOwner<AdaptiveCudaAPI>;
+using ExternalLease = detail::ExternalLease;
+using detail::device_check;
+using detail::release_external;
+using detail::retain_poison;
 std::atomic<uint64_t> session_ids{1};
 } // namespace
 
@@ -284,6 +229,8 @@ struct PatchSession::Impl {
     external_stop.emplace(token, ForwardStop{&cancellation});
     check(resource && source.source().view().resource == resource, ErrorCode::internal_error,
           "adaptive source resource mismatch");
+    check(source.purpose() == SourceCachePurpose::regular_patch, ErrorCode::invalid_source,
+          "trace-only source cache cannot form a regular patch");
     check(cap.nodes && cap.points && cap.frontier && cap.control_scalars && cap.ambiguities &&
               cap.max_axis_depth && cap.max_axis_depth <= 64 && cap.cpu_threads &&
               cap.cpu_threads <= 1024 && cap.child_bytes && cap.child_work && cap.total_work &&
@@ -1166,7 +1113,7 @@ void PatchSession::open_device(const CacheDevice &request) {
   config.host_bytes = p.limits.host_bytes;
   config.work = p.limits.total_work;
   config.reservation_context = &owner;
-  config.reserve = reserve_external;
+  config.reserve = detail::reserve_external<AdaptiveCudaAPI>;
   // The C ABI has two opaque pointers; keep the internal release operation typed.
   config.release = [](auto *context, auto *token) noexcept {
     release_external(*static_cast<DeviceOwner *>(context), static_cast<ExternalLease *>(token));
