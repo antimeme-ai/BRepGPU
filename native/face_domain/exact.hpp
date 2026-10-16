@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory_resource>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -157,6 +158,7 @@ public:
   }
   [[nodiscard]] int sign() const noexcept { return sign_; }
   [[nodiscard]] std::size_t size() const noexcept { return limbs_.size(); }
+  [[nodiscard]] std::span<const uint32_t> magnitude() const noexcept { return limbs_; }
   [[nodiscard]] int compare(const Integer &other) const {
     budget_->charge(1);
     if (sign_ != other.sign_)
