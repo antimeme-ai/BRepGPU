@@ -1,7 +1,7 @@
 # Native mesher: shared features and face construction implementation plan
 
-Status: proposed implementation plan for review; no product implementation or
-tests have started. This is one construction owner inside
+Status: accepted in the whole-plan review; implementation is underway.
+This is one construction owner inside
 `NATIVE_MESHER_DESIGN.md`, coordinated with the geometry and native runtime
 plans. It owns source incidence through final accepted facet connectivity,
 including actual-facet contact decisions. It does not ship an independent CDT

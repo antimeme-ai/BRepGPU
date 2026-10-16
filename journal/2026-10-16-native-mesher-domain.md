@@ -40,5 +40,7 @@ reader independently Fraction-transforms literal original coordinates and invoke
 the existing `qualify_cdt` coverage/embedding/source/local-legality oracle. It
 replaces a duplicate native/oracle CTest or another geometry checker. Actual
 ASan/UBSan/LSan process plus reader and actual-source engine/fixture clang-tidy
-pass. Independent source review and root CMake integration follow; whole source
-trace/cell/contact orchestration remains unfinished.
+pass. Root's scoped independent source review ACCEPT is recorded in
+`papers/2026-10-16-native-mesher-domain-code-review.md`, including exact Y grouping,
+own subtraction, common dyadic scale and temporary lifetime. Root CMake
+integration follows; whole source trace/cell/contact orchestration is unfinished.

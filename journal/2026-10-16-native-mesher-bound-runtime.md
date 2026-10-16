@@ -44,3 +44,9 @@ and ACCEPTED this scoped adapter. The whole-mesh coordinator remains its planned
 consumer. Logs stay ignored in
 context/bound-runtime-unit; all execution used the isolated native-mesher fleet
 checkout, not the old active watch job.
+
+Root independent actual code review ACCEPT: immutable root/input leases,
+cached anchors, separate children/cumulative work, identity validation and
+preregistered session rollback/final-failed-drain retention all accepted. Root
+owns the coherent commit. Next consumer subplan is
+docs/native-mesher-actual-cell-unit.md; no further runtime certification campaign.
