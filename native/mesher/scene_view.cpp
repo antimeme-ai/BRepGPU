@@ -372,23 +372,36 @@ void write_scene(const std::filesystem::path &path, const NativeScene &scene,
                  bgfd::Budget &budget) {
   if (!scene)
     invalid("native display scene is absent");
+  write_scene(path, scene->view(), budget);
+}
+void write_scene(const std::filesystem::path &path, const bgom10::SceneView &scene,
+                 bgfd::Budget &budget) {
+  bgom10::validate_scene_view(&scene, true, {&budget, &budget, [](void *state, uint64_t count) {
+                                               static_cast<bgfd::Budget *>(state)->charge(count);
+                                             }});
+  const auto definitions = bgom10::records(scene.definitions, scene.ndefinitions);
+  const auto instances = bgom10::records(scene.instances, scene.ninstances);
+  const auto vertices = bgom10::records(scene.vertices, scene.nvertices);
+  const auto triangles = bgom10::records(scene.triangles, scene.ntriangles);
+  const auto carriers = bgom10::records(scene.carriers, scene.ncarriers);
+  const auto materials = bgom10::records(scene.materials, scene.nmaterials);
+  const auto controls = bgom10::records(scene.controls, scene.ncontrols);
   Writer writer(path, budget);
   writer.raw("BGMESH01");
   writer.u32(1);
   writer.u32(bgom10::SOURCE_GEOMETRY_PROFILE);
   for (const uint64_t count :
-       {scene->definitions.size(), scene->instances.size(), scene->vertices.size(),
-        scene->triangles.size(), scene->carriers.size(), scene->materials.size(),
-        scene->controls.size(), std::size_t{0}})
+       {definitions.size(), instances.size(), vertices.size(), triangles.size(), carriers.size(),
+        materials.size(), controls.size(), std::size_t{0}})
     writer.u64(count);
-  for (const auto &v : scene->definitions) {
+  for (const auto &v : definitions) {
     writer.u64(v.id);
     writer.u64(v.first_vertex);
     writer.u64(v.vertex_count);
     writer.u64(v.first_triangle);
     writer.u64(v.triangle_count);
   }
-  for (const auto &v : scene->instances) {
+  for (const auto &v : instances) {
     writer.u64(v.id);
     writer.u32(v.definition);
     writer.u32(v.reserved);
@@ -397,7 +410,7 @@ void write_scene(const std::filesystem::path &path, const NativeScene &scene,
     for (double x : v.explosion)
       writer.f64(x);
   }
-  for (const auto &v : scene->vertices) {
+  for (const auto &v : vertices) {
     for (double x : v.xyz)
       writer.f64(x);
     for (double x : v.uv)
@@ -406,13 +419,13 @@ void write_scene(const std::filesystem::path &path, const NativeScene &scene,
     writer.u32(v.flags);
     writer.u64(v.physical);
   }
-  for (const auto &v : scene->triangles) {
+  for (const auto &v : triangles) {
     for (uint32_t x : v.vertex)
       writer.u32(x);
     writer.u32(v.material);
     writer.u64(v.face);
   }
-  for (const auto &v : scene->carriers) {
+  for (const auto &v : carriers) {
     writer.u64(v.id);
     writer.u32(v.tag);
     writer.u32(v.flags);
@@ -429,12 +442,12 @@ void write_scene(const std::filesystem::path &path, const NativeScene &scene,
     writer.u32(v.q);
     writer.u64(v.reserved);
   }
-  for (const auto &v : scene->materials) {
+  for (const auto &v : materials) {
     for (double x : v.rgb)
       writer.f64(x);
     writer.f64(v.roughness);
   }
-  for (const auto &v : scene->controls)
+  for (const auto &v : controls)
     for (double x : v.h)
       writer.f64(x);
   writer.finish();
