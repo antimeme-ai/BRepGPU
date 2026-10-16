@@ -102,3 +102,41 @@ from actual counters. Backend parity tests deterministic placement; the
 independent original-output reader supplies geometric truth. Scoped source
 review and caller sanitizers address memory/publication faults. Stop once direct
 affected checks pass; no additional certification or unchanged watch retry.
+
+## Wire revision 1
+
+Header is `<8sII8Q32s`: BGACRV01, wire1, numeric profile1, original definition
+ID, boundary node-row count, edge count, alias count, physical-interval count,
+use count, site count, use-interval count, original source digest. All following
+integers are little-endian; there is no implicit struct padding. A rational is
+`<iII>` sign/numerator-count/denominator-count followed by reduced uint32 limbs.
+An optional value has a uint32 present flag followed by its payload when present.
+
+Rows follow in header order. A boundary node writes generator(uint32), original
+source/generation/ordinal/constructed-revision(uint64 each), XYZ(3 doubles), exact
+t, path-bit count(uint32) and that many byte0/1 directions. An edge writes eight
+uint64 values: original edge/curve/endpointVertex0/endpointVertex1, node first/
+count and interval first/count; then original t0/t1(double) and four uint32
+curve-sense/same-parameter/degenerate/reserved0. Aliases write original and
+representative VertexIDs (two uint64).
+
+A physical interval writes BoundaryKey(owner:uint64,interval:uint64,kind:uint32),
+two boundary-node uint32 indices, exact t0/t1, exact parameter-chord bound,
+optional exact image bound, correspondence(uint32), optional line map. Physical
+interval order matches the boundary interval pool used by each edge range.
+A line map writes exact covector3/curve-scalar2/trace-scalar2/original-t2, then
+traversal(int32). Map payloads address retained ORIGINAL curve parameters.
+
+A use writes original use/face/edge/carrier/loop IDs (five uint64), sense(int32),
+reconstructed/map-kind/shifts2/authority (five uint32 words, signed shifts by
+int32 bit pattern), sites first/count, intervals first/count and face/boundary
+generations (six uint64). A site writes boundary node(uint32), original LoopID
+(uint64), junction(uint32), original shifts2/selected branch2(int32 each), then
+exact t/s/chosenUV2/chartXY2/node-source-upper.
+
+A use interval writes BoundaryKey, sites2/authority/correspondence(uint32 each),
+exact carrier-trace-to-chord/source-to-selected-trace/UV-component2 bounds,
+optional exact authoritative-domain bound, optional line map and optional
+cylinder identity. A cylinder identity writes original spatial-curve/carrier IDs
+(uint64), orientation(int32), exact t2/chosenUV4/constant-v. No query table keys,
+cache pointers or transient numerical pool offsets are written as source IDs.
