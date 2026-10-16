@@ -1,7 +1,7 @@
 # Native mesher implementation plan: values, exact tasks, runtime and output
 
-Status: proposed implementation plan for whole-plan review, after accepted design
-`f7aedef`. Code follows accepted whole-plan review.
+Status: accepted in the whole-plan review after design `f7aedef`.
+Implementation is underway; acceptance of the plan does not claim delivery.
 This lane owns one source/value/numerical-task/runtime/result contract; geometry
 and topology owners supply their algorithms against it. It does not deliver a
 collection of separately usable ports in place of the whole mesher.

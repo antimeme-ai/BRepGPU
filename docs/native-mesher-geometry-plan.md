@@ -1,8 +1,8 @@
 # Native mesher: original geometry, correspondence and coverage implementation plan
 
-Status: proposed for independent whole-plan review after accepted design
-`f7aedef`. This specifies procedures and admission, not implemented capabilities.
-No product/test implementation or geometry execution belongs to this phase.
+Status: accepted in the independent whole-plan review after design `f7aedef`.
+Implementation is underway. This specifies procedures and admission; completed
+capabilities and their limits are recorded in the implementation journals.
 It is the geometry owner of [the complete operation](NATIVE_MESHER_PLAN.md),
 using [runtime values/tasks](native-mesher-runtime-plan.md) and supplying
 [shared features and face construction](native-mesher-topology-plan.md).
