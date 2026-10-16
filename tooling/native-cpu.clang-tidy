@@ -1,0 +1,10 @@
+Checks: >-
+  -*,
+  bugprone-use-after-move,
+  bugprone-unchecked-optional-access,
+  bugprone-easily-swappable-parameters,
+  performance-unnecessary-copy-initialization,
+  performance-unnecessary-value-param,
+  clang-analyzer-*
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
