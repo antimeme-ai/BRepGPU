@@ -1,6 +1,7 @@
 # Native predicate implementation plan
 
-Status: proposed for root review before code.
+Status: root reviewed and accepted before code; steps 1–5 complete. Constructor
+integration remains the subsequent owning lane's work.
 
 1. Review `DIRECT_CDT_PREDICATES_DESIGN.md` interface/ownership, enclosure and
    scalar-error derivations with root and the constructor owner. Agree the

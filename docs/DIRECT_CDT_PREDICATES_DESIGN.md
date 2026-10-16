@@ -1,6 +1,7 @@
 # Native direct CDT predicates
 
-Status: proposed for root review before product code. This implements the
+Status: root reviewed and accepted before product code; implementation and
+focused fleet verification complete. This implements the
 filtered-exact direction in `DIRECT_CDT_STRATEGY.md` and the predicate research
 paper, independently of triangulation topology.
 
@@ -114,6 +115,8 @@ do not alter the caller's floating environment. Preparing enclosures uses exact
 integer bit operations/IEEE construction and therefore does not depend on the
 current rounding state. Explicit FMA, checked 128-bit and additional adaptive
 stages remain contenders rather than unreviewed additions to this unit.
+`FLT_EVAL_METHOD` must also equal zero before enabling any floating filter;
+an excess-precision profile uses the exact path.
 
 ## Budgets, counters and failures
 
