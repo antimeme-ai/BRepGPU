@@ -21,3 +21,11 @@ the report records source, author, revision, license, bytes, SHA and restoration
 No product edit, source dependency adoption, fleet experiment or CAD execution
 was performed by this research lane. Recommendations require measured actual
 cost reductions and independent geometry checks before stronger claims.
+
+During implementation review, recorded a deferred weak-convex specialization:
+an exact no-hole convex ring with protected collinear samples can reject the
+triangle-apex/opposite-flat-chain ear using maintained strict-corner topology,
+potentially avoiding point queries entirely. Actual exact turn signs, supporting
+line reasoning and cursor complexity need a separate selected unit; no geometry
+snapping or immediate scope expansion. Root asked to defer live-leaf and inline
+integer tuning after the first practical target passes.
