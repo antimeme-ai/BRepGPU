@@ -189,6 +189,20 @@ construction and complete-part time.
 
 ## Correctness and brutal performance experiments
 
+The captured watch cylinder is one regression/performance input, not the
+admission contract or tuning denominator. Before implementation, select
+independent authored initial triangulations and relevant external domains:
+thin fans, approximately isotropic meshes, concave constrained domains, holes,
+cocircular grids and anisotropic metrics, at multiple sizes and with permuted
+source IDs. Generate their initial connectivity independently of watch sampling.
+Keep wide-coordinate/cancellation cases in the numerical cohort. Translation
+and exact scale derivatives supplement these independent families; a changed
+metric need not retain the same diagonals. No cylinder/part-ID shortcut, assumed
+aspect ratio, watch-sized allocation or tolerance relaxation is admitted.
+Cached lifts rely on fixed vertices and metric, not a carrier family. Report
+whole-call time/work/memory per family, including regressions, before selecting
+an optimization on the strength of the captured watch result.
+
 1. Before code, review the exact metric/queue/local-update contract and bounded
    plan. Genuine authored RED targets the missing native connectivity capability.
 2. Direct hand-derived weighted incircle signs, zero and wide cancellation;

@@ -200,6 +200,17 @@ and checks exact source-token/node-ID round trips before handing output onward.
 
 ## Direct correctness and performance claims
 
+OM10 motivates this unit's practical target; it does not define its geometry
+contract. Production admits exact sampled domains independently of model name,
+source ID, dimension or observed sample count. The strict-convex shortcut is
+selected only after general simplicity and exact turn checks, never from a
+known part or expected shape. Resource limits remain declared caller budgets.
+The separate strip, convex, concave, hole and external-input families below
+remain part of the evaluation even when an optimization helps the watch.
+Report their outcomes separately; a watch improvement cannot hide another
+family's regression. Choose additional independent inputs before tuning the
+next mechanism rather than selecting only successful examples afterward.
+
 Use Python Fraction as an independent arithmetic oracle, the unchanged Python
 boundary/ear model for promised ordering, and `qualify_domain` for positive full
 original boundary chains. For bounded fixtures also directly reject crossing
