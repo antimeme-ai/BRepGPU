@@ -57,6 +57,13 @@ remain visible. The constructor uses a shared bounded PMR resource for owned
 points, arithmetic, topology and output. No source-dependent admission or
 capacity is introduced.
 
+The reused input reader still checks each hole against other loops by winding;
+many-hole validation can therefore be quadratic even though direct construction
+avoids the old fan repair. No whole-call asymptotic bound is claimed for that
+composition. The initial Python coordinate normalizer also conservatively
+reserves legacy bridge-weight space before reduced metric packing; an unusually
+tight input byte limit may reject an otherwise smaller direct encoding.
+
 ## Implementation and direct checks
 
 1. Review this boundary plan against the constructor and predicate interfaces.

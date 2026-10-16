@@ -65,6 +65,7 @@ typedef struct bgfd_context bgfd_context;
 uint32_t bgfd_abi_size(uint32_t record);
 bgfd_status bgfd_create(const bgfd_input *input, bgfd_context **output, bgfd_error *error);
 bgfd_status bgfd_first_crossing(bgfd_context *context, bgfd_crossing *output, bgfd_error *error);
+bgfd_status bgfd_validate_domain(bgfd_context *context, bgfd_error *error);
 bgfd_status bgfd_triangulate(bgfd_context *context, bgfd_error *error);
 bgfd_status bgfd_copy_triangles(bgfd_context *context, uint64_t *ids, uint64_t capacity,
                                 uint64_t *required, bgfd_error *error);

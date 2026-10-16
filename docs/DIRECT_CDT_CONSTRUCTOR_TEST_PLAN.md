@@ -1,6 +1,6 @@
 # Direct CDT constructor: public tests and performance experiment
 
-Status: proposed for root review before test/benchmark implementation. This
+Status: root reviewed and accepted before test/benchmark implementation. This
 unit owns actual public-constructor tests and independently qualified workload
 comparisons. Native construction and Python binding have separate owners.
 All geometry, tests and benchmarks execute on the isolated fleet checkout.
@@ -37,7 +37,11 @@ source inputs. An identical seed/input is repeatable; different seeds or source
 renaming need not choose identical legal zero diagonals. Include wrong/unknown
 loops, crossing domain, nonpositive/nonfinite metric, unsigned-ID/range issues,
 input/memory/work exhaustion, closed owner and successful independent owner
-after another fails. Do not require an invalid operation to return a mesh.
+after another fails. Successful repeats copy cached immutable connectivity;
+construction/predicate/work counters remain unchanged while actual output copy
+time can accumulate. A failed construction attempt is terminal for that owner;
+no silent budget reset or partial output is allowed. Do not require an invalid
+operation to return a mesh.
 
 ## Complete large-output qualification without pairwise output scans
 
@@ -129,3 +133,32 @@ timeouts/resource failures/unfavorable scaling visible. Inputs are owned exact
 Python values; do not add JSON internal persistence or a dependency. A benchmark
 is complete after meaningful correctness/performance evidence and independent
 review; it does not start a certification campaign.
+
+## Reviewed amendment: actual long constraint recovery
+
+The first four scalable families returned zero crossed edges and zero cavity
+occurrences at every measured size. Their performance evidence covers initial
+DT construction, original-domain validation and eliminating the old poor ear
+fan; it does not cover constraint recovery. Root reviewed and approved this
+additional independent family before code or tuning.
+
+Use an exact outer rectangle with many protected bottom sites on `y=-eps` at
+strictly increasing stations across `[0,1]`. Inside it, place a narrow rectangular
+hole above the unsplit protected base `(0,0)-(1,0)`, with the same stations on
+its top edge `y=+eps`. The enclosing rectangle is strictly separated from the
+hole. Initial DT ladder edges cross the forced long base; inserting this actual
+source constraint exercises real recovery and a large cavity. No watch parameter
+or observed sample count enters construction or admission.
+
+The independent family reader checks actual two-chain station order/coordinates,
+positive separation and strict outer/hole containment. Original unique sites,
+protected segments, exact positive chain/incidence and every local determinant
+remain mandatory. Before scaling, run target 32 and 64 through the existing
+complete pairwise domain/embedding reader as well as the scalable reader.
+Require actual `crossed_edges > 0` and `cavity_occurrences > 0` for the designated
+constructor tests/benchmark family; a no-recovery run cannot substitute.
+
+Then select targets 64,256,1024,4096,8192 with direct seeds 0,1,2 and one baseline
+per target under the existing 30s phase deadline. Keep every failed/censored row;
+do not optimize dispatch or source values against this case. Preserve the first
+four families and report their zero recovery work explicitly.
