@@ -93,3 +93,27 @@ clang-format dry-run exit0. Algorithm peer reread complete-horizon preflight,
 capacity dedup, inactive-axis handling and typed job/release fixes ACCEPT.
 No further runtime test campaign is needed. Root owns final affected both-P100
 caller and module scan checks; this lane is code-review/commit-ready.
+
+Next shared-curve checkpoint: read actual pinned SmCurveCache span/parent cache,
+SmTess shared edge/clamp/isoline/face-retry source, owned physical forest,
+per-definition horizon, source topology and original use recovery. Read primary
+CudaTess sections2–3/supplement, deterministic-reservations sections5.1–5.2,
+scan up/down/stable packing and parallel refinement independence assumptions.
+Saved papers/native-adaptive-curves-runtime.md with selected fresh-query
+DefinitionBoundaryForest sole authority + persistent dedicated1D numerical cache,
+finite session/snapshot rows, paired-childO(p²) restriction, exact incidence/lift
+separation and targeted original-output/cold-warm comparison plan. Root and
+geometry/construction owners coordinated actual type boundaries. No product
+edits, dependency adoption, builds, CAD or benchmark execution in this study.
+
+Runtime finite implementation plan saved docs/adaptive-curves-runtime-unit.md.
+Cross-review found wire edges need owner-origin split requests (no invented
+face), and ready-large parameter error must not bypass the selected monotone
+line-image profile. Added actual BoundaryKey in interval rows, original use
+traversal/junction sentinel, maximum ORIGINAL node guards and authoritative-bound
+presence. Construction peer supplied these valid additions; root accepted core
+reuse/ownership and guarded combined promotion+split transaction direction.
+Checked recent Woźny/Chudy2026 scaledFFT restriction contender at algorithm level:
+kept paired convex de Casteljau for finite degree32/shared storage with certified
+interval arithmetic; recorded exact complexity and future crossover hypothesis,
+not an unsupported fastest claim. No product code or tests started.
