@@ -177,13 +177,16 @@ be reviewed). In the BL–BR–TR half, keep BR for last. Maintain a current end
 on the bottom chain starting at BL, and one on the right chain starting at TR.
 Consume one next non-BR sample from either chain; emit the positive triangle
 against the opposite current endpoint. Choose the shorter new actual-XYZ
-diagonal, with exact squared comparison and stable tie, when both candidates
+diagonal using the shared RN64 squared-distance heuristic, saturating overflow
+to positive infinity and using stable PointKey ties, when both candidates
 exist. Once those samples are exhausted, emit `(current_bottom,BR,current_right)`.
 Do the symmetric construction in the other half, retaining TL for last.
 Each step removes an ear of a convex triangle with points on its two sides.
 It never removes their common corner prematurely. All collinear side samples
 survive, all output triangles are positive, and k boundary samples emit k−2
 triangles. No CDT is needed for these packets.
+The score is not geometric truth: either candidate is a valid positive ear, so
+no Rational XYZ import or exact escalation is justified merely to break a tie.
 
 ## Exact trims, holes and boundary regions
 
