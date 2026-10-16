@@ -278,6 +278,21 @@ cold and declared warm-cache operations with source, quality, transfers, memory,
 failures and unsupported outcomes accounted for. GPU advantage is a hypothesis
 to test, not an outcome to manufacture. Source IDs/names never select dispatch.
 
+The first cached-adaptive regular-surface operation is delivered. Read
+results/adaptive-patch-2026-10-16/REPORT.md and the preserved general2D observations.
+Actual original-source CPU1/CPU4/both-P100 mesh outputs, source/numerical oracles,
+host concurrency/sanitizer checks and CUDA protocol/memory checks pass within
+the stated finite patch scope. Current coupled-quadratic 131,072-triangle cold
+query is 5.591s CPU4 versus 4.777s P1000; complete two-query processes are 9.681s
+versus 9.116s in one observation, not a general speedup. Older fine 120s censors
+remain published separately. Whole trimmed faces/components/watch are not done.
+Next implement original curve caches and shared chosen domains, then boundary
+regions and complete source publication per ADAPTIVE_MESHER_PLAN.md. Do not turn
+this checkpoint into an extra certification/tuning campaign. Record opportunities
+in docs/ADAPTIVE_MESHER_RETURN_PASS.md. SourceStore spatial values are already mm;
+units_mm is original metadata and must not rescale tolerances or geometry again.
+Keep the NVIDIA reference/backfill and external alpha suite requirements live.
+
 ## Development workflow
 
 Use a feature branch for each substantial delivery. Make frequent, coherent

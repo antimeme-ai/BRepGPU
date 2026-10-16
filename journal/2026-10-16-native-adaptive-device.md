@@ -45,3 +45,20 @@ claimed. The first general2D cohort deliberately retains its original binaries
 while source review closes a selected quarter-twist transfer bound. It is not
 silently rerun against a mixed implementation. Final affected checks and scoped
 public result tables follow that coherent source update.
+
+Final affected registered CTest run passes all 10 adaptive tests on the coherent
+source revision: independent numerical readers CPU/both P100s, packet Fraction
+reader, CPU/both-P100 runtime, complete caller and both device protocol cases.
+Final Compute Sanitizer racecheck reports zero hazards/errors/warnings on the
+513-prefix/operation protocol fixture. No further correctness campaign follows.
+The old general2D eight-process cohort retains all four 120s fine censors. The
+bounded affected comparison on current code completes the same 1e-5 source with
+131,072 triangles; CPU1/CPU4/P1000 cold and warm artifacts match the independent
+whole-facet oracle. CPU4 process 9.681s versus P1000 9.116s is one modest observed
+difference, not a general GPU speedup. Full tables preserve scopes and revisions.
+
+Published the first regular-patch checkpoint in the README and its scoped result
+report. Updated the architecture status and continuing implementation plan;
+recorded concrete transfer/cache follow-ups for after shared curves, trims and
+complete components. The whole-mesher PR stays draft. No new dependency, whole
+watch completion, external reference timing or alpha qualification is claimed.
