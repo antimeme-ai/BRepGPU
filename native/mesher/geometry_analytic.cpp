@@ -1,5 +1,6 @@
 #include "geometry_analytic.hpp"
 #include "geometry_enclosure.hpp"
+#include "point_trig.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -141,20 +142,24 @@ void validate_frame(const Frame &frame) {
     if (!std::isfinite(value))
       invalid("nonfinite original analytic frame");
 }
+std::optional<CanonicalPoint> rounded_point(const EnclosedPoint &point) {
+  Vec3 output{};
+  bool resolved = true;
+  for (uint32_t axis = 0; axis < point.dimension; ++axis) {
+    const auto low = point.coordinates[axis].lower.to_double();
+    const auto high = point.coordinates[axis].upper.to_double();
+    if (std::bit_cast<uint64_t>(low) != std::bit_cast<uint64_t>(high))
+      resolved = false;
+    output[axis] = low;
+  }
+  if (resolved)
+    return CanonicalPoint{point.dimension, output};
+  return std::nullopt;
+}
 template <class Evaluate> CanonicalPoint canonical(GeometryContext &context, Evaluate evaluate) {
   for (;;) {
-    const auto point = evaluate();
-    Vec3 output{};
-    bool resolved = true;
-    for (uint32_t axis = 0; axis < point.dimension; ++axis) {
-      const auto low = point.coordinates[axis].lower.to_double();
-      const auto high = point.coordinates[axis].upper.to_double();
-      if (std::bit_cast<uint64_t>(low) != std::bit_cast<uint64_t>(high))
-        resolved = false;
-      output[axis] = low;
-    }
-    if (resolved)
-      return {point.dimension, output};
+    if (const auto point = rounded_point(evaluate()))
+      return *point;
     context.refine();
   }
 }
@@ -239,19 +244,30 @@ SinCosEnclosure enclose_sin_cos(GeometryContext &context, const Rational &x) {
   context.guard_bits_ = std::max(context.guard_bits_, static_cast<uint32_t>(32 + argument_bits(x)));
   return answer;
 }
-EnclosedPoint evaluate_analytic_curve(GeometryContext &context, const Curve &curve,
-                                      const Rational &t) {
+namespace {
+struct PointFilterMiss final {};
+SinCosEnclosure selected_trig(GeometryContext &context, const Rational &x,
+                              const point_detail::Profile *filter) {
+  if (!filter)
+    return enclose_sin_cos(context, x);
+  auto result = point_detail::try_sin_cos(context.budget(), x, *filter);
+  if (!result)
+    throw PointFilterMiss{};
+  return std::move(*result);
+}
+EnclosedPoint evaluate_curve_impl(GeometryContext &context, const Curve &curve, const Rational &t,
+                                  const point_detail::Profile *filter) {
   owner(context, t);
   validate_frame(curve.frame);
   if ((curve.dimension != 2 && curve.dimension != 3) || curve.kind < 1 || curve.kind > 3)
     invalid("invalid original analytic curve kind/dimension");
-  const auto bits = work_bits(context);
+  const auto bits = filter ? filter->bits + 32 : work_bits(context);
   auto &b = context.budget();
   std::optional<SinCosEnclosure> trig;
   if (curve.kind != 1) {
     if (!std::isfinite(curve.radii[0]) || !std::isfinite(curve.radii[1]))
       invalid("nonfinite original analytic curve radii");
-    trig.emplace(enclose_sin_cos(context, t));
+    trig.emplace(selected_trig(context, t, filter));
   }
   const auto make = [&](std::size_t axis) -> ExactEnclosure {
     const auto origin = exact_double(b, curve.frame[axis]);
@@ -274,8 +290,9 @@ EnclosedPoint evaluate_analytic_curve(GeometryContext &context, const Curve &cur
   };
   return {curve.dimension, {make(0), make(1), make(2)}};
 }
-EnclosedPoint evaluate_analytic_surface(GeometryContext &context, const Carrier &carrier,
-                                        const Rational &u, const Rational &v) {
+EnclosedPoint evaluate_surface_impl(GeometryContext &context, const Carrier &carrier,
+                                    const Rational &u, const Rational &v,
+                                    const point_detail::Profile *filter) {
   owner(context, u);
   owner(context, v);
   validate_frame(carrier.frame);
@@ -284,7 +301,7 @@ EnclosedPoint evaluate_analytic_surface(GeometryContext &context, const Carrier 
   if (!std::isfinite(carrier.radii[0]) || !std::isfinite(carrier.radii[1]))
     invalid("nonfinite original analytic carrier radii");
   auto &b = context.budget();
-  const auto bits = work_bits(context);
+  const auto bits = filter ? filter->bits + 32 : work_bits(context);
   if (carrier.kind == 1) {
     const auto component = [&](std::size_t axis) {
       const auto value = Rational::from_double(b, carrier.frame[axis])
@@ -294,7 +311,7 @@ EnclosedPoint evaluate_analytic_surface(GeometryContext &context, const Carrier 
     };
     return {3, {component(0), component(1), component(2)}};
   }
-  const auto trig_u = enclose_sin_cos(context, u);
+  const auto trig_u = selected_trig(context, u, filter);
   const auto radius = Rational::from_double(b, carrier.radii[0]);
   std::optional<ExactEnclosure> radial, axial;
   if (carrier.kind == 2) {
@@ -302,11 +319,11 @@ EnclosedPoint evaluate_analytic_surface(GeometryContext &context, const Carrier 
     axial.emplace(v);
   } else if (carrier.kind == 3) {
     const auto angle = Rational::from_double(b, carrier.radii[1]);
-    const auto trig_angle = enclose_sin_cos(context, angle);
+    const auto trig_angle = selected_trig(context, angle, filter);
     radial.emplace(add(ExactEnclosure(radius), scale(trig_angle.sine, v, bits), bits));
     axial.emplace(scale(trig_angle.cosine, v, bits));
   } else {
-    const auto trig_v = enclose_sin_cos(context, v);
+    const auto trig_v = selected_trig(context, v, filter);
     const auto minor = carrier.kind == 4 ? radius : Rational::from_double(b, carrier.radii[1]);
     auto r = scale(trig_v.cosine, minor, bits);
     radial.emplace(carrier.kind == 4 ? std::move(r) : add(ExactEnclosure(radius), r, bits));
@@ -322,12 +339,56 @@ EnclosedPoint evaluate_analytic_surface(GeometryContext &context, const Carrier 
   };
   return {3, {component(0), component(1), component(2)}};
 }
+bool usable_profile(point_detail::Profile profile) {
+  if (profile.bits != 128 && profile.bits != 192 && profile.bits != 256)
+    invalid("unknown canonical source point profile");
+  return profile.bits + 32 <= profile.working_cap;
+}
+} // namespace
+namespace point_detail {
+std::optional<CanonicalPoint> try_curve(GeometryContext &context, const Curve &curve,
+                                        const Rational &t, Profile profile) {
+  if (!usable_profile(profile))
+    return std::nullopt;
+  try {
+    return rounded_point(evaluate_curve_impl(context, curve, t, &profile));
+  } catch (const PointFilterMiss &) {
+    return std::nullopt;
+  }
+}
+std::optional<CanonicalPoint> try_surface(GeometryContext &context, const Carrier &carrier,
+                                          const Rational &u, const Rational &v, Profile profile) {
+  if (!usable_profile(profile))
+    return std::nullopt;
+  try {
+    return rounded_point(evaluate_surface_impl(context, carrier, u, v, &profile));
+  } catch (const PointFilterMiss &) {
+    return std::nullopt;
+  }
+}
+} // namespace point_detail
+EnclosedPoint evaluate_analytic_curve(GeometryContext &context, const Curve &curve,
+                                      const Rational &t) {
+  return evaluate_curve_impl(context, curve, t, nullptr);
+}
+EnclosedPoint evaluate_analytic_surface(GeometryContext &context, const Carrier &carrier,
+                                        const Rational &u, const Rational &v) {
+  return evaluate_surface_impl(context, carrier, u, v, nullptr);
+}
 CanonicalPoint canonical_analytic_curve(GeometryContext &context, const Curve &curve,
                                         const Rational &t) {
+  for (const uint32_t bits : {128U, 192U, 256U})
+    if (const auto point =
+            point_detail::try_curve(context, curve, t, {bits, context.maximum_bits()}))
+      return *point;
   return canonical(context, [&] { return evaluate_analytic_curve(context, curve, t); });
 }
 CanonicalPoint canonical_analytic_surface(GeometryContext &context, const Carrier &carrier,
                                           const Rational &u, const Rational &v) {
+  for (const uint32_t bits : {128U, 192U, 256U})
+    if (const auto point =
+            point_detail::try_surface(context, carrier, u, v, {bits, context.maximum_bits()}))
+      return *point;
   return canonical(context, [&] { return evaluate_analytic_surface(context, carrier, u, v); });
 }
 EnclosedPoint enclose_original_curve(GeometryContext &context, const GeometryStore &store,
@@ -363,14 +424,27 @@ EnclosedPoint enclose_original_surface(GeometryContext &context, const GeometryS
 }
 CanonicalPoint canonical_original_curve(GeometryContext &context, const GeometryStore &store,
                                         Slot<CurveTag> slot, const Rational &t) {
+  const auto &curves = store.view().source.view().curves;
+  if (slot.value >= curves.size())
+    throw Error(ErrorCode::internal_error, "original curve slot out of bounds");
+  if (curves[slot.value].kind <= 3)
+    return canonical_analytic_curve(context, curves[slot.value], t);
   return canonical(context, [&] { return enclose_original_curve(context, store, slot, t); });
 }
 CanonicalPoint canonical_original_surface(GeometryContext &context, const GeometryStore &store,
                                           Slot<CarrierTag> slot, const Rational &u,
                                           const Rational &v) {
+  const auto &carriers = store.view().source.view().carriers;
+  if (slot.value >= carriers.size())
+    throw Error(ErrorCode::internal_error, "original carrier slot out of bounds");
+  if (carriers[slot.value].kind <= 5)
+    return canonical_analytic_surface(context, carriers[slot.value], u, v);
   return canonical(context, [&] { return enclose_original_surface(context, store, slot, u, v); });
 }
 namespace geometry_detail {
+Rational dyadic_outward(const Rational &x, uint32_t bits, bool upward) {
+  return dyadic(x, bits, upward);
+}
 ExactEnclosure sum(const ExactEnclosure &a, const ExactEnclosure &b) { return add(a, b, 0); }
 ExactEnclosure negate(const ExactEnclosure &a) { return negative(a); }
 ExactEnclosure difference(const ExactEnclosure &a, const ExactEnclosure &b) {
