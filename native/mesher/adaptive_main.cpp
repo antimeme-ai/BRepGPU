@@ -23,18 +23,15 @@ double seconds(Clock::time_point begin) {
 }
 uint64_t integer(std::string_view text) {
   uint64_t value = 0;
-  const auto parsed =
-      std::from_chars(text.data(), text.data() + text.size(), value);
+  const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
   if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
     invalid("invalid unsigned integer option");
   return value;
 }
 double number(std::string_view text) {
   double value = 0;
-  const auto parsed =
-      std::from_chars(text.data(), text.data() + text.size(), value);
-  if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() ||
-      !std::isfinite(value))
+  const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+  if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || !std::isfinite(value))
     invalid("invalid finite numeric option");
   return value;
 }
@@ -71,10 +68,7 @@ Options options(int argc, char **argv) {
     else if (key == "--positional-mm")
       out.positional.push_back(number(value));
     else if (key == "--u0" || key == "--u1" || key == "--v0" || key == "--v1") {
-      const std::size_t slot = key == "--u0"   ? 0
-                               : key == "--u1" ? 1
-                               : key == "--v0" ? 2
-                                               : 3;
+      const std::size_t slot = key == "--u0" ? 0 : key == "--u1" ? 1 : key == "--v0" ? 2 : 3;
       if (out.rectangle[slot])
         invalid("duplicate rectangle option");
       out.rectangle[slot] = number(value);
@@ -82,8 +76,8 @@ Options options(int argc, char **argv) {
       if (value != "cpu" && value != "p100")
         invalid("backend must be cpu or p100");
       out.p100 = value == "p100";
-    } else if (key == "--threads" || key == "--max-nodes" ||
-               key == "--max-depth" || key == "--device") {
+    } else if (key == "--threads" || key == "--max-nodes" || key == "--max-depth" ||
+               key == "--device") {
       const auto n = integer(value);
       if (n > INT32_MAX)
         invalid("option exceeds native index range");
@@ -100,20 +94,18 @@ Options options(int argc, char **argv) {
   }
   if (out.help)
     return out;
-  if (out.source.empty() || out.output.empty() || !out.carrier ||
-      out.positional.empty() || out.threads == 0 || out.threads > 256)
+  if (out.source.empty() || out.output.empty() || !out.carrier || out.positional.empty() ||
+      out.threads == 0 || out.threads > 256)
     invalid("required: --source --carrier --output --positional-mm positive "
             "--threads 1..256");
   for (double value : out.positional)
     if (value <= 0)
       invalid("positional allowance must be positive");
-  if (!out.memory_mib || out.memory_mib > (UINT64_MAX >> 20) ||
-      !out.max_nodes || out.max_nodes > UINT32_MAX / 256 || !out.max_depth ||
-      out.max_depth > 64)
+  if (!out.memory_mib || out.memory_mib > (UINT64_MAX >> 20) || !out.max_nodes ||
+      out.max_nodes > UINT32_MAX / 256 || !out.max_depth || out.max_depth > 64)
     invalid("invalid memory, node capacity or depth64 limit");
-  const auto rectangle_count =
-      std::count_if(out.rectangle.begin(), out.rectangle.end(),
-                    [](const auto &v) { return v.has_value(); });
+  const auto rectangle_count = std::count_if(out.rectangle.begin(), out.rectangle.end(),
+                                             [](const auto &v) { return v.has_value(); });
   if (rectangle_count != 0 && rectangle_count != 4)
     invalid("rectangle requires all of --u0 --u1 --v0 --v1");
   if (out.p100 != !out.module.empty())
@@ -144,50 +136,47 @@ public:
     if (!out_)
       throw Error(ErrorCode::io_failure, "patch artifact write failed");
   }
-  void word(uint64_t value, unsigned count) {
+  template <unsigned count> void word(uint64_t value) {
+    static_assert(count == 4 || count == 8);
     std::array<std::byte, 8> bytes{};
     for (unsigned i = 0; i < count; ++i)
       bytes[i] = static_cast<std::byte>((value >> (8 * i)) & 255);
     this->bytes(std::span(bytes).first(count));
   }
   void rational(ExactView value) {
-    if (value.numerator.size() > UINT32_MAX ||
-        value.denominator.size() > UINT32_MAX)
-      throw Error(ErrorCode::resource_exhausted,
-                  "patch rational exceeds wire count range");
-    word(static_cast<uint32_t>(value.sign), 4);
-    word(value.numerator.size(), 4);
-    word(value.denominator.size(), 4);
+    if (value.numerator.size() > UINT32_MAX || value.denominator.size() > UINT32_MAX)
+      throw Error(ErrorCode::resource_exhausted, "patch rational exceeds wire count range");
+    word<4>(static_cast<uint32_t>(value.sign));
+    word<4>(value.numerator.size());
+    word<4>(value.denominator.size());
     for (auto w : value.numerator)
-      word(w, 4);
+      word<4>(w);
     for (auto w : value.denominator)
-      word(w, 4);
+      word<4>(w);
   }
   void finish() { close(out_); }
 };
-void write_patch(const std::filesystem::path &path, const PacketMeshData &mesh,
-                 uint64_t carrier, bgfd::Budget &budget) {
+void write_patch(const std::filesystem::path &path, const PacketMeshData &mesh, uint64_t carrier,
+                 bgfd::Budget &budget) {
   const auto &selection = *mesh.selection;
   if (selection.points.size() > UINT32_MAX || mesh.triangles.empty() ||
       !mesh.demoted_leaf_slots.empty())
-    throw Error(ErrorCode::internal_error,
-                "cannot publish incomplete patch result");
+    throw Error(ErrorCode::internal_error, "cannot publish incomplete patch result");
   Wire out(path, budget);
-  constexpr std::array magic{std::byte{'B'}, std::byte{'G'}, std::byte{'A'},
-                             std::byte{'P'}, std::byte{'C'}, std::byte{'H'},
-                             std::byte{'0'}, std::byte{'1'}};
+  constexpr std::array magic{std::byte{'B'}, std::byte{'G'}, std::byte{'A'}, std::byte{'P'},
+                             std::byte{'C'}, std::byte{'H'}, std::byte{'0'}, std::byte{'1'}};
   out.bytes(magic);
-  out.word(1, 4);
-  out.word(selection.source.profile().revision, 4);
-  out.word(carrier, 8);
-  out.word(selection.points.size(), 8);
-  out.word(mesh.triangles.size(), 8);
+  out.word<4>(1);
+  out.word<4>(selection.source.profile().revision);
+  out.word<8>(carrier);
+  out.word<8>(selection.points.size());
+  out.word<8>(mesh.triangles.size());
   out.bytes(selection.source.source().view().source_digest);
   for (const auto &point : selection.points) {
     for (double value : point.actual_xyz) {
       if (!std::isfinite(value))
         throw Error(ErrorCode::internal_error, "nonfinite patch point");
-      out.word(std::bit_cast<uint64_t>(value), 8);
+      out.word<8>(std::bit_cast<uint64_t>(value));
     }
     for (auto value : point.original_uv)
       out.rational(selection.values.view(value));
@@ -195,9 +184,8 @@ void write_patch(const std::filesystem::path &path, const PacketMeshData &mesh,
   for (const auto &triangle : mesh.triangles)
     for (auto point : triangle.points) {
       if (point.value >= selection.points.size())
-        throw Error(ErrorCode::internal_error,
-                    "patch point index outside result");
-      out.word(point.value, 4);
+        throw Error(ErrorCode::internal_error, "patch point index outside result");
+      out.word<4>(point.value);
     }
   out.finish();
 }
@@ -209,25 +197,28 @@ void digest(std::ostream &out, const SourceDigest &source) {
   }
 }
 std::array<double, 2> natural_axis(const SourceData &source, Range<double> knot_range,
-                                  Range<uint32_t> multiplicity_range, uint32_t degree,
-                                  uint32_t control_count) {
+                                   Range<uint32_t> multiplicity_range, uint32_t degree,
+                                   uint32_t control_count) {
   const auto knots = source.view(knot_range);
   const auto multiplicities = source.view(multiplicity_range);
   if (knots.size() != multiplicities.size() || control_count <= degree)
     invalid("invalid original rational knot axis");
-  std::array<std::optional<double>, 2> endpoints;
+  std::array<double, 2> endpoints{};
+  std::array<bool, 2> found{};
   uint64_t expanded = 0;
   for (std::size_t i = 0; i < knots.size(); ++i) {
     const auto next = expanded + multiplicities[i];
-    if (expanded <= degree && degree < next)
-      endpoints[0] = knots[i];
-    if (expanded <= control_count && control_count < next)
-      endpoints[1] = knots[i];
+    if (expanded <= degree && degree < next) {
+      endpoints[0] = knots[i]; found[0] = true;
+    }
+    if (expanded <= control_count && control_count < next) {
+      endpoints[1] = knots[i]; found[1] = true;
+    }
     expanded = next;
   }
-  if (!endpoints[0] || !endpoints[1] || *endpoints[0] >= *endpoints[1])
+  if (!found[0] || !found[1] || endpoints[0] >= endpoints[1])
     invalid("empty original rational knot domain");
-  return {*endpoints[0], *endpoints[1]};
+  return endpoints;
 }
 void run(const Options &o, std::string_view &stage) {
   const auto full = Clock::now();
@@ -235,8 +226,7 @@ void run(const Options &o, std::string_view &stage) {
   const auto resource = std::make_shared<RunResource>(bytes);
   bgfd::Budget budget({bytes, uint64_t{1} << 44}, resource.get());
   OutputDirectory output(o.output);
-  std::ofstream timings(output.path() / "timings.tsv"),
-      queries(output.path() / "queries.tsv");
+  std::ofstream timings(output.path() / "timings.tsv"), queries(output.path() / "queries.tsv");
   if (!timings || !queries)
     throw Error(ErrorCode::io_failure, "cannot open patch metadata");
   timings << std::setprecision(17) << "scope\tseconds\n";
@@ -251,26 +241,27 @@ void run(const Options &o, std::string_view &stage) {
   const auto &carrier = source.view().carriers[slot.value];
   auto rectangle = carrier.uv_bounds;
   if (!o.rectangle[0] && carrier.kind == 6) {
-    const auto u = natural_axis(source.view(), carrier.knot_u, carrier.mult_u,
-                                carrier.degrees[0], carrier.control_shape[0]);
-    const auto v = natural_axis(source.view(), carrier.knot_v, carrier.mult_v,
-                                carrier.degrees[1], carrier.control_shape[1]);
+    const auto u = natural_axis(source.view(), carrier.knot_u, carrier.mult_u, carrier.degrees[0],
+                                carrier.control_shape[0]);
+    const auto v = natural_axis(source.view(), carrier.knot_v, carrier.mult_v, carrier.degrees[1],
+                                carrier.control_shape[1]);
     rectangle = {u[0], u[1], v[0], v[1]};
   }
   if (o.rectangle[0])
-    for (std::size_t i = 0; i < 4; ++i)
-      rectangle[i] = *o.rectangle[i];
+    for (std::size_t i = 0; i < 4; ++i) {
+      const auto &value = o.rectangle[i];
+      if (!value.has_value()) invalid("missing rectangle endpoint");
+      rectangle[i] = value.value();
+    }
   if (!(rectangle[0] < rectangle[1] && rectangle[2] < rectangle[3]))
     invalid("requested source rectangle must have positive area");
   stage = "source.compile";
   tick = Clock::now();
   const CarrierRequest request{slot, rectangle};
-  const auto cache = prepare_source_cache(source, std::span(&request, 1),
-                                          resource, {}, {}, budget);
+  const auto cache = prepare_source_cache(source, std::span(&request, 1), resource, {}, {}, budget);
   timing(stage, tick);
   if (cache.profile().revision != 1)
-    throw Error(ErrorCode::unsupported,
-                "caller requires rn64_anchor32_p128_v1");
+    throw Error(ErrorCode::unsupported, "caller requires rn64_anchor32_p128_v1");
   CacheLimits limits;
   limits.nodes = limits.frontier = o.max_nodes;
   limits.points = o.max_nodes * 4;
@@ -279,8 +270,7 @@ void run(const Options &o, std::string_view &stage) {
   limits.cpu_threads = o.threads;
   limits.host_bytes = limits.device_bytes = bytes;
   limits.child_bytes = std::min(bytes, uint64_t{1} << 26);
-  JobContext context({limits.child_bytes, limits.total_work}, resource.get(),
-                     {});
+  JobContext context({limits.child_bytes, limits.total_work}, resource.get(), {});
   stage = "session.create";
   tick = Clock::now();
   PatchSession session(resource, cache, limits);
@@ -298,18 +288,18 @@ void run(const Options &o, std::string_view &stage) {
              "hits\tcontrol_restrictions"
              "\texact_fallbacks\tdevice_points\tdevice_bounds\tdevice_"
              "restrictions\tdevice_epochs"
-             "\tuploaded_bytes\tdownloaded_bytes\thost_reserved_bytes\thost_"
-             "peak_bytes"
+             "\tuploaded_bytes\tdownloaded_bytes\tsession_host_reserved_bytes\tsession_host_"
+             "peak_upper_bytes"
              "\tdevice_reserved_bytes\tdevice_peak_bytes\tpacket_"
              "rounds\tactual_facet_tests"
-             "\tactual_facet_failures\n";
+             "\tactual_facet_failures\trun_peak_including_device_reservations_bytes\n";
   for (std::size_t query = 0; query < o.positional.size(); ++query) {
     stage = "query.prepare";
     tick = Clock::now();
     ExactBuilder builder(resource, {{OwnerKind::run, 0, 1}, query + 1, 0});
-    const auto allowance = builder.append(
-        Rational::from_double(budget, o.positional[query])
-            .divide(Rational::from_double(budget, source.view().units_mm)));
+    // SourceStore snapshot spatial values are already millimetres. units_mm
+    // records original source metadata and must not rescale this allowance.
+    const auto allowance = builder.append(Rational::from_double(budget, o.positional[query]));
     const auto values = builder.seal();
     std::pmr::vector<RootAllowance> allowances(resource.get());
     for (uint32_t i = 0; i < cache.roots().size(); ++i)
@@ -323,8 +313,7 @@ void run(const Options &o, std::string_view &stage) {
       if (state == StepState::done)
         break;
       if (state != StepState::ready)
-        throw Error(ErrorCode::internal_error,
-                    "adaptive session returned unexpected state");
+        throw Error(ErrorCode::internal_error, "adaptive session returned unexpected state");
       std::this_thread::yield();
     }
     timing(stage, tick);
@@ -332,30 +321,26 @@ void run(const Options &o, std::string_view &stage) {
       const auto mesh = session.result();
       stage = "output.patch";
       tick = Clock::now();
-      write_patch(output.path() /
-                      ("query-" + std::to_string(query) + ".bgapch"),
-                  *mesh, o.carrier, budget);
+      write_patch(output.path() / ("query-" + std::to_string(query) + ".bgapch"), *mesh, o.carrier,
+                  budget);
       timing(stage, tick);
       const auto s = session.stats();
       queries << query << '\t' << o.positional[query] << '\t';
       digest(queries, source.view().source_digest);
-      queries << "\trn64_anchor32_p128_v1\t" << (o.p100 ? "p100" : "cpu")
-              << '\t' << o.threads << '\t' << source.view().units_mm;
+      queries << "\trn64_anchor32_p128_v1\t" << (o.p100 ? "p100" : "cpu") << '\t' << o.threads
+              << '\t' << source.view().units_mm;
       for (double value : rectangle)
         queries << '\t' << value;
-      queries << '\t' << cache.roots().size() << '\t'
-              << cache.original_roots().size() << '\t'
-              << mesh->selection->points.size() << '\t'
-              << mesh->triangles.size();
+      queries << '\t' << cache.roots().size() << '\t' << cache.original_roots().size() << '\t'
+              << mesh->selection->points.size() << '\t' << mesh->triangles.size();
       for (auto value :
            {s.nodes_created, s.nodes_reused, s.point_evaluations, s.point_hits,
-            s.control_restrictions, s.exact_fallbacks, s.device_points,
-            s.device_bounds, s.device_restrictions, s.device_epochs,
-            s.uploaded_bytes, s.downloaded_bytes, s.host_reserved_bytes,
-            s.host_peak_bytes, s.device_reserved_bytes, s.device_peak_bytes,
+            s.control_restrictions, s.exact_fallbacks, s.device_points, s.device_bounds,
+            s.device_restrictions, s.device_epochs, s.uploaded_bytes, s.downloaded_bytes,
+            s.host_reserved_bytes, s.host_peak_bytes, s.device_reserved_bytes, s.device_peak_bytes,
             s.packet_rounds, s.actual_facet_tests, s.actual_facet_failures})
         queries << '\t' << value;
-      queries << '\n';
+      queries << '\t' << resource->peak() << '\n';
     }
     session.release_result();
   }
@@ -369,8 +354,7 @@ void run(const Options &o, std::string_view &stage) {
   stage = "output.publish";
   output.publish();
   std::cout << "adaptive_patch\tcomplete\tqueries\t" << o.positional.size()
-            << "\tthrough_publication_seconds\t" << std::setprecision(17)
-            << seconds(full) << '\n';
+            << "\tthrough_publication_seconds\t" << std::setprecision(17) << seconds(full) << '\n';
 }
 } // namespace
 
@@ -379,19 +363,18 @@ int main(int argc, char **argv) {
   try {
     const auto o = options(argc, argv);
     if (o.help) {
-      std::cout
-          << "brepgpu-adaptive-patch --source FILE --carrier ID --output "
-             "NEW_DIRECTORY "
-             "--positional-mm VALUE [--positional-mm VALUE ...] --threads N "
-             "[--u0 U0 --u1 U1 --v0 V0 --v1 V1] "
-             "[--backend p100 --cuda-module LIBRARY --device N]\n";
+      std::cout << "brepgpu-adaptive-patch --source FILE --carrier ID --output "
+                   "NEW_DIRECTORY "
+                   "--positional-mm VALUE [--positional-mm VALUE ...] --threads N "
+                   "[--u0 U0 --u1 U1 --v0 V0 --v1 V1] "
+                   "[--backend p100 --cuda-module LIBRARY --device N]\n";
       return 0;
     }
     run(o, stage);
     return 0;
   } catch (const Error &error) {
-    std::cerr << "error\t" << stage << '\t' << static_cast<unsigned>(error.code)
-              << '\t' << error.what() << '\n';
+    std::cerr << "error\t" << stage << '\t' << static_cast<unsigned>(error.code) << '\t'
+              << error.what() << '\n';
   } catch (const bgfd::Failure &error) {
     std::cerr << "error\t" << stage << "\texact\t" << error.what() << '\n';
   } catch (const std::exception &error) {

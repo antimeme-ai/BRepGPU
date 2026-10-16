@@ -501,33 +501,22 @@ if(BUILD_TESTING)
   endif()
 endif()
 
-# The adaptive constructor owns a separate operation. These guards permit its
-# independently owned units to be built while the remaining source files land.
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/source_cache.cpp" AND
-   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/adaptive_geometry.cpp")
-  add_library(brepgpu_mesher_adaptive_geometry STATIC source_cache.cpp adaptive_geometry.cpp)
-  target_link_libraries(brepgpu_mesher_adaptive_geometry PUBLIC
-    brepgpu_mesher_source brepgpu_mesher_geometry brepgpu_mesher_exact)
-  brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_geometry)
-endif()
-
-if(TARGET brepgpu_mesher_adaptive_geometry AND
-   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/adaptive_packets.cpp")
-  add_library(brepgpu_mesher_adaptive_packets STATIC adaptive_packets.cpp)
-  target_link_libraries(brepgpu_mesher_adaptive_packets PUBLIC brepgpu_mesher_adaptive_geometry)
-  brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_packets)
-endif()
-if(TARGET brepgpu_mesher_adaptive_packets AND
-   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/adaptive_cache.cpp")
-  add_library(brepgpu_mesher_adaptive_cache STATIC adaptive_cache.cpp)
-  target_link_libraries(brepgpu_mesher_adaptive_cache PUBLIC brepgpu_mesher_adaptive_packets
-    brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
-  brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cache)
-  add_executable(brepgpu-adaptive-patch adaptive_main.cpp)
-  target_link_libraries(brepgpu-adaptive-patch PRIVATE brepgpu_mesher_adaptive_cache)
-  brepgpu_native_cpu_rigor(brepgpu-adaptive-patch)
-endif()
-if(BREPGPU_MESHER_ENABLE_CUDA AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cuda/adaptive_cuda.cu")
+# The adaptive constructor owns a separate original-source patch operation.
+add_library(brepgpu_mesher_adaptive_geometry STATIC source_cache.cpp adaptive_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_geometry PUBLIC
+  brepgpu_mesher_source brepgpu_mesher_geometry brepgpu_mesher_exact)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_geometry)
+add_library(brepgpu_mesher_adaptive_packets STATIC adaptive_packets.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_packets PUBLIC brepgpu_mesher_adaptive_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_packets)
+add_library(brepgpu_mesher_adaptive_cache STATIC adaptive_cache.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cache PUBLIC brepgpu_mesher_adaptive_packets
+  brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cache)
+add_executable(brepgpu-adaptive-patch adaptive_main.cpp)
+target_link_libraries(brepgpu-adaptive-patch PRIVATE brepgpu_mesher_adaptive_cache)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-patch)
+if(BREPGPU_MESHER_ENABLE_CUDA)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
   add_library(brepgpu_mesher_adaptive_cuda SHARED cuda/adaptive_cuda.cu)
@@ -539,14 +528,35 @@ if(BREPGPU_MESHER_ENABLE_CUDA AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cuda/adapt
     $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;--Werror=all-warnings;-Wno-deprecated-gpu-targets;-Xcompiler=-fno-fast-math,-ffp-contract=off>)
 endif()
 
-if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_geometry)
+if(BUILD_TESTING)
   add_executable(brepgpu_native_adaptive_geometry ../../tests/native_adaptive_geometry.cpp)
-  target_link_libraries(brepgpu_native_adaptive_geometry PRIVATE brepgpu_mesher_adaptive_geometry)
+  target_link_libraries(brepgpu_native_adaptive_geometry PRIVATE brepgpu_mesher_adaptive_geometry ${CMAKE_DL_LIBS})
   add_dependencies(brepgpu_native_adaptive_geometry brepgpu_native_mesher_geometry_fixture)
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_geometry)
-  add_test(NAME native_adaptive_geometry COMMAND brepgpu_native_adaptive_geometry "${GEOMETRY_FIXTURE}")
+  set(ADAPTIVE_GEOMETRY_FIXTURES "${CMAKE_CURRENT_BINARY_DIR}/adaptive-source-fixtures")
+  set(ADAPTIVE_GEOMETRY_STAMP "${ADAPTIVE_GEOMETRY_FIXTURES}/complete.stamp")
+  add_custom_command(OUTPUT "${ADAPTIVE_GEOMETRY_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_fixture.py"
+      "${ADAPTIVE_GEOMETRY_FIXTURES}"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${ADAPTIVE_GEOMETRY_STAMP}"
+    DEPENDS ../../tests/native_adaptive_geometry_fixture.py ../../tests/native_mesher_geometry_fixture.py
+      ../../tests/native_mesher_run_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_geometry_fixture DEPENDS "${ADAPTIVE_GEOMETRY_STAMP}")
+  add_dependencies(brepgpu_native_adaptive_geometry brepgpu_native_adaptive_geometry_fixture)
+  set(ADAPTIVE_GEOMETRY_ORACLE "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py")
+  add_test(NAME native_adaptive_geometry COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_GEOMETRY_ORACLE}"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_geometry>" --source "${GEOMETRY_FIXTURE}"
+    --analytic-fixtures "${ADAPTIVE_GEOMETRY_FIXTURES}")
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_geometry_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_GEOMETRY_ORACLE}"
+        --fixture "$<TARGET_FILE:brepgpu_native_adaptive_geometry>" --source "${GEOMETRY_FIXTURE}"
+        --analytic-fixtures "${ADAPTIVE_GEOMETRY_FIXTURES}" --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>"
+        --device "${device}")
+    endforeach()
+  endif()
 endif()
-if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_packets)
+if(BUILD_TESTING)
   add_executable(brepgpu_native_adaptive_packets ../../tests/native_adaptive_packets.cpp)
   target_link_libraries(brepgpu_native_adaptive_packets PRIVATE brepgpu_mesher_adaptive_packets)
   add_dependencies(brepgpu_native_adaptive_packets brepgpu_native_mesher_cell_fixture)
@@ -555,7 +565,7 @@ if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_packets)
     "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_packets_oracle.py"
     --fixture "$<TARGET_FILE:brepgpu_native_adaptive_packets>" --source "${CELL_FIXTURE}")
 endif()
-if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_cache)
+if(BUILD_TESTING)
   add_executable(brepgpu_native_adaptive_runtime ../../tests/native_adaptive_runtime.cpp)
   target_link_libraries(brepgpu_native_adaptive_runtime PRIVATE brepgpu_mesher_adaptive_cache)
   add_dependencies(brepgpu_native_adaptive_runtime brepgpu_native_mesher_chart_fixture)
@@ -576,4 +586,15 @@ if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_cache)
     "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_caller.py"
     "$<TARGET_FILE:brepgpu-adaptive-patch>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-caller"
     ${ADAPTIVE_CALLER_DEVICE_ARGS})
+endif()
+
+if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_cuda)
+  add_executable(brepgpu_native_adaptive_device ../../tests/native_adaptive_device.cpp)
+  target_link_libraries(brepgpu_native_adaptive_device PRIVATE brepgpu_mesher_adaptive_geometry ${CMAKE_DL_LIBS})
+  add_dependencies(brepgpu_native_adaptive_device brepgpu_native_mesher_cell_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_device)
+  foreach(device 0 1)
+    add_test(NAME native_adaptive_device_${device} COMMAND brepgpu_native_adaptive_device
+      "${CELL_FIXTURE}" "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+  endforeach()
 endif()

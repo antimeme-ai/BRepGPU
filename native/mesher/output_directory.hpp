@@ -19,20 +19,15 @@ class OutputDirectory final {
   bool published_ = false;
 
 public:
-  explicit OutputDirectory(const std::filesystem::path &target)
-      : final_(target) {
+  explicit OutputDirectory(const std::filesystem::path &target) : final_(target) {
     if (std::filesystem::exists(std::filesystem::symlink_status(final_)))
-      throw Error(ErrorCode::io_failure,
-                  "output already exists; publication never replaces it");
+      throw Error(ErrorCode::io_failure, "output already exists; publication never replaces it");
     if (!std::filesystem::is_directory(final_.parent_path()))
-      throw Error(ErrorCode::io_failure,
-                  "output parent must be an existing directory");
-    auto pattern =
-        (final_.parent_path() / (final_.filename().string() + ".tmp-XXXXXX"))
-            .string();
+      throw Error(ErrorCode::io_failure, "output parent must be an existing directory");
+    auto pattern = (final_.parent_path() / (final_.filename().string() + ".tmp-XXXXXX")).string();
     if (!::mkdtemp(pattern.data()))
-      throw Error(ErrorCode::io_failure, "cannot create temporary output: " +
-                                             std::string(std::strerror(errno)));
+      throw Error(ErrorCode::io_failure,
+                  "cannot create temporary output: " + std::string(std::strerror(errno)));
     temporary_ = pattern;
   }
   OutputDirectory(const OutputDirectory &) = delete;
@@ -47,10 +42,10 @@ public:
   }
   [[nodiscard]] const std::filesystem::path &path() const { return temporary_; }
   void publish() {
-    if (::syscall(SYS_renameat2, AT_FDCWD, temporary_.c_str(), AT_FDCWD,
-                  final_.c_str(), RENAME_NOREPLACE) != 0)
-      throw Error(ErrorCode::io_failure, "no-replace publication failed: " +
-                                             std::string(std::strerror(errno)));
+    if (::syscall(SYS_renameat2, AT_FDCWD, temporary_.c_str(), AT_FDCWD, final_.c_str(),
+                  RENAME_NOREPLACE) != 0)
+      throw Error(ErrorCode::io_failure,
+                  "no-replace publication failed: " + std::string(std::strerror(errno)));
     published_ = true;
   }
 };

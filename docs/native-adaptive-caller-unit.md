@@ -5,6 +5,9 @@ This caller consumes an original SourceStore, a requested original carrier and
 rectangle, and the actual PatchSession/PacketMesh operation from the reviewed
 adaptive plan. It never invokes the previous mesher to fill missing geometry.
 It is an untrimmed patch diagnostic/benchmark, not whole-component delivery.
+SourceStore spatial coordinates are already millimetres; units_mm is original
+source metadata. Requested positional_mm therefore enters the query unchanged.
+Changing metadata alone must not change geometry or its accepted error.
 
 Build native/mesher/adaptive_main.cpp as brepgpu-adaptive-patch. Required options
 are --source, --carrier, --output, --positional-mm and --threads; CPU is default,

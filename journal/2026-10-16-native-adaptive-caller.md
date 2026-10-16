@@ -61,3 +61,20 @@ span. Weighted-rational interior samples remain explicitly falsification checks;
 its whole-cell bound has separate original-coefficient numerical vectors. No
 second validator, extra campaign or general certifier was added. Caller strict
 syntax and Clang analyzer checks passed; integrated GREEN is still pending.
+
+Runtime review caught a source-contract error in the caller: I divided requested
+millimetres by units_mm, although SourceStore coordinates are already mm and
+units_mm is original metadata. Removed that conversion. The existing source
+fixture now changes only metadata to .001, requiring identical actual geometry
+and unchanged positional limits. Both earlier review notes explicitly correct
+their mistaken acceptance of the division.
+
+Actual end-to-end caller GREEN on CPU1, CPU4, P1000 and P1001 for polynomial,
+strongly weighted rational, two-span C0 and the metadata-only variant. The same
+reader checked actual artifacts, whole polynomial/C0 facets, weighted interior
+falsification, exact coverage/incidence, history/fresh coarse correspondence,
+required GPU work, refusal/publication and source metadata. One small-case run
+observed four-query process totals about3–8ms CPU and308–375ms P100; device setup
+dominates these small operations. No GPU speedup or complete trimmed component
+is claimed. Native geometry, connectivity and runtime work replace the previous
+constructor in this patch caller; no old mesher supplies missing triangles.

@@ -16,6 +16,23 @@ import time
 from native_mesher_run_fixture import make
 
 
+def make_bowl(path):
+    # Original positive-weight coupled quadratic; no face/trim inventory implied.
+    from brepgpu.imported_source import (
+        ImportedSource, Product, Carrier, SurfaceSpan, ZERO_FRAME, write_source,
+    )
+    net = tuple(value for i in range(3) for j in range(3)
+                for value in (i/2, j/2, .75*(i == 2)+.25*(j == 2)+i*j/4, 1.))
+    carrier = Carrier(9, 6, ZERO_FRAME, (0., 0.), (0., 1., 0., 1.),
+                      (2, 2), (0., 1.), (3, 3), (0., 1.), (3, 3),
+                      (3, 3), net,
+                      (SurfaceSpan((0., 1., 0., 1.), (2, 2), net),))
+    source = ImportedSource('ac'*32, 1., 0., 100, 'coupled quadratic patch asset',
+                            (Product(100, 'coupled quadratic', 'root'),),
+                            (), (), (), (), (), (), (), (carrier,), ())
+    write_source(source, path)
+
+
 class Reader:
     def __init__(self, data):
         self.data = data
@@ -46,6 +63,8 @@ def source_value(kind, u, v):
         return ((8*u-7*u*u)/denominator, v, 16*u*(1-u)/denominator)
     if kind == 'c0':
         return (u, v, u/2 if u <= F(1, 2) else (1-u)/2)
+    if kind == 'bowl':
+        return (u, v, F(3, 4)*u*u+F(1, 4)*v*v+u*v)
     return (u, v, u*u)
 
 
@@ -91,6 +110,12 @@ def read_patch(path, kind, epsilon):
             if kind == 'c0':
                 assert hi <= F(1, 2) or lo >= F(1, 2), 'facet crosses original C0 knot'
                 source_error = F(0)
+            elif kind == 'bowl':
+                width_u = hi-lo
+                width_v = max(q[1] for q in uv)-min(q[1] for q in uv)
+                # |Cov(U,V)| <= range(U)*range(V)/4.
+                source_error = (F(3, 16)*width_u**2+F(1, 16)*width_v**2
+                                +width_u*width_v/4)
             else:
                 source_error = (hi-lo)**2/4
             remaining = F(epsilon)-source_error
@@ -154,11 +179,14 @@ def main():
     args = parser.parse_args()
     args.destination.mkdir(parents=True, exist_ok=True)
     args.destination = Path(tempfile.mkdtemp(prefix='run-', dir=args.destination))
-    for kind in ('polynomial', 'weighted', 'c0'):
-        source = args.destination/f'{kind}.bgsource'
+    unit_invariant = None
+    for kind, metadata_units in (('polynomial', 1.), ('weighted', 1.), ('c0', 1.),
+                                 ('polynomial', .001)):
+        label = kind if metadata_units == 1 else f'{kind}-unit-metadata'
+        source = args.destination/f'{label}.bgsource'
         # Adapter hints deliberately differ from the original knot domain.
         make(source, kind, 12 if kind == 'polynomial' else 1,
-             hint=(.125, .875, .25, .75))
+             hint=(.125, .875, .25, .75), units_mm=metadata_units)
         # Fine/coarse/fine plus equal-quality remesh tests cache history while
         # independently checking every actual output against original source.
         qualities = (.02, .08, .02, .02)
@@ -168,11 +196,16 @@ def main():
             modes += [(f'p100{device}', 4, ('--backend', 'p100', '--device', str(device),
                                            '--cuda-module', str(args.cuda_module))) for device in (0, 1)]
         for name, threads, device_args in modes:
-            output = args.destination/f'{kind}-{name}'
+            output = args.destination/f'{label}-{name}'
             run = invoke(args.executable, source, output, qualities, threads, device_args)
             assert run.returncode == 0, (name, kind, run.returncode, run.stderr, run.stdout)
             print('complete_process', kind, name, 'four_queries_seconds', run.wall_seconds, flush=True)
             meshes = [read_patch(output/f'query-{i}.bgapch', kind, q) for i, q in enumerate(qualities)]
+            if kind == 'polynomial' and name == 'cpu1':
+                if unit_invariant is None:
+                    unit_invariant = meshes
+                else:
+                    assert unit_invariant == meshes, 'source unit metadata rescaled already-mm geometry'
             assert meshes[0] == meshes[2] == meshes[3], "warm history changed mesh semantics"
             if reference is None:
                 reference = meshes
@@ -185,6 +218,7 @@ def main():
                 assert row['numeric_profile'] == 'rn64_anchor32_p128_v1'
                 assert row['source_digest'] == 'ac'*32
                 assert row['backend'] == ('p100' if device_args else 'cpu')
+                assert float(row['source_units_mm']) == metadata_units
             assert int(rows[-1]['nodes_reused']) > 0 and int(rows[-1]['point_hits']) > 0
             assert int(rows[0]['original_roots']) == (2 if kind == 'c0' else 1), (
                 'source compilation included unrequested carrier roots', kind, rows[0])
@@ -193,18 +227,18 @@ def main():
                 if kind != 'c0':
                     assert int(rows[0]['device_restrictions']) > 0
             assert (output/'timings.tsv').is_file()
-            cold = args.destination/f'{kind}-{name}-cold-coarse'
+            cold = args.destination/f'{label}-{name}-cold-coarse'
             run = invoke(args.executable, source, cold, (.08,), threads, device_args)
             assert run.returncode == 0, (name, kind, run.stderr, run.stdout)
             assert read_patch(cold/'query-0.bgapch', kind, .08) == meshes[1], (
                 'a prior fine query changed a later coarse mesh', name, kind)
         # Publication must never replace an existing successful result.
-        existing = args.destination/f'{kind}-cpu1'
+        existing = args.destination/f'{label}-cpu1'
         retained = (existing/'query-0.bgapch').read_bytes()
         refused = invoke(args.executable, source, existing, (.02,), 1)
         assert refused.returncode != 0 and (existing/'query-0.bgapch').read_bytes() == retained
         # An exhausted finite capacity cannot publish partial success.
-        exhausted = args.destination/f'{kind}-exhausted'
+        exhausted = args.destination/f'{label}-exhausted'
         command = [str(args.executable), '--source', str(source), '--carrier', '9',
                    '--output', str(exhausted), '--threads', '1', '--positional-mm', '1e-9',
                    '--max-nodes', '1']
