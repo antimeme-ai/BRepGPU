@@ -5,11 +5,15 @@ review after the integrated design's constructive resolutions. Execute product
 units after their finite interface plans and direct RED. The
 operator has selected the architecture and authorized implementation; reviews
 resolve concrete engineering decisions rather than request permission again.
+The first regular-surface checkpoint is now delivered in
+[the patch report](../results/adaptive-patch-2026-10-16/REPORT.md). Continue with
+original curve caches/shared chosen domains and complete trimmed components;
+the whole-mesher PR remains unfinished.
 
 ## Complete operation and checkpoints
 
-1. **Original geometry cache and regular mesh.** Implement packed, reusable
-   curve/surface roots and adaptive nodes with original-source bounds, actual
+1. **Original surface cache and regular mesh.** Implement packed, reusable
+   surface roots and adaptive nodes with original-source bounds, actual
    stored sample values and finite typed source identities. Build/refine a
    surface cache on CPU and P100 through one common numerical profile and
    deterministic frontier. Extract a conforming regular patch mesh using common
@@ -22,8 +26,8 @@ resolve concrete engineering decisions rather than request permission again.
    Ambiguous regularity refines or returns a typed exhausted/unsupported outcome;
    positional acceptance and nonzero emitted triangles alone do not prove it.
    Global source embedding/injectivity is not claimed by this patch checkpoint.
-2. **Shared curves and chosen domains.** Connect original curve caches to the
-   single physical source-edge sample authority, efficient source-node recovery,
+2. **Shared curves and chosen domains.** Implement original curve caches and
+   connect them to the single physical source-edge sample authority, efficient source-node recovery,
    selected trace correspondence, whole-interval chord/domain bounds, original
    authoritative/mixed domains and finite seam/pole maps. This replaces the
    expensive old analytic trace path rather than paying it before every cache

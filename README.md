@@ -32,10 +32,25 @@ solids. Construction, meshing and these views run on CPU.
 [cached adaptive subdivision design](docs/ADAPTIVE_MESHER_DESIGN.md), with
 [a concrete delivery plan](docs/ADAPTIVE_MESHER_PLAN.md), is now primary.
 We study NVIDIA USD/BRep and the wider literature for stronger numerical,
-cache, trim and GPU algorithms. CPU and P100 will execute the same source-linked
-operation, with cold and declared cache-reuse costs reported separately.
-The design is under implementation-unit review; no new adaptive mesh or GPU
-speedup is claimed yet. The complete OM10 render remains pending.
+cache, trim and GPU algorithms. The first integrated C++/CUDA operation now takes
+original untrimmed surface patches through cached refinement to conforming,
+source-bounded triangles on CPU and both P100s.
+
+The [131,072-triangle coupled-surface observation](results/adaptive-patch-2026-10-16/REPORT.md)
+passes an independent whole-facet oracle with identical CPU/GPU cold/warm output:
+
+| Backend | Cold query | Warm fresh mesh | Complete two-query process |
+|---|---:|---:|---:|
+| CPU1 | 8.423s | 4.284s | 12.833s |
+| CPU4 | 5.591s | 3.959s | 9.681s |
+| P1000, CPU4 host | 4.777s | 3.853s | 9.116s |
+
+These are single observations; CPU4 is the best observed CPU baseline and the
+complete-process difference is modest. Setup, output, transfers and close remain
+accounted for. The report retains earlier timeouts and distinguishes actual
+warm remeshing from returning a cached result. This is an untrimmed patch
+operation; shared trims, complete components and the OM10 render remain pending.
+The NVIDIA CPU reference has not been run on this new scenario.
 
 ```mermaid
 flowchart LR

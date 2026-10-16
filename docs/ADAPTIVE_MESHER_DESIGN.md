@@ -3,8 +3,10 @@
 Status: operator-selected architecture; constructive design accepted in scoped
 algorithm, geometry and runtime review after the resolutions below. Product
 units require their finite interface/RED/review procedures. This supersedes the
-direct-refinement framework in NATIVE_MESHER_DESIGN.md. It is not an implemented
-mesher claim.
+direct-refinement framework in NATIVE_MESHER_DESIGN.md. The first regular
+untrimmed surface operation is implemented and measured in
+[the patch report](../results/adaptive-patch-2026-10-16/REPORT.md); the complete
+curve/trim/component mesher remains under implementation.
 The dependency draft is [ADAPTIVE_MESHER_PLAN.md](ADAPTIVE_MESHER_PLAN.md).
 
 ## Purpose and selected architecture
