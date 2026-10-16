@@ -125,7 +125,10 @@ answer may conceal exhaustion. Exact bit width is not silently capped to64/128.
 Sort exact X and Y coordinate values once, assign equal values equal uint32
 ranks, and retain source node slot as the deterministic tie breaker. Rank order
 preserves closed-box overlap exactly; it is not a numeric approximation. More
-than uint32-representable nodes/ranks returns RESOURCE_EXHAUSTED.
+than uint32-representable nodes/ranks returns RESOURCE_EXHAUSTED. Derived bridge
+occurrences `N+2*H`, tree nodes up to `2*N-1`, output counts and byte products
+are checked independently before allocation/conversion; an input count fitting
+uint32 does not imply its derived counts fit.
 
 Use one owned packed median-split BVH representation with small leaves (initial
 leaf size8), closed rank AABBs and uint32 object slots. Choose split axis by rank
@@ -177,7 +180,15 @@ version and byte size; mismatched/truncated or nonzero unknown reserved fields
 are rejected before reading later fields. No STL type, borrowed native vector, exception or
 allocator ownership crosses C. Create/run catch allocation and other exceptions;
 contexts use RAII internally. Destroy is noexcept and null-safe. Native functions
-are nodiscard internally; typed ID/slot wrappers prevent accidental interchange.
+are nodiscard internally. A strong internal NodeSlot distinguishes source-node
+arguments from ear occurrence/segment/tree ordinals, which remain checked raw
+uint32 in their owning records; source IDs remain explicit uint64 at the C ABI.
+
+Work limits apply independently to context creation and each subsequent native
+operation; `work` and operation counters describe the last operation, while
+`memory_peak` is the retained context lifetime high-water. Decode wall is retained
+separately. `first_crossing` returns OK with an explicit found flag; CROSSING is
+the triangulation rejection status.
 
 Statuses distinguish OK, INVALID_INPUT, CROSSING, INVALID_DOMAIN, NO_BRIDGE,
 NO_POSITIVE_EAR, RESOURCE_EXHAUSTED and INTERNAL_ERROR. Boundary NONE is an OK
@@ -213,8 +224,7 @@ process RSS captures Python normalization/storage too. Native one-core timing
 precedes concurrency. Reference geometry admission is separate from construction.
 
 A sparse dyadic rectangular-strip perimeter family scales256..8192 boundary
-nodes. Its closed segment boxes intersect only locally: at8192 require exact
-segment candidates under `64*N`, rather than ~N^2/2 enumeration. Ear candidate
+nodes. Its closed segment boxes intersect only locally: at8192 require crossing-only BVH node visits plus leaf-object box tests under `64*N`, rather than ~N^2/2 enumeration. Ear candidate
 work is reported rather than falsely promised linear for this family. A strict-convex family checks the exact fast path, sequence and emitted-ear
 count with zero blocker queries and no point-index build; a separate
 concave dense-box family reveals broad-query behavior without that shortcut. A
