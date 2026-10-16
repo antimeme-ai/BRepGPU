@@ -79,6 +79,11 @@ void terminal_tie() {
   mesh.seal_initial();
   // AB=AD=5 in the neighbor. Its ordinary endpoint tie chooses AD, but the
   // incoming AB must immediately terminate the LEPP pair.
+  const auto terminal = mesh.next_terminal(target);
+  require(terminal == required(mesh.find_edge(a, b), "terminal incoming edge missing") &&
+              mesh.stats().sites == 4 && mesh.stats().live_triangles == 2 &&
+              mesh.take_changes().empty(),
+          "terminal preflight mutated topology or walked beyond incoming tie");
   const auto result = mesh.refine_longest(target);
   require(result.kind == bgmesh::RefineKind::target_bisected, "incoming longest tie walked on");
   require(result.splits == 1 && mesh.triangles().size() == 4, "tie did not split one pair");
@@ -113,24 +118,55 @@ void sticky_lineage() {
   const auto c = mesh.append_site({0, 2});
   const auto target = mesh.add_initial_triangle({a, b, c});
   mesh.seal_initial();
-  const auto inserted = mesh.insert_heuristic(target, {0.5, 0.5});
-  require(inserted.has_value(), "valid heuristic rejected");
-  const auto p = *inserted;
+  const auto staged = required(mesh.stage_heuristic(target, std::array<double, 2>{0.5, 0.5}),
+                               "valid heuristic staging rejected");
+  require(mesh.stats().sites == 3 && mesh.triangles().size() == 1 &&
+              mesh.triangle(target).heuristic_spent,
+          "heuristic preflight published geometry before canonical XYZ staging");
+  const auto &staged_x = mesh.heuristic_coordinate(staged, bgmesh::CoordinateAxis::x);
+  require(staged_x.to_double() == .5, "staged heuristic coordinate changed");
+  bool pending_blocked = false;
+  try {
+    (void)mesh.bisect_internal_edge(required(mesh.find_edge(a, b), "staged edge missing"));
+  } catch (const bgfd::Failure &) {
+    pending_blocked = true;
+  }
+  require(pending_blocked && mesh.stats().sites == 3,
+          "intervening edit invalidated a staged source evaluation");
+  const auto p = mesh.commit_heuristic(staged);
+  bool stale_ticket = false;
+  try {
+    (void)mesh.commit_heuristic(staged);
+  } catch (const bgfd::Failure &) {
+    stale_ticket = true;
+  }
+  require(stale_ticket && mesh.is_usable(), "committed heuristic ticket was reused");
   require(mesh.triangles().size() == 3, "interior insertion patch");
   for (const auto child : mesh.triangles()) {
     require(mesh.triangle(child).heuristic_spent, "child lost spent ancestry");
     mesh.mark_accepted(child);
     require(mesh.triangle(child).heuristic_spent, "acceptance reset spent ancestry");
   }
-  const auto shared = mesh.find_edge(a, p);
-  require(shared.has_value(), "new spoke missing");
-  (void)mesh.bisect_internal_edge(*shared);
+  const auto shared = required(mesh.find_edge(a, p), "new spoke missing");
+  (void)mesh.bisect_internal_edge(shared);
   for (const auto child : mesh.triangles())
     require(mesh.triangle(child).heuristic_spent, "conformity split reset ancestry");
   const auto live = mesh.triangles().front();
   const bool rejected = !mesh.insert_heuristic(live, {0.5, 0.5});
   require(rejected && mesh.is_usable(), "spent attempt did not reject before mutation");
   check_links(mesh);
+  bgmesh::MutableFaceTopology cancelled(budget);
+  const auto ca = cancelled.append_site({0, 0}), cb = cancelled.append_site({2, 0}),
+             cc = cancelled.append_site({0, 2});
+  const auto cancel_target = cancelled.add_initial_triangle({ca, cb, cc});
+  cancelled.seal_initial();
+  const auto cancel_ticket = required(
+      cancelled.stage_heuristic(cancel_target, std::array<double, 2>{.5, .5}),
+      "cancel fixture staging rejected");
+  cancelled.cancel_heuristic(cancel_ticket);
+  require(cancelled.stats().sites == 3 && cancelled.triangle(cancel_target).heuristic_spent &&
+              !cancelled.stage_heuristic(cancel_target, std::array<double, 2>{.5, .5}),
+          "cancel published an orphan or reset sticky attempt");
   bgmesh::MutableFaceTopology overflow(budget);
   const auto oa = overflow.append_site({0, 0}), ob = overflow.append_site({2, 0}),
              oc = overflow.append_site({0, 2});

@@ -59,3 +59,7 @@ is pending. Only the forest can construct sealed evaluation-batch handles;
 callers retain/copy them and cannot replace the immutable task table. Face joints/traces,
 domain admission and the whole runtime producer remain the next integration
 steps; this forest alone is not a watertight mesh claim.
+
+## Immutable original-edge transport for face recovery
+
+Added `freeze_face_boundary(face)` to the same forest authority after an actual missing-method RED. It exports only settled source evaluations (idle forest), retaining SourceStore/definition/face/epoch/source-boundary generation. Flat source-edge-sorted rows retain the literal original parameter direction, canonical physical keys/XYZ, exact source-t refs and protected interval keys. No mutable forest, Rational or Budget is borrowed by the geometry recovery job. A forest-owned monotone nonzero export ordinal distinguishes every pool from earlier exports and evaluation batch ordinal0. The existing fixture checks pending refusal, retained source identity/literal endpoint mapping, new-generation chain length and the unchanged older snapshot. Focused ASan/UBSan/LSan execution passed. Actual-source lint also passed; independent parent review remains separate.

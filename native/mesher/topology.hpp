@@ -22,6 +22,13 @@ struct EdgeHandle final {
   auto operator<=>(const EdgeHandle &) const = default;
 };
 enum class CoordinateAxis { x, y };
+class MutableFaceTopology;
+class HeuristicTicket final {
+  const void *owner_;
+  uint64_t serial_;
+  HeuristicTicket(const void *owner, uint64_t serial) : owner_(owner), serial_(serial) {}
+  friend class MutableFaceTopology;
+};
 enum class BoundaryOwnerKind { source_edge, face_cut };
 struct BoundaryKey final {
   uint64_t owner = 0, interval = 0;
@@ -96,6 +103,7 @@ public:
   [[nodiscard]] std::pmr::vector<TriangleHandle> triangles() const;
   [[nodiscard]] const Rational &coordinate(SiteSlot, CoordinateAxis) const;
   [[nodiscard]] const Rational &metric_coordinate(SiteSlot, CoordinateAxis) const;
+  [[nodiscard]] const Rational &diameter_squared(TriangleHandle) const;
   [[nodiscard]] int compare_axis(SiteSlot, SiteSlot, CoordinateAxis) const;
   [[nodiscard]] int orient(std::array<SiteSlot, 3>) const;
   [[nodiscard]] const TriangleLineage &lineage(uint64_t) const;
@@ -106,7 +114,18 @@ public:
   [[nodiscard]] std::optional<SiteSlot> insert_heuristic(TriangleHandle, std::array<double, 2>);
   [[nodiscard]] std::optional<SiteSlot> insert_heuristic(TriangleHandle,
                                                          const std::array<Rational, 2> &);
+  // A ticket spends the attempt but publishes no site/triangle. The owner may
+  // evaluate canonical XYZ before commit. Cancel preserves the sticky flag.
+  [[nodiscard]] std::optional<HeuristicTicket> stage_heuristic(TriangleHandle,
+                                                               std::array<double, 2>);
+  [[nodiscard]] std::optional<HeuristicTicket> stage_heuristic(TriangleHandle,
+                                                               const std::array<Rational, 2> &);
+  [[nodiscard]] const Rational &heuristic_coordinate(HeuristicTicket, CoordinateAxis) const;
+  [[nodiscard]] SiteSlot commit_heuristic(HeuristicTicket);
+  void cancel_heuristic(HeuristicTicket);
   [[nodiscard]] SiteSlot bisect_internal_edge(EdgeHandle);
+  // LEPP selection only: lets the same owner stage canonical XYZ before commit.
+  [[nodiscard]] EdgeHandle next_terminal(TriangleHandle);
   [[nodiscard]] RefineResult refine_longest(TriangleHandle);
 };
 } // namespace bgmesh

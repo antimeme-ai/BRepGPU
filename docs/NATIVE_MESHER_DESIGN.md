@@ -2,7 +2,7 @@
 
 Status: whole-system design accepted for implementation planning by independent
 algorithm, geometry/source and runtime/numerical reviews on2026-10-16.
-Implementation has not started. This replaces selecting the next local change to the old imported
+Implementation is underway against the accepted whole plan. This replaces selecting the next local change to the old imported
 mesher. The three [research reports](#research-and-alternatives) supply the
 literature, inspected reference revisions, assumptions and acquisition gaps.
 
