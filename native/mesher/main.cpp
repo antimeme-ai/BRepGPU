@@ -1,4 +1,5 @@
 #include "mesh_io.hpp"
+#include "output_directory.hpp"
 #include "mesh_publish.hpp"
 #include "meshing_run.hpp"
 #include "presentation.hpp"
@@ -122,39 +123,6 @@ Options options(int argc, char **argv) {
   out.output = std::filesystem::absolute(out.output).lexically_normal();
   return out;
 }
-class OutputDirectory final {
-  std::filesystem::path final_, temporary_;
-  bool published_ = false;
-
-public:
-  explicit OutputDirectory(const std::filesystem::path &target) : final_(target) {
-    if (std::filesystem::exists(std::filesystem::symlink_status(final_)))
-      throw Error(ErrorCode::io_failure, "output already exists; publication never replaces it");
-    if (!std::filesystem::is_directory(final_.parent_path()))
-      throw Error(ErrorCode::io_failure, "output parent must be an existing directory");
-    auto pattern = (final_.parent_path() / (final_.filename().string() + ".tmp-XXXXXX")).string();
-    if (!::mkdtemp(pattern.data()))
-      throw Error(ErrorCode::io_failure,
-                  "cannot create temporary output: " + std::string(std::strerror(errno)));
-    temporary_ = pattern;
-  }
-  ~OutputDirectory() {
-    if (published_ || temporary_.empty())
-      return;
-    std::error_code failure;
-    std::filesystem::remove_all(temporary_, failure);
-    if (failure)
-      std::cerr << "cleanup\ttemporary_output\t" << failure.message() << '\n';
-  }
-  const std::filesystem::path &path() const { return temporary_; }
-  void publish() {
-    if (::syscall(SYS_renameat2, AT_FDCWD, temporary_.c_str(), AT_FDCWD, final_.c_str(),
-                  RENAME_NOREPLACE) != 0)
-      throw Error(ErrorCode::io_failure,
-                  "no-replace publication failed: " + std::string(std::strerror(errno)));
-    published_ = true;
-  }
-};
 struct Stage final {
   std::string_view name;
   double value;
