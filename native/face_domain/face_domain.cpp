@@ -643,6 +643,15 @@ extern "C" bgfd_status bgfd_first_crossing(bgfd_context *context, bgfd_crossing 
     static_cast<void>(context->engine.crossing(*output));
   });
 }
+extern "C" bgfd_status bgfd_validate_domain(bgfd_context *context, bgfd_error *error) {
+  return guarded(context, error, [&] {
+    if (context == nullptr)
+      throw bgfd::Failure(BGFD_INVALID_INPUT, "missing context");
+    if (context->engine.stats.node_count != context->engine.stats.segment_count)
+      throw bgfd::Failure(BGFD_INVALID_DOMAIN, "every source site must occur in a boundary loop");
+    context->engine.validate_domain();
+  });
+}
 extern "C" bgfd_status bgfd_triangulate(bgfd_context *context, bgfd_error *error) {
   return guarded(context, error, [&] {
     if (context == nullptr)

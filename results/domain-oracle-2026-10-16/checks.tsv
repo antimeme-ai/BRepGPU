@@ -1,0 +1,5 @@
+check	reader	outcome	methods	seconds	observed_comparisons	comparison_limit
+fraction-comparison-work-512	old	EXPECTED_RED	1	0.693	590566	32768
+preserved-domain-semantics	old	PASS	6	0.186		
+focused-sweep-suite	new	PASS	8	0.259		
+affected-consumer-suite	new	PASS	80	18.675		

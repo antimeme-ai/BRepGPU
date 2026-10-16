@@ -30,9 +30,12 @@ def main(args):
     own_path = Path(__file__).resolve()
     pins = (*pin_files(), (str(own_path.relative_to(ROOT)), hashlib.sha256(own_path.read_bytes()).hexdigest()))
     binaries = (('step_source_adapter', args.adapter), ('native_executable', args.native), ('cuda_plugin', args.plugin))
-    if args.domain_backend == 'native':
+    if args.domain_backend in ('native', 'direct'):
         from brepgpu.face_domain import library_path
         binaries += (('native_face_domain', library_path()),)
+    if args.domain_backend == 'direct':
+        from brepgpu.face_domain import direct_cdt_library_path
+        binaries += (('native_direct_cdt', direct_cdt_library_path()),)
     def binary_hashes():
         return tuple((role, hashlib.sha256(path.read_bytes()).hexdigest()) for role, path in binaries)
     executable_pins = binary_hashes()
@@ -100,6 +103,7 @@ def main(args):
             (f'query_definition_{id}_sha256',query_pins[index+1]))),
         ('tolerance_mm',args.tolerance),('source_residual_mm',args.source_residual),
         ('domain_backend',args.domain_backend),
+        ('connectivity_seed',0 if args.domain_backend=='direct' else 'not applicable'),
         ('max_refinement',args.max_refinement),('max_edge_samples',args.max_edge_samples),
         ('width',args.width),('height',args.height),('supersample',args.supersample),
         ('azimuth',args.azimuth),('elevation',args.elevation),('view_flags',3)))
@@ -137,7 +141,7 @@ if __name__ == '__main__':
     p.add_argument('--adapter',type=Path,default=ROOT/'build/om10-step-source/brepgpu-step-source')
     p.add_argument('--native',type=Path,default=ROOT/'build/om10-release/brepgpu-om10-native')
     p.add_argument('--plugin',type=Path,default=ROOT/'build/om10-release/libbrepgpu_om10_cuda.so')
-    p.add_argument('--domain-backend',choices=('native','python'),default='native')
+    p.add_argument('--domain-backend',choices=('native','direct','python'),default='native')
     p.add_argument('--width',type=int,default=2400)
     p.add_argument('--height',type=int,default=2000)
     p.add_argument('--supersample',type=int,choices=(1,2),default=2)
