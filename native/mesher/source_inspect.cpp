@@ -1,10 +1,13 @@
 #include "source.hpp"
+#if defined(BREPGPU_SOURCE_GEOMETRY)
+#include "geometry_store.hpp"
+#endif
 #include <chrono>
 #include <iostream>
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    std::cerr << "usage: brepgpu-source-inspect source.bgsource\n";
+  if (argc != 2 && !(argc == 3 && std::string_view(argv[2]) == "--geometry")) {
+    std::cerr << "usage: brepgpu-source-inspect source.bgsource [--geometry]\n";
     return 2;
   }
   try {
@@ -21,9 +24,33 @@ int main(int argc, char **argv) {
               << "\noriginal_bytes\t" << d.original_bytes.size() << "\nsource_read_seconds\t"
               << std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count()
               << "\npeak_reserved_bytes\t" << resource->peak() << '\n';
+    if (argc == 3) {
+#if defined(BREPGPU_SOURCE_GEOMETRY)
+      const auto geometry_start = std::chrono::steady_clock::now();
+      bgfd::Budget budget({uint64_t{2} << 30, uint64_t{1} << 40}, resource.get());
+      const auto geometry = bgmesh::compile_geometry(
+          source, resource, {{bgmesh::OwnerKind::geometry, 0, 0}, 0, 0}, budget);
+      std::cout << "original_curve_roots\t" << geometry.view().curve_roots.size()
+                << "\noriginal_surface_roots\t" << geometry.view().surface_roots.size()
+                << "\ngeometry_prepare_seconds\t"
+                << std::chrono::duration<double>(std::chrono::steady_clock::now() - geometry_start)
+                       .count()
+                << "\ngeometry_exact_work\t" << budget.work() << "\ngeometry_scratch_peak_bytes\t"
+                << budget.peak() << "\ncomplete_prepare_peak_reserved_bytes\t" << resource->peak()
+                << '\n';
+#else
+      throw bgmesh::Error(bgmesh::ErrorCode::unsupported, "original geometry module is not built");
+#endif
+    }
     return 0;
   } catch (const std::exception &error) {
     std::cerr << error.what() << '\n';
     return 1;
   }
+#if defined(BREPGPU_SOURCE_GEOMETRY)
+  catch (const bgfd::Failure &error) {
+    std::cerr << error.what() << '\n';
+    return 1;
+  }
+#endif
 }
