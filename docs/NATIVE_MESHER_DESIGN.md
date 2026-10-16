@@ -31,6 +31,14 @@ heals the original B-rep nor supplies minimum-angle, analysis-element, normal-
 angle, volume-error or collision-free-assembly guarantees by implication.
 No incomplete part inventory may become a successful mesh.
 
+The requested positional tolerance applies after the retained assembly
+placements. Their source matrices are approximately rigid binary64 values,
+not exact isometries by assertion. Compose source paths exactly, bound their
+actual linear operator norms, and charge rounding of the stored composed
+instance matrix. Derive a safe definition-local allowance for all its instances
+before meshing; retain that allowance and original path. Raster/projection
+rounding remains the separate display-consumer contract.
+
 The selected framework is **geometry-aware constrained refinement with local
 approximation bounds and one global feature authority**. Geometry subdivision
 trees supply bounds, local charts, span/trim lookup and sizing information; they
@@ -127,7 +135,7 @@ implicit inverse equation that a triangulator cannot represent:
    generation and restart affected face domains. A fixed-point loop has explicit
    work/precision limits; difficult geometry cannot become a success by omission.
 
-Thus reconstructed traces have E_domain=0 relative to their named selected
+Thus all-reconstructed faces have E_domain=0 relative to their named selected
 polygon **in the chosen working chart**, realized through S_f composed with Psi;
 the whole-interval original edge/carrier discrepancy is still required. A
 physical-plane realization is not first defined as an original-UV polygon and
@@ -138,6 +146,19 @@ their graph strips and joint neighborhoods must establish bounded correspondence
 to the polygon, charged below. An undefined/open authoritative domain is reported
 explicitly. Degenerate edges take a declared constant/quotient branch and never
 enter a formula dividing by a zero parameter range.
+
+Authority is per use, not a face-wide boolean. Mixed faces use the finite
+`HybridPullback` realization: a joint touching an authoritative arc retains its
+original endpoint A, with a common chosen polygon joint Q. A local nodal fan B
+maps A to Q. Reconstructed reference arcs are B^-1 of their selected polygons;
+authoritative arcs remain original. Apply all nodal B maps, then tapered strip
+maps T only on authoritative arcs, excluding reconstructed polygons except their
+fixed common endpoints. This closes the full reference boundary and maps it to
+the selected polygon. Bound and charge B/T displacement on every affected cell
+and inverse movement in original-edge/reference-trace comparisons. It is not
+free domain error on reconstructed arcs near a mixed joint. Store the finite
+selected maps and reference-policy tag. The [geometry plan](native-mesher-geometry-plan.md)
+specifies the affine fan inverse, support construction, bounds and unresolved cases.
 
 Thus the reference is a named toleranced face realization plus bounds to the
 retained originals. We do not promise distance to an unspecified exact solid
@@ -195,6 +216,13 @@ Interior cells have E_domain=0. The maxima are local; do not sum bounds for
 unrelated cells. Physical source-edge chords independently satisfy the requested
 edge bound against C_e, with original endpoint departures included. Source
 uncertainty remains reported separately from computed discrepancies.
+
+The retained source-recovery setting is a nodal cap: original V or C_e(t_i)
+versus original S at the stored chosen recovery UV. It is not a whole-curve
+closest-carrier guarantee. Whole curve/selected-trace approximation uses the
+positional allowance; a plane's curved trim must not inherit a finer chord
+tolerance merely because its nodal recovery cap is smaller. Actual XYZ rounding
+is already included in cell/chord bounds and is not charged again here.
 
 The default edge correspondence is parameter-matched linear interpolation.
 A checked geometric-line profile instead projects C_e onto the endpoint line,
