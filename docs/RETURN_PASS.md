@@ -49,6 +49,11 @@ may remain useful for research and independent qualification even if it does not
 belong in the shipping execution path. Select a role and a concrete migration
 sequence only after that study; current beachheads keep their existing APIs.
 See the [investigation brief](../papers/2026-10-14-python-role-return-pass.md).
+After the watch exposed expensive serial CPU construction, the operator asked
+for an actual sibling C++ rigor-stack inspection. The [resulting transition
+proposal](../papers/2026-10-15-native-cpp-transition-proposal.md) recommends
+native production geometry with independent Python oracles; it is a study,
+and implementation remains held for the operator's next direction.
 
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
 Complete analytic intersection and spatial/bothUV representation, plus the

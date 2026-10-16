@@ -26,3 +26,11 @@ process attachment, execution, implementation or restart was performed here.
 The current 8,300-node/four-coedge face demonstrates why actual sampled counts
 must replace original topology size when diagnosing this run. Recommendations
 remain proposals pending the operator-facing report.
+
+For the operator's subsequent C++ phaseout study, inspected imported source/
+mesh records, exact plane construction, packed display ownership and ABI5
+source/revision/slot conventions. Saved the bounded native-domain recommendation
+and numerical/identity/concurrency/oracle seams in
+`papers/2026-10-15-cpp-migration-numerical-seams.md`. No implementation,
+execution, benchmark, installation or dependency adoption; the diagnostic
+hold remains in force.
