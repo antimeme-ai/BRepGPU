@@ -219,10 +219,12 @@ performance certification gates. Mutants run on the fleet, never the laptop.
 
 The operator explicitly requires avoiding overfitting to the OM10 watch.
 Use it to expose costs and retain regressions, while deriving algorithms and
-admission from general geometry contracts. No source-ID, part-name, dimension,
-sample-count or model-specific tolerance/dispatch shortcuts. Specializations
-require explicit geometric preconditions checked on the actual input and a
-general admitted path. Select independent authored/reference workload families
+admission from general geometry contracts. Do not key admission, dispatch,
+tolerances or capacities to watch source IDs, names, dimensions or observed
+sample counts. General size-dependent algorithm choices are allowed when
+justified across workloads and bounded by actual inputs. Specializations require
+explicit geometric preconditions checked on the actual input and a general
+admitted path. Select independent authored/reference workload families
 before tuning; retain separate correctness, time, work and memory outcomes for
 each family, including regressions and censored cases. Transformations of a
 watch case supplement independent geometry; they do not replace it. Keep this
