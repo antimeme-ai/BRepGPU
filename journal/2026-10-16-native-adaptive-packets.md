@@ -133,3 +133,36 @@ arithmetic hotspot cause is claimed from that failed attachment. The old six-
 coefficient bound driving many precise false failures remains a source-based
 hypothesis until separately measured. Final observations follow after the fixed
 cohort completes.
+
+The fixed original cohort is complete:1e-4 all four modes passed original whole-
+facet/coverage checks and produced identical cold/warm bytes;1e-5 all four two-
+query processes censored at120s. Derived public TSV/report preserve all eight
+rows and pinned caller/module/source hashes. Metadata-only recovery repaired
+only the known missing-column status after actual reader assertions had passed;
+it did not rerun geometry. Raw original status/logs remain untouched private.
+
+Root then explicitly authorized a NEW separate, bounded affected comparison
+after the selected `/4` transfer fix: fine1e-5 SAME source and limits, CPU1 and
+P1000 only,120s each. This supersedes the earlier no-further-run instruction only
+for those two changed-implementation observations; the original cohort is never
+replaced. Added a finite runner switch/source reuse/hash capture. Execution is
+on hold until root's current-build GREEN notice; no automatic tuning or larger
+cohort will follow a censor.
+
+Current affected CPU1/P1000 comparison passed: same fine1e-5 original source,
+66,049points/131,072facets, SAME exact whole-facet/coverage reader and all four
+cold/warm byte sequences equal. Native process times12.833s CPU1 and9.116s P1000;
+query scopes8.423/4.284s and4.777/3.853s. Current binary/source identities were
+captured before execution; old baseline/artifacts remain untouched. Both modes
+had zero exact fallback and actual facet failure counts.
+
+Before publication root required the material missing current parallel baseline,
+consistent with the best-CPU performance contract. Exactly ONE additional current
+CPU4 process used identical source/binary hashes, fixed limits and120s censor;
+no source oracle was rerun, only byte equality to the already independently
+checked current artifact. It passed at9.681s process,5.591s cold/3.959s warm.
+Current public three-row TSV and separate transfer observation report preserve
+that outcome. No P1001, additional quality, tuning or further workload followed.
+The modest process difference versus CPU4 is one shared-machine observation,
+not a general GPU speedup. All raw commands/output and identity tables remain
+private. Root can resume builds; this bounded performance unit is complete.
