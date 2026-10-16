@@ -1,5 +1,19 @@
 # BRepGPU research
 
+## Direct constrained triangulation and performance ambition
+
+The operator requires strong algorithm/numerical/data-layout choices before
+metrics. The [direct-CDT strategy](../docs/DIRECT_CDT_STRATEGY.md) reopens the
+native-Lawson default around complete constrained construction and a serious
+GPU contender. Read the [algorithm selection](2026-10-16-direct-cdt-algorithm-selection.md),
+[filtered exact predicates](2026-10-16-direct-cdt-predicate-design.md), and
+[current GPU CDT paper/source study](2026-10-16-gpu-cdt-frontier.md), with
+[bibliography](direct-cdt.bib) and explicit full-text gaps in SHOPPING_LIST.
+The [independent oracle](../docs/DIRECT_CDT_ORACLE_DESIGN.md) adds exact local
+constrained-Delaunay legality to original-domain/source/embedding checks.
+Its focused fleet results are in the [journal](../journal/2026-10-16-direct-cdt-oracle-design.md).
+No native direct CDT or GPU constructor is delivered by this study.
+
 ## Signed analytic offsets and sharp joins
 
 The [design](../docs/OFFSET_DESIGN.md) and [reviewed plan](../docs/OFFSET_PLAN.md)

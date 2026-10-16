@@ -217,6 +217,39 @@ cannot independently certify geometry. Report transfer, setup, validation,
 fallback and Python overhead explicitly. No tests-for-tests or perpetual
 performance certification gates. Mutants run on the fleet, never the laptop.
 
+The operator explicitly requires avoiding overfitting to the OM10 watch.
+Use it to expose costs and retain regressions, while deriving algorithms and
+admission from general geometry contracts. Do not key admission, dispatch,
+tolerances or capacities to watch source IDs, names, dimensions or observed
+sample counts. General size-dependent algorithm choices are allowed when
+justified across workloads and bounded by actual inputs. Specializations require
+explicit geometric preconditions checked on the actual input and a general
+admitted path. Select independent authored/reference workload families
+before tuning; retain separate correctness, time, work and memory outcomes for
+each family, including regressions and censored cases. Transformations of a
+watch case supplement independent geometry; they do not replace it. Keep this
+discipline in subsequent native/CUDA migration designs and performance claims.
+
+Performance ambition starts with the strongest applicable algorithms, numerical
+methods and data layouts in the literature, before metrics exist. Study those
+contenders and their actual assumptions before choosing an implementation;
+familiarity or an easy port of current code does not select the design. Use
+complexity, avoided work, locality and parallelism to form concrete hypotheses,
+then compare qualified complete operations across independent workloads.
+Wall-clock budgets bound experiments; they are not the meaning of this mandate.
+Read docs/DIRECT_CDT_STRATEGY.md and DIRECT_CDT_ORACLE_DESIGN.md before selecting
+the next connectivity implementation. The prior native-Lawson proposal is an
+option/control, superseded as the default next-constructor choice. The current
+study now has an owned native direct CDT constructor and independent oracle.
+Read docs/DIRECT_CDT.md and results/direct-cdt-2026-10-16/REPORT.md. Explicit
+`domain_backend='direct'` uses the actual carrier metric and retains source
+sampling/refinement; old native ears remain the default. Keep whole sampled-domain,
+complete-part and whole-watch/render claims separate. The shared signed-cap
+helper has actual semantic/sanitizer evidence; public marked-fan execution is
+not observed in the current workload cohort. Many-hole admission remains a
+measured quadratic cost. No new alpha or GPU CDT claim follows from these CPU
+results.
+
 ## Development workflow
 
 Use a feature branch for each substantial delivery. Make frequent, coherent

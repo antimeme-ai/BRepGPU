@@ -28,6 +28,36 @@ solids. Construction, meshing and these views run on CPU.
 [Images, source/history exports and scoped costs](results/watch-2026-10-15/REPORT.md) ·
 [Target and design notes](docs/WATCH_TARGET.md).
 
+The supplied real OM10 movement is driving an owned
+[C++20 direct constrained Delaunay constructor](docs/DIRECT_CDT.md):
+alternating-cut initial triangulation, randomized constraint recovery, compact
+indexed topology and filtered exact metric predicates. An **8,192-site forced
+recovery** call takes **0.326–0.337s** on one CPU across three seeds, recovering
+more than8,000 crossed edges; the old ear-plus-Python-Lawson worker is censored
+at30s. Exact independent qualification is timed separately. The
+[107-observation report](results/direct-cdt-2026-10-16/REPORT.md) retains all
+outcomes, setup costs and the remaining quadratic many-hole admission cost.
+These are CPU sampled-domain calls; GPU CDT remains future work.
+
+```mermaid
+flowchart LR
+  A[Original exact UVs and constraints] --> B[Exact domain admission]
+  B --> C[Alternating-cut Delaunay]
+  C --> D[Special-cavity constraint recovery]
+  D --> E[Original source-ID triangles]
+  E --> F[Existing carrier refinement]
+  F --> G[Independent complete mesh checks]
+```
+
+Explicit imported-mesh direct mode now constructs and independently qualifies
+all **438 main-plate faces and191,688 triangles** at unchanged quality:
+**208.258s construction**, then **169.985s independent qualification** on one CPU.
+The [complete-part report](results/main-plate-direct-2026-10-16/REPORT.md) retains
+the earlier qualifier timeout and the exact ranked-sweep replacement. The earlier
+[native ear results](results/native-face-domain-2026-10-16/REPORT.md) remain
+available, including the main-plate300s construction censor. The full OM10
+render remains pending.
+
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen
 it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
@@ -52,8 +82,11 @@ cover result meshing, composable history, external qualification and measured
 runtime ownership. Actual extrusion/bore composition is now delivered; external
 adapters and runtime/language study remain. The [post-watch roadmap proposal](docs/POST_WATCH_ROADMAP.md)
 connects required CPU references, measured preparation/runtime work, real edits
-and GPU topology construction in the next broad cycle. No language rewrite or
-general modeling support is implied.
+and GPU topology construction in the next broad cycle. The first
+[native C++20 ownership unit](docs/NATIVE_FACE_DOMAINS.md) now handles exact
+sampled-face crossing and triangulation in imported meshing, with an explicit
+Python reference path and selected external geometry cases. General modeling
+support remains a separate goal.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -70,7 +103,10 @@ system at all, and in which role.
 Development can continue while those suites are incomplete; required missing,
 unsupported, skipped or failing cases cannot count as green. The
 [OCCT, CGAL and oracle audit](papers/README.md#external-oracles-and-alpha-qualification)
-records the current gap: we have not yet replayed community cases against our output.
+records the remaining full-suite gap. Selected NVIDIA trim and Manifold polygon
+inputs now exercise our native face-domain output with independent exact
+boundary/incidence/embedding checks; this first cohort does not complete alpha
+qualification.
 
 [NVIDIA USD/BRep CPU reference timings are required for every README scenario](https://github.com/antimeme-ai/BRepGPU/issues/63).
 Complete the OM10 watch comparison first, then backfill all advertised scenarios
