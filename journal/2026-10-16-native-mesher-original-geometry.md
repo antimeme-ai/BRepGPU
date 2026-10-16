@@ -292,3 +292,166 @@ comparisons. A foreign-owner second occurrence produced actual fleet RED
 `rational arithmetic allocator mismatch`. All occurrences now pass owner,
 allowance, precision and original-t/map coverage admission before endpoint
 selection or arithmetic; GREEN is running.
+
+Cross-use owner/POWER/authoritative-joint cohort strict GREEN. Root independently
+accepted chart/envelope source after the cone correction. During trace RED,
+reviewed root's FaceOwnerJob actual scheduling/lifetime code; found optional
+empty stop token disconnected persistent arithmetic from scheduler stop.
+Root removed the default and requires the submitting scheduler's token.
+Scoped ACCEPT is in papers/2026-10-16-native-mesher-face-job-code-review.md.
+No geometry correctness is inferred from scheduling tests. Whole trace unit
+observed genuine missing geometry_correspondence.hpp RED before implementation.
+
+Trace first strict GREEN: exact original curve-span and selected UV-knot
+partition; source rational cross residual N_ce*W_trace-N_trace*W_ce (common
+exact anchor, positive product weights, degree<=38); analytic coupled full
+second derivative plus original endpoint departures. Rational ordinary chord
+pieces retain original root/t and restricted actual affine XYZ for the existing
+BoundRuntime; no source-geometry dependency on its consumer was added. Checked
+line profiles separately normalize original curve and selected trace scalar
+endpoint ranges; both prove strict monotonicity and bounded geometric image
+departure, so nonlinear straight parameterizations need no spurious sampling.
+Moved that derivative-numerator criterion from charts into one shared profile
+helper rather than duplicate it.
+
+The direct oracle includes a nonzero weighted curve against the original
+polynomial carrier. Independently authored POWER numerator is
+(3/2)t-(9/2)t²+4t³-t⁴; its degree6 Bernstein coefficient maximum is1/4 with
+positive weight minimum1. Actual trace upper is exactly1/4; curve homogeneous
+scale8 and carrier scale16 preserve it. Identical original compositions give0,
+the checked geometric straight image gives0 even with nonlinear speed, and a
+selected constant transverse departure1/64 is charged exactly. Current trace
+values remain constructor work: B/T supports, whole chosen-domain embedding,
+feature protection and quotient cells are still required before publication.
+
+Trace ASan/UBSan and actual-source tidy GREEN; named affine endpoint tuple
+removed the sole easily-swappable warning without suppression. Added the
+separate face_preparation consumer module per root-reviewed bridge: persistent
+owner/context, frozen SourceBoundarySnapshot, original-ordered common joints,
+selected sites/use dispositions and whole trace bounds. Existing keyed
+CurveBoundInput/BoundBatch numerical work gates snapshot readiness; CPU/P100 use
+the same source bank. Source generation comes from GeometryStore's table,
+boundary generation from forest and face generation from coordinator quality
+request. Final seed table is allocated last; topology owner continued its
+packet counter above this ordinal to prevent ExactRef table aliases.
+
+Actual missing-header RED preceded implementation. First strict GREEN uses the
+real original forest/canonical point producer and existing BoundRuntime, with
+an authored parabolic sheet requiring nontrivial rational chord tasks. Loose
+tolerance accepts complete batches to a seed; tight tolerance requests a shared
+edge. Outstanding work cannot snapshot, and all sites/uses/loops/trace maps
+remain complete. All-reconstructed identity domain is the initial branch;
+authoritative nonidentity B/T and quotient coverage are explicitly unsupported
+until their full construction lands. This transport is no mesh qualification.
+
+Integrated preparation/metric strict Release GREEN (0.11s), actual-source tidy
+GREEN. The actual FaceEngine consumes the complete source seed, continues exact
+table ordinals above preparation, and produces its two original-domain cells.
+Metric ordinal0 is reserved; H² uses the complete original definition bbox.
+
+Next owned construction subunit: candidate protection uses the original shared
+physical segment keys and actual binary64 endpoints. A retained balanced box
+index filters conservative L1-radius bounds; the final strict diametral test
+is exact dot((p-a),(p-b))<0 in definition XYZ, never a UV circle. All incident
+features are considered and the smallest stable BoundaryKey requests a split.
+This is the pre-insertion feature policy, not a physical embedding claim or a
+replacement for authoritative B/T supports. The current producer explicitly
+refuses authoritative domains until those supports are built. Missing retained
+protection must refuse candidate work, never imply permission. Local draft files
+preceded the fleet consumer RED; the fleet RED below establishes the missing
+actual API/integration, not a claim that no local draft existed. Direct square
+oracle expects center on four exact circle boundaries to pass; (.5,.25,0)
+requests bottom source edge with dot=-3/16; a large off-plane point does not
+inherit UV encroachment.
+
+Candidate/protection fleet RED: Release target compilation failed at
+native_mesher_face_preparation.cpp:4 with missing geometry_candidate.hpp
+(exit2), before uploading the owned implementation. The previous integrated
+metric/preparation target was GREEN. Independently reviewed native display
+profile math; plane admission incorrectly depended on unused Z. Root replaced
+it with the scaled two-axis cross guard; actual-source reread ACCEPT is saved
+in papers/2026-10-16-native-display-source-profile-review.md. Root owns its CPU,
+both-P100 and API-version checks; no duplicate execution was added.
+
+Candidate/protection strict Release GREEN0.14s and ASan/UBSan/leaks GREEN3.62s.
+Actual-source tidy GREEN for all three source files, with only external warnings.
+The actual prepared seed retains one immutable source feature index (no seed
+cycle); shared BoundaryKey selection is exact and deterministic. The direct
+candidate producer refuses absent protection. Authoritative B/T supports and
+analytic quotient maps remain separate finite construction branches still to
+implement, not capabilities inferred from this ordinary-domain result.
+
+Analytic quotient implementation subplan is docs/native-mesher-pole-unit.md.
+This continues the accepted complete mesher geometry lane: actual whole fan
+bounds, source-owned meridian cuts, ordinary remainder and native nonzero
+facets. No pole constant enters exact topology as rounded rational truth.
+Topology owner agreed finite snapshot patch dispatch and face-cut generation
+rebuild; ordinary UV topology must not invent quotient coverage.
+
+Plane inverse actual missing-header RED exit1. Parent accepted the selected
+strong-monotonicity procedure: cache m=min(det_lower/trace_upper) during the
+existing profile walk; no repeated regularity tree. Exact/enclosed conditioned
+residual norm/m bounds distance to the unique inverse on convex R. First actual
+driver failed to settle at normalized40-bit precision because proposal grid
+had only the same40 bits. Reserving16 proposal guard bits produced strict
+GREEN against the independent POWER bracket f(u)=(3u-u²)/2, context-history
+invariance and outside-Q refusal. Chosen UV is a finite dyadic locator with
+real enclosure; it is not claimed equal to an algebraic inverse root.
+
+Inverse + actual plane candidate/preparation ASan/UBSan/leaks GREEN1.25s+4.95s.
+Actual-source tidy found one swappable XY/UV helper signature and repeated
+shared-pointer optional accesses. Replacing them with a named query tuple and
+one locally admitted reserved key; no numerical rule or precision changed.
+Pole first direct bound observed missing-header RED, implementation continues
+under the accepted source cap/shared cut plan.
+
+Read-only original watch BGSRC source inventory (SHA76d461...6584) has zero
+explicitly declared degenerate edges; consequently no distinct-ID declared
+pole endpoints. Static parser only, no CAD/evaluation/build workload. TSV is
+results/native-source-inventory-2026-10-16/poles.tsv. Generic quotient work
+remains selected; this source fact does not justify dropping it or guessing
+unmarked poles. Root prioritizes actual authoritative B/T producer integration
+next. Pole direct bound ASan/UBSan/leaks GREEN12.67s, inverse1.30s and integrated
+preparation5.13s; actual-source pole tidy GREEN. These finite fan bounds are not
+claimed to construct source cap/remainder inventory yet.
+
+B/T same-producer concrete implementation proposal is
+ docs/native-mesher-domain-map-unit.md. It specializes the accepted taper to
+X=1,c=2m,w0=c/2: whole transformed-arc derivative cones plus fixed endpoints
+prove support inclusion directly, avoiding a new gate/root procedure. Retained
+finite source/fan/strip descriptors feed existing native publication and the
+same per-cell allowance tau-E_domain; not a second mesher/checker. Parent
+prioritized this source-authority branch while generic quotient cap selection
+remains outstanding beyond its actual bounded fan primitive.
+
+Boundary plane enclosure missing-field RED at native_mesher_recovery.cpp31/32
+(exit2) preceded code. Accepted inverse is now used at selected boundary XY;
+original V/Ce nodecap is rechecked at chosen UV and across common joints. Actual
+plane enclosure survives source use/joint/seed transport; ordinary UV remains
+a direct source parameter. Optional inverse-profile geometric failures retry
+originalUV once before output, preserving cumulative work. Resource/invalid
+source failures are not masked. Recovery/preparation ASan GREEN1.73s+5.90s.
+
+B/T actual RED command on fleetbox/native-mesher: clang++-18 -std=c++20 -O0
+tests/native_mesher_domain_maps.cpp linked against owned ASan geometry/source/
+exact libraries with -fsanitize=address,undefined. After correcting the authored
+BoundaryKey enum initializer, ld reported undefined construct_domain_map and
+bound_domain_displacement (exit1, session12767). The identity-source fixture
+checks actual original policy/zero supports/zero allowance; nonlinear fan/strip
+cases follow in the same fixture, before full native producer consumption.
+
+### Original authoritative domain map implementation and producer integration
+
+The actual originalUV domain constructor now builds source-point nodal fans B and monotone tapered graph strips T; mixed uses retain the named HybridPullback reference. Exact source samples remain descriptors, including A=1/3 when selected Q is binary64. The map retains immutable original geometry, complete source/face/boundary generations, finite support descriptors and an indexed support query. Physical-plane authoritative use explicitly requests the admitted originalUV fallback; no raw UV is treated as projected XY.
+
+Actual fleet RED: `taskset -c 8-15 cmake --build build/geometry-owner-asan --target brepgpu_native_mesher_domain_maps -j4` followed by `ASAN_OPTIONS=detect_leaks=1 taskset -c 2 build/geometry-owner-asan/brepgpu_native_mesher_domain_maps build/geometry-owner-asan/chart-fixtures` failed `whole original face map must reject omitted complete source-loop inventory` (exit 1). The previous constructor admitted an empty whole-face arc set. Original source loop/coedge cursor admission now requires every use, literal spatial-t range/sense, contiguous partition, source loop incidence and mandatory original t-to-s map partitions. Exact original mapping and partition checks binary-search already monotone t rows, avoiding a known quadratic map scan. Independent review accepted the source inventory and endpoint agreement correction.
+
+The same actual fleet command then GREEN (exit 0): identity authoritative map; nondyadic original rational A=1/3 fan; independently derived POWER displacement; original curved strip with x'=1, y'=(1-2t)/16 and slope 1/16; full-cell physical map bound exactly 1/32; mixed HybridPullback; local unaffected cell upper 0. ASan/UBSan/leak instrumentation was active. This validates this finite admitted mechanism, not universal source trim realizability.
+
+Actual producer RED: affected native face-preparation executable, after adding actual authoritative identity/curved/mixed source cases, failed `authoritative face preparation requires its original-domain B/T map branch` (exit 1). Integration replaces that refusal only with successful named map construction and complete keyed curve-chord fold. The same seed retains domain descriptors and feature protection. Reference trace approximation includes inverse-domain movement; FaceEngine independently charges E_domain once against the actual-cell allowance. Zero-width boundary trace queries now retain derivative motion by enclosing it on its same original span rather than dropping the root.
+
+The same-producer authoritative identity/curved/mixed cases are now ASan/UBSan/leak GREEN, including actual retained map supports and SAME FaceEngine per-cell allowance tau−1/32; focused CTest `native_mesher_face_preparation`14.59s and `native_mesher_domain_maps`1.09s. The previously unexecuted exterior-node fallback case incorrectly assumed no original chord work after switching back to originalUV; it now folds the actual keyed chord runtime before asserting readiness. No geometry policy changed for this test correction.
+
+Small-feature actual RED used the target's exact same CMake ASan flags/static libraries through its retained link command while another newly registered fixture path was not yet uploaded. `ASAN_OPTIONS=detect_leaks=1 taskset -c 2 build/geometry-owner-asan/brepgpu_native_mesher_face_preparation build/geometry-owner-asan/chart-fixtures` failed `tiny nonconstant closed original cubic must refine topology even when chord error is below epsilon` (exit1). The source is an exact degree3 Bezier closed loop with one nondegenerate original edge, one repeated endpoint vertex, no mandatory interior knot, scale2^-10 and positional epsilon1. Preparation now checks the exact selected inventory before topology: count and coordinate alias failures request a canonical source interval only from retained nonzero whole-trace deviation. Real source forest epochs and canonical original evaluation produce a usable >=3-segment hole, retained in SAME direct CDT. The full actual face-preparation executable then ASan GREEN (exit0), including ordinary, plane, authoritative, mixed and small-hole cases. No circle-specific seeding or tolerance welding exists.
+
+Final actual-source tidy of domain/boundary/preparation/candidate/protection found only two optional-access analyzer expressions; both now use an explicitly guarded feature chooser. The final narrow geometry_domain.cpp tidy rerun is GREEN (only non-user-header warnings suppressed by the existing checked-in profile). No suppressions were added. Current source map helpers binary-search original monotone t rows and retain original mapped-s truth; no new numerical backend was introduced. Stored source inventory TSV now also records all51742 uses reconstructed/mapkind1 and the actual analytic/NURBS face counts. This inventory affects expected watch coverage only; generic authoritative B/T delivery is retained.

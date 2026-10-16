@@ -354,10 +354,6 @@ struct MeshComponent final {
   ExactRef value;
   MProfile profile;
 };
-struct MeshQuality final {
-  double positional, node_source;
-  uint32_t policy_revision = 1;
-};
 struct MeshInstance final {
   Range<UsageId> path;
   ProductId product;

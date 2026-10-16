@@ -52,6 +52,8 @@ struct PlaneChart final {
   std::array<Rational, 8> quadrilateral;
   std::array<Rational, 4> preconditioner;
   Rational height_upper;
+  // Construction cache: lower bound for sym(M*J_projection) on natural R.
+  Rational inverse_monotonicity_lower;
 };
 struct WorkingChart final {
   WorkingChartKind kind;

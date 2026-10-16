@@ -44,3 +44,26 @@ pass. Root's scoped independent source review ACCEPT is recorded in
 `papers/2026-10-16-native-mesher-domain-code-review.md`, including exact Y grouping,
 own subtraction, common dyadic scale and temporary lifetime. Root CMake
 integration follows; whole source trace/cell/contact orchestration is unfinished.
+
+Initial selected-domain geometry now has an explicit report mode in this SAME
+validator. Genuine missing-type/API RED is retained in fleet
+`context/domain-report-red.log`. Default callers still reject. The opt-in mode
+returns too-few-sites, zero-area, exact boundary-contact or hole-placement issues
+before any CDT/connectivity mutation. Contact witnesses name original loop and
+segment occurrences; reversed normalization does not rewrite their identities.
+Broken inventories remain structural errors. Reporting a selected-polygon issue
+does not prove that original geometry is invalid or that subdivision fixes it:
+the geometry producer must use its actual source/trace evidence to request a
+bounded shared interval split, justify a source-contact refusal, or report
+unresolved. A collapsed one-site hole survives as an issue regardless of its
+size relative to positional tolerance. The existing strict native fixture and
+single Fraction reader pass the new literal cases alongside prior domain work;
+the broader producer/forest multi-epoch source family is being integrated by the
+geometry owner. No second polygon checker or generic invalid-to-split catch was
+introduced.
+
+The report-mode closure also passes actual-source clang-tidy and the full native
+ASan/UBSan/LSan domain target through the same existing Fraction process reader
+(`context/domain-report-tidy.log`, `context/domain-report-asan.log`). The literal
+malformed repeated-site inventory still returns structural BGFD_INVALID_DOMAIN
+in report mode; it is never reclassified as a refinable geometric issue.

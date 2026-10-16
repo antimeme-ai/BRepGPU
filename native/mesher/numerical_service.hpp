@@ -29,6 +29,7 @@ struct NumericalServiceLimits final {
 struct NumericalServiceStats final {
   BoundRuntimeStats runtime;
   uint64_t requests = 0, prepared_cells = 0, analytic_cells = 0;
+  uint64_t plane_cells = 0;
   uint64_t batches = 0, mixed_cell_batches = 0;
 };
 // One serialized service owns one persistent numerical runtime/session. Only

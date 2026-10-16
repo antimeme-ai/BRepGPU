@@ -52,6 +52,9 @@ class ExactTable final {
 
 public:
   [[nodiscard]] ExactTableKey key() const noexcept { return data_->key; }
+  [[nodiscard]] const std::shared_ptr<RunResource> &resource() const noexcept {
+    return data_->resource;
+  }
   [[nodiscard]] uint64_t size() const noexcept { return data_->entries.size(); }
   [[nodiscard]] ExactView view(ExactRef ref) const;
 };

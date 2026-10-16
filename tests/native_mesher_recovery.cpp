@@ -27,6 +27,14 @@ void sample(const std::filesystem::path &path,bool plane,bool displaced_guide) {
        .subtract(u.multiply(u).divide(Rational(b,2))).subtract(Rational(b,11).divide(Rational(b,32)));
  require(dx.multiply(dx).add(v.multiply(v)).compare(allowance.multiply(allowance))<=0,
          "actual stored recovery locator satisfies independently authored original polynomial node cap");
+ if(plane) {
+  require(choice.original_uv_enclosure.has_value(),"plane boundary locator retains actual inverse enclosure");
+  const auto &box=*choice.original_uv_enclosure;
+  const auto power=[&](const Rational &x){return x.multiply(Rational(b,3)).subtract(x.multiply(x)).divide(Rational(b,2));};
+  const auto q=Rational(b,11).divide(Rational(b,32));
+  require(power(box[0]).compare(q)<=0&&power(box[1]).compare(q)>=0,
+   "plane boundary inverse enclosure brackets independent original POWER root");
+ }
  if(plane) require(choice.chart[0].compare(Rational(b,11).divide(Rational(b,32)))==0,
                     "plane chart chooses original spatial image before UV parameterization");
  else require(choice.chart[0].compare(choice.original_uv[0])==0,"UV chart site is stored chosen source locator");

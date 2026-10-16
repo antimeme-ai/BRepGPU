@@ -5,6 +5,10 @@
 #include <optional>
 
 namespace bgmesh {
+struct MeshQuality final {
+  double positional, node_source;
+  uint32_t policy_revision = 1;
+};
 enum class CellMapKind : uint32_t {
   uv_triangle = 1,
   plane_xy_triangle = 2,

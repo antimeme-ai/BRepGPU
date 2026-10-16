@@ -74,6 +74,8 @@ public:
 [[nodiscard]] BoundRootBank prepare_bound_roots(bgfd::Budget &,
                                                 const std::shared_ptr<RunResource> &, GeometryStore,
                                                 std::span<const BoundRootSelection>, ExactTableKey);
+// An analytic-only source has a valid empty bank. Its analytic bounds stay on
+// the host; no synthetic rational root or empty device launch is introduced.
 class BoundBatch final {
   std::shared_ptr<const BoundBatchData> data_;
   explicit BoundBatch(std::shared_ptr<const BoundBatchData> data) : data_(std::move(data)) {}

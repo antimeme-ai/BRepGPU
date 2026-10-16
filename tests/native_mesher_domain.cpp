@@ -111,6 +111,74 @@ void protected_collinear() {
   require(mesh.triangles().size() == 3 && mesh.stats().sites == 5,
           "protected collinear site removed or rejected");
 }
+void reported_geometry() {
+  using namespace bgmesh;
+  const auto check = [](std::span<const std::array<double, 2>> points,
+                        std::span<const uint32_t> sizes, DomainIssueKind expected) {
+    bgfd::Budget budget({1u << 26, uint64_t{1} << 31});
+    MutableFaceTopology mesh(budget);
+    std::pmr::vector<SiteSlot> sites(&budget);
+    std::pmr::vector<BoundaryKey> keys(&budget);
+    for (const auto &point : points) {
+      sites.push_back(mesh.append_site(point));
+      keys.push_back({900, sites.size()});
+    }
+    std::pmr::vector<DomainLoopView> loops(&budget);
+    std::size_t first = 0;
+    for (const auto size : sizes) {
+      loops.push_back({loops.empty(), std::span<const SiteSlot>(sites).subspan(first, size),
+                       std::span<const BoundaryKey>(keys).subspan(first, size)});
+      first += size;
+    }
+    const auto admission =
+        initialize_face_domain(budget, mesh, loops, 0, DomainFailureMode::report_geometry);
+    require(admission.issue && admission.issue->kind == expected,
+            "selected geometry issue was thrown or lost");
+    require(mesh.stats().live_triangles == 0 && mesh.is_usable(),
+            "geometric admission report mutated or poisoned pristine connectivity");
+    for (uint32_t i = 0; i < admission.issue->segment_count; ++i) {
+      const auto source = admission.issue->segments[i];
+      require(source.loop < loops.size() && source.segment < loops[source.loop].sites.size(),
+              "reported witness is not an original loop/segment occurrence");
+    }
+    if (expected == DomainIssueKind::boundary_contact) {
+      require(admission.issue->segment_count == 2,
+              "crossing lacks the two original source segment witnesses");
+      const auto a = admission.issue->segments[0], b = admission.issue->segments[1];
+      require(a.loop == 0 && b.loop == 0 &&
+                  ((a.segment == 1 && b.segment == 4) || (a.segment == 4 && b.segment == 1)),
+              "reversed normalization changed original crossing occurrence identities");
+    }
+  };
+  const std::array<std::array<double, 2>, 5> crossing{{{0, 0}, {4, 0}, {0, 4}, {4, 4}, {5, 2}}};
+  const std::array<uint32_t, 1> five{5};
+  check(crossing, five, DomainIssueKind::boundary_contact);
+  const std::array<std::array<double, 2>, 3> flat{{{0, 0}, {1, 0}, {2, 0}}};
+  const std::array<uint32_t, 1> three{3};
+  check(flat, three, DomainIssueKind::zero_area);
+  const std::array<std::array<double, 2>, 5> tiny_hole{{{0, 0}, {4, 0}, {4, 4}, {0, 4}, {2, 2}}};
+  const std::array<uint32_t, 2> four_one{4, 1};
+  check(tiny_hole, four_one, DomainIssueKind::too_few_sites);
+  const std::array<std::array<double, 2>, 8> outside{
+      {{0, 0}, {2, 0}, {2, 2}, {0, 2}, {3, 0}, {3, 1}, {4, 1}, {4, 0}}};
+  const std::array<uint32_t, 2> fours{4, 4};
+  check(outside, fours, DomainIssueKind::hole_placement);
+  bgfd::Budget budget({1u << 26, uint64_t{1} << 31});
+  MutableFaceTopology mesh(budget);
+  for (const auto &point : flat)
+    static_cast<void>(mesh.append_site(point));
+  const std::array<SiteSlot, 3> repeated{{{0}, {1}, {1}}};
+  const std::array<BoundaryKey, 3> keys{{{900, 1}, {900, 2}, {900, 3}}};
+  const std::array<DomainLoopView, 1> malformed{{{true, repeated, keys}}};
+  bool structural_error = false;
+  try {
+    static_cast<void>(
+        initialize_face_domain(budget, mesh, malformed, 0, DomainFailureMode::report_geometry));
+  } catch (const bgfd::Failure &error) {
+    structural_error = error.status == BGFD_INVALID_DOMAIN;
+  }
+  require(structural_error, "report mode converted a broken source inventory into refinement");
+}
 void aligned_holes(uint32_t count) {
   bgfd::Budget budget({1u << 28, uint64_t{1} << 36});
   bgmesh::MutableFaceTopology mesh(budget);
@@ -150,6 +218,7 @@ int main() {
     hole_domain();
     invalid_domains();
     protected_collinear();
+    reported_geometry();
     aligned_holes(16);
     aligned_holes(64);
     std::cout << "native indexed domain and typed metric CDT PASS\n";

@@ -47,8 +47,9 @@ FaceOwnerInput input(bgfd::Budget &b, const std::shared_ptr<RunResource> &run,
           source.vertices[i].xyz,
           {}}});
     boundary->segments.push_back({i, {source.edges[i].id.value, i}, {i}, {zero, one}, {0, 0}});
+    boundary->uses.push_back({{i}, FaceUseKind::ordinary_chain, {i, 1}, {zero, one}});
   }
-  boundary->loops.push_back({{0}, true, {0, 4}});
+  boundary->loops.push_back({{0}, true, {0, 4}, {0, 4}});
   ExactBuilder metric(run, {{OwnerKind::geometry, 0, face_id}, 4, 1});
   const auto z = metric.append(Rational(b)), o = metric.append(Rational(b, 1));
   const auto tau = metric.append(Rational(b, 1).divide(Rational(b, 64)));
@@ -58,6 +59,23 @@ void run(const std::shared_ptr<RunResource> &resource, const GeometryStore &geom
          uint32_t threads) {
   bgfd::Budget owner({1ULL << 25, 1ULL << 35}, resource.get());
   NativeScheduler scheduler(resource, {threads, 8, 1ULL << 20, 1ULL << 32});
+  const auto foreign_resource = std::make_shared<RunResource>(1ULL << 26);
+  rejects(
+      [&] {
+        FaceOwnerJob foreign(foreign_resource, input(owner, resource, geometry),
+                             {1ULL << 25, 1ULL << 35, 8}, scheduler.stop_token());
+      },
+      "face owner accepted a boundary from another run resource");
+  auto foreign_metric_input = input(owner, resource, geometry);
+  ExactBuilder foreign_metric(foreign_resource, foreign_metric_input.metric_values.key());
+  static_cast<void>(foreign_metric.append(Rational(owner, 1)));
+  foreign_metric_input.metric_values = foreign_metric.seal();
+  rejects(
+      [&] {
+        FaceOwnerJob foreign(resource, foreign_metric_input, {1ULL << 25, 1ULL << 35, 8},
+                             scheduler.stop_token());
+      },
+      "face owner accepted a metric from another run resource");
   auto job = std::allocate_shared<FaceOwnerJob>(
       RunAllocator<FaceOwnerJob>(resource), resource, input(owner, resource, geometry),
       FaceOwnerLimits{1ULL << 25, 1ULL << 35, 8}, scheduler.stop_token());
@@ -93,23 +111,54 @@ void run(const std::shared_ptr<RunResource> &resource, const GeometryStore &geom
               job->event().kind == FaceOwnerEventKind::settled &&
               job->engine().topology().triangles().size() == 2,
           "complete numerical answers must reach the definition horizon");
+  require(job->event().horizon && job->event().horizon->inserted.size() == 2,
+          "settled owner must export actual immutable contact cells");
+  job->begin_optimizer();
+  scheduler.submit(job);
+  completion = completed(scheduler);
+  completion.rethrow();
+  require(job->event().kind == FaceOwnerEventKind::optimizer_queue && job->event().optimizer &&
+              job->event().optimizer->edges.size() == 1,
+          "same owner must publish initial stable internal-edge work");
+  const auto diagonal = job->event().optimizer->edges[0];
+  job->prepare_flip(diagonal.edge);
+  scheduler.submit(job);
+  completion = completed(scheduler);
+  completion.rethrow();
+  require(job->event().kind == FaceOwnerEventKind::optimizer_queue,
+          "square equal-potential diagonal must not publish an improving proposal");
   job->finish_generation();
   scheduler.submit(job);
   completion = completed(scheduler);
   completion.rethrow();
   require(completion.state == StepState::done && job->event().kind == FaceOwnerEventKind::finished,
           "definition coordinator must explicitly finish settled generation");
+  require(job->result()->triangles.size() == 2 && job->result()->sites.size() == 4,
+          "final semantic face must be sealed by its owner before arena release");
+  auto priority = std::allocate_shared<FaceOwnerJob>(
+      RunAllocator<FaceOwnerJob>(resource), resource, input(owner, resource, geometry),
+      FaceOwnerLimits{1ULL << 25, 1ULL << 35, 1}, scheduler.stop_token());
+  scheduler.submit(priority);
+  completion = completed(scheduler);
+  completion.rethrow();
+  const auto first = priority->event().cells;
+  require(first && first->cells.size() == 1, "priority fixture needs one bounded cell");
+  const std::array failing{CellBoundResult{first->cells[0].header, BoundDecision::bound_fail}};
+  priority->finish_cells(failing);
+  scheduler.submit(priority);
+  completion = completed(scheduler);
+  completion.rethrow();
+  require(priority->event().kind == FaceOwnerEventKind::candidate,
+          "ready maximal failure must refine before classifying unrelated lower cells");
   std::stop_source stop;
   stop.request_stop();
   auto cancelled = std::allocate_shared<FaceOwnerJob>(
       RunAllocator<FaceOwnerJob>(resource), resource, input(owner, resource, geometry),
       FaceOwnerLimits{1ULL << 25, 1ULL << 35, 8}, stop.get_token());
-  scheduler.submit(cancelled);
-  completion = completed(scheduler);
-  require(completion.state == StepState::failed, "cancelled owner started geometry");
+  JobContext stopped_context({1ULL << 20, 1ULL << 32}, resource.get(), stop.get_token());
   bool observed = false;
   try {
-    completion.rethrow();
+    static_cast<void>(cancelled->step(stopped_context));
   } catch (const bgfd::Cancelled &) {
     observed = true;
   }

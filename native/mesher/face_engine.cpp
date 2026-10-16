@@ -1,5 +1,6 @@
 #include "face_engine.hpp"
 #include "domain.hpp"
+#include "geometry_domain.hpp"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -27,6 +28,9 @@ struct FaceEngine::Impl final {
   FaceCellFrontier frontier;
   Rational h2, width_u, width_v, allowance;
   std::pmr::vector<PhysicalNode> nodes;
+  std::pmr::vector<std::array<Rational, 2>> original_locations;
+  std::pmr::vector<std::optional<std::array<Rational, 4>>> original_enclosures;
+  std::optional<std::array<Rational, 4>> plane_factor;
   std::pmr::vector<TopologyEdit> changes;
   std::pmr::vector<int32_t> adapters;
   std::pmr::vector<BoundaryKey> protected_keys;
@@ -35,6 +39,21 @@ struct FaceEngine::Impl final {
   std::optional<EdgeHandle> midpoint_edge;
   std::optional<TriangleHandle> closure;
   std::optional<BoundaryKey> request;
+  struct Potential final {
+    uint64_t generation = 0;
+    std::optional<double> value;
+  };
+  std::pmr::vector<Potential> potentials;
+  struct DomainFailure final {
+    CellResultKey cell;
+    BoundaryKey feature;
+  };
+  std::pmr::vector<std::optional<DomainFailure>> domain_failures;
+  FaceOptimizationWork optimization;
+  std::optional<FlipTicket> flip;
+  uint64_t optimizer_ordinal = 0;
+  bool optimizing = false;
+  FaceResult result;
   uint64_t candidate_ordinal = 0, node_ordinal_base = 0;
   uint32_t table_ordinal = 0;
   FaceEngineStats counters;
@@ -47,24 +66,31 @@ struct FaceEngine::Impl final {
         h2(metric.scales.physical_diagonal_squared.clone_into(b)),
         width_u(metric.scales.chart_width_u.clone_into(b)),
         width_v(metric.scales.chart_width_v.clone_into(b)), allowance(tau.clone_into(b)), nodes(&b),
-        changes(&b), adapters(&b), protected_keys(&b) {
+        original_locations(&b), original_enclosures(&b), changes(&b), adapters(&b),
+        protected_keys(&b), potentials(&b), domain_failures(&b) {
     if (&context.budget() != &budget)
       invalid("face geometry context uses another owner");
     if (boundary->chart_kind != WorkingChartKind::original_uv &&
-        boundary->chart_kind != WorkingChartKind::analytic_unwrapped_uv)
+        boundary->chart_kind != WorkingChartKind::analytic_unwrapped_uv && !is_plane())
       throw Error(ErrorCode::unsupported, "face map specialization is not connected");
-    if (boundary->plane || allowance.sign() <= 0 || metric.scales.allowance.compare(tau) != 0)
+    if (boundary->plane.has_value() != is_plane() || allowance.sign() <= 0 ||
+        metric.scales.allowance.compare(tau) != 0)
       invalid("face chart/allowance mismatch");
+    if (is_plane())
+      plane_factor = make_plane_factor();
     if (boundary->values.key().owner != owner ||
-        boundary->values.key().generation != boundary->face_generation ||
-        boundary->values.key().ordinal != 0)
-      invalid("face seed table must reserve owner/generation ordinal0");
+        boundary->values.key().generation != boundary->face_generation)
+      invalid("face seed table owner/generation mismatch");
+    table_ordinal = boundary->values.key().ordinal;
     nodes.reserve(boundary->sites.size());
+    original_locations.reserve(boundary->sites.size());
+    original_enclosures.reserve(boundary->sites.size());
     for (const auto &site : boundary->sites) {
       budget.charge(1);
       const std::array uv{read(site.chart[0]), read(site.chart[1])};
+      const std::array locator{read(site.original_uv[0]), read(site.original_uv[1])};
       for (std::size_t axis = 0; axis < 2; ++axis)
-        if (uv[axis].compare(read(site.original_uv[axis])) != 0)
+        if (!is_plane() && uv[axis].compare(locator[axis]) != 0)
           invalid("ordinary chart and original UV disagree");
       if (site.node.key.definition != boundary->definition.value)
         invalid("boundary physical node belongs to another definition");
@@ -73,6 +99,15 @@ struct FaceEngine::Impl final {
       if (slot.value != nodes.size())
         internal("face site/node append mismatch");
       nodes.push_back(site.node);
+      original_locations.push_back(locator);
+      if (site.original_uv_enclosure) {
+        const auto &refs = *site.original_uv_enclosure;
+        std::array bounds{read(refs[0]), read(refs[1]), read(refs[2]), read(refs[3])};
+        if (bounds[0].compare(bounds[1]) > 0 || bounds[2].compare(bounds[3]) > 0)
+          invalid("boundary source locator enclosure is reversed");
+        original_enclosures.emplace_back(std::move(bounds));
+      } else
+        original_enclosures.push_back(std::nullopt);
       if (site.node.key.generator == NodeGenerator::face_site && site.node.key.source == owner.id &&
           site.node.key.generation == boundary->face_generation) {
         if (site.node.key.ordinal == UINT64_MAX)
@@ -104,6 +139,7 @@ struct FaceEngine::Impl final {
       if (original.face_id != face().id || original.outer != loop.outer)
         invalid("source loop/face ownership mismatch");
       loop_slots.push_back(loop.source_loop.value);
+      validate_uses(loop, original);
       if (loop.segments.first > boundary->segments.size() ||
           loop.segments.count > boundary->segments.size() - loop.segments.first)
         invalid("face seed loop range invalid");
@@ -142,9 +178,64 @@ struct FaceEngine::Impl final {
     });
     protected_keys.erase(std::unique(protected_keys.begin(), protected_keys.end()),
                          protected_keys.end());
-    auto domain = initialize_face_domain(budget, mesh, loops, seed);
+    validate_domain_map();
+    auto domain =
+        initialize_face_domain(budget, mesh, loops, seed, DomainFailureMode::report_geometry);
+    if (domain.issue)
+      request = classify_coarse_domain_issue(budget, *boundary, *domain.issue);
     adapters = std::move(domain.traversal_adapters);
     frontier.initialize();
+  }
+  void validate_domain_map() const {
+    bool authoritative = false, reconstructed = false;
+    for (const auto &item : boundary->uses) {
+      budget.charge(1);
+      const auto &use = source().coedges[item.source_use.value];
+      authoritative = authoritative || !use.reconstructed;
+      reconstructed = reconstructed || use.reconstructed;
+    }
+    const auto &map = boundary->domain_map;
+    if (!authoritative) {
+      if (map)
+        invalid("reconstructed face has an unexpected source-domain map");
+      return;
+    }
+    if (!map)
+      throw Error(ErrorCode::unsupported, "authoritative face lacks its actual domain map");
+    if (map->resource != boundary->resource || map->values.resource() != boundary->resource ||
+        &map->geometry.view() != &boundary->geometry.view() ||
+        boundary->source_generation != boundary->geometry.view().table.key().generation ||
+        map->definition != boundary->definition || map->face != boundary->face ||
+        map->generations != std::array<uint64_t, 3>{boundary->source_generation,
+                                                    boundary->face_generation,
+                                                    boundary->boundary_generation} ||
+        map->values.key().owner != owner ||
+        map->values.key().generation != boundary->face_generation ||
+        map->values.key().ordinal >= boundary->values.key().ordinal ||
+        map->policy != (reconstructed ? DomainReferencePolicy::hybrid_pullback
+                                      : DomainReferencePolicy::authoritative_original))
+      invalid("source-domain map escaped its actual face generation");
+  }
+  DomainDisplacement domain_displacement(const std::array<Rational, 6> &chart) {
+    if (!boundary->domain_map)
+      return {Rational(budget), std::nullopt};
+    auto displacement = bound_domain_displacement(context, boundary->domain_map, chart);
+    if (&displacement.upper.budget() != &budget || displacement.upper.sign() < 0)
+      internal("source-domain displacement has an invalid owner or sign");
+    if (displacement.feature && !std::binary_search(protected_keys.begin(), protected_keys.end(),
+                                                    *displacement.feature, [&](auto a, auto b) {
+                                                      budget.charge(1);
+                                                      return a < b;
+                                                    }))
+      internal("source-domain displacement names an unknown boundary feature");
+    return displacement;
+  }
+  void forget_domain_failure(TriangleHandle triangle) {
+    if (triangle.slot < domain_failures.size()) {
+      auto &entry = domain_failures[triangle.slot];
+      if (entry && entry->cell.triangle == triangle)
+        entry.reset();
+    }
   }
   const SourceData &source() const {
     if (!boundary)
@@ -164,10 +255,117 @@ struct FaceEngine::Impl final {
       invalid("face seed definition mismatch");
     return {OwnerKind::face, boundary->definition.value, face().id.value};
   }
+  void original_vertex(uint32_t site, VertexId expected) {
+    if (site >= boundary->sites.size())
+      invalid("source use endpoint site out of range");
+    const auto &node = boundary->sites[site].node;
+    const auto &vertex = source().vertices[source().vertex_index.find(expected).value];
+    const PhysicalNodeKey key{boundary->definition.value, NodeGenerator::original_vertex,
+                              expected.value, 0, 0};
+    if (node.key != key || node.xyz != vertex.xyz)
+      invalid("source use endpoint lost original physical vertex authority");
+  }
+  void validate_uses(const FaceBoundaryLoop &loop, const Loop &original) {
+    if (loop.uses.first > boundary->uses.size() ||
+        loop.uses.count > boundary->uses.size() - loop.uses.first ||
+        loop.uses.count != original.coedges.count ||
+        loop.segments.first > boundary->segments.size() ||
+        loop.segments.count > boundary->segments.size() - loop.segments.first)
+      invalid("source use inventory/range mismatch");
+    auto cursor = loop.segments.first;
+    const auto end = loop.segments.first + loop.segments.count;
+    for (uint64_t ui = 0; ui < loop.uses.count; ++ui) {
+      budget.charge(1);
+      const auto &disposition = boundary->uses[static_cast<std::size_t>(loop.uses.first + ui)];
+      const auto source_id =
+          source().coedge_ids[static_cast<std::size_t>(original.coedges.first + ui)];
+      const auto expected = source().coedge_index.find(source_id);
+      if (disposition.source_use != expected)
+        invalid("source coedge order/inventory changed");
+      if (disposition.kind != FaceUseKind::ordinary_chain)
+        throw Error(ErrorCode::unsupported, "quotient use requires specialized coverage dispatch");
+      if (disposition.segments.first != cursor || disposition.segments.count == 0 ||
+          disposition.segments.count > end - cursor)
+        invalid("source coedge segment partition has gaps/overlap");
+      const auto &use = source().coedges[expected.value];
+      const auto &edge = source().edges[source().edge_index.find(use.edge_id).value];
+      if (use.sense != 1 && use.sense != -1)
+        invalid("source use sense invalid");
+      if (edge.degenerate || edge.parameter_range[0] == edge.parameter_range[1])
+        throw Error(ErrorCode::unsupported,
+                    "degenerate source use requires explicit quotient disposition");
+      const auto from = use.sense == 1 ? 0u : 1u, to = 1u - from;
+      const auto begin = Rational::from_double(budget, edge.parameter_range[from]);
+      const auto finish = Rational::from_double(budget, edge.parameter_range[to]);
+      if (read(disposition.original_parameter[0]).compare(begin) != 0 ||
+          read(disposition.original_parameter[1]).compare(finish) != 0)
+        invalid("source use t endpoints changed or curve sense applied twice");
+      auto current = begin;
+      const auto direction = finish.compare(begin);
+      original_vertex(boundary->segments[static_cast<std::size_t>(cursor)].site,
+                      edge.vertex_ids[from]);
+      for (uint64_t si = 0; si < disposition.segments.count; ++si) {
+        budget.charge(1);
+        const auto &segment = boundary->segments[static_cast<std::size_t>(cursor + si)];
+        if (segment.use != expected || read(segment.source_parameter[0]).compare(current) != 0)
+          invalid("source spatial edge schedule has gaps/changed uses");
+        const auto next = read(segment.source_parameter[1]);
+        if (next.compare(current) != direction ||
+            (direction > 0 ? next.compare(finish) > 0 : next.compare(finish) < 0))
+          invalid("source spatial schedule reverses or exceeds original interval");
+        if (si != 0) {
+          if (segment.site >= boundary->sites.size())
+            invalid("source edge sample site invalid");
+          const auto &node = boundary->sites[segment.site].node;
+          if (node.key.generator != NodeGenerator::original_edge ||
+              node.key.source != edge.id.value || node.key.generation != 0 ||
+              !node.original_parameter || read(*node.original_parameter).compare(current) != 0)
+            invalid("interior source edge sample lost physical key/original t");
+        }
+        current = next;
+      }
+      if (current.compare(finish) != 0)
+        invalid("source spatial edge coverage incomplete");
+      cursor += disposition.segments.count;
+      const auto next_segment = cursor == end ? loop.segments.first : cursor;
+      original_vertex(boundary->segments[static_cast<std::size_t>(next_segment)].site,
+                      edge.vertex_ids[to]);
+    }
+    if (cursor != end)
+      invalid("selected loop has segments outside source use inventory");
+  }
   Rational read(ExactRef ref) { return import_exact(budget, boundary->values.view(ref)); }
+  bool is_plane() const {
+    return boundary->chart_kind == WorkingChartKind::physical_plane_convex_q;
+  }
+  CellMapKind map_kind() const {
+    return is_plane() ? CellMapKind::plane_xy_triangle : CellMapKind::uv_triangle;
+  }
+  std::array<Rational, 4> make_plane_factor() {
+    const auto &profile = boundary->plane;
+    if (!profile)
+      invalid("plane face lacks admitted source profile");
+    const auto &p = *profile;
+    const std::array<ExactEnclosure, 3> zero{ExactEnclosure(Rational(budget)),
+                                             ExactEnclosure(Rational(budget)),
+                                             ExactEnclosure(Rational(budget))};
+    const std::array<ExactEnclosure, 3> du{ExactEnclosure(read(p.basis[0])),
+                                           ExactEnclosure(read(p.basis[2])),
+                                           ExactEnclosure(read(p.basis[4]))};
+    const std::array<ExactEnclosure, 3> dv{ExactEnclosure(read(p.basis[1])),
+                                           ExactEnclosure(read(p.basis[3])),
+                                           ExactEnclosure(read(p.basis[5]))};
+    return metric_from_point_jet({zero, du, dv, zero, zero, zero},
+                                 {h2, width_u, width_v, allowance});
+  }
   void check() const {
     if (!usable)
       internal("face generation has failed");
+  }
+  void mutable_check() const {
+    check();
+    if (result)
+      invalid("face generation has been frozen");
   }
   static void finite(Vec3 xyz) {
     for (const auto x : xyz)
@@ -187,12 +385,67 @@ struct FaceEngine::Impl final {
             key.request_revision,
             boundary->face_generation};
   }
-  std::array<Rational, 6> uv(TriangleHandle handle) const {
-    const auto sites = mesh.triangle(handle).sites;
+  std::array<Rational, 6> chart_coordinates(TriangleHandle handle) const {
+    return chart_coordinates(mesh.triangle(handle).sites);
+  }
+  std::array<Rational, 6> chart_coordinates(const std::array<SiteSlot, 3> &sites) const {
     return {
         mesh.coordinate(sites[0], CoordinateAxis::x), mesh.coordinate(sites[0], CoordinateAxis::y),
         mesh.coordinate(sites[1], CoordinateAxis::x), mesh.coordinate(sites[1], CoordinateAxis::y),
         mesh.coordinate(sites[2], CoordinateAxis::x), mesh.coordinate(sites[2], CoordinateAxis::y)};
+  }
+  std::array<Rational, 4> local_factor(std::span<const Rational, 6> coordinates) {
+    if (plane_factor)
+      return *plane_factor;
+    const Rational three(budget, 3);
+    const std::array center{coordinates[0].add(coordinates[2]).add(coordinates[4]).divide(three),
+                            coordinates[1].add(coordinates[3]).add(coordinates[5]).divide(three)};
+    return original_source_metric(context, boundary->geometry, carrier, center,
+                                  {h2, width_u, width_v, allowance});
+  }
+  std::optional<double> potential(const std::array<SiteSlot, 3> &sites) {
+    const auto coordinates = chart_coordinates(sites);
+    try {
+      const auto local = local_factor(coordinates);
+      return metric_shape_potential(coordinates, local);
+    } catch (const Error &error) {
+      if (error.code == ErrorCode::unsupported)
+        return std::nullopt;
+      throw;
+    }
+  }
+  std::optional<double> potential(TriangleHandle handle) {
+    if (handle.slot >= potentials.size()) {
+      grow(potentials, static_cast<std::size_t>(handle.slot) + 1 - potentials.size());
+      potentials.resize(static_cast<std::size_t>(handle.slot) + 1);
+    }
+    auto &cached = potentials[handle.slot];
+    if (cached.generation != handle.generation) {
+      cached.value = potential(mesh.triangle(handle).sites);
+      cached.generation = handle.generation;
+    }
+    return cached.value;
+  }
+  DeclaredContactEdge declaration(SiteSlot a, SiteSlot b) const {
+    const auto handle = mesh.find_edge(a, b);
+    if (handle) {
+      const auto edge = mesh.edge(*handle);
+      if (edge.constraint) {
+        const auto &key = *edge.constraint;
+        return {key.kind == BoundaryOwnerKind::source_edge ? ContactEdgeKind::source_edge
+                                                           : ContactEdgeKind::face_cut,
+                key.owner,
+                key.kind == BoundaryOwnerKind::source_edge ? 0 : boundary->face_generation,
+                key.interval};
+      }
+    }
+    const auto low = std::min(a.value, b.value), high = std::max(a.value, b.value);
+    return {ContactEdgeKind::internal_face, owner.id, boundary->face_generation,
+            (uint64_t{low} << 32) | high};
+  }
+  std::array<DeclaredContactEdge, 3> declarations(const std::array<SiteSlot, 3> &sites) const {
+    return {declaration(sites[0], sites[1]), declaration(sites[1], sites[2]),
+            declaration(sites[2], sites[0])};
   }
   FaceCandidateWork make_candidate(CellResultKey key, FaceCandidateKind kind,
                                    const std::array<Rational, 2> &point) {
@@ -200,9 +453,22 @@ struct FaceEngine::Impl final {
       throw Error(ErrorCode::resource_exhausted, "face candidate ordinal exhausted");
     ExactBuilder builder(boundary->resource, next_table());
     const std::array refs{builder.append(point[0]), builder.append(point[1])};
+    auto locator = refs;
+    if (is_plane()) {
+      const auto sites = mesh.triangle(key.triangle).sites;
+      const Rational three(budget, 3);
+      for (std::size_t axis = 0; axis < 2; ++axis)
+        locator[axis] = builder.append(original_locations[sites[0].value][axis]
+                                           .add(original_locations[sites[1].value][axis])
+                                           .add(original_locations[sites[2].value][axis])
+                                           .divide(three));
+    }
+    auto values = builder.seal();
+    const auto result_key = is_plane() ? std::optional(next_table()) : std::nullopt;
     auto work = std::allocate_shared<FaceCandidateData>(
         RunAllocator<FaceCandidateData>(boundary->resource),
-        FaceCandidateData{boundary, key, ++candidate_ordinal, kind, builder.seal(), refs, refs});
+        FaceCandidateData{boundary, key, ++candidate_ordinal, kind, std::move(values), refs,
+                          locator, result_key});
     ++counters.candidates;
     return work;
   }
@@ -210,12 +476,50 @@ struct FaceEngine::Impl final {
     request = key;
     return {FaceAdvanceKind::boundary_request, target, {}, key};
   }
+  struct ImportedLocator final {
+    std::array<Rational, 2> chosen;
+    std::optional<std::array<Rational, 4>> enclosure;
+  };
+  ImportedLocator candidate_location(const FaceCandidateResult &completion) {
+    if (!candidate)
+      internal("candidate location without staged request");
+    if (!is_plane()) {
+      if (completion.locator || candidate->result_table_key)
+        invalid("ordinary candidate returned a foreign locator");
+      return {{import_exact(budget, candidate->values.view(candidate->original_uv[0])),
+               import_exact(budget, candidate->values.view(candidate->original_uv[1]))},
+              std::nullopt};
+    }
+    const auto &reserved_key = candidate->result_table_key;
+    if (!completion.locator || !reserved_key)
+      invalid("plane candidate lacks its selected original source inverse locator");
+    const auto &locator = *completion.locator;
+    if (locator.values.key() != *reserved_key)
+      invalid("plane candidate returned a foreign reserved locator table");
+    std::array point{import_exact(budget, locator.values.view(locator.uv[0])),
+                     import_exact(budget, locator.values.view(locator.uv[1]))};
+    std::array enclosure{import_exact(budget, locator.values.view(locator.enclosure[0])),
+                         import_exact(budget, locator.values.view(locator.enclosure[1])),
+                         import_exact(budget, locator.values.view(locator.enclosure[2])),
+                         import_exact(budget, locator.values.view(locator.enclosure[3]))};
+    for (std::size_t axis = 0; axis < 2; ++axis) {
+      const auto &lo = enclosure[2 * axis], &hi = enclosure[2 * axis + 1];
+      if (lo.compare(hi) > 0 ||
+          point[axis].compare(read(boundary->prepared_original_rectangle[2 * axis])) < 0 ||
+          point[axis].compare(read(boundary->prepared_original_rectangle[2 * axis + 1])) > 0)
+        invalid("plane source locator/enclosure leaves prepared profile");
+    }
+    return {std::move(point), std::move(enclosure)};
+  }
   bool current_target(CellResultKey key) const {
     return mesh.is_live(key.triangle) && frontier.key(key.triangle) == key;
   }
   void fold_changes() {
     auto edits = mesh.take_changes();
     grow(changes, edits.size());
+    for (const auto &edit : edits)
+      for (uint32_t i = 0; i < edit.removed_count; ++i)
+        forget_domain_failure(edit.removed[i]);
     frontier.apply_changes(edits);
     changes.insert(changes.end(), edits.begin(), edits.end());
   }
@@ -238,7 +542,9 @@ FaceEngine::~FaceEngine() {
   std::pmr::polymorphic_allocator<Impl>(budget_).deallocate(impl_, 1);
 }
 std::optional<FaceCellWork> FaceEngine::take_cell_work(uint32_t maximum) {
-  impl_->check();
+  impl_->mutable_check();
+  if (impl_->optimizing)
+    return std::nullopt;
   try {
     const auto keys = impl_->frontier.take_pending(maximum);
     if (keys.empty())
@@ -249,24 +555,43 @@ std::optional<FaceCellWork> FaceEngine::take_cell_work(uint32_t maximum) {
     for (const auto key : keys) {
       budget_->charge(1);
       const auto triangle = impl_->mesh.triangle(key.triangle);
-      FaceCellInput input{impl_->header(key), impl_->carrier, CellMapKind::uv_triangle, {}, {}, {}};
+      const auto displacement = impl_->domain_displacement(impl_->chart_coordinates(key.triangle));
+      const auto remaining = impl_->allowance.subtract(displacement.upper);
+      if (remaining.sign() <= 0) {
+        if (!displacement.feature)
+          internal("exhausted source-domain allowance lacks a boundary feature");
+        if (key.triangle.slot >= impl_->domain_failures.size())
+          impl_->domain_failures.resize(static_cast<std::size_t>(key.triangle.slot) + 1);
+        impl_->domain_failures[key.triangle.slot] = Impl::DomainFailure{key, *displacement.feature};
+        if (!impl_->frontier.complete(key, CellNumericalState::needs_refine))
+          internal("source-domain result lost its pending cell");
+        ++impl_->counters.domain_failures;
+        continue;
+      }
+      FaceCellInput input{impl_->header(key), impl_->carrier, impl_->map_kind(), {}, {}, {}};
       for (std::size_t corner = 0; corner < 3; ++corner) {
         const auto site = triangle.sites[corner];
-        input.original_uv[2 * corner] =
+        input.chart_xy[2 * corner] =
             builder.append(impl_->mesh.coordinate(site, CoordinateAxis::x));
-        input.original_uv[2 * corner + 1] =
+        input.chart_xy[2 * corner + 1] =
             builder.append(impl_->mesh.coordinate(site, CoordinateAxis::y));
+        for (std::size_t axis = 0; axis < 2; ++axis)
+          input.original_uv[2 * corner + axis] =
+              impl_->is_plane() ? builder.append(impl_->original_locations[site.value][axis])
+                                : input.chart_xy[2 * corner + axis];
         const auto &node = impl_->nodes[site.value];
         for (std::size_t axis = 0; axis < 3; ++axis)
           input.actual_xyz[3 * corner + axis] =
               builder.append(Rational::from_double(*budget_, node.xyz[axis]));
       }
-      input.allowance = builder.append(impl_->allowance);
+      input.allowance = builder.append(remaining);
       rows.push_back(input);
     }
+    if (rows.empty())
+      return std::nullopt;
     auto work = std::allocate_shared<FaceCellWorkData>(
         RunAllocator<FaceCellWorkData>(impl_->boundary->resource), impl_->boundary->resource,
-        impl_->boundary->geometry, builder.seal());
+        impl_->boundary->geometry, builder.seal(), impl_->boundary);
     work->cells.assign(rows.begin(), rows.end());
     ++impl_->counters.cell_packets;
     return FaceCellWork(work);
@@ -276,7 +601,7 @@ std::optional<FaceCellWork> FaceEngine::take_cell_work(uint32_t maximum) {
   }
 }
 bool FaceEngine::complete(const CellBoundResult &result) {
-  impl_->check();
+  impl_->mutable_check();
   const auto &h = result.header;
   if (h.key.owner != impl_->owner.id || h.key.cell > UINT32_MAX || h.key.ordinal != 0 ||
       h.source_generation != impl_->boundary->source_generation || h.bound_revision != 1 ||
@@ -308,7 +633,9 @@ bool FaceEngine::complete(const CellBoundResult &result) {
   return accepted;
 }
 FaceAdvance FaceEngine::advance() {
-  impl_->check();
+  impl_->mutable_check();
+  if (impl_->optimizing)
+    return {FaceAdvanceKind::settled, {}, {}, {}};
   try {
     if (impl_->request)
       return {FaceAdvanceKind::boundary_request, {}, {}, impl_->request};
@@ -327,15 +654,15 @@ FaceAdvance FaceEngine::advance() {
       if (top->state == CellNumericalState::unresolved)
         return {FaceAdvanceKind::unresolved, top->key, {}, {}};
       selected = top->key;
+      if (selected->triangle.slot < impl_->domain_failures.size()) {
+        const auto &failure = impl_->domain_failures[selected->triangle.slot];
+        if (failure && failure->cell == *selected)
+          return impl_->boundary_request(failure->feature, *selected);
+      }
       const auto triangle = impl_->mesh.triangle(selected->triangle);
       if (!triangle.heuristic_spent) {
-        const auto uv = impl_->uv(selected->triangle);
-        const Rational three(*budget_, 3);
-        const std::array center{uv[0].add(uv[2]).add(uv[4]).divide(three),
-                                uv[1].add(uv[3]).add(uv[5]).divide(three)};
-        const auto local = original_source_metric(
-            impl_->context, impl_->boundary->geometry, impl_->carrier, center,
-            {impl_->h2, impl_->width_u, impl_->width_v, impl_->allowance});
+        const auto uv = impl_->chart_coordinates(selected->triangle);
+        const auto local = impl_->local_factor(uv);
         const auto chosen = metric_circumcenter(uv, local);
         impl_->ticket = impl_->mesh.stage_heuristic(selected->triangle, chosen);
         if (impl_->ticket) {
@@ -371,11 +698,20 @@ FaceAdvance FaceEngine::advance() {
   }
 }
 bool FaceEngine::complete_candidate(const FaceCandidateResult &result) {
-  impl_->check();
+  impl_->mutable_check();
   if (!impl_->candidate || result.target != impl_->candidate->target ||
       result.ordinal != impl_->candidate->ordinal || !impl_->current_target(result.target)) {
     ++impl_->counters.rejected_results;
     return false;
+  }
+  // Validate immutable response identity/locator before entering a topology
+  // commit transaction. A foreign reply must not destroy its pending ticket.
+  std::optional<Impl::ImportedLocator> location;
+  if (result.decision == FaceCandidateDecision::admitted) {
+    if (result.feature)
+      invalid("admitted candidate also requests a feature");
+    Impl::finite(result.xyz);
+    location.emplace(impl_->candidate_location(result));
   }
   try {
     if (result.decision == FaceCandidateDecision::protected_feature) {
@@ -397,7 +733,8 @@ bool FaceEngine::complete_candidate(const FaceCandidateResult &result) {
     }
     if (result.decision != FaceCandidateDecision::admitted || result.feature)
       invalid("candidate admission/feature mismatch");
-    Impl::finite(result.xyz);
+    if (!location)
+      internal("admitted candidate location missing");
     if (impl_->node_ordinal_base > UINT64_MAX - impl_->nodes.size())
       throw Error(ErrorCode::resource_exhausted, "face node creation ordinal exhausted");
     const auto ordinal = impl_->node_ordinal_base + impl_->nodes.size();
@@ -406,6 +743,8 @@ bool FaceEngine::complete_candidate(const FaceCandidateResult &result) {
                             result.xyz,
                             {}};
     grow(impl_->nodes, 1);
+    grow(impl_->original_locations, 1);
+    grow(impl_->original_enclosures, 1);
     SiteSlot site;
     if (impl_->ticket)
       site = impl_->mesh.commit_heuristic(*impl_->ticket);
@@ -413,9 +752,12 @@ bool FaceEngine::complete_candidate(const FaceCandidateResult &result) {
       site = impl_->mesh.bisect_internal_edge(*impl_->midpoint_edge);
     else
       internal("candidate lacks owned topology transaction");
-    if (site.value != impl_->nodes.size())
+    if (site.value != impl_->nodes.size() || site.value != impl_->original_locations.size() ||
+        site.value != impl_->original_enclosures.size())
       internal("committed face site/node mismatch");
     impl_->nodes.push_back(node);
+    impl_->original_locations.push_back(std::move(location->chosen));
+    impl_->original_enclosures.push_back(std::move(location->enclosure));
     impl_->ticket.reset();
     impl_->midpoint_edge.reset();
     impl_->candidate.reset();
@@ -428,27 +770,32 @@ bool FaceEngine::complete_candidate(const FaceCandidateResult &result) {
   }
 }
 CellResultKey FaceEngine::retry(CellResultKey key) {
-  impl_->check();
+  impl_->mutable_check();
+  if (impl_->optimizing)
+    invalid("refinement cannot resume during fixed-site optimization");
   if (impl_->candidate)
     invalid("cannot retry while a candidate transaction is staged");
   if (!impl_->current_target(key))
     invalid("stale face retry request");
+  impl_->forget_domain_failure(key.triangle);
   return impl_->frontier.retry(key.triangle);
 }
 bool FaceEngine::mark_contact_failure(CellResultKey key) {
-  impl_->check();
+  impl_->mutable_check();
+  if (impl_->optimizing)
+    invalid("fixed-site optimizer requires settled current contacts");
   if (impl_->candidate || impl_->closure || impl_->request)
     invalid("contact epoch requires settled face construction");
   return impl_->frontier.mark_contact_failure(key);
 }
 std::pmr::vector<TopologyEdit> FaceEngine::take_changes() {
-  impl_->check();
+  impl_->mutable_check();
   std::pmr::vector<TopologyEdit> out(budget_);
   out.swap(impl_->changes);
   return out;
 }
 std::pmr::vector<CellResultKey> FaceEngine::take_settled() {
-  impl_->check();
+  impl_->mutable_check();
   return impl_->frontier.take_settled();
 }
 const MutableFaceTopology &FaceEngine::topology() const {
@@ -465,24 +812,246 @@ std::span<const int32_t> FaceEngine::traversal_adapters() const {
   impl_->check();
   return impl_->adapters;
 }
-std::array<DeclaredContactEdge,3> FaceEngine::declared_edges(TriangleHandle handle) const {
+std::array<DeclaredContactEdge, 3> FaceEngine::declared_edges(TriangleHandle handle) const {
   impl_->check();
-  const auto triangle=impl_->mesh.triangle(handle);
-  std::array<DeclaredContactEdge,3> result{};
-  for(std::size_t i=0;i<3;++i) {
-    const auto edge=impl_->mesh.edge(triangle.edges[i]);
-    if(edge.constraint) {
-      const auto &key=*edge.constraint;
-      result[i]={key.kind==BoundaryOwnerKind::source_edge ? ContactEdgeKind::source_edge : ContactEdgeKind::face_cut,
-                 key.owner,key.kind==BoundaryOwnerKind::source_edge ? 0 : impl_->boundary->face_generation,key.interval};
-    } else {
-      const auto a=std::min(edge.sites[0].value,edge.sites[1].value),
-                 b=std::max(edge.sites[0].value,edge.sites[1].value);
-      result[i]={ContactEdgeKind::internal_face,impl_->owner.id,impl_->boundary->face_generation,
-                 (uint64_t{a}<<32)|b};
+  return impl_->declarations(impl_->mesh.triangle(handle).sites);
+}
+std::pmr::vector<EdgeHandle> FaceEngine::begin_optimizer() {
+  impl_->mutable_check();
+  if (impl_->optimizing || impl_->candidate || impl_->request || impl_->closure ||
+      impl_->frontier.next())
+    invalid("optimizer requires settled construction exactly once");
+  auto edges = impl_->mesh.internal_edges();
+  impl_->optimizing = true;
+  return edges;
+}
+uint64_t FaceEngine::optimizer_edge_key(EdgeHandle handle) const {
+  impl_->check();
+  const auto sites = impl_->mesh.edge(handle).sites;
+  return (uint64_t{std::min(sites[0].value, sites[1].value)} << 32) |
+         std::max(sites[0].value, sites[1].value);
+}
+std::optional<FaceOptimizationWork> FaceEngine::prepare_flip(EdgeHandle edge) {
+  impl_->mutable_check();
+  if (!impl_->optimizing || impl_->optimization)
+    invalid("optimizer proposal state mismatch");
+  if (!impl_->mesh.is_live(edge))
+    return std::nullopt;
+  const auto ticket = impl_->mesh.stage_flip(edge);
+  if (!ticket)
+    return std::nullopt;
+  impl_->flip = ticket;
+  try {
+    const auto sites = impl_->mesh.flip_sites(*ticket);
+    const auto old = impl_->mesh.flip_cells(*ticket);
+    const auto before0 = impl_->potential(old[0]), before1 = impl_->potential(old[1]);
+    const auto after0 = impl_->potential(sites[0]), after1 = impl_->potential(sites[1]);
+    auto cancel = [&]() {
+      impl_->mesh.cancel_flip(*impl_->flip);
+      impl_->flip.reset();
+    };
+    if (!before0 || !before1 || !after0 || !after1) {
+      cancel();
+      return std::nullopt;
     }
+    const auto old_sum =
+        Rational::from_double(*budget_, *before0).add(Rational::from_double(*budget_, *before1));
+    const auto new_sum =
+        Rational::from_double(*budget_, *after0).add(Rational::from_double(*budget_, *after1));
+    if (new_sum.compare(old_sum) >= 0) {
+      cancel();
+      return std::nullopt;
+    }
+    if (impl_->optimizer_ordinal >= ((uint64_t{1} << 62) - 1))
+      throw Error(ErrorCode::resource_exhausted, "optimizer temporary cell serial exhausted");
+    const auto ordinal = ++impl_->optimizer_ordinal;
+    ExactBuilder builder(impl_->boundary->resource, impl_->next_table());
+    std::array<FaceCellInput, 2> inputs{};
+    std::array<std::array<PhysicalNode, 3>, 2> physical{};
+    for (std::size_t i = 0; i < 2; ++i) {
+      const auto displacement = impl_->domain_displacement(impl_->chart_coordinates(sites[i]));
+      const auto remaining = impl_->allowance.subtract(displacement.upper);
+      if (remaining.sign() <= 0) {
+        cancel();
+        return std::nullopt;
+      }
+      auto &input = inputs[i];
+      input.header = impl_->header(impl_->frontier.key(old[i]));
+      input.header.key.cell = (uint64_t{1} << 63) | (ordinal * 2 + i);
+      input.header.key.generation = edge.generation;
+      input.carrier = impl_->carrier;
+      input.map_kind = impl_->map_kind();
+      for (std::size_t c = 0; c < 3; ++c) {
+        const auto site = sites[i][c];
+        physical[i][c] = impl_->nodes[site.value];
+        input.chart_xy[2 * c] = builder.append(impl_->mesh.coordinate(site, CoordinateAxis::x));
+        input.chart_xy[2 * c + 1] = builder.append(impl_->mesh.coordinate(site, CoordinateAxis::y));
+        for (std::size_t axis = 0; axis < 2; ++axis)
+          input.original_uv[2 * c + axis] =
+              impl_->is_plane() ? builder.append(impl_->original_locations[site.value][axis])
+                                : input.chart_xy[2 * c + axis];
+        for (std::size_t a = 0; a < 3; ++a)
+          input.actual_xyz[3 * c + a] =
+              builder.append(Rational::from_double(*budget_, physical[i][c].xyz[a]));
+      }
+      input.allowance = builder.append(remaining);
+    }
+    auto cells = std::allocate_shared<FaceCellWorkData>(
+        RunAllocator<FaceCellWorkData>(impl_->boundary->resource), impl_->boundary->resource,
+        impl_->boundary->geometry, builder.seal(), impl_->boundary);
+    cells->cells.assign(inputs.begin(), inputs.end());
+    auto work = std::allocate_shared<FaceOptimizationData>(
+        RunAllocator<FaceOptimizationData>(impl_->boundary->resource),
+        FaceOptimizationData{impl_->boundary,
+                             cells,
+                             ordinal,
+                             edge,
+                             {impl_->frontier.key(old[0]), impl_->frontier.key(old[1])},
+                             sites,
+                             physical,
+                             {impl_->declarations(sites[0]), impl_->declarations(sites[1])},
+                             {*before0, *before1},
+                             {*after0, *after1}});
+    impl_->optimization = work;
+    ++impl_->counters.optimizer_proposals;
+    return FaceOptimizationWork(work);
+  } catch (...) {
+    impl_->usable = false;
+    throw;
   }
-  return result;
+}
+void FaceEngine::reject_flip(uint64_t ordinal) {
+  impl_->mutable_check();
+  if (!impl_->optimization || impl_->optimization->ordinal != ordinal || !impl_->flip)
+    invalid("stale optimizer proposal rejection");
+  impl_->mesh.cancel_flip(*impl_->flip);
+  impl_->flip.reset();
+  impl_->optimization.reset();
+}
+FaceOptimizationCommit FaceEngine::complete_flip(uint64_t ordinal,
+                                                 const std::array<CellBoundResult, 2> &results,
+                                                 const ContactApproval &approval) {
+  impl_->mutable_check();
+  if (!impl_->optimization || impl_->optimization->ordinal != ordinal || !impl_->flip)
+    invalid("stale optimizer proposal completion");
+  const auto &work = *impl_->optimization;
+  for (std::size_t i = 0; i < 2; ++i) {
+    const auto &a = results[i].header, &b = work.cells->cells[i].header;
+    if (a.key != b.key || a.source_generation != b.source_generation ||
+        a.boundary_generation != b.boundary_generation || a.face_generation != b.face_generation ||
+        a.bound_revision != b.bound_revision || a.request_revision != b.request_revision ||
+        results[i].decision != BoundDecision::accept || !impl_->current_target(work.old_cells[i]))
+      invalid("optimizer needs exact same two current accepted cell bounds");
+  }
+  if (!contact_approval_matches(approval, {ordinal, work.old_cells, work.nodes, work.edges}))
+    invalid("optimizer contact approval does not match proposed identities/geometry");
+  FaceOptimizationCommit output(budget_);
+  output.affected_edges.reserve(5);
+  const auto sites = work.sites;
+  const auto potential = work.new_potential;
+  try {
+    impl_->mesh.commit_flip(*impl_->flip);
+    impl_->flip.reset();
+    auto edits = impl_->mesh.take_changes();
+    if (edits.size() != 1 || edits[0].inserted_count != 2 || edits[0].removed_count != 2)
+      internal("optimizer lost local two-cell transaction");
+    grow(impl_->changes, 1);
+    impl_->frontier.apply_changes(edits);
+    impl_->changes.push_back(edits[0]);
+    for (std::size_t i = 0; i < 2; ++i) {
+      const auto handle = edits[0].inserted[i];
+      if (impl_->mesh.triangle(handle).sites != sites[i])
+        internal("optimizer commit changed proved cell roles");
+      output.cells[i] = impl_->frontier.key(handle);
+      if (!impl_->frontier.complete(output.cells[i], CellNumericalState::accepted))
+        internal("optimizer cannot rekey accepted cell proof");
+      if (handle.slot >= impl_->potentials.size()) {
+        grow(impl_->potentials,
+             static_cast<std::size_t>(handle.slot) + 1 - impl_->potentials.size());
+        impl_->potentials.resize(static_cast<std::size_t>(handle.slot) + 1);
+      }
+      impl_->potentials[handle.slot] = {handle.generation, potential[i]};
+      for (const auto edge : impl_->mesh.triangle(handle).edges) {
+        const auto view = impl_->mesh.edge(edge);
+        if (view.incident_count == 2 && !view.constraint &&
+            std::find(output.affected_edges.begin(), output.affected_edges.end(), edge) ==
+                output.affected_edges.end())
+          output.affected_edges.push_back(edge);
+      }
+    }
+    // The two local cells already carry the same accepted proofs. Retire their
+    // pending-work records now rather than accumulating one stale log per flip.
+    if (!impl_->frontier.take_pending(1).empty() || impl_->frontier.next())
+      internal("accepted optimizer cells unexpectedly require refinement");
+    std::sort(output.affected_edges.begin(), output.affected_edges.end(), [&](auto a, auto b) {
+      budget_->charge(1);
+      return optimizer_edge_key(a) < optimizer_edge_key(b);
+    });
+    impl_->optimization.reset();
+    ++impl_->counters.optimizer_flips;
+    return output;
+  } catch (...) {
+    impl_->usable = false;
+    throw;
+  }
+}
+FaceResult FaceEngine::freeze_result() {
+  impl_->check();
+  if (impl_->result)
+    return impl_->result;
+  if (impl_->candidate || impl_->closure || impl_->request || impl_->optimization || impl_->flip ||
+      impl_->frontier.next())
+    invalid("final face export requires settled complete owner");
+  try {
+    ExactBuilder builder(impl_->boundary->resource, impl_->next_table());
+    std::pmr::vector<FaceResultSite> sites(budget_);
+    sites.reserve(impl_->nodes.size());
+    for (std::size_t i = 0; i < impl_->nodes.size(); ++i) {
+      budget_->charge(1);
+      if (i > UINT32_MAX)
+        internal("final face site slot overflow");
+      const SiteSlot slot{static_cast<uint32_t>(i)};
+      const std::array refs{builder.append(impl_->mesh.coordinate(slot, CoordinateAxis::x)),
+                            builder.append(impl_->mesh.coordinate(slot, CoordinateAxis::y))};
+      const auto locator = impl_->is_plane()
+                               ? std::array{builder.append(impl_->original_locations[i][0]),
+                                            builder.append(impl_->original_locations[i][1])}
+                               : refs;
+      std::optional<std::array<ExactRef, 4>> enclosure;
+      const auto &retained_enclosure = impl_->original_enclosures[i];
+      if (retained_enclosure) {
+        const auto &bounds = *retained_enclosure;
+        enclosure.emplace(std::array{builder.append(bounds[0]), builder.append(bounds[1]),
+                                     builder.append(bounds[2]), builder.append(bounds[3])});
+      }
+      sites.push_back({slot, refs, locator, impl_->nodes[i], enclosure});
+    }
+    auto frozen = std::allocate_shared<FaceResultData>(
+        RunAllocator<FaceResultData>(impl_->boundary->resource), impl_->boundary, builder.seal());
+    frozen->sites.assign(sites.begin(), sites.end());
+    const auto count = impl_->mesh.lineage_count();
+    if (count > frozen->lineages.max_size())
+      throw Error(ErrorCode::resource_exhausted, "final lineage capacity exhausted");
+    frozen->lineages.reserve(static_cast<std::size_t>(count));
+    for (uint64_t i = 0; i < count; ++i) {
+      budget_->charge(1);
+      frozen->lineages.push_back(impl_->mesh.lineage(i));
+    }
+    const auto live = impl_->mesh.triangles();
+    frozen->triangles.reserve(live.size());
+    for (const auto handle : live) {
+      budget_->charge(1);
+      const auto triangle = impl_->mesh.triangle(handle);
+      frozen->triangles.push_back({impl_->frontier.key(handle), impl_->map_kind(), triangle.sites,
+                                   triangle.lineage, impl_->declarations(triangle.sites)});
+    }
+    frozen->traversal_adapters.assign(impl_->adapters.begin(), impl_->adapters.end());
+    impl_->result = frozen;
+    return impl_->result;
+  } catch (...) {
+    impl_->usable = false;
+    throw;
+  }
 }
 FaceEngineStats FaceEngine::stats() const {
   impl_->check();

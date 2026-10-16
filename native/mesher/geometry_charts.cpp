@@ -71,22 +71,27 @@ std::optional<Matrix> center_preconditioner(const PlaneFrame &f, const SurfaceJe
   return Matrix{j[3].lower.divide(det), j[1].lower.negative().divide(det),
                 j[2].lower.negative().divide(det), j[0].lower.divide(det)};
 }
-bool positive_symmetric(const PlaneFrame &f, const Matrix &m, const SurfaceJetEnclosure &jet) {
+std::optional<Rational> positive_symmetric(const PlaneFrame &f, const Matrix &m,
+                                           const SurfaceJetEnclosure &jet) {
   const auto j = projected_jacobian(f, jet);
   const auto a = sum(times(j[0], m[0]), times(j[2], m[1]));
   const auto d = sum(times(j[1], m[2]), times(j[3], m[3]));
   if (a.lower.sign() <= 0 || d.lower.sign() <= 0)
-    return false;
+    return std::nullopt;
   const auto b =
       sum(sum(times(j[1], m[0]), times(j[3], m[1])), sum(times(j[0], m[2]), times(j[2], m[3])));
   const Rational four(a.lower.budget(), 4);
-  return difference(product(a, d), times(squared(b), Rational(a.lower.budget(), 1).divide(four)))
-             .lower.sign() > 0;
+  const auto det =
+      difference(product(a, d), times(squared(b), Rational(a.lower.budget(), 1).divide(four)));
+  if (det.lower.sign() <= 0)
+    return std::nullopt;
+  return det.lower.divide(a.upper.add(d.upper));
 }
 struct Admission final {
   const PlaneFrame &frame;
   const Matrix &preconditioner;
   const ChartProfileLimits &limits;
+  Rational &monotonicity;
   uint64_t visited = 0;
 };
 bool regular_cell(Admission &admission, const BezierSurface &root, const UVBox &box,
@@ -94,9 +99,12 @@ bool regular_cell(Admission &admission, const BezierSurface &root, const UVBox &
   if (admission.visited >= admission.limits.cells)
     return false;
   ++admission.visited;
-  if (positive_symmetric(admission.frame, admission.preconditioner,
-                         enclose_rational_surface_jet(root, box)))
+  if (const auto lower = positive_symmetric(admission.frame, admission.preconditioner,
+                                            enclose_rational_surface_jet(root, box))) {
+    if (admission.monotonicity.sign() == 0 || lower->compare(admission.monotonicity) < 0)
+      admission.monotonicity = *lower;
     return true;
+  }
   if (depth >= admission.limits.subdivision_depth)
     return false;
   const std::size_t axis = static_cast<std::size_t>(depth % 2) * 2;
@@ -200,9 +208,9 @@ std::optional<PlaneChart> plane_profile(GeometryContext &ctx, const GeometryStor
                                             request.precision.transcendental_bits));
   if (!m)
     return std::nullopt;
-  Rational height(budget, 0);
+  Rational height(budget, 0), monotonicity(budget, 0);
   if (carrier.kind == 6) {
-    Admission admission{f, *m, request.profile_limits};
+    Admission admission{f, *m, request.profile_limits, monotonicity};
     BoundaryProfile boundary{f, q, r};
     const auto roots = intersecting_surface_roots(budget, geometry, envelope.carrier, r);
     for (const auto slot : roots) {
@@ -216,10 +224,14 @@ std::optional<PlaneChart> plane_profile(GeometryContext &ctx, const GeometryStor
       if (bound.compare(height) > 0)
         height = bound;
     }
-  } else if (!positive_symmetric(f, *m,
-                                 enclose_analytic_surface_jet(
-                                     ctx, carrier, r, request.precision.transcendental_bits)))
-    return std::nullopt;
+  } else {
+    const auto lower = positive_symmetric(
+        f, *m,
+        enclose_analytic_surface_jet(ctx, carrier, r, request.precision.transcendental_bits));
+    if (!lower)
+      return std::nullopt;
+    monotonicity = *lower;
+  }
   if (height.compare(request.positional_allowance) >= 0)
     return std::nullopt;
   return PlaneChart{r,
@@ -228,7 +240,8 @@ std::optional<PlaneChart> plane_profile(GeometryContext &ctx, const GeometryStor
                     {f.dual_x[0], f.dual_x[1], f.dual_x[2], f.dual_y[0], f.dual_y[1], f.dual_y[2]},
                     {q[0][0], q[0][1], q[1][0], q[1][1], q[2][0], q[2][1], q[3][0], q[3][1]},
                     *m,
-                    std::move(height)};
+                    std::move(height),
+                    std::move(monotonicity)};
 }
 } // namespace
 WorkingChart choose_chart(GeometryContext &ctx, const GeometryStore &geometry,

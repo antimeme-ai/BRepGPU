@@ -1,4 +1,5 @@
 #include "numerical_service.hpp"
+#include "plane_cell_bounds.hpp"
 #include <algorithm>
 #include <limits>
 
@@ -10,6 +11,29 @@ template <std::size_t N, std::size_t... I>
 std::array<Rational, N> read(bgfd::Budget &budget, const ExactTable &table,
                              const std::array<ExactRef, N> &refs, std::index_sequence<I...>) {
   return {import_exact(budget, table.view(refs[I]))...};
+}
+void plane_source(const FaceCellWorkData &work, const std::shared_ptr<RunResource> &resource) {
+  const auto &seed = work.chart_source;
+  if (!seed || seed->resource != resource || &seed->geometry.view() != &work.geometry.view() ||
+      seed->chart_kind != WorkingChartKind::physical_plane_convex_q || !seed->plane)
+    invalid("plane numerical packet lacks its admitted source profile");
+  const auto &source = work.geometry.view().source.view();
+  if (seed->face.value >= source.faces.size() ||
+      seed->definition.value >= source.definitions.size() ||
+      seed->source_generation != work.geometry.view().table.key().generation)
+    invalid("plane numerical source identity mismatch");
+  const auto &face = source.faces[seed->face.value];
+  if (face.definition_id != source.definitions[seed->definition.value].id)
+    invalid("plane numerical face definition mismatch");
+  const auto carrier = source.carrier_index.find(face.carrier_id);
+  for (const auto &cell : work.cells)
+    if (cell.map_kind != CellMapKind::plane_xy_triangle || cell.carrier != carrier ||
+        cell.header.key.owner != face.id.value || cell.header.key.ordinal != 0 ||
+        cell.header.bound_revision != 1 ||
+        cell.header.source_generation != seed->source_generation ||
+        cell.header.boundary_generation != seed->boundary_generation ||
+        cell.header.face_generation != seed->face_generation)
+      invalid("plane numerical cell escaped its source face/generations");
 }
 } // namespace
 struct NumericalServiceJob::Impl final {
@@ -75,6 +99,10 @@ struct NumericalServiceJob::Impl final {
   void prepare(JobContext &job) {
     const auto &work = *std::get<FaceCellWork>(current().input);
     const auto &cell = work.cells[next_cell];
+    if (cell.map_kind == CellMapKind::plane_xy_triangle) {
+      prepare_plane(job, work);
+      return;
+    }
     const auto uv = read(job.budget, work.values, cell.original_uv, std::make_index_sequence<6>{});
     const auto xyz = read(job.budget, work.values, cell.actual_xyz, std::make_index_sequence<9>{});
     const auto allowance = import_exact(job.budget, work.values.view(cell.allowance));
@@ -99,6 +127,37 @@ struct NumericalServiceJob::Impl final {
       });
       phase = Phase::dispatch;
     }
+  }
+  void prepare_plane(JobContext &job, const FaceCellWorkData &work) {
+    // The source lease was bound at admission. Import this constant profile
+    // once into the same step Budget as the entire bounded cell batch.
+    const auto &seed = work.chart_source;
+    if (!seed)
+      internal("plane service lost its source profile");
+    const auto &plane = seed->plane;
+    if (!plane.has_value())
+      internal("plane service lost its source profile");
+    const auto &frozen = plane.value();
+    const auto origin =
+        read(job.budget, seed->values, frozen.origin, std::make_index_sequence<3>{});
+    const auto basis = read(job.budget, seed->values, frozen.basis, std::make_index_sequence<6>{});
+    const auto q =
+        read(job.budget, seed->values, frozen.quadrilateral, std::make_index_sequence<8>{});
+    const auto height = import_exact(job.budget, seed->values.view(frozen.height_upper));
+    const PlaneCellProfile profile(job.budget, {origin, basis, q, height});
+    for (std::size_t i = 0; i < work.cells.size(); ++i) {
+      const auto &cell = work.cells[i];
+      const auto xy = read(job.budget, work.values, cell.chart_xy, std::make_index_sequence<6>{});
+      const auto xyz =
+          read(job.budget, work.values, cell.actual_xyz, std::make_index_sequence<9>{});
+      const auto allowance = import_exact(job.budget, work.values.view(cell.allowance));
+      cell_results->cells[i] =
+          bound_plane_cell(profile, {cell.header, cell.map_kind, xy, xyz, allowance});
+      ++counters.plane_cells;
+    }
+    result.emplace(
+        NumericalResult{current().key, std::shared_ptr<const CellBatchResult>(cell_results)});
+    phase = Phase::complete;
   }
   void pack(bgfd::Budget &scratch) {
     std::pmr::vector<BoundInput> inputs(&scratch);
@@ -234,6 +293,12 @@ void NumericalServiceJob::begin(NumericalRequest request) {
     std::sort(keys.begin(), keys.end());
     if (std::adjacent_find(keys.begin(), keys.end()) != keys.end())
       invalid("numerical service repeated cell key");
+    if (std::any_of(
+            work->cells.begin(), work->cells.end(),
+            [](const auto &cell) { return cell.map_kind == CellMapKind::plane_xy_triangle; }) ||
+        (work->chart_source &&
+         work->chart_source->chart_kind == WorkingChartKind::physical_plane_convex_q))
+      plane_source(*work, resource_);
     auto answers =
         std::allocate_shared<CellBatchResult>(RunAllocator<CellBatchResult>(resource_), resource_);
     answers->cells.resize(work->cells.size());
@@ -255,7 +320,7 @@ StepState NumericalServiceJob::step(JobContext &job) {
     switch (p.phase) {
     case Impl::Phase::preparing:
       p.prepare(job);
-      return StepState::ready;
+      return p.phase == Impl::Phase::complete ? StepState::done : StepState::ready;
     case Impl::Phase::dispatch:
       return p.dispatch(job);
     case Impl::Phase::waiting: {

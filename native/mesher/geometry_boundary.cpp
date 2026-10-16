@@ -1,5 +1,6 @@
 #include "geometry_boundary.hpp"
 #include "geometry_enclosure.hpp"
+#include "geometry_inverse.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -54,26 +55,40 @@ Rational mapped_parameter(bgfd::Budget &budget, const UseSource &source, const R
   const auto map =
       std::span<const Vec2>(source.source.parameter_maps)
           .subspan(static_cast<std::size_t>(range.first), static_cast<std::size_t>(range.count));
-  for (std::size_t i = 1; i < map.size(); ++i) {
-    const auto x = Rational::from_double(budget, map[i - 1][0]),
-               y = Rational::from_double(budget, map[i][0]);
-    if (t.compare(x.compare(y) < 0 ? x : y) < 0 || t.compare(x.compare(y) < 0 ? y : x) > 0)
-      continue;
-    const auto p = Rational::from_double(budget, map[i - 1][1]),
-               q = Rational::from_double(budget, map[i][1]);
-    return p.add(t.subtract(x).multiply(q.subtract(p)).divide(y.subtract(x)));
+  // Source t rows are strictly monotone in the literal original edge direction.
+  // Locate the first closed piece endpoint at/after t without scanning all rows.
+  const auto direction = a.compare(b) < 0 ? 1 : -1;
+  std::size_t first = 1, last = map.size();
+  while (first < last) {
+    budget.charge(1);
+    const auto mid = first + (last - first) / 2;
+    const auto x = Rational::from_double(budget, map[mid][0]);
+    if (x.compare(t) * direction < 0)
+      first = mid + 1;
+    else
+      last = mid;
+  }
+  if (first < map.size()) {
+    const auto x = Rational::from_double(budget, map[first - 1][0]);
+    const auto y = Rational::from_double(budget, map[first][0]);
+    if (t.compare(x) * direction >= 0 && t.compare(y) * direction <= 0) {
+      const auto p = Rational::from_double(budget, map[first - 1][1]);
+      const auto q = Rational::from_double(budget, map[first][1]);
+      return p.add(t.subtract(x).multiply(q.subtract(p)).divide(y.subtract(x)));
+    }
   }
   throw Error(ErrorCode::invalid_source, "source parameter map does not cover sample");
 }
-void validate_request(GeometryContext &ctx,const WorkingChart &chart,const UseNodeRequest &request) {
-  if(&request.source_parameter.budget()!=&ctx.budget()||
-     &request.node_source_allowance.budget()!=&ctx.budget()||
-     request.node_source_allowance.sign()<=0||&chart.envelope.uv[0].budget()!=&ctx.budget())
-    throw Error(ErrorCode::invalid_source,"invalid recovery owner or source allowance");
-  if(request.precision.transcendental_bits<32||
-     request.precision.transcendental_bits>ctx.maximum_bits()||
-     request.precision.norm_fractional_bits>ctx.maximum_bits())
-    throw Error(ErrorCode::invalid_source,"invalid source recovery precision profile");
+void validate_request(GeometryContext &ctx, const WorkingChart &chart,
+                      const UseNodeRequest &request) {
+  if (&request.source_parameter.budget() != &ctx.budget() ||
+      &request.node_source_allowance.budget() != &ctx.budget() ||
+      request.node_source_allowance.sign() <= 0 || &chart.envelope.uv[0].budget() != &ctx.budget())
+    throw Error(ErrorCode::invalid_source, "invalid recovery owner or source allowance");
+  if (request.precision.transcendental_bits < 32 ||
+      request.precision.transcendental_bits > ctx.maximum_bits() ||
+      request.precision.norm_fractional_bits > ctx.maximum_bits())
+    throw Error(ErrorCode::invalid_source, "invalid source recovery precision profile");
 }
 Point source_curve_point(GeometryContext &ctx, const WorkingChart &chart, Slot<CurveTag> curve,
                          const Rational &parameter, GeometryBoundPrecision precision) {
@@ -299,22 +314,46 @@ void authoritative_agreement(GeometryContext &ctx, const WorkingChart &chart,
   }
 }
 } // namespace
+Rational map_original_use_parameter(GeometryContext &ctx, const WorkingChart &chart,
+                                    OriginalUsePoint point) {
+  if (&point.source_parameter.budget() != &ctx.budget())
+    throw Error(ErrorCode::invalid_source, "source parameter map owner mismatch");
+  return mapped_parameter(ctx.budget(), use_source(chart, point.use), point.source_parameter);
+}
+void require_authoritative_point_agreement(GeometryContext &ctx, const WorkingChart &chart,
+                                           std::array<OriginalUsePoint, 2> points,
+                                           GeometryBoundPrecision precision) {
+  const UseNodeRequest a{
+      points[0].use, points[0].source_parameter, Rational(ctx.budget(), 1), precision, {}};
+  const UseNodeRequest b{
+      points[1].use, points[1].source_parameter, Rational(ctx.budget(), 1), precision, {}};
+  validate_request(ctx, chart, a);
+  validate_request(ctx, chart, b);
+  if (use_source(chart, a.use).use.reconstructed || use_source(chart, b.use).use.reconstructed)
+    throw Error(ErrorCode::invalid_source,
+                "authoritative point comparison received reconstructed guide");
+  authoritative_agreement(ctx, chart, a, b);
+}
 BoundarySiteChoice locate_boundary_site(GeometryContext &ctx, const WorkingChart &chart,
                                         const UseNodeRequest &request) {
-  validate_request(ctx,chart,request);
+  validate_request(ctx, chart, request);
   const auto source = use_source(chart, request.use);
   const auto parameter = mapped_parameter(ctx.budget(), source, request.source_parameter);
   const auto original = target(ctx, chart, source, request);
   const auto seed = guide(ctx, chart, source, parameter, request.precision);
-  const auto uv = recover({ctx, chart, source, request, original.point, seed});
+  auto uv = recover({ctx, chart, source, request, original.point, seed});
+  const auto xy = chart_coordinate(ctx, chart, original.point, uv);
+  std::optional<std::array<Rational, 4>> enclosure;
+  if (chart.kind == WorkingChartKind::physical_plane_convex_q) {
+    const auto inverse = recover_plane_chart_locator(ctx, chart, xy, request.precision);
+    uv = inverse.chosen;
+    enclosure.emplace(inverse.enclosure);
+  }
   const auto residual = source_residual(ctx, chart, uv, original.point, request.precision);
-  return {request.use,
-          request.source_parameter,
-          parameter,
-          chart_coordinate(ctx, chart, original.point, uv),
-          uv,
-          residual,
-          original.endpoint_curve_upper};
+  if (residual.compare(request.node_source_allowance) > 0)
+    unresolved("chosen inverse locator exceeds original node source allowance");
+  return {request.use, request.source_parameter,      parameter,           xy, uv,
+          residual,    original.endpoint_curve_upper, std::move(enclosure)};
 }
 BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingChart &chart,
                                           std::span<const UseNodeRequest> requests) {
@@ -322,9 +361,10 @@ BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingCha
     throw Error(ErrorCode::invalid_source, "empty face joint request");
   // Admit every occurrence before selecting one or comparing any owner-affine
   // values. An unselected request is still part of this common joint.
-  for(const auto &item:requests) {
-    validate_request(ctx,chart,item);
-    static_cast<void>(mapped_parameter(ctx.budget(),use_source(chart,item.use),item.source_parameter));
+  for (const auto &item : requests) {
+    validate_request(ctx, chart, item);
+    static_cast<void>(
+        mapped_parameter(ctx.budget(), use_source(chart, item.use), item.source_parameter));
   }
   std::size_t selected = 0;
   std::optional<std::size_t> authoritative;
@@ -363,8 +403,10 @@ BoundaryJointChoice choose_boundary_joint(GeometryContext &ctx, const WorkingCha
     if (residual.compare(item.node_source_allowance) > 0)
       unresolved("common face-vertex joint exceeds an incident node source allowance");
     occurrences.push_back({item.use, item.source_parameter, parameter, chosen_site.chart,
-                           chosen_site.original_uv, residual, original.endpoint_curve_upper});
+                           chosen_site.original_uv, residual, original.endpoint_curve_upper,
+                           chosen_site.original_uv_enclosure});
   }
-  return {vertex, chosen_site.chart, chosen_site.original_uv, std::move(occurrences)};
+  return {vertex, chosen_site.chart, chosen_site.original_uv, std::move(occurrences),
+          chosen_site.original_uv_enclosure};
 }
 } // namespace bgmesh
