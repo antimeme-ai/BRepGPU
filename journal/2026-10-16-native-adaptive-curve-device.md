@@ -46,3 +46,24 @@ literal homogeneous source values and actual output endpoints, with virtual
 oracle subdivision where a single coefficient hull is inconclusive. Ordinary
 linear edges may also select the checked image profile; the reader checks the
 actual collinear source image rather than assuming only t^3 can do so.
+
+The original-source degree32 whole caller exposed interval dependency inflation
+in `a+t*(b-a)`; the numerical owner amended its plan and supplied a curve-only
+convex interpolation helper. The warp sampler now calls that SAME helper.
+The previous patch arithmetic remains unchanged. The original-source numerical
+reader passes all81 records on both P100s after the coherent convex rebuild;
+the complete caller's degree32 fine/coarse/fine/repeat/fresh comparisons now
+pass CPU1/CPU4/P1000/P1001 at the unchanged1e-8 nodal cap. No new memory or
+lifetime mechanism was introduced by this arithmetic correction.
+
+Construction peer reviewed the complete caller and reader against original
+incidence and exact payload semantics. Valid findings were resolved: normalize
+only cache request ranges for literal descending edges, select only this
+definition's guide occurrences, reject unknown map kinds explicitly, check
+actual line-map scalars and use-site traversal, and independently bound the
+whole affine plane trace against actual output chords. The current independent
+whole caller passes rational, weighted, degree32, stationary-line, descending,
+wire, C0, nonclamped and literal cylinder-seam geometry across CPU1/CPU4 and
+both P100s. Its finite source/publication refusal checks additionally exposed
+an original-endpoint guard scheduled too late; the runtime owner is correcting
+that invariant before complete operation publication.
