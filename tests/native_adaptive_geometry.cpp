@@ -229,6 +229,39 @@ int main(int argc, char **argv) {
                  .certified,
             "precise positive residual cannot accept too-small allowance");
     std::cout << std::hexfloat;
+    // The source and SAME actual L are known exactly: B=(u,v,uv),
+    // L=(u,v,v+shift) on 0<=v<=u<=1. Their maximum error is 1/4+shift.
+    auto twist_facet = facet;
+    twist_facet.actual_corners[11] = 1.;
+    const std::array twist_uv{f(0), f(0), f(1), f(0), f(1), f(1)};
+    for (const auto shift : {0., .125}) {
+      const double coordinates[]{0., 0., 1., 0., 1., 1.};
+      for (size_t a = 0; a < 6; ++a)
+        twist_facet.uv[a] = {coordinates[a], coordinates[a]};
+      for (size_t i = 0; i < 3; ++i) {
+        twist_facet.affine_xyz[3 * i] = {coordinates[2 * i], coordinates[2 * i]};
+        twist_facet.affine_xyz[3 * i + 1] = {coordinates[2 * i + 1], coordinates[2 * i + 1]};
+        const auto z = coordinates[2 * i] * coordinates[2 * i + 1] + shift;
+        twist_facet.affine_xyz[3 * i + 2] = {z, z};
+      }
+      const auto transfer = facet_value(gpu.get(), twist_facet);
+      require(transfer.status == bgmesh::adaptive::NumericStatus::ready &&
+                  transfer.bilinear_to_facet_upper >= .25 + shift &&
+                  transfer.bilinear_to_facet_upper < .251 + shift,
+              "actual quarter-twist transfer retains displaced-L error");
+      const auto dz = bgmesh::Rational::from_double(budget, shift);
+      const std::array twist_l{f(0), f(0), dz, f(1), f(0), dz, f(1), f(1), f(1).add(dz)};
+      require(bgmesh::adaptive::bound_actual_facet_precise(twist_facet, twist_uv, twist_l,
+                                                           f(1, 4).add(dz), budget)
+                  .certified,
+              "precise quarter-twist equality accepts SAME actual L");
+      require(!bgmesh::adaptive::bound_actual_facet_precise(twist_facet, twist_uv, twist_l,
+                                                            f(1, 5).add(dz), budget)
+                   .certified,
+              "quarter-twist transfer refuses insufficient allowance");
+      std::cout << "twist-facet\t" << shift << '\t' << transfer.bilinear_to_facet_upper << '\n';
+    }
+    std::cout << std::hexfloat;
     for (int i = 0; i <= 8; ++i)
       for (int j = 0; j <= 8; ++j) {
         point.uv[0] = {i / 8., i / 8.};

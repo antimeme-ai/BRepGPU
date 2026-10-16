@@ -400,7 +400,7 @@ PreciseFacetResult bound_actual_facet_precise(const ActualFacetInput &input,
   for (const auto &coordinate : uv)
     check(coordinate.sign() >= 0 && coordinate.compare(Rational(b, 1)) <= 0,
           "precise virtual facet outside leaf");
-  auto maximum = Rational(b), maximum_square = Rational(b);
+  auto maximum_square = Rational(b), diagonal_square = Rational(b);
   for (size_t i = 0; i < 3; ++i)
     for (size_t j = i; j < 3; ++j) {
       auto residual = zeros(b, 3);
@@ -426,12 +426,36 @@ PreciseFacetResult bound_actual_facet_precise(const ActualFacetInput &input,
         square = square.add(x.multiply(x));
       if (square.compare(maximum_square) > 0)
         maximum_square = square;
+      if (i == j && square.compare(diagonal_square) > 0)
+        diagonal_square = square;
     }
-  maximum = maximum_square.square_root_bounds(160).upper;
+  auto twist_square = Rational(b);
+  for (size_t a = 0; a < 3; ++a) {
+    const auto d = Rational::from_double(b, input.actual_corners[9 + a])
+                       .subtract(Rational::from_double(b, input.actual_corners[6 + a]))
+                       .subtract(Rational::from_double(b, input.actual_corners[3 + a]))
+                       .add(Rational::from_double(b, input.actual_corners[a]));
+    twist_square = twist_square.add(d.multiply(d));
+  }
+  const auto quarter_square = twist_square.divide(Rational(b, 16));
+  auto maximum = maximum_square.square_root_bounds(160).upper;
+  const auto covariance = quarter_square.square_root_bounds(160).upper.add(
+      diagonal_square.square_root_bounds(160).upper);
+  if (covariance.compare(maximum) < 0)
+    maximum = covariance;
   const auto e = Rational::from_double(b, input.source_to_bilinear_upper),
              remaining = allowance.subtract(e);
-  const bool certified =
-      remaining.sign() >= 0 && maximum_square.compare(remaining.multiply(remaining)) <= 0;
+  bool certified = false;
+  if (remaining.sign() >= 0) {
+    const auto square = remaining.multiply(remaining);
+    const auto slack = square.subtract(quarter_square).subtract(diagonal_square);
+    // Nonnegative sum-of-roots comparison, including exact quarter-twist
+    // equality without a rounded square-root upper.
+    certified = maximum_square.compare(square) <= 0 ||
+                (slack.sign() >= 0 &&
+                 slack.multiply(slack).compare(
+                     quarter_square.multiply(diagonal_square).multiply(Rational(b, 4))) >= 0);
+  }
   ActualFacetBounds result;
   result.status = NumericStatus::ready;
   result.bilinear_to_facet_upper = maximum.bounds().upper;

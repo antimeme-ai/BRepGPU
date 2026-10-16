@@ -30,3 +30,12 @@ source reader subsequently passes against actual outputs on both P100s. This
 review does not independently approve CUDA lifetime/fault ownership; those are
 owned by the module and runtime reviews. It makes no whole-mesher performance
 or global embedding claim.
+
+Subsequent actual-facet transfer closure preserves both common CPU/P100 formula
+bodies: the minimum of the six-coefficient upper and quarter-twist plus maximum
+nodal residual is valid for any contained chart triangle. In the exact path,
+A=||D||²/16, B=max nodal squared residual, r=tau-e are nonnegative; the alternative
+accepts when s=r²-A-B>=0 and s²>=4AB. This is equivalent to
+sqrt(A)+sqrt(B)<=r and includes exact equality. The numerical owner independently
+reviewed the actual RN and precise bodies and returned scoped ACCEPT. No source,
+point or actual-L substitution accompanies the tighter bound.

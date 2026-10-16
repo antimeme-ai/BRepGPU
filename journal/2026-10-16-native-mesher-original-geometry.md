@@ -687,3 +687,30 @@ stress and selected exact fallback remain explicitly host checks. Module
 observed SHA4dc828ac7f701c84c10ce3fec024cb534e456ef87aeb38d300f8f2330d9f11d1.
 Stop this bounded numerical qualification cohort; parent owns integrated cache
 mesh/caller closure and coherent commits.
+
+Postpacket transfer review found six degree-two residual hull gives twist/2 on
+an ordinary half rectangle even when the selected leaf packet bound guarantees
+twist/4. Recorded finite closure in docs/adaptive-geometry-unit.md before code;
+root/numeric owner approved same-facet covariance bound. Added two hand-derived
+same-fixture cases B=(u,v,uv), L=(u,v,v+shift), shift0/1/8, true maximum1/4+shift,
+plus precise equality/insufficient allowances and independent Fraction sampling.
+Old body genuine RED context/adaptive-facet-transfer-red.log: 'actual quarter-twist
+transfer retains displaced-L error' (exit1).
+
+Common HD now returns min(sixcoeff upper, ||D||/4+max nodal residual). Precise path
+also compares exact squared-sum criterion r>=0,s=r²-A-B>=0,s²>=4AB; this includes
+zero-nodal D²<=16r² and general shifted equality without sqrt-padding ambiguity.
+Numeric owner actual-source scoped ACCEPT. Same-source Release reader GREEN216
+main observations +7analytic families; affected ASan/UBSan/leaks GREEN216 and
+tidy GREEN. Logs context/adaptive-facet-transfer-{green,asan,tidy}.log. No new
+subdivision/checker/corpus. Root holding old module/CLI pair through its bounded
+8-process cohort; new header/body are stable, pending one affected rebuilt GPU
+reader pair after that cohort, not a repeat deep workload campaign.
+
+Root completed the pinned old-revision 2D cohort and now owns the single affected
+CMake/CTest closure after rebuilding module+CLI with the covariance transfer.
+The registered SAME independent geometry reader now includes both P100s and
+analytic fixture generation, so no duplicate device rerun from geometry lane.
+Root actual-source covariance/slack review ACCEPT. Geometry code stable and
+ready for coherent commit; final rebuilt module hash/device rows will be added
+from that registered run rather than conflated with the earlier214 observations.

@@ -599,7 +599,11 @@ BGAD_HD inline ActualFacetBounds bound_actual_facet_rn64(const ActualFacetInput 
     result.status = NumericStatus::invalid;
     return result;
   }
-  double largest = 0.;
+  double largest = 0., diagonal = 0.;
+  Interval twist[3]{};
+  for (uint32_t a = 0; a < 3; ++a)
+    twist[a] = sub(sub(point(input.actual_corners[9 + a]), point(input.actual_corners[6 + a])),
+                   sub(point(input.actual_corners[3 + a]), point(input.actual_corners[a])));
   for (uint32_t i = 0; i < 3; ++i)
     for (uint32_t j = i; j < 3; ++j) {
       Interval residual[3]{};
@@ -608,8 +612,7 @@ BGAD_HD inline ActualFacetBounds bound_actual_facet_rn64(const ActualFacetInput 
         const auto c = point(0.);
         const auto x = sub(point(input.actual_corners[3 + a]), anchor);
         const auto y = sub(point(input.actual_corners[6 + a]), anchor);
-        const auto d =
-            sub(sub(point(input.actual_corners[9 + a]), point(input.actual_corners[6 + a])), x);
+        const auto d = twist[a];
         const auto ui = input.uv[2 * i], uj = input.uv[2 * j], vi = input.uv[2 * i + 1],
                    vj = input.uv[2 * j + 1];
         auto coefficient =
@@ -619,8 +622,15 @@ BGAD_HD inline ActualFacetBounds bound_actual_facet_rn64(const ActualFacetInput 
                                                  sub(input.affine_xyz[3 * j + a], anchor)),
                                              .5));
       }
-      largest = maximum(largest, norm_upper(residual));
+      const auto coefficient = norm_upper(residual);
+      largest = maximum(largest, coefficient);
+      if (i == j)
+        diagonal = maximum(diagonal, coefficient);
     }
+  // B-L = D*(E[U]E[V]-E[UV]) + E[B(p_i)-L_i].  For any
+  // contained triangle, |Cov(U,V)| <= 1/4 on the normalized unit box.
+  const auto covariance = add(scale(point(norm_upper(twist)), .25), point(diagonal)).upper;
+  largest = minimum(largest, covariance);
   if (!finite(largest))
     return result;
   result.bilinear_to_facet_upper = largest;

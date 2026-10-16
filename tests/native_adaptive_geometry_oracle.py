@@ -52,9 +52,16 @@ def main():
             assert values[3]<=truth[2]<=truth[3]<=values[4],('cos',x)
         elif kind=='tiny':
             assert values[0]<=F(1,1<<1075)<=values[1]
+        elif kind=='twist-facet':
+            shift,upper=values
+            assert F(1,4)+shift<=upper<F(251,1000)+shift
+            for i in range(33):
+                for j in range(i+1):
+                    u,v=F(i,32),F(j,32)
+                    assert abs(u*v-v-shift)<=upper
         else:
             raise AssertionError(kind)
-    assert counts=={'point':81,'precise':1,'leaf':1,'leaf-child':1,'trig':129,'tiny':1},counts
+    assert counts=={'point':81,'precise':1,'leaf':1,'leaf-child':1,'trig':129,'tiny':1,'twist-facet':2},counts
 
     if a.analytic_fixtures:
         frame=(3.,-2.,4.,2.,0.,1.,.5,1.,0.,.25,.5,3.)
