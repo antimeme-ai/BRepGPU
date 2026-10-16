@@ -200,7 +200,7 @@ double gram_upper(const Frame &frame, uint32_t columns) {
   return value;
 }
 void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
-                    bgfd::Budget &budget) {
+                    bgfd::Budget &budget,SourceCachePurpose purpose) {
   std::array<Rational, 9> axes{Rational(budget), Rational(budget), Rational(budget),
                                Rational(budget), Rational(budget), Rational(budget),
                                Rational(budget), Rational(budget), Rational(budget)};
@@ -225,7 +225,7 @@ void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
   if (carrier.radii[0] == 0.)
     throw Error(ErrorCode::unsupported, "zero original analytic radius");
   const auto pi_lower = numeric::rn_mul(numeric::half_pi().lower, 2.);
-  if (numeric::sub(point(box[1]), point(box[0])).upper >= numeric::rn_mul(pi_lower, 2.))
+  if (purpose==SourceCachePurpose::regular_patch && numeric::sub(point(box[1]), point(box[0])).upper >= numeric::rn_mul(pi_lower, 2.))
     throw Error(ErrorCode::unsupported, "wrapped angular patch outside initial profile");
   if (carrier.kind == 3) {
     const auto angle = numeric::sincos(point(carrier.radii[1]));
@@ -249,7 +249,7 @@ void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
         numeric::absolute(carrier.radii[0]) <= numeric::absolute(carrier.radii[1]))
       throw Error(ErrorCode::unsupported,
                   "initial torus profile requires nonzero minor and separated radial factor");
-    if (numeric::sub(point(box[3]), point(box[2])).upper >= numeric::rn_mul(pi_lower, 2.))
+    if (purpose==SourceCachePurpose::regular_patch && numeric::sub(point(box[3]), point(box[2])).upper >= numeric::rn_mul(pi_lower, 2.))
       throw Error(ErrorCode::unsupported, "wrapped torus chart outside initial profile");
   }
 }
@@ -362,11 +362,11 @@ void prepare_point_owners(SourceCacheData &data, bgfd::Budget &budget, uint64_t 
       }
 }
 } // namespace
-SourceCache prepare_source_cache(const SourceStore &source,
+std::shared_ptr<const SourceCacheData> prepare_source_cache_data(const SourceStore &source,
                                  std::span<const CarrierRequest> requests,
                                  const std::shared_ptr<RunResource> &resource,
                                  NumericProfile profile, SourceCacheLimits limits,
-                                 bgfd::Budget &budget) {
+                                  bgfd::Budget &budget,SourceCachePurpose purpose) {
   admit_numeric_environment();
   const auto entry_work = budget.work();
   const auto check_work = [&] {
@@ -379,6 +379,7 @@ SourceCache prepare_source_cache(const SourceStore &source,
     throw Error(ErrorCode::unsupported, "unsupported adaptive numeric profile");
   auto data = std::allocate_shared<SourceCacheData>(RunAllocator<SourceCacheData>(resource),
                                                     resource, source, profile);
+  data->purpose=purpose;
   auto remaining = limits.work;
   std::pmr::vector<CarrierRequest> ordered(requests.begin(), requests.end(), resource.get());
   std::sort(ordered.begin(), ordered.end(), [&](const auto &a, const auto &b) {
@@ -404,7 +405,7 @@ SourceCache prepare_source_cache(const SourceStore &source,
     check(carrier.kind >= 1 && carrier.kind <= 6, "unknown original carrier family");
     base.family = static_cast<GeometryFamily>(carrier.kind - 1);
     if (carrier.kind < 6) {
-      admit_analytic(carrier, box, budget);
+      admit_analytic(carrier, box, budget,purpose);
       check_work();
       base.frame_a = point(gram_upper(carrier.frame, 2));
       base.frame_f = (carrier.kind == 4 || carrier.kind == 5) ? point(gram_upper(carrier.frame, 3))
@@ -507,6 +508,14 @@ SourceCache prepare_source_cache(const SourceStore &source,
   }
   prepare_point_owners(*data, budget, remaining);
   check_work();
-  return SourceCache(std::move(data));
+  return data;
+}
+SourceCache prepare_source_cache(const SourceStore& source,std::span<const CarrierRequest> requests,
+    const std::shared_ptr<RunResource>& resource,NumericProfile profile,SourceCacheLimits limits,bgfd::Budget& b){
+  return SourceCache(prepare_source_cache_data(source,requests,resource,profile,limits,b,SourceCachePurpose::regular_patch));
+}
+SourceCache prepare_trace_source_cache(const SourceStore& source,std::span<const CarrierRequest> requests,
+    const std::shared_ptr<RunResource>& resource,NumericProfile profile,SourceCacheLimits limits,bgfd::Budget& b){
+  return SourceCache(prepare_source_cache_data(source,requests,resource,profile,limits,b,SourceCachePurpose::trace_geometry));
 }
 } // namespace bgmesh::adaptive

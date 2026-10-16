@@ -462,4 +462,13 @@ PreciseFacetResult bound_actual_facet_precise(const ActualFacetInput &input,
   result.total_upper = maximum.add(e).bounds().upper;
   return {result, certified};
 }
+std::array<Rational,3> exact_original_surface_point(const SourceCache&cache,OriginalRootSlot slot,
+    std::span<const Rational,2>uv,bgfd::Budget&b){
+  admit_numeric_environment();owner(b,uv);
+  check(slot.value<cache.original_roots().size(),"foreign exact surface point root");
+  const auto&root=cache.original_roots()[slot.value];
+  check(root.family==GeometryFamily::rational_tensor,"exact homogeneous surface point requires rational source");
+  const auto net=exact_original_root(cache.source(),root,b);
+  return evaluate_surface(net,uv[0],uv[1]);
+}
 } // namespace bgmesh::adaptive
