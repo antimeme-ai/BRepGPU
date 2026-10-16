@@ -6,7 +6,7 @@ from brepgpu.imported_source import (ImportedSource,Product,SolidDefinition,Usag
     Edge,Coedge,Loop,Face,Carrier,Curve,SurfaceSpan,ZERO_FRAME,IDENTITY,write_source)
 
 
-def make(path,kind,count):
+def make(path,kind,count,*,hint=None):
     vertices=[];edges=[];uses=[];loops=[];faces=[];carriers=[];curves=[]
     for index in range(count):
         shift=10000*index
@@ -25,7 +25,7 @@ def make(path,kind,count):
                 tuple(v for k in (i,i+1) for y in (0.,1.) for v in (us[k]+dx,y+dy,zs[k],1.))) for i in range(2))
         else:
             spans=(SurfaceSpan((0.,1.,0.,1.),(degree,1),net),)
-        carriers.append(Carrier(9+shift,6,ZERO_FRAME,(0.,0.),(0.,1.,0.,1.),
+        carriers.append(Carrier(9+shift,6,ZERO_FRAME,(0.,0.),hint or (0.,1.,0.,1.),
             (degree,1),knots,multiplicities,(0.,1.),(2,2),(3,2),net,spans))
         points=tuple(tuple(net[i:i+4]) for i in range(0,len(net),4))
         boundary=(tuple(points[i] for i in (0,2,4)),tuple(points[i] for i in (4,5)),
