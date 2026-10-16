@@ -230,6 +230,18 @@ each family, including regressions and censored cases. Transformations of a
 watch case supplement independent geometry; they do not replace it. Keep this
 discipline in subsequent native/CUDA migration designs and performance claims.
 
+Performance ambition starts with the strongest applicable algorithms, numerical
+methods and data layouts in the literature, before metrics exist. Study those
+contenders and their actual assumptions before choosing an implementation;
+familiarity or an easy port of current code does not select the design. Use
+complexity, avoided work, locality and parallelism to form concrete hypotheses,
+then compare qualified complete operations across independent workloads.
+Wall-clock budgets bound experiments; they are not the meaning of this mandate.
+Read docs/DIRECT_CDT_STRATEGY.md and DIRECT_CDT_ORACLE_DESIGN.md before selecting
+the next connectivity implementation. The prior native-Lawson proposal is an
+option/control, superseded as the default next-constructor choice. The current
+study implements an independent CDT oracle, not a new native CDT constructor.
+
 ## Development workflow
 
 Use a feature branch for each substantial delivery. Make frequent, coherent

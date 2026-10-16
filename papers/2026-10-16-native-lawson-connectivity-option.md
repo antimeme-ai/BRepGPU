@@ -1,5 +1,11 @@
 # Next native unit: fixed-vertex weighted Lawson connectivity
 
+**Updated direction:** the operator's subsequent performance clarification
+reopened constructor selection. The [direct-CDT strategy](../docs/DIRECT_CDT_STRATEGY.md)
+supersedes choosing a native Lawson translation as the next constructor by
+default. Retain this paper's exact arithmetic and compact ownership work as a
+baseline/component option; it does not select the next production implementation.
+
 Read-only proposal after the first native domain slice exposed another active
 Python stage. Root reports a three-second nonblocking sample with210 valid
 stacks and89 reader errors:167 valid stacks in `_improve_connectivity`,5 in plane
