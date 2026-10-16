@@ -28,6 +28,8 @@ void admit_numeric_environment();
                                                             std::span<const Rational, 9>,
                                                             const Rational &, bgfd::Budget &);
 [[nodiscard]] SampleResult evaluate_sample(const SourceCache &, const SampleInput &);
+[[nodiscard]] std::array<Rational,3> exact_original_surface_point(const SourceCache&,OriginalRootSlot,
+    std::span<const Rational,2>,bgfd::Budget&);
 [[nodiscard]] NodeBounds bound_node(const SourceCache &, const NodePredicate &,
                                     std::span<const Interval> node_controls = {});
 [[nodiscard]] ActualFacetBounds bound_actual_facet(const ActualFacetInput &);
