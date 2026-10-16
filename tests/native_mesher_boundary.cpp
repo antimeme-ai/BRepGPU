@@ -28,9 +28,29 @@ void epochs(const bgmesh::SourceStore &source,
   if (!initial)
     throw std::runtime_error("source map breakpoint omitted");
   require(initial->tasks().size() == 1, "source map breakpoint omitted");
-  require(&initial->source().view()==&source.view() && initial->definition().value==0,
+  require(&initial->source().view() == &source.view() && initial->definition().value == 0,
           "evaluation batch lost source authority/definition lease");
+  bool premature = false;
+  try {
+    (void)forest.freeze_face_boundary({0});
+  } catch (const bgfd::Failure &) {
+    premature = true;
+  }
+  require(premature, "unsettled original boundary exported");
   (void)forest.complete_evaluations(initial->epoch(), evaluate_literal(budget, *initial));
+  const auto frozen = forest.freeze_face_boundary({0});
+  require(&frozen->source.view() == &source.view() && frozen->definition.value == 0 &&
+              frozen->face.value == 0 && frozen->boundary_generation == 0,
+          "frozen boundary lost source/definition/face identity");
+  require(frozen->edges.front().edge.value == 0 && frozen->edges.front().nodes.count == 3,
+          "frozen boundary lost incident source chain");
+  const auto &frozen_first = frozen->nodes[frozen->edges.front().nodes.first];
+  require(
+      frozen_first.original_parameter &&
+          bgmesh::import_exact(budget, frozen->parameters.view(*frozen_first.original_parameter))
+                  .to_double() == 1 &&
+          frozen_first.key.source == 300,
+      "frozen boundary reversed literal parameter/vertex association");
   const bgmesh::Slot<bgmesh::EdgeTag> edge{0};
   const auto chain = forest.chain(edge);
   require(chain.size() == 3, "descending edge did not retain source-t knot");
@@ -96,6 +116,10 @@ void epochs(const bgmesh::SourceStore &source,
   require(sample.key.generator == bgmesh::NodeGenerator::original_edge && sample.key.ordinal == 2 &&
               forest.parameter(update.new_samples[0]).to_double() == .75,
           "sample identity/order or exact descending midpoint wrong");
+  const auto refrozen = forest.freeze_face_boundary(first);
+  require(refrozen->boundary_generation == 1 && refrozen->edges.front().nodes.count == 5 &&
+              frozen->boundary_generation == 0 && frozen->edges.front().nodes.count == 3,
+          "new boundary mutation changed an old immutable snapshot");
   const auto second = forest.begin_epoch();
   forest.arrive(second, first, 1, {});
   forest.arrive(second, last, 1, {});

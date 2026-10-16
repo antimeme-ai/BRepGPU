@@ -35,8 +35,7 @@ struct BoundaryEvaluationData final {
   ExactTable parameters;
   std::pmr::vector<BoundaryEvaluationTask> tasks;
   BoundaryEvaluationData(std::shared_ptr<RunResource>, BoundaryEpoch, SourceStore,
-                         Slot<DefinitionTag>, ExactTable,
-                         std::pmr::vector<BoundaryEvaluationTask>);
+                         Slot<DefinitionTag>, ExactTable, std::pmr::vector<BoundaryEvaluationTask>);
 };
 class BoundaryEvaluationBatch final {
   std::shared_ptr<const BoundaryEvaluationData> data_;
@@ -46,7 +45,7 @@ class BoundaryEvaluationBatch final {
 
 public:
   [[nodiscard]] BoundaryEpoch epoch() const noexcept { return data_->epoch; }
-  [[nodiscard]] const SourceStore& source() const noexcept { return data_->source; }
+  [[nodiscard]] const SourceStore &source() const noexcept { return data_->source; }
   [[nodiscard]] Slot<DefinitionTag> definition() const noexcept { return data_->definition; }
   [[nodiscard]] const ExactTable &parameters() const noexcept { return data_->parameters; }
   [[nodiscard]] std::span<const BoundaryEvaluationTask> tasks() const noexcept {
@@ -74,6 +73,34 @@ struct BoundaryUpdate final {
       : changed_faces(resource), new_samples(resource), removed_intervals(resource),
         inserted_intervals(resource) {}
 };
+struct SourceBoundaryEdge final {
+  Slot<EdgeTag> edge;
+  // Literal Edge.parameter_range[0] -> [1] direction, not curve_same_sense.
+  Range<PhysicalNode> nodes;
+  Range<BoundaryKey> intervals;
+};
+struct SourceBoundarySnapshotData final {
+  std::shared_ptr<RunResource> resource;
+  SourceStore source;
+  Slot<DefinitionTag> definition;
+  Slot<FaceTag> face;
+  BoundaryEpoch epoch;
+  uint64_t boundary_generation;
+  ExactTable parameters;
+  std::pmr::vector<SourceBoundaryEdge> edges;
+  std::pmr::vector<PhysicalNode> nodes;
+  std::pmr::vector<BoundaryKey> intervals;
+  SourceBoundarySnapshotData(std::shared_ptr<RunResource> owner, SourceStore original,
+                             Slot<DefinitionTag> definition_slot, Slot<FaceTag> face_slot,
+                             BoundaryEpoch identity, uint64_t generation, ExactTable table)
+      : resource(std::move(owner)), source(std::move(original)), definition(definition_slot),
+        face(face_slot), epoch(identity), boundary_generation(generation),
+        parameters(std::move(table)), edges(resource.get()), nodes(resource.get()),
+        intervals(resource.get()) {}
+  SourceBoundarySnapshotData(const SourceBoundarySnapshotData &) = delete;
+  SourceBoundarySnapshotData &operator=(const SourceBoundarySnapshotData &) = delete;
+};
+using SourceBoundarySnapshot = std::shared_ptr<const SourceBoundarySnapshotData>;
 struct BoundaryStats final {
   uint64_t epochs = 0, requests = 0, splits = 0, invalidated_faces = 0, samples = 0,
            live_intervals = 0;
@@ -107,6 +134,7 @@ public:
   [[nodiscard]] BoundarySampleView sample(BoundarySampleSlot) const;
   [[nodiscard]] const Rational &parameter(BoundarySampleSlot) const;
   [[nodiscard]] BoundaryStats stats() const;
+  [[nodiscard]] SourceBoundarySnapshot freeze_face_boundary(Slot<FaceTag>) const;
 };
 } // namespace bgmesh
 #endif

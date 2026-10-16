@@ -65,3 +65,9 @@ compile straddled the runtime owner's Budget layout extension and returned a
 spurious cancellation; the clean closure rebuild resolves that transient ABI
 mix. The cached metric-coordinate getter now feeds the owned domain bridge
 without copying or independently reconstructing the fixed metric.
+
+## Stage physical geometry before topology commit
+
+Face integration exposed that the original convenience `refine_longest` committed closure sites before the face owner could obtain canonical XYZ. Added `next_terminal` by factoring the existing exact LEPP walk; it returns its edge without changing sites, triangles or edit log. The original convenience method now consumes the same selection function. Its tie fixture checks incoming-edge terminal selection and absence of geometric mutation.
+
+The heuristic has an opaque `stage_heuristic` ticket. Admission spends ancestry and selects original dyadic coordinates but publishes no site/triangle. The face owner can obtain common geometry/protection results before `commit_heuristic`; cancellation retains the spent flag. Pending tickets block intervening topology mutation, committed/stale tickets reject, and old insert convenience overloads use this one staged path. Actual missing-method REDs preceded both additions. The existing ten-method sanitizer executable passed with staging/no-publication, intervening-edit rejection, stale-ticket and cancel/sticky cases; actual-source lint passed after making optional access guards explicit. This does not replace the geometry owner's required feature-admission result.

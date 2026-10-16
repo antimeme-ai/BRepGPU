@@ -108,6 +108,14 @@ struct MutableFaceTopology::Impl final {
     uint64_t hash = 0;
     SiteSlot site{none};
   };
+  struct HeuristicPlan final {
+    TriangleHandle target;
+    std::optional<uint32_t> edge;
+    std::array<Rational, 2> coordinate;
+    uint64_t serial;
+  };
+  std::optional<HeuristicPlan> staged_heuristic;
+  uint64_t heuristic_serial = 0;
   bgfd::Budget &budget;
   std::array<Rational, 4> transform;
   std::pmr::vector<Point> points;
@@ -138,6 +146,10 @@ struct MutableFaceTopology::Impl final {
   void require_usable() const {
     if (!usable)
       internal("mutable topology generation failed");
+  }
+  void require_no_stage() const {
+    if (staged_heuristic)
+      invalid("finish staged heuristic before another topology mutation");
   }
   void require_sealed() const {
     require_usable();
@@ -670,6 +682,14 @@ const Rational &MutableFaceTopology::metric_coordinate(SiteSlot slot, Coordinate
   const auto &point = impl_->point(slot);
   return axis == CoordinateAxis::x ? point.tx : point.ty;
 }
+const Rational &MutableFaceTopology::diameter_squared(TriangleHandle handle) const {
+  const auto &triangle = impl_->checked(handle);
+  auto best = triangle.edges[0];
+  for (std::size_t i = 1; i < 3; ++i)
+    if (impl_->edges[triangle.edges[i]].length2.compare(impl_->edges[best].length2) > 0)
+      best = triangle.edges[i];
+  return impl_->edges[best].length2;
+}
 int MutableFaceTopology::compare_axis(SiteSlot a, SiteSlot b, CoordinateAxis axis) const {
   return coordinate(a, axis).compare(coordinate(b, axis));
 }
@@ -694,26 +714,42 @@ std::pmr::vector<TopologyEdit> MutableFaceTopology::take_changes() {
   return result;
 }
 void MutableFaceTopology::protect_edge(EdgeHandle handle, BoundaryKey key) {
+  impl_->require_no_stage();
   impl_->checked(handle).constraint = key;
 }
 void MutableFaceTopology::mark_accepted(TriangleHandle handle) {
+  impl_->require_no_stage();
   impl_->checked(handle).accepted = true;
 }
 std::optional<SiteSlot> MutableFaceTopology::insert_heuristic(TriangleHandle handle,
                                                               std::array<double, 2> value) {
+  const auto ticket = stage_heuristic(handle, value);
+  return ticket ? std::optional(commit_heuristic(*ticket)) : std::nullopt;
+}
+std::optional<SiteSlot>
+MutableFaceTopology::insert_heuristic(TriangleHandle handle, const std::array<Rational, 2> &value) {
+  const auto ticket = stage_heuristic(handle, value);
+  return ticket ? std::optional(commit_heuristic(*ticket)) : std::nullopt;
+}
+std::optional<HeuristicTicket> MutableFaceTopology::stage_heuristic(TriangleHandle handle,
+                                                                    std::array<double, 2> value) {
+  impl_->require_sealed();
+  impl_->require_no_stage();
   if (!std::isfinite(value[0]) || !std::isfinite(value[1])) {
-    impl_->require_sealed();
     const auto &target = impl_->checked(handle);
     impl_->lineages[target.lineage].heuristic_spent = true;
     return std::nullopt;
   }
-  return insert_heuristic(handle,
-                          std::array<Rational, 2>{Rational::from_double(*budget_, value[0]),
-                                                  Rational::from_double(*budget_, value[1])});
+  return stage_heuristic(handle,
+                         std::array<Rational, 2>{Rational::from_double(*budget_, value[0]),
+                                                 Rational::from_double(*budget_, value[1])});
 }
-std::optional<SiteSlot>
-MutableFaceTopology::insert_heuristic(TriangleHandle handle, const std::array<Rational, 2> &value) {
+std::optional<HeuristicTicket>
+MutableFaceTopology::stage_heuristic(TriangleHandle handle, const std::array<Rational, 2> &value) {
   impl_->require_sealed();
+  impl_->require_no_stage();
+  if (impl_->heuristic_serial == UINT64_MAX)
+    throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "heuristic ticket exhausted");
   auto &target = impl_->checked(handle);
   auto &parent = impl_->lineages[target.lineage];
   if (parent.heuristic_spent)
@@ -752,14 +788,46 @@ MutableFaceTopology::insert_heuristic(TriangleHandle handle, const std::array<Ra
                                                                  : edge.incidents[0].triangle;
     impl_->lineages[impl_->triangles[other].lineage].heuristic_spent = true;
   }
-  const auto site = impl_->append(value);
+  const auto serial = ++impl_->heuristic_serial;
   try {
-    if (zero_count == 1) {
-      (void)impl_->split_edge(target.edges[zero_side], site, true);
+    impl_->staged_heuristic.emplace(
+        Impl::HeuristicPlan{handle,
+                            zero_count == 1 ? std::optional(target.edges[zero_side]) : std::nullopt,
+                            {value[0].clone_into(*budget_), value[1].clone_into(*budget_)},
+                            serial});
+  } catch (...) {
+    impl_->usable = false;
+    throw;
+  }
+  return HeuristicTicket(impl_, serial);
+}
+const Rational &MutableFaceTopology::heuristic_coordinate(HeuristicTicket ticket,
+                                                          CoordinateAxis axis) const {
+  impl_->require_sealed();
+  if (ticket.owner_ != impl_ || !impl_->staged_heuristic ||
+      ticket.serial_ != impl_->staged_heuristic->serial)
+    invalid("stale or foreign heuristic ticket");
+  return impl_->staged_heuristic->coordinate[axis == CoordinateAxis::x ? 0 : 1];
+}
+void MutableFaceTopology::cancel_heuristic(HeuristicTicket ticket) {
+  (void)heuristic_coordinate(ticket, CoordinateAxis::x);
+  impl_->staged_heuristic.reset();
+}
+SiteSlot MutableFaceTopology::commit_heuristic(HeuristicTicket ticket) {
+  (void)heuristic_coordinate(ticket, CoordinateAxis::x);
+  if (!impl_->staged_heuristic)
+    internal("validated heuristic stage missing");
+  auto plan = std::move(*impl_->staged_heuristic);
+  impl_->staged_heuristic.reset();
+  try {
+    const auto &target = impl_->checked(plan.target);
+    const auto site = impl_->append(plan.coordinate);
+    if (plan.edge) {
+      (void)impl_->split_edge(*plan.edge, site, true);
     } else {
       const auto sites = target.sites;
       const auto lineage = target.lineage;
-      const std::array<uint32_t, 1> old{handle.slot};
+      const std::array<uint32_t, 1> old{plan.target.slot};
       const std::array<Impl::PatchTriangle, 3> children{
           {{{sites[0], sites[1], site}, lineage, true},
            {{sites[1], sites[2], site}, lineage, true},
@@ -767,52 +835,62 @@ MutableFaceTopology::insert_heuristic(TriangleHandle handle, const std::array<Ra
       impl_->replace(old, children, LineageOperation::heuristic, site);
       ++impl_->counters.interior_splits;
     }
+    return site;
   } catch (...) {
     impl_->usable = false;
     throw;
   }
-  return site;
 }
 SiteSlot MutableFaceTopology::bisect_internal_edge(EdgeHandle handle) {
   impl_->require_sealed();
+  impl_->require_no_stage();
   (void)impl_->checked(handle);
   return impl_->split_edge(handle.slot, std::nullopt, false);
 }
+EdgeHandle MutableFaceTopology::next_terminal(TriangleHandle target) {
+  impl_->require_sealed();
+  impl_->require_no_stage();
+  (void)impl_->checked(target);
+  if (++impl_->walk_stamp == 0)
+    internal("topology walk stamp exhausted");
+  uint32_t current = target.slot;
+  uint64_t steps = 0;
+  for (;;) {
+    budget_->charge(1);
+    ++impl_->counters.walk_steps;
+    if (++steps > impl_->counters.live_triangles ||
+        impl_->triangles[current].walk_stamp == impl_->walk_stamp)
+      internal("nonmonotone longest-edge propagation cycle");
+    impl_->triangles[current].walk_stamp = impl_->walk_stamp;
+    const auto longest = impl_->longest(current);
+    const auto &edge = impl_->edges[longest];
+    if (edge.count == 1 || edge.constraint)
+      return impl_->edge_handle(longest);
+    if (edge.count != 2)
+      internal("invalid longest edge incidence");
+    const auto next = edge.incidents[0].triangle == current ? edge.incidents[1].triangle
+                                                            : edge.incidents[0].triangle;
+    const auto next_longest = impl_->longest(next);
+    const int comparison = edge.length2.compare(impl_->edges[next_longest].length2);
+    if (comparison == 0)
+      return impl_->edge_handle(longest);
+    if (comparison > 0)
+      internal("longest edge length decreased during propagation");
+    current = next;
+  }
+}
 RefineResult MutableFaceTopology::refine_longest(TriangleHandle target) {
   impl_->require_sealed();
+  impl_->require_no_stage();
   (void)impl_->checked(target);
   uint64_t splits = 0;
   while (is_live(target)) {
-    if (++impl_->walk_stamp == 0)
-      internal("topology walk stamp exhausted");
-    uint32_t current = target.slot;
-    uint64_t steps = 0;
-    for (;;) {
-      budget_->charge(1);
-      ++impl_->counters.walk_steps;
-      if (++steps > impl_->counters.live_triangles ||
-          impl_->triangles[current].walk_stamp == impl_->walk_stamp)
-        internal("nonmonotone longest-edge propagation cycle");
-      impl_->triangles[current].walk_stamp = impl_->walk_stamp;
-      const auto longest = impl_->longest(current);
-      const auto &edge = impl_->edges[longest];
-      if (edge.count == 1 || edge.constraint)
-        return {RefineKind::boundary_request, impl_->edge_handle(longest), splits};
-      if (edge.count != 2)
-        internal("invalid longest edge incidence");
-      const auto next = edge.incidents[0].triangle == current ? edge.incidents[1].triangle
-                                                              : edge.incidents[0].triangle;
-      const auto next_longest = impl_->longest(next);
-      const int comparison = edge.length2.compare(impl_->edges[next_longest].length2);
-      if (comparison == 0) {
-        (void)impl_->split_edge(longest, std::nullopt, false);
-        ++splits;
-        break;
-      }
-      if (comparison > 0)
-        internal("longest edge length decreased during propagation");
-      current = next;
-    }
+    const auto terminal = next_terminal(target);
+    const auto &edge = impl_->checked(terminal);
+    if (edge.count == 1 || edge.constraint)
+      return {RefineKind::boundary_request, terminal, splits};
+    (void)impl_->split_edge(terminal.slot, std::nullopt, false);
+    ++splits;
   }
   return {RefineKind::target_bisected, std::nullopt, splits};
 }
