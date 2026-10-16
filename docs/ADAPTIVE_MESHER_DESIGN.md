@@ -1,8 +1,11 @@
 # Cached adaptive B-rep mesher
 
-Status: operator-selected architecture; constructive design under independent
-algorithm, geometry and runtime review. This supersedes the direct-refinement
-framework in NATIVE_MESHER_DESIGN.md. It is not an implemented mesher claim.
+Status: operator-selected architecture; constructive design accepted in scoped
+algorithm, geometry and runtime review after the resolutions below. Product
+units require their finite interface/RED/review procedures. This supersedes the
+direct-refinement framework in NATIVE_MESHER_DESIGN.md. It is not an implemented
+mesher claim.
+The dependency draft is [ADAPTIVE_MESHER_PLAN.md](ADAPTIVE_MESHER_PLAN.md).
 
 ## Purpose and selected architecture
 
@@ -42,9 +45,11 @@ holes, seams, declared quotients, placements and material labels.
 The positional allowance applies to the whole actual emitted piecewise-affine
 surface after the original assembly transforms. Retain the existing definition
 allowances derived from composed source transforms and their storage error.
-The source-node allowance bounds a physical source node's departure from the
-original vertex/curve versus its selected face carrier. It does not become an
-extra discretionary chord or cell allowance. Source tolerance remains metadata.
+The source-node allowance compares the ORIGINAL vertex or original curve point
+against its selected original face-carrier point (and retains the original
+endpoint vertex/curve nodal guard). It does not compare a newly rounded mesh
+point in their place or become an extra discretionary chord/cell allowance.
+Source tolerance remains metadata.
 
 For a cached leaf, let B be its retained bilinear map constructed from its
 actual four corner XYZ values, and e bound the original S versus B over the
@@ -64,7 +69,9 @@ establishes this whole-cell bound.
 Correct-nearest transcendental XYZ was an internal policy of the previous
 constructor, not a prerequisite for accurate source-linked output. The new
 design may explicitly use deterministic bounded point construction, with its
-original-source departure retained and charged once. Original source vertices
+original-source departure retained and charged once against the actual
+curve-chord and face positional bounds, rather than paid from the source-node
+allowance. Original source vertices
 remain their original XYZ. A source edge has ONE canonical physical sample
 sequence used by every incident face; coordinate equality never welds keys.
 CPU/P100 construction must use a specified common arithmetic/evaluation policy;
@@ -89,9 +96,69 @@ are exact dyadic fractions OF the original root interval; packed representations
 retain their exact meaning. Common sides and shared knot endpoints have one
 canonical chart-point identity and evaluation owner, independently of which
 leaf/root reaches them first. Cache-allocation offsets are not semantic IDs.
+Adjacent original spans share knot points only after original C0 continuity is
+established. A discontinuous source unsupported by the format/policy is refused;
+do not infer a new branch or weld merely because rounded coordinates agree.
 
-The splitting policy, packed layout, canonical point algorithm and reclamation
-procedure remain concrete review decisions before product implementation.
+Select packed binary kd nodes with SoA metadata, degree-bucket control slabs,
+two scan/compaction frontiers, a canonical PointPool and a separate QueryView.
+The detailed records/procedures are in the
+[runtime design](../papers/native-adaptive-subdivision-runtime.md). Retain parent
+metadata and summaries; reclaim replayable split-parent controls only after the
+epoch barrier. Replaying an evicted net follows the SAME axis/child path from a
+retained checkpoint, rather than restricting by a different arithmetic history.
+
+SourceCache compiles only live requested roots from SourceStore. Use interval
+original-coefficient extraction, with exact selected-root extraction as a lazy
+fallback. Direct analytic descriptors need no rational extraction. The old eager
+GeometryStore/PreparedRun cannot be a mandatory constructor merely to satisfy
+publisher types; adapt source/envelope/publication ownership to the new roots.
+Original source admission and complete inventory remain mandatory.
+
+Each task identifies source, cache, query and arithmetic-profile generations,
+root, complete split path, operation and request ordinal. A current slot alone
+does not establish identity. Bound root-relative dyadic/path storage with explicit
+configured limits and checked allocation; depth exhaustion is unresolved, never
+wrapped coordinates or forced acceptance. Reserve/check the complete canonical
+epoch's required node/control/frontier/ambiguity/output capacity BEFORE mutation.
+Cache history is distinct from the current quality-selected leaf mask.
+Preserve base and promoted numerical/control/point tiers separately. Each new
+query follows the SAME base-to-escalation decision policy as a cold query; a
+previous tighter query cannot silently supply a tighter bound or different Q
+that changes subsequent loose-query topology. Reuse a cached tier when the
+current policy actually requests it. Promotion invalidates constructed-record
+generations, side/physical-node/contact users and bounds at the shared authority;
+logical original curve/parameter identity remains separate from that generation.
+
+Use cheap deterministic directional scores from cached analytic curvature plus
+twist, or rational directional control/residual variation. These are heuristic
+split proposals, not additional geometric truth. Compare their canonical upper
+values with a fixed U tie; do not invoke exact transcendental evaluation just
+to choose between nearly equal axes. Every fourth split on a failing lineage
+instead bisects its longest normalized ORIGINAL-root active direction (U tie).
+An axis is inactive only after checked exact affine-separable approximation
+dependence: its pure second derivative AND mixed derivative are zero, allowing
+linear translation such as cylinder V. A bilinear saddle keeps both axes active.
+Numeric roundoff uses precision promotion rather than invented curvature.
+This supplies fair shrinking without sacrificing the exact
+one-direction cylinder/extrusion path. Retain/count actual chosen restrictions;
+trial restrictions/evaluations are not free work or cache reuse.
+
+Select numerical profile `rn64_anchor32_p128_v1`: shared RN operations and
+identical IEEE-word outward padding, no reassociation/contraction, converted
+existing owned P128 Chebyshev coefficient/anchor intervals and retained uniform
+remainder. Use the runtime report's finite bounded quadrant locator, whole
+reduced-domain/anchor checks, fixed reconstruction DAG and deterministic
+midpoint construction. This is ordinary CPU/P100 point evaluation. Escalate
+unresolved numerical width/reduction to fixed128,192,256 and finally owned exact
+evaluation. No ordinary libm sine/cosine supplies a geometric enclosure.
+
+The source/numerical profile chooses Q independently of visiting face or local
+epsilon. If a tighter request needs a better Q, the PointPool authority promotes
+the sorted common requests at a generation barrier and invalidates all dependent
+bounds and incident construction. A face cannot privately replace shared XYZ.
+Numerical floors request promotion/tighter source bounds, not endless geometric
+subdivision. Source construction error remains charged to epsilon as above.
 
 ## Shared boundaries and trim embedding
 
@@ -120,6 +187,13 @@ Triangulation must preserve every side sample and emit positive cells, without
 creating a new center point merely for convenience. Side/rim events retain
 source-independent chart identities and canonical physical nodes.
 
+Select the [algorithm report's](../papers/native-adaptive-subdivision-algorithm.md)
+exact collinear-side event sweep and no-center two-half zipper. Each rectangle
+with k side samples produces k-2 positive triangles. Both incident sides consume
+the same ordered atomic intervals. Inspect alternating packet/band sectors at
+rim vertices and monotonically demote incident packets until the simple-loop
+region constructor's hypotheses hold; demotion changes no source feature.
+
 Packets touching only at a vertex can produce weak boundary-region cycles.
 Resolve such cases explicitly before giving cycles to a simple-loop constructor;
 monotone demotion of the affected packets into the boundary region is a finite
@@ -127,10 +201,34 @@ candidate. Dense/thin trims may make a large boundary region. Measure that
 behavior and its work; do not drop features or invent unsupported success.
 
 Boundary triangles are checked through the source cache against their actual L.
-Failure requests a geometrically defined cache/region refinement, with one
-owner and an explicit progress/resource rule. Do not secretly invoke the old
-whole-face refinement engine. Exact proposed rules for region refinement and
-mapped poles remain review items in the algorithm/geometry reports.
+Tighten a loose bound on the SAME L before geometric changes. Consume remaining
+surface failures in a complete canonical region horizon, refine implicated cache
+leaves and install at least one NEW point strictly inside each failed triangle.
+Choose a positive leaf/triangle overlap piece, use its exact rational centroid
+as a locator, and refine dyadic rounding until exact predicates prove strict
+interiority. Deduplicate anchors canonically and rebuild each affected connected
+region once per horizon. An anchor outside/on the old facet, or cache restriction
+alone, does not count as construction progress. Apply the same fair split rule
+and cumulative memory/work/precision limits; no universal termination/shape-quality
+claim follows. Domain/source limitations request their actual feature authority.
+The previous whole-face refinement engine is not a hidden fallback.
+
+For the owned integer direct-CDT boundary adapter, select exact common-denominator
+clearing per connected region, cached for that unchanged site set. Use one
+positive D for BOTH axes, preserving orientation/incircle signs and the declared
+metric. Retain the original exact coordinates in semantic sites; the scaled
+integers are predicate inputs only. Count/check denominator bits, work and bytes
+before use. Common dyadic source coordinates reduce to a shared power of two.
+The rational-predicate adapter is an explicit alternative if denominator growth
+becomes material; no coordinate is rounded to appease the integer API.
+
+Finite source quotient caps retain their actual symbolic source maps, ordinary/
+fan cut identity, original aliases and positional/band components. They use the
+cache's geometry service and current source-cut protocol; proxy coordinates are
+not ordinary UV coverage. The existing one-cap sector profile is not generalized
+by assertion. Add an explicit adaptive-subdivision lineage/root-path operation
+and update the semantic codec/readers; do not describe cache sites as LEPP or
+circumcenter births.
 
 ## CPU and P100 execution
 
@@ -171,10 +269,17 @@ where the GPU helps; GPU advantage is not presumed.
 ## Research and delivery status
 
 The pinned reference source studies and bibliography remain under papers/ and
-papers/whole-mesher/. Current focused reports will cover algorithm/trim ownership,
-original geometry and numerical caches, and native/GPU runtime. Integrate their
-findings, resolve the remaining concrete decisions, obtain design review, then
-write/review the implementation plan before product code. Implement complete
+papers/whole-mesher/. Focused reports cover
+[algorithm/trim ownership](../papers/native-adaptive-subdivision-algorithm.md),
+[original geometry and numerical caches](../papers/native-adaptive-subdivision-geometry.md),
+and [native/GPU runtime](../papers/native-adaptive-subdivision-runtime.md).
+The selected procedures above integrate their constructive choices. Scoped
+reviews are recorded in
+[runtime review](../papers/native-adaptive-runtime-review.md) and
+[geometry review](../papers/native-adaptive-subdivision-geometry-review.md),
+with algorithm acceptance in the algorithm report/journal. Finite product-unit
+plans still require actual interface review and direct RED before code.
+Implement complete
 conceptual units with direct oracles and scoped runtime/static checks, commit
 each material milestone, and keep the whole-mesher PR unfinished until the
 selected operation is actually delivered.

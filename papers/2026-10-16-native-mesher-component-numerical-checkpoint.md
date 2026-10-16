@@ -28,8 +28,30 @@ both views and both images. Source preparation took0.067080927s, and assembled
 display took0.043514968s. It performed13boundary rounds and reported
 1,638,587,209owner work units. The image was inspected. These are single
 observations, not uncontended benchmark estimates, external-oracle qualification,
-or a whole-watch result. There is no matched NVIDIA timing for this part yet.
+or a whole-watch result. No matched-quality reference comparison is established.
 Raw source, images and operational transcripts remain ignored in context/.
+
+## NVIDIA prepared-component observation
+
+During the adaptive-architecture study, the existing pinned NVIDIA reference
+worker consumed the corresponding complete original1795/1722 BinTools source
+definitions, requested chord0.005mm, healing0, strict no-partial output. Both
+returned complete meshes with closed/manifold report status. In one shared fresh
+worker, context/plugin setup took0.005177606s. Per-component observations:
+
+| Definition | Actual physical vertices / triangles | Tessellation stage | Conversion/import/tessellation/output/part teardown |
+| --- | ---: | ---: | ---: |
+|1795|26/48|0.009416878s|0.036027589s|
+|1722|128/252|0.020337965s|0.024774508s|
+
+Combined native process wall was0.10s. This begins with prepared original
+component B-reps, not STEP decoding. It includes the official OCCT→USD conversion
+and import in the larger per-part scope. Environment limits constrain PXR/OMP/
+BLAS but do not by themselves prove a TBB worker count. There is no reference
+display time or warm-tree reuse measurement here. Requested chord values alone
+do not establish the same whole-cell/source correspondence guarantee or actual
+quality, so no matched-quality speedup ratio is calculated. Both outcomes and
+their counts remain, rather than selecting only the smallest/fastest part.
 
 ## What the references actually offer
 
