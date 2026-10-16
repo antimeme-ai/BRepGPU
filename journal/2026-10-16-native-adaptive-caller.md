@@ -1,0 +1,37 @@
+# Actual adaptive patch caller
+
+The first integrated operation is original source → requested SourceCache →
+PatchSession → bounded conforming PacketMesh → indexed patch artifact. The
+caller does not use the older constructor to supply missing triangles. Its
+finite plan is docs/native-adaptive-caller-unit.md; runtime peer review accepted
+that operation and required explicit source digest/profile/quality metadata.
+
+The external Python test authored polynomial, strongly weighted rational and
+two-span C0 sources and reached the actual caller invocation on the fleet. It
+failed because the native adaptive executable did not exist: a missing-operation
+RED, before caller implementation. The reader independently uses integer and
+Fraction arithmetic on original source formulas, exact emitted UV and the SAME
+actual affine triangle. It checks whole-patch coverage/incidence, physical
+noncollapse, fine/coarse/fine history, fresh coarse correspondence, CPU/P100
+semantic bytes, actual geometry/cache work and no-replace publication. It does
+not use the production evaluator or count image appearance as correctness.
+
+Implemented the native caller against the actual reviewed shared declarations.
+It preserves exact original UV in BGAPCH01, converts millimetre allowance to
+original source units with exact rational division, and emits cumulative work
+and separate elapsed scopes. Requested-only source compilation has an explicit
+counter assertion, including unused carriers in the authored source. Required
+artifacts close before output publication. Extracted the existing owned Linux
+no-replace directory owner so old/new callers use the same operation. No new
+dependency or renderer.
+
+Interface review found that merely placing one session task on a multithreaded
+scheduler would not make a parallel CPU baseline. Runtime now accepts actual
+cpu_threads and dispatches disjoint geometry batches with canonical completion
+folds. The caller sets that width and polls the coordinator directly.
+
+Initial actual-header fleet syntax check passed. Complete-operation GREEN,
+sanitizer checks and actual-source peer review remain pending the geometry,
+packet and runtime bodies. No adaptive mesh/performance delivery is claimed at
+this checkpoint. CMake registers real unit targets as their actual bodies land;
+it supplies no placeholder library or fixture-backed product operation.
