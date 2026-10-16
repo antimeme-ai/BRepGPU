@@ -251,8 +251,10 @@ is not emitted without its actual finite map producer.
 UseCurveInterval stores BOTH carrier_trace_to_actual_chord_upper (positional
 acceptance) and source_to_selected_trace_upper (Ce↔Sselected relationship).
 Ce→actualQ is separately accepted at physical owner. These quantities are not
-interchangeable; Ce↔Sselected never uses the original-node cap. The latter may
-be the sum or a compatible tighter coupled bound. Snapshot semantics name which
+interchangeable; Ce↔Sselected never uses the original-node cap. Acceptance is
+Ce→Q<=tau and carrier-trace→Q+authoritative-domain<=tau. The retained Ce↔Sselected
+sum may reach2tau; it has no separate same-tau cap. It may instead use a
+compatible tighter coupled bound. Snapshot semantics name which
 correspondence each bound uses. Original FaceBoundarySnapshot remains later
 transport, never an eager GeometryStore prerequisite for this operation.
 
