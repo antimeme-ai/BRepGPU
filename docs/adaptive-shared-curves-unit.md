@@ -1,8 +1,9 @@
 # Cached shared source curves and occurrence traces
 
-Status: finite implementation design/plan under integration and peer review.
-No product code starts until the concrete interfaces and procedures below have
-closed review. This implements checkpoint 2 of ADAPTIVE_MESHER_PLAN.md; trimmed
+Status: finite implementation design/plan accepted in scoped numerical,
+construction and runtime peer review, with the concrete resolutions below.
+Product units start with direct RED against these interfaces. This implements
+checkpoint 2 of ADAPTIVE_MESHER_PLAN.md; trimmed
 region construction, complete components and assembly publication follow it.
 
 ## Complete operation
@@ -120,8 +121,52 @@ host-device traffic, failures and work without mixing them with network traffic.
 Root owns CMake, complete source-to-boundary caller, output and independent
 whole-operation reader. Numerical and construction owners own coherent source
 contracts; runtime owns the sole authority/session and device lifetime seam.
-Final public field layouts and exact finite trace admission are recorded below
-when interface review closes, before RED and implementation.
+The literal public field layouts and finite source procedures are selected in
+the three focused reports and adaptive-curves-runtime-unit.md. Root owns the
+separate device and caller unit plans; these reference the same numerical PODs
+and source/result leases.
+
+## Constructive review resolutions
+
+All three scoped owners reviewed this plan and the caller plan against actual
+source. Runtime and construction reviewed the numerical procedures. Root read
+the actual reports, original owner and reference paths, and integrated these
+concrete findings before implementation:
+
+- Geometry uses a dedicated dimension2/3, degree0..32 curve cache. Original Cox
+  extraction is a local Bernstein dynamic program; paired midpoint restrictions
+  share one O(p²) pyramid. Parameter and proved monotone-image bounds remain
+  distinct, and a valid image profile is tried BEFORE speed-only subdivision.
+- Per-use carrier traces use direct original-span affine-UV restriction, degree
+  at most6 for rational surfaces, or original analytic directional derivatives.
+  No PatchSession or second surface-refinement controller is created per use.
+  Tight coupled rational residuals and checked harmonic cancellation address
+  loose bounds without changing the SAME actual chord.
+- First recovery admits original guide-derived candidates verified against the
+  original-node cap, with explicit plane and cylinder locators. Unimplemented
+  general Newton/inverse recovery is not promised. Unknown map kind3 and failed
+  recovery return named finite unsupported outcomes.
+- Matching cylinder circles may use a checked CylinderAffineIdentity descriptor:
+  original harmonic/frame/height equality and chosen angle literally equal to
+  spatial t. General cylinder_arc_order is not admitted as a bare tag. Actual
+  carrier-trace-to-chord and source-curve-to-selected-trace bounds are separate.
+- Supported nonzero period shifts retain a symbolic true-period descriptor on
+  the relevant analytic periodic axis and charge chosen dyadic-UV departure.
+  NURBS/nonperiodic axes do not infer a period. Stored binary64 2pi is never
+  replaced by symbolic2pi. Authoritative endpoint equality requires source
+  descriptor identity, exact rational equality or a checked analytic identity;
+  overlapping numerical enclosures are not equality.
+- Each UseCurveInterval retains its BoundaryKey, authority, correspondence and
+  actual bound components. Joint identity is loop-adjacent occurrence sector,
+  not physical VertexID plus shift. Every source occurrence survives.
+- Definition-default allowances cover wires; optional face restrictions cannot
+  omit incidence. Add owner-only split requests to the existing forest so a wire
+  needs no invented face. Logical physical keys remain distinct from constructed
+  revisions. Stage guarded promotions and commit them atomically with split
+  evaluations; original vertices stay immutable and all incidents invalidate.
+
+These resolutions select procedures, not a performance result. Direct RED,
+implementation and actual-source review remain required for each owned unit.
 
 ## Finite delivery sequence
 

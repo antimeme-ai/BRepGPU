@@ -714,3 +714,33 @@ analytic fixture generation, so no duplicate device rerun from geometry lane.
 Root actual-source covariance/slack review ACCEPT. Geometry code stable and
 ready for coherent commit; final rebuilt module hash/device rows will be added
 from that registered run rather than conflated with the earlier214 observations.
+
+Shared-curves checkpoint research only: reread actual pinned NVIDIA
+SmCurveCache span allocation/restriction/ComputeConstants/Tessellate and
+SmCurveTessDriver, original source/curve/trace/forest modules, accepted adaptive
+spec/plan. Saved actionable papers/native-adaptive-curves-geometry.md including
+literal typed numerical/cache/service proposal, original node-vs-positional
+contracts, polynomial-time p<=32 extraction, paired O(p²) restriction and actual
+chord residuals. Acquired intact Floater1992, Karavelas/Kaklis/Kostas2004 and
+Bez/Bez2013 author PDFs with URL/hash/read scope in papers/native-adaptive-curves/.
+Purdue Nairn full download403 recorded; no full-text claim. No product/test edits,
+builds, geometry execution or dependency adoption in this research unit.
+
+Runtime/construction peers reviewed actual report numerical scope ACCEPT with
+one valid shared finding: generic dampedNewton would exceed first finite
+plane/cylinder-locator+generic-guideguard scope. Amended actual report to defer
+general inverse and type guide failures explicitly. Root selected same module
+versioned CurveCudaAPI with dedicated typed curve pools. Exact cylinder profile
+now literal CylinderAffineIdentityRecord/source algebra, not a phantom general
+ArcOrder tag. Affine trace service restricts directly across indexed original
+spans and SAME actual chord, never creates per-use PatchSession or old eager
+GeometryStore. Root actual finite unit plan reviewed; remaining API/schema
+integration belongs to plan closure before RED/code.
+
+Cross-read actual adaptive-shared-curves-unit.md, adaptive-curves-caller-unit.md
+and runtime/construction reports. Scoped source/error/shared-occurrence/complete
+boundary result ACCEPT. Sent two literal runtime schema alignments before header
+freeze: retain carrier_trace_to_actual_chord_upper separately, and replace the
+old unimplemented cylinder_arc_order name with the finite implemented identity
+payload/tag or keep it nonemittable. No code/runtime changes from this lane;
+parent integrates finite plan and owns next implementation authorization.
