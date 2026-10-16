@@ -19,7 +19,7 @@ Use the agreed entry point:
 PacketMesh build_packet_mesh(
     bgfd::Budget& scratch,
     const std::shared_ptr<RunResource>& result_resource,
-    std::shared_ptr<const PatchSelection> selection,
+    const std::shared_ptr<const PatchSelection>& selection,
     std::span<const uint32_t> enabled_leaf_slots);
 ```
 
@@ -67,7 +67,9 @@ request. Output capacity/counts are checked before fill/publication.
 2. Emit four side records for each enabled rectangle. Record axis, exact line
    constant, ordered interval endpoints, original side direction and leaf slot.
    Sort by axis/constant/interval/key using exact chart-coordinate comparisons.
-   Temporary exact imports belong only to scratch and are cached per input ref.
+   Comparisons borrow canonical exact words, compare equal-denominator or
+   power-of-two-denominator values directly, and use scratch-owned integer
+   crossproducts only for general rational coordinates.
 3. For each collinear line group, sweep endpoint events in exact coordinate
    order, grouping equality BEFORE incidence updates. The open atomic interval
    between consecutive distinct events carries at most one side on either
