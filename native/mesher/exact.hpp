@@ -19,6 +19,8 @@ struct Binary64Bounds final {
   double lower, upper;
 };
 
+struct SqrtBounds;
+
 class Rational final {
   bgfd::Integer numerator_, denominator_;
   struct Canonical {};
@@ -52,6 +54,13 @@ public:
   // Failure.
   [[nodiscard]] double to_double() const;
   [[nodiscard]] Binary64Bounds bounds() const;
+  // Nonnegative input, enclosed on the absolute dyadic grid 2^-fractional_bits.
+  // Both endpoints retain this value's owner; arithmetic is integer-only.
+  [[nodiscard]] SqrtBounds square_root_bounds(uint32_t fractional_bits) const;
+};
+
+struct SqrtBounds final {
+  Rational lower, upper;
 };
 } // namespace bgmesh
 #endif
