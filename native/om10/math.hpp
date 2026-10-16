@@ -1,69 +1,8 @@
 #ifndef BG_OM10_MATH_HPP
 #define BG_OM10_MATH_HPP
 #include "../evaluator.hpp"
-#include "types.hpp"
-#include <cfloat>
-#include <cmath>
-#if defined(__CUDACC__)
-#define BGOM_HD __host__ __device__ inline
-#else
-#define BGOM_HD inline
-#endif
+#include "vector_math.hpp"
 namespace bgom10 {
-BGOM_HD bool finite(double x) { return brepgpu::numeric_finite(x); }
-BGOM_HD Vec vec(const double *p) { return {p[0], p[1], p[2]}; }
-BGOM_HD Vec add(Vec a, Vec b) { return {a.x + b.x, a.y + b.y, a.z + b.z}; }
-BGOM_HD Vec sub(Vec a, Vec b) { return {a.x - b.x, a.y - b.y, a.z - b.z}; }
-BGOM_HD Vec mul(Vec a, double b) { return {a.x * b, a.y * b, a.z * b}; }
-BGOM_HD double dot(Vec a, Vec b) {
-  return ((a.x * b.x + a.y * b.y) + a.z * b.z);
-}
-BGOM_HD Vec cross(Vec a, Vec b) {
-  return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
-}
-BGOM_HD bool good(Vec a) { return finite(a.x) && finite(a.y) && finite(a.z); }
-BGOM_HD double maxd(double a, double b) { return a > b ? a : b; }
-BGOM_HD double mind(double a, double b) { return a < b ? a : b; }
-BGOM_HD bool unit(Vec a, Vec &out) {
-  double m = maxd(fabs(a.x), maxd(fabs(a.y), fabs(a.z)));
-  if (!finite(m) || m == 0)
-    return false;
-  Vec b = {a.x / m, a.y / m, a.z / m};
-  double n = sqrt(dot(b, b));
-  out = mul(b, 1 / n);
-  return good(out);
-}
-BGOM_HD double maximum_component(Vec a) {
-  return maxd(fabs(a.x), maxd(fabs(a.y), fabs(a.z)));
-}
-BGOM_HD Vec divided(Vec a, double scale) {
-  return {a.x / scale, a.y / scale, a.z / scale};
-}
-// Normalization removes the common positive square scale. Keep the actual
-// relative source axes and affine matrix entries; never orthonormalize them.
-BGOM_HD Vec cofactor_normal(const double *matrix, Vec n) {
-  Vec a = vec(matrix), b = vec(matrix + 4), c = vec(matrix + 8);
-  const double scale = maxd(maximum_component(a), maxd(maximum_component(b), maximum_component(c)));
-  if (!finite(scale) || scale == 0) return {};
-  a = divided(a, scale); b = divided(b, scale); c = divided(c, scale);
-  return {dot(cross(b, c), n), dot(cross(c, a), n), dot(cross(a, b), n)};
-}
-BGOM_HD bool source_vertex_flags(const Carrier &c, uint32_t flags) {
-  if ((flags & ~63u) != 0 || (flags & (STORED_XYZ | COFACTOR_NORMAL)) != (STORED_XYZ | COFACTOR_NORMAL))
-    return false;
-  if ((flags & (NEGATIVE_RADIAL_SHEET | SPHERE_SOUTH)) && !(flags & ANALYTIC_NORMAL_LIMIT)) return false;
-  if ((flags & ANALYTIC_NORMAL_LIMIT) && c.tag != 3 && c.tag != 4) return false;
-  return !(flags & SPHERE_SOUTH) || c.tag == 4;
-}
-inline bool scene_vertex_profile(const SceneView *scene, bool source_profile) {
-  if (!scene || (scene->nvertices && !scene->vertices) || (scene->ncarriers && !scene->carriers)) return false;
-  for (uint64_t i = 0; i < scene->nvertices; ++i) {
-    const auto &v = scene->vertices[i];
-    if (v.carrier >= scene->ncarriers || (source_profile ? !source_vertex_flags(scene->carriers[v.carrier], v.flags)
-                                                       : (v.flags & ~3u) != 0)) return false;
-  }
-  return true;
-}
 BGOM_HD void save(Vec a, double *p) {
   p[0] = a.x;
   p[1] = a.y;
@@ -100,8 +39,7 @@ BGOM_HD void basis(uint32_t n, double t, double *b, double *d) {
     d[3] = 3 * t * t;
   }
 }
-BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
-                      const Vertex &v, Jet &out) {
+BGOM_HD bool evaluate(const Carrier &c, const Control *controls, const Vertex &v, Jet &out) {
   const double u = v.uv[0], w = v.uv[1];
   Vec p{}, du{}, dv{}, normal{};
   out.status = 0;
@@ -112,10 +50,11 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
     du = x;
     dv = y;
     normal = cross(x, y);
-    if(v.flags & COFACTOR_NORMAL) {
-      const double scale=maxd(maximum_component(x),maximum_component(y));
-      if(!finite(scale)||scale==0)return false;
-      normal=cross(divided(x,scale),divided(y,scale));
+    if (v.flags & COFACTOR_NORMAL) {
+      const double scale = maxd(maximum_component(x), maximum_component(y));
+      if (!finite(scale) || scale == 0)
+        return false;
+      normal = cross(divided(x, scale), divided(y, scale));
     }
   } else if (c.tag >= 2 && c.tag <= 5) {
     double su = sin(u), cu = cos(u);
@@ -160,8 +99,7 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
         out.flags |= 1;
     }
   } else if (c.tag == 6) {
-    double a = (u - c.uv[0]) / (c.uv[1] - c.uv[0]),
-           b = (w - c.uv[2]) / (c.uv[3] - c.uv[2]);
+    double a = (u - c.uv[0]) / (c.uv[1] - c.uv[0]), b = (w - c.uv[2]) / (c.uv[3] - c.uv[2]);
     double bu[4], bv[4], dbu[4], dbv[4];
     basis(c.p, a, bu, dbu);
     basis(c.q, b, bv, dbv);
@@ -177,8 +115,7 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
     double weights[6] = {h[0][3], h[1][3], h[2][3], 0, 0, 0};
     double values[3][3];
     for (int axis = 0; axis < 3; ++axis) {
-      double numerator[6] = {h[0][axis], h[1][axis], h[2][axis], 0, 0, 0},
-             r[6]{};
+      double numerator[6] = {h[0][axis], h[1][axis], h[2][axis], 0, 0, 0}, r[6]{};
       if (!brepgpu::recover_channel(numerator, weights, 1, r))
         return false;
       for (int k = 0; k < 3; ++k)
@@ -191,19 +128,24 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
   } else
     return false;
   if (v.flags & ANALYTIC_NORMAL_LIMIT) {
-    if (!(v.flags & COFACTOR_NORMAL) || (c.tag != 3 && c.tag != 4)) return false;
-    const double scale = maxd(maximum_component(x), maxd(maximum_component(y), maximum_component(z)));
-    if (!finite(scale) || scale == 0) return false;
+    if (!(v.flags & COFACTOR_NORMAL) || (c.tag != 3 && c.tag != 4))
+      return false;
+    const double scale =
+        maxd(maximum_component(x), maxd(maximum_component(y), maximum_component(z)));
+    if (!finite(scale) || scale == 0)
+      return false;
     const Vec sx = divided(x, scale), sy = divided(y, scale), sz = divided(z, scale);
     if (c.tag == 4) {
       normal = cross(sx, sy);
-      if (v.flags & SPHERE_SOUTH) normal = mul(normal, -1);
+      if (v.flags & SPHERE_SOUTH)
+        normal = mul(normal, -1);
     } else {
       const Vec e = add(mul(sx, cos(u)), mul(sy, sin(u))),
                 ep = add(mul(sx, -sin(u)), mul(sy, cos(u)));
       normal = add(mul(cross(ep, e), sin(c.r1)), mul(cross(ep, sz), cos(c.r1)));
     }
-    if (v.flags & NEGATIVE_RADIAL_SHEET) normal = mul(normal, -1);
+    if (v.flags & NEGATIVE_RADIAL_SHEET)
+      normal = mul(normal, -1);
     out.flags |= SINGULAR_PARAMETER;
   }
   if (!good(p) || !good(du) || !good(dv) || !unit(normal, normal))
@@ -215,14 +157,15 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
   save(dv, out.dv);
   save(normal, out.normal);
   save((v.flags & STORED_XYZ) ? vec(v.xyz) : p, out.used);
-  if (v.flags & COFACTOR_NORMAL) out.flags |= COFACTOR_INSTANCE_NORMAL;
+  if (v.flags & COFACTOR_NORMAL)
+    out.flags |= COFACTOR_INSTANCE_NORMAL;
   return good(vec(out.used));
 }
 BGOM_HD Vec rotate(const double *m, Vec p) {
   return {dot(vec(m), p), dot(vec(m + 4), p), dot(vec(m + 8), p)};
 }
-BGOM_HD bool project(const SceneView &s, const Request &r, uint64_t slot,
-                     const Jet *jets, Projected &out) {
+BGOM_HD bool project(const SceneView &s, const Request &r, uint64_t slot, const Jet *jets,
+                     Projected &out) {
   const VertexRef ref = s.vertex_refs[slot];
   const Instance &i = s.instances[ref.instance];
   const Definition &d = s.definitions[i.definition];
@@ -232,19 +175,16 @@ BGOM_HD bool project(const SceneView &s, const Request &r, uint64_t slot,
     p = add(p, mul(vec(i.explosion), r.alpha));
   const auto &jet = jets[ref.source];
   Vec n = (jet.flags & COFACTOR_INSTANCE_NORMAL) ? cofactor_normal(i.matrix, vec(jet.normal))
-                                               : rotate(i.matrix, vec(jet.normal));
+                                                 : rotate(i.matrix, vec(jet.normal));
   if (!good(p) || !unit(n, n))
     return false;
   Vec v = sub(p, vec(r.center));
-  double px = (r.pixel_center[0] + r.scale * dot(vec(r.basis), v)) *
-              r.supersample,
-         py = (r.pixel_center[1] - r.scale * dot(vec(r.basis + 3), v)) *
-              r.supersample,
+  double px = (r.pixel_center[0] + r.scale * dot(vec(r.basis), v)) * r.supersample,
+         py = (r.pixel_center[1] - r.scale * dot(vec(r.basis + 3), v)) * r.supersample,
          z = dot(vec(r.basis + 6), v);
   double sx = px >= 0 ? floor(px * 256 + .5) : ceil(px * 256 - .5),
          sy = py >= 0 ? floor(py * 256 + .5) : ceil(py * 256 - .5);
-  if (!finite(sx) || !finite(sy) || fabs(sx) > 536870912. ||
-      fabs(sy) > 536870912. || !finite(z))
+  if (!finite(sx) || !finite(sy) || fabs(sx) > 536870912. || fabs(sy) > 536870912. || !finite(z))
     return false;
   out.instance = i.id;
   out.definition = d.id;
@@ -256,21 +196,21 @@ BGOM_HD bool project(const SceneView &s, const Request &r, uint64_t slot,
   save(n, out.normal);
   return true;
 }
-BGOM_HD int64_t edge(int64_t ax, int64_t ay, int64_t bx, int64_t by, int64_t px,
-                     int64_t py) {
+BGOM_HD int64_t edge(int64_t ax, int64_t ay, int64_t bx, int64_t by, int64_t px, int64_t py) {
   return (bx - ax) * (py - ay) - (by - ay) * (px - ax);
 }
 BGOM_HD bool top_left(int64_t ax, int64_t ay, int64_t bx, int64_t by) {
   return by < ay || (by == ay && bx > ax);
 }
-BGOM_HD bool setup(const SceneView &s, const Request &r, uint64_t slot,
-                   const Projected *points, Prepared &out) {
+BGOM_HD bool setup(const SceneView &s, const Request &r, uint64_t slot, const Projected *points,
+                   Prepared &out) {
   PrimitiveRef ref = s.primitive_refs[slot];
   const Triangle &t = s.triangles[ref.triangle];
   out = {};
   out.primitive = slot;
   out.instance = s.instances[ref.instance].id;
-  out.material = t.material;
+  out.material = t.material == INHERIT_OCCURRENCE_MATERIAL ? s.instances[ref.instance].reserved - 1
+                                                           : t.material;
   for (int k = 0; k < 3; ++k) {
     out.vertex[k] = ref.vertex_base + t.vertex[k];
     const Projected &p = points[out.vertex[k]];
@@ -298,24 +238,23 @@ BGOM_HD bool setup(const SceneView &s, const Request &r, uint64_t slot,
     out.vertex[2] = v;
     out.area = -out.area;
   }
-  double xmin = mind(out.x[0], mind(out.x[1], out.x[2])),
-         xmax = maxd(out.x[0], maxd(out.x[1], out.x[2])),
-         ymin = mind(out.y[0], mind(out.y[1], out.y[2])),
-         ymax = maxd(out.y[0], maxd(out.y[1], out.y[2]));
+  // project admits integer coordinates of magnitude at most2^29; each
+  // conversion is exact in binary64.
+  const double x0 = static_cast<double>(out.x[0]), x1 = static_cast<double>(out.x[1]),
+               x2 = static_cast<double>(out.x[2]), y0 = static_cast<double>(out.y[0]),
+               y1 = static_cast<double>(out.y[1]), y2 = static_cast<double>(out.y[2]);
+  double xmin = mind(x0, mind(x1, x2)), xmax = maxd(x0, maxd(x1, x2)),
+         ymin = mind(y0, mind(y1, y2)), ymax = maxd(y0, maxd(y1, y2));
   out.xmin = static_cast<int32_t>(maxd(0, ceil((xmin - 128) / 256)));
-  out.xmax = static_cast<int32_t>(
-      mind(r.width * r.supersample - 1, floor((xmax - 128) / 256)));
+  out.xmax = static_cast<int32_t>(mind(r.width * r.supersample - 1, floor((xmax - 128) / 256)));
   out.ymin = static_cast<int32_t>(maxd(0, ceil((ymin - 128) / 256)));
-  out.ymax = static_cast<int32_t>(
-      mind(r.height * r.supersample - 1, floor((ymax - 128) / 256)));
+  out.ymax = static_cast<int32_t>(mind(r.height * r.supersample - 1, floor((ymax - 128) / 256)));
   if (out.xmin > out.xmax || out.ymin > out.ymax)
     out.area = 0;
   return true;
 }
-BGOM_HD bool covered(const Prepared &t, uint32_t x, uint32_t y, double *w,
-                     double &z) {
-  int64_t px = static_cast<int64_t>(x) * 256 + 128,
-          py = static_cast<int64_t>(y) * 256 + 128;
+BGOM_HD bool covered(const Prepared &t, uint32_t x, uint32_t y, double *w, double &z) {
+  int64_t px = static_cast<int64_t>(x) * 256 + 128, py = static_cast<int64_t>(y) * 256 + 128;
   for (int k = 0; k < 3; ++k) {
     int a = (k + 1) % 3, b = (k + 2) % 3;
     int64_t e = edge(t.x[a], t.y[a], t.x[b], t.y[b], px, py);
@@ -336,16 +275,13 @@ BGOM_HD double power(double x, unsigned exponent) {
   }
   return y;
 }
-BGOM_HD bool shade(const Prepared &t, const Projected *p,
-                   const Material *materials, const Request &r, const double *w,
-                   Vec &color) {
-  Vec n = add(add(mul(vec(p[t.vertex[0]].normal), w[0]),
-                  mul(vec(p[t.vertex[1]].normal), w[1])),
+BGOM_HD bool shade(const Prepared &t, const Projected *p, const Material *materials,
+                   const Request &r, const double *w, Vec &color) {
+  Vec n = add(add(mul(vec(p[t.vertex[0]].normal), w[0]), mul(vec(p[t.vertex[1]].normal), w[1])),
               mul(vec(p[t.vertex[2]].normal), w[2]));
   if (!unit(n, n))
     return false;
-  n = {dot(vec(r.basis), n), dot(vec(r.basis + 3), n),
-       dot(vec(r.basis + 6), n)};
+  n = {dot(vec(r.basis), n), dot(vec(r.basis + 3), n), dot(vec(r.basis + 6), n)};
   Vec light{}, half{}, fill{};
   unit({-.35, .50, .79}, light);
   unit(add(light, {0, 0, 1}), half);
@@ -353,14 +289,10 @@ BGOM_HD bool shade(const Prepared &t, const Projected *p,
   double diffuse = maxd(0, dot(n, light)), f = maxd(0, dot(n, fill));
   const Material &m = materials[t.material];
   unsigned exponent =
-      m.roughness > .65
-          ? 16
-          : (m.roughness > .35 ? 32 : (m.roughness > .15 ? 64 : 128));
-  double spec = .55 * power(maxd(0, dot(n, half)), exponent),
-         gain = .20 + .70 * diffuse + .16 * f;
+      m.roughness > .65 ? 16 : (m.roughness > .35 ? 32 : (m.roughness > .15 ? 64 : 128));
+  double spec = .55 * power(maxd(0, dot(n, half)), exponent), gain = .20 + .70 * diffuse + .16 * f;
   Vec base = vec(m.rgb);
-  color = {base.x * gain + spec * (.4 + .6 * base.x),
-           base.y * gain + spec * (.4 + .6 * base.y),
+  color = {base.x * gain + spec * (.4 + .6 * base.x), base.y * gain + spec * (.4 + .6 * base.y),
            base.z * gain + spec * (.4 + .6 * base.z)};
   return good(color);
 }

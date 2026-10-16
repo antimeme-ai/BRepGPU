@@ -1,4 +1,5 @@
 #include "math.hpp"
+#include "validation.hpp"
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -15,22 +16,18 @@ double ms(Clock::time_point t) {
 struct CudaFailure : std::runtime_error {
   int code;
   CudaFailure(cudaError_t c, const char *op)
-      : std::runtime_error(std::string(op) + ": " + cudaGetErrorString(c)),
-        code(c) {}
+      : std::runtime_error(std::string(op) + ": " + cudaGetErrorString(c)), code(c) {}
 };
 struct RowFailure : std::runtime_error {
   int64_t row;
   explicit RowFailure(uint64_t r)
-      : std::runtime_error(
-            "nonfinite/singular arithmetic or out-of-range projection"),
-        row(r) {}
+      : std::runtime_error("nonfinite/singular arithmetic or out-of-range projection"), row(r) {}
 };
 void check(cudaError_t c, const char *op) {
   if (c != cudaSuccess)
     throw CudaFailure(c, op);
 }
-void record(Error *e, const char *stage, const char *msg, int code = 0,
-            int64_t row = -1) {
+void record(Error *e, const char *stage, const char *msg, int code = 0, int64_t row = -1) {
   if (!e)
     return;
   std::snprintf(e->stage, sizeof(e->stage), "%s", stage);
@@ -56,8 +53,7 @@ struct Session {
   uint64_t *primitive = nullptr;
   uint64_t *instance = nullptr;
   unsigned long long *bad = nullptr;
-  uint64_t tile_capacity = 0, bin_capacity = 0, sample_capacity = 0,
-           pixel_capacity = 0;
+  uint64_t tile_capacity = 0, bin_capacity = 0, sample_capacity = 0, pixel_capacity = 0;
   bool evaluated = false, poisoned = false;
   const char *stage = "session_create";
 };
@@ -88,8 +84,8 @@ template <class F> bool selected(Session &s, Error *e, F fn) {
         record(e, s.stage, "restore prior device failed", r);
       else if (e) {
         size_t n = std::strlen(e->message);
-        std::snprintf(e->message + n, sizeof(e->message) - n,
-                      "; restore failed: %s", cudaGetErrorString(r));
+        std::snprintf(e->message + n, sizeof(e->message) - n, "; restore failed: %s",
+                      cudaGetErrorString(r));
       }
       ok = false;
     }
@@ -102,21 +98,16 @@ template <class T> void allocate(T *&ptr, uint64_t n) {
   if (n > SIZE_MAX / sizeof(T))
     throw std::runtime_error("allocation size overflow");
   if (n)
-    check(cudaMalloc(reinterpret_cast<void **>(&ptr), n * sizeof(T)),
-          "allocate device storage");
+    check(cudaMalloc(reinterpret_cast<void **>(&ptr), n * sizeof(T)), "allocate device storage");
 }
-template <class T>
-void copy_in(T *target, const T *source, uint64_t n, Session &s) {
+template <class T> void copy_in(T *target, const T *source, uint64_t n, Session &s) {
   if (n)
-    check(cudaMemcpyAsync(target, source, n * sizeof(T), cudaMemcpyHostToDevice,
-                          s.stream),
+    check(cudaMemcpyAsync(target, source, n * sizeof(T), cudaMemcpyHostToDevice, s.stream),
           "upload scene");
 }
-template <class T>
-void copy_out(T *target, const T *source, uint64_t n, Session &s) {
+template <class T> void copy_out(T *target, const T *source, uint64_t n, Session &s) {
   if (n)
-    check(cudaMemcpyAsync(target, source, n * sizeof(T), cudaMemcpyDeviceToHost,
-                          s.stream),
+    check(cudaMemcpyAsync(target, source, n * sizeof(T), cudaMemcpyDeviceToHost, s.stream),
           "download result");
 }
 template <class T> void free_checked(T *&p) {
@@ -131,8 +122,7 @@ void finish(Session &s) {
   check(cudaStreamSynchronize(s.stream), "complete owned stream");
 }
 void reset_bad(Session &s) {
-  check(cudaMemsetAsync(s.bad, 255, sizeof(*s.bad), s.stream),
-        "reset error row");
+  check(cudaMemsetAsync(s.bad, 255, sizeof(*s.bad), s.stream), "reset error row");
 }
 void check_bad(Session &s) {
   unsigned long long row;
@@ -141,8 +131,7 @@ void check_bad(Session &s) {
   if (row != ~0ull)
     throw RowFailure(row);
 }
-__global__ void evaluate_kernel(SceneView scene, Jet *jets,
-                                unsigned long long *bad) {
+__global__ void evaluate_kernel(SceneView scene, Jet *jets, unsigned long long *bad) {
   uint64_t i = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= scene.nvertices)
     return;
@@ -152,20 +141,20 @@ __global__ void evaluate_kernel(SceneView scene, Jet *jets,
     atomicMin(bad, static_cast<unsigned long long>(i));
   }
 }
-__global__ void project_kernel(SceneView scene, Request r, const Jet *jets,
-                               Projected *points, unsigned long long *bad) {
+__global__ void project_kernel(SceneView scene, Request r, const Jet *jets, Projected *points,
+                               unsigned long long *bad) {
   uint64_t i = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i < scene.nplaced_vertices && !project(scene, r, i, jets, points[i]))
     atomicMin(bad, static_cast<unsigned long long>(i));
 }
-__global__ void setup_kernel(SceneView scene, Request r,
-                             const Projected *points, Prepared *triangles) {
+__global__ void setup_kernel(SceneView scene, Request r, const Projected *points,
+                             Prepared *triangles) {
   uint64_t i = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i < scene.nprimitives)
     setup(scene, r, i, points, triangles[i]);
 }
-__global__ void count_kernel(const Prepared *triangles, uint64_t n,
-                             uint32_t tiles_x, uint32_t *counts) {
+__global__ void count_kernel(const Prepared *triangles, uint64_t n, uint32_t tiles_x,
+                             uint32_t *counts) {
   uint64_t i = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= n)
     return;
@@ -177,9 +166,7 @@ __global__ void count_kernel(const Prepared *triangles, uint64_t n,
       atomicAdd(counts + uint64_t(y) * tiles_x + x, 1u);
 }
 // Fixed maximum8192sample image ->262144tiles ->512block sums.
-template <class T>
-__global__ void scan512(const T *in, uint64_t *out, uint64_t *sums,
-                        uint64_t n) {
+template <class T> __global__ void scan512(const T *in, uint64_t *out, uint64_t *sums, uint64_t n) {
   __shared__ uint64_t data[512];
   unsigned tid = threadIdx.x;
   uint64_t start = uint64_t(blockIdx.x) * 512;
@@ -212,17 +199,16 @@ __global__ void scan512(const T *in, uint64_t *out, uint64_t *sums,
   if (start + tid + 256 < n)
     out[start + tid + 256] = data[tid + 256];
 }
-__global__ void add_scan(uint64_t *offsets, const uint64_t *block_offsets,
-                         const uint64_t *sums, uint64_t n, uint32_t blocks) {
+__global__ void add_scan(uint64_t *offsets, const uint64_t *block_offsets, const uint64_t *sums,
+                         uint64_t n, uint32_t blocks) {
   uint64_t i = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i < n)
     offsets[i] += block_offsets[i / 512];
   if (i == 0)
     offsets[n] = block_offsets[blocks - 1] + sums[blocks - 1];
 }
-__global__ void fill_kernel(const Prepared *triangles, uint64_t n,
-                            uint32_t tiles_x, uint32_t *cursor,
-                            const uint64_t *offsets, uint32_t *bins) {
+__global__ void fill_kernel(const Prepared *triangles, uint64_t n, uint32_t tiles_x,
+                            uint32_t *cursor, const uint64_t *offsets, uint32_t *bins) {
   uint64_t i = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= n)
     return;
@@ -235,11 +221,9 @@ __global__ void fill_kernel(const Prepared *triangles, uint64_t n,
       bins[offsets[tile] + atomicAdd(cursor + tile, 1u)] = i;
     }
 }
-__global__ void visibility_kernel(const Prepared *triangles,
-                                  const uint64_t *offsets, const uint32_t *bins,
-                                  uint32_t width, uint32_t height,
-                                  uint32_t tiles_x, Sample *samples,
-                                  unsigned long long *bad) {
+__global__ void visibility_kernel(const Prepared *triangles, const uint64_t *offsets,
+                                  const uint32_t *bins, uint32_t width, uint32_t height,
+                                  uint32_t tiles_x, Sample *samples, unsigned long long *bad) {
   uint32_t x = blockIdx.x * 16 + threadIdx.x, y = blockIdx.y * 16 + threadIdx.y;
   if (x >= width || y >= height)
     return;
@@ -247,8 +231,7 @@ __global__ void visibility_kernel(const Prepared *triangles,
   Sample sample{-INFINITY, UINT64_MAX, UINT64_MAX};
   for (uint64_t i = offsets[tile]; i < offsets[tile + 1]; ++i) {
     const Prepared &p = triangles[bins[i]];
-    if (x < static_cast<uint32_t>(p.xmin) ||
-        x > static_cast<uint32_t>(p.xmax) ||
+    if (x < static_cast<uint32_t>(p.xmin) || x > static_cast<uint32_t>(p.xmax) ||
         y < static_cast<uint32_t>(p.ymin) || y > static_cast<uint32_t>(p.ymax))
       continue;
     double w[3], z;
@@ -258,25 +241,20 @@ __global__ void visibility_kernel(const Prepared *triangles,
       atomicMin(bad, static_cast<unsigned long long>(uint64_t(y) * width + x));
       continue;
     }
-    if (z > sample.depth ||
-        (z == sample.depth && p.primitive < sample.primitive))
+    if (z > sample.depth || (z == sample.depth && p.primitive < sample.primitive))
       sample = {z, p.primitive, p.instance};
   }
   samples[uint64_t(y) * width + x] = sample;
 }
-__global__ void resolve_kernel(const Prepared *triangles,
-                               const Projected *points,
-                               const Material *materials, Request r,
-                               const Sample *samples, uint8_t *rgba,
-                               double *depths, uint64_t *primitives,
+__global__ void resolve_kernel(const Prepared *triangles, const Projected *points,
+                               const Material *materials, Request r, const Sample *samples,
+                               uint8_t *rgba, double *depths, uint64_t *primitives,
                                uint64_t *instances, unsigned long long *bad) {
   uint64_t index = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (index >= uint64_t(r.width) * r.height)
     return;
-  uint32_t x = index % r.width, y = index / r.width,
-           width = r.width * r.supersample;
-  const Sample &chosen =
-      samples[uint64_t(y * r.supersample) * width + x * r.supersample];
+  uint32_t x = index % r.width, y = index / r.width, width = r.width * r.supersample;
+  const Sample &chosen = samples[uint64_t(y * r.supersample) * width + x * r.supersample];
   depths[index] = chosen.depth;
   primitives[index] = chosen.primitive;
   instances[index] = chosen.instance;
@@ -289,8 +267,7 @@ __global__ void resolve_kernel(const Prepared *triangles,
       if (sample.primitive != UINT64_MAX) {
         const Prepared &p = triangles[sample.primitive];
         double w[3], z;
-        if (!covered(p, xx, yy, w, z) ||
-            !shade(p, points, materials, r, w, c)) {
+        if (!covered(p, xx, yy, w, z) || !shade(p, points, materials, r, w, c)) {
           atomicMin(bad, static_cast<unsigned long long>(index));
           return;
         }
@@ -372,11 +349,18 @@ void cleanup(Session &s, Error *e, bool &ok) {
     }
   }
 }
-bool create_profile(const SceneView *view, int32_t device, void **out,
-                    Error *e, Times *times,bool source_profile) {
+bool create_profile(const SceneView *view, int32_t device, void **out, Error *e, Times *times,
+                    bool source_profile) {
+  if (!out || !times) {
+    record(e, "session_create", "missing CUDA output/times");
+    return false;
+  }
   *out = nullptr;
-  if(!scene_vertex_profile(view,source_profile)) {
-    record(e,"session_create","invalid scene vertex profile");return false;
+  try {
+    validate_scene_view(view, source_profile);
+  } catch (const std::exception &failure) {
+    record(e, "session_create", failure.what());
+    return false;
   }
   Session *s = nullptr;
   try {
@@ -399,17 +383,16 @@ bool create_profile(const SceneView *view, int32_t device, void **out,
   }
   auto start = Clock::now();
   bool ok = selected(*s, e, [&] {
-    check(cudaStreamCreateWithFlags(&s->stream, cudaStreamNonBlocking),
-          "create stream");
+    check(cudaStreamCreateWithFlags(&s->stream, cudaStreamNonBlocking), "create stream");
     times->create = ms(start);
     s->stage = "scene_allocate_upload";
     auto t = Clock::now();
-#define COPY_FIELD(field, count, Type)                                         \
-  {                                                                            \
-    Type *p = nullptr;                                                         \
-    allocate(p, view->count);                                                  \
-    s->scene.field = p;                                                        \
-    copy_in(p, view->field, view->count, *s);                                  \
+#define COPY_FIELD(field, count, Type)                                                             \
+  {                                                                                                \
+    Type *p = nullptr;                                                                             \
+    allocate(p, view->count);                                                                      \
+    s->scene.field = p;                                                                            \
+    copy_in(p, view->field, view->count, *s);                                                      \
   }
     COPY_FIELD(definitions, ndefinitions, Definition);
     COPY_FIELD(instances, ninstances, Instance);
@@ -432,13 +415,11 @@ bool create_profile(const SceneView *view, int32_t device, void **out,
     Error secondary{};
     bool clean = true;
     // No allocation precedes stream creation. A rejected device owns nothing.
-    bool cleaned = !s->stream || selected(*s, &secondary, [&] {
-      cleanup(*s, &secondary, clean);
-    });
+    bool cleaned = !s->stream || selected(*s, &secondary, [&] { cleanup(*s, &secondary, clean); });
     if ((!clean || !cleaned) && e) {
       size_t used = std::strlen(e->message);
-      std::snprintf(e->message + used, sizeof(e->message) - used,
-                    "; cleanup: %s", secondary.message);
+      std::snprintf(e->message + used, sizeof(e->message) - used, "; cleanup: %s",
+                    secondary.message);
     }
     delete s;
     return false;
@@ -457,8 +438,8 @@ bool evaluate_gpu(void *token, Jet *out, Error *e, Times *times) {
     auto t = Clock::now();
     reset_bad(s);
     if (s.scene.nvertices)
-      evaluate_kernel<<<(s.scene.nvertices + 255) / 256, 256, 0, s.stream>>>(
-          s.scene, s.jets, s.bad);
+      evaluate_kernel<<<(s.scene.nvertices + 255) / 256, 256, 0, s.stream>>>(s.scene, s.jets,
+                                                                             s.bad);
     check_bad(s);
     times->evaluate = ms(t);
     s.evaluated = true;
@@ -502,8 +483,17 @@ void reserve_frame(Session &s, uint64_t nsamples, uint64_t npixels) {
     s.pixel_capacity = npixels;
   }
 }
-bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e,
-                Times *times) {
+bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e, Times *times) {
+  try {
+    require(token && request && out && times, "render: missing required argument");
+    validate_request(*request);
+    require((request->flags & PROJECT_ONLY) ||
+                (out->rgba && out->depth && out->primitive && out->instance),
+            "render: missing frame output arrays");
+  } catch (const std::exception &failure) {
+    record(e, "render", failure.what());
+    return false;
+  }
   Session &s = *static_cast<Session *>(token);
   const Request r = *request;
   s.stage = "instance_transform_project";
@@ -515,8 +505,8 @@ bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e,
     auto t = Clock::now();
     reset_bad(s);
     if (s.scene.nplaced_vertices)
-      project_kernel<<<(s.scene.nplaced_vertices + 255) / 256, 256, 0,
-                       s.stream>>>(s.scene, r, s.jets, s.points, s.bad);
+      project_kernel<<<(s.scene.nplaced_vertices + 255) / 256, 256, 0, s.stream>>>(
+          s.scene, r, s.jets, s.points, s.bad);
     check_bad(s);
     times->project = ms(t);
     if (out->projected) {
@@ -535,25 +525,22 @@ bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e,
     s.stage = "triangle_setup";
     t = Clock::now();
     if (s.scene.nprimitives)
-      setup_kernel<<<(s.scene.nprimitives + 255) / 256, 256, 0, s.stream>>>(
-          s.scene, r, s.points, s.triangles);
+      setup_kernel<<<(s.scene.nprimitives + 255) / 256, 256, 0, s.stream>>>(s.scene, r, s.points,
+                                                                            s.triangles);
     finish(s);
     times->setup = ms(t);
     s.stage = "tile_count_scan_allocate_fill";
     t = Clock::now();
     reserve_tiles(s, ntiles);
-    check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream),
-          "zero tile counts");
+    check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream), "zero tile counts");
     if (s.scene.nprimitives)
       count_kernel<<<(s.scene.nprimitives + 255) / 256, 256, 0, s.stream>>>(
           s.triangles, s.scene.nprimitives, tx, s.counts);
     uint32_t blocks = (ntiles + 511) / 512;
-    scan512<<<blocks, 256, 0, s.stream>>>(s.counts, s.offsets, s.block_sums,
-                                          ntiles);
-    scan512<<<1, 256, 0, s.stream>>>(s.block_sums, s.block_offsets, nullptr,
-                                     blocks);
-    add_scan<<<(ntiles + 255) / 256, 256, 0, s.stream>>>(
-        s.offsets, s.block_offsets, s.block_sums, ntiles, blocks);
+    scan512<<<blocks, 256, 0, s.stream>>>(s.counts, s.offsets, s.block_sums, ntiles);
+    scan512<<<1, 256, 0, s.stream>>>(s.block_sums, s.block_offsets, nullptr, blocks);
+    add_scan<<<(ntiles + 255) / 256, 256, 0, s.stream>>>(s.offsets, s.block_offsets, s.block_sums,
+                                                         ntiles, blocks);
     uint64_t references = 0;
     copy_out(&references, s.offsets + ntiles, 1, s);
     finish(s);
@@ -562,8 +549,7 @@ bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e,
       allocate(s.bins, references);
       s.bin_capacity = references;
     }
-    check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream),
-          "zero tile cursors");
+    check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream), "zero tile cursors");
     if (s.scene.nprimitives)
       fill_kernel<<<(s.scene.nprimitives + 255) / 256, 256, 0, s.stream>>>(
           s.triangles, s.scene.nprimitives, tx, s.counts, s.offsets, s.bins);
@@ -576,8 +562,8 @@ bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e,
     visibility_kernel<<<dim3(tx, ty), dim3(16, 16), 0, s.stream>>>(
         s.triangles, s.offsets, s.bins, width, height, tx, s.samples, s.bad);
     resolve_kernel<<<(npixels + 255) / 256, 256, 0, s.stream>>>(
-        s.triangles, s.points, s.scene.materials, r, s.samples, s.rgba, s.depth,
-        s.primitive, s.instance, s.bad);
+        s.triangles, s.points, s.scene.materials, r, s.samples, s.rgba, s.depth, s.primitive,
+        s.instance, s.bad);
     check_bad(s);
     times->display = ms(t);
     s.stage = "result_download";
@@ -604,11 +590,12 @@ bool close_gpu(void *token, Error *e, Times *times) {
   times->close = ms(t);
   return clean && selected_ok;
 }
-bool create(const SceneView *view,uint32_t,int32_t device,void **out,Error *e,Times *times) {
-  return create_profile(view,device,out,e,times,false);
+bool create(const SceneView *view, uint32_t, int32_t device, void **out, Error *e, Times *times) {
+  return create_profile(view, device, out, e, times, false);
 }
-bool create_v2(const SceneView *view,uint32_t,int32_t device,void **out,Error *e,Times *times) {
-  return create_profile(view,device,out,e,times,true);
+bool create_v2(const SceneView *view, uint32_t, int32_t device, void **out, Error *e,
+               Times *times) {
+  return create_profile(view, device, out, e, times, true);
 }
 const Api api = {1, sizeof(Api), create, evaluate_gpu, render_gpu, close_gpu};
 const Api api_v2 = {2, sizeof(Api), create_v2, evaluate_gpu, render_gpu, close_gpu};
