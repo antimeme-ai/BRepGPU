@@ -54,3 +54,14 @@ semantic cases PASS; final root CMake instrumentation/review follows this edit.
 Source boundaries, geometry tasks, contact epochs, optimizer and full watch/result
 integration remain this owner's next dependencies, not completed capabilities
 inferred from the primitive tests.
+
+Circumcenter integration review found one additional sticky-attempt edge case:
+the double overload imported a nonfinite candidate before spending its lineage.
+The existing sticky test gained a literal infinite-coordinate rejection and
+observed actual RED (`nonfinite rational binary64 input`). The overload now
+rejects/spends without publishing a site; a second finite attempt is refused.
+Fresh consistent-header strict execution passes all ten methods. An earlier
+compile straddled the runtime owner's Budget layout extension and returned a
+spurious cancellation; the clean closure rebuild resolves that transient ABI
+mix. The cached metric-coordinate getter now feeds the owned domain bridge
+without copying or independently reconstructing the fixed metric.
