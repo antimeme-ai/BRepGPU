@@ -241,3 +241,45 @@ RN header dependency; CUDA17 sees only adaptive_geometry_types.h,
 adaptive_numeric.hpp and adaptive_rn_tables.hpp. Runtime CUDA target consumes
 these inline bodies and external workspace; this library has no CUDA session.
 All builds/tests use cached-adaptive-mesher/build/adaptive-geometry-{release,asan}.
+
+## Reviewed implementation seam clarifications
+
+The implemented factory borrows `const SourceStore&` and `const
+shared_ptr<RunResource>&`, then retains owned copies inside SourceCache.
+Regular means local immersion on the requested untrimmed rectangle; this first
+operation does not promise global source injectivity or a closed B-rep.
+Analytic planes prove rank[X,Y]=2 (unused Z may be zero), other admitted families
+prove full original frame rank, nonzero relevant radii and no source pole/apex
+inside the finite chart. Sphere cosine endpoint sign plus width<pi proves the
+pole exclusion; ring-torus radius separation is an explicit initial profile.
+Rational `NodeBounds.regularity_proved` uses the SAME restricted homogeneous
+net derivative hull/cofactor; failure refines the SAME cache or reports bounded
+unresolved, never positional success by itself.
+
+Prepared descriptors retain `sample_owners[9]` for low/interior/high U×V cases.
+Metered ordered source endpoint/corner indexes fill these once; evaluator-only
+closed neighboring roots preserve lex-lower original ownership at query-boundary
+knots. No per-point source-root scan occurs.
+
+Exact fallback takes exact original UV/box Rational spans, never infers truth
+from an interval. It reconstructs only the selected original root from source
+coefficients, reuses existing owned original analytic formulas on rare fallback,
+and compares exact residual norms/squared thresholds to the exact allowance.
+A conservative upper exceeding tolerance is not a lower/infeasibility claim.
+All constructed-stage Q use the same RN midpoint of outward64 source endpoints;
+the exact original source relationship remains distinct from Q departure.
+
+HD coefficient request records (`RestrictionCoefficient`, `TensorCoefficient`)
+avoid same-type positional-argument swaps. A supplied warp-reduced maximum
+residual may bypass only the serial coefficient loop of `bound_node_rn64`;
+Wmin, regularity, division and the packet fold remain the identical function.
+
+Rational axis scores use anchored homogeneous first/second control differences
+and denominator first variation, with degree factors and Wmin normalization;
+actual bilinear twist contributes to both active axes. They do not multiply one
+scalar e by U/V widths. This cheap heuristic needs no per-control quotient/sqrt
+or repeated full residual pass. A q=1 original support proves affine-separable V
+when W_i0=W_i1 and (N_i1-N_i0)/W_i is the same vector across U support; exact
+cross products check this once per requested original root. The p=1 dual proves
+U. This is the source identity S(u,v)=C(u)+vD on that span, not literal S_v=0.
+The original source coefficients supply the proof, not rounded extracted values.

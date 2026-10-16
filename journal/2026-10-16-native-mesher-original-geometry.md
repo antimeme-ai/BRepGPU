@@ -608,3 +608,82 @@ independence (pure/mixed second derivatives zero), not literal S_v=0; cylinders
 have nonzero linear S_v but need no V curvature splitting. The RN-first finite
 runtime profile was independently read and accepted; heuristic axis comparisons
 do not escalate to exact trig. Typed first geometry-unit plan follows; no code.
+
+Saved finite first geometry/numeric unit plan docs/adaptive-geometry-unit.md for
+root/runtime peer review. It selects actual header/SourceCache/POD names,
+original evaluator vs prepared root identity, scaled RN sqrt/norm, requested-only
+Cox/Bernstein roots, shared analytic formulas and explicit six-coefficient
+B−SAME-L actual-facet procedure. No product code or execution yet. Root caller
+must integrate actual cached subdivisions/packets; geometry tests are not a
+standalone mesher completion claim.
+
+Peer-reviewed actual runtime and packet unit plans; scoped ACCEPT recorded in
+papers/native-adaptive-subdivision-unit-peer-review.md. Sent runtime two narrow
+completion-gate clarifications: actual physical noncollapse, and exact allowance
+comparison via downward conversion/precise ambiguity. Packets retains chart-only
+construction scope and runtime owns actual-facet completion. No geometry run.
+
+First adaptive geometry missing-operation RED observed on isolated new fleet:
+`c++ -std=c++20 -I native context/adaptive-geometry-red.o native/mesher/source.cpp
+-o context/adaptive-geometry-red`; existing actual SourceStore source is linked.
+`context/adaptive-geometry-red.log` reports precisely missing prepare_source_cache,
+evaluate_sample and bound_actual_facet (exit1). Headers and real fixture preceded
+all bodies. Runtime and algorithm peer reviews ACCEPT; numerical owner required
+exact original parameters in fallback seam, now explicit Rational spans in
+adaptive_geometry.hpp rather than inferring truth from interval endpoints.
+
+Adaptive geometry initial strict Clang18 Release GREEN, independent actual-output
+reader GREEN213 observations: original rational grid/precise parameters,
+source→actualB dense sample inequalities, actualL threshold equality,129
+original-argument trig inputs and subnormal multiplication. Extended the SAME
+reader through7 original analytic-source families: plane/cylinder/cone/sphere/
+torus with nonorthogonal frames and finite1e200/1e-200 plane frames;25 original
+points/family plus source→actualB inequalities all GREEN. First matching
+ASan/UBSan/leak path GREEN. These are numerical-unit results, not complete
+adaptive patch/wholecomponent publication. Full source→cache→triangles caller
+remains runtime integration.
+
+Root numerical source review caught radius-sum nearest rounding on torus,
+invalidinterval propagation before min/max and unscaled frame Gram. Fixed all
+in the common DAG/preparation. Public precise methods now admit RN environment;
+profilepromotedQ uses the SAME RN midpoint of returned outward64 endpoints.
+Finite analytic regularity checks reject singular input charts; rational node
+bounds prove local immersion from differenced homogeneous control nets in the
+SAME adaptive cache, never through another subdivision tree. Root/runtime
+agreed actualphysical noncollapse remains a separate final gate and local
+immersion does not claim global embedding.
+
+Canonical original knot point ownership now precomputed once using metered
+ordered endpoint/corner maps; prepared sample_owners[9] is O(1) at points.
+Evaluator-only touching neighbor roots preserve lower-original-span ownership
+when a requested rectangle begins on a source knot. No repeated root scan.
+Tidy found only three same-type helper argument groups and unnecessary factory
+value copies; changed to finite coefficient request records/UVPair and borrowed
+constrefs while SourceCache retains owned leases. No suppression added.
+
+Adaptive geometry final expanded Release and ASan/UBSan/leak source reader
+GREEN214 main observations +7 analytic families; same reader additionally
+checks three weighted extrusion bounds and selected original-coefficient
+extreme-weight fallback. Owned-source clang-tidy GREEN, no suppressions. Saved
+public-safe results/adaptive-geometry-2026-10-16/REPORT.md and TSV. No wholepatch
+or performance claim follows from numerical-unit checks.
+
+Root actual CUDA module strict NVCC needed HD infinity constructed from its IEEE
+word rather than host numeric_limits constexpr; common numerical header changed
+without changing the represented value. Scoped actual module review found
+short rational net admission, missing node source-box containment and ineffective
+all-affine failed-bound split action. Root fixed each before final integration;
+review saved papers/native-adaptive-device-geometry-review.md.
+
+Actual same independent reader on both P100s GREEN:
+`python3 -B tests/native_adaptive_geometry_oracle.py --fixture
+build/adaptive-geometry-release/brepgpu_native_adaptive_geometry --source
+build/adaptive-geometry-release/original-geometry.bgsource --analytic-fixtures
+context/adaptive-analytic-fixtures --cuda-module
+build/adaptive-root-cuda/libbrepgpu_mesher_adaptive_cuda.so --device 0`
+(and device1). Logs context/adaptive-geometry-p100-0.log and -1.log. Actual device
+source sample/node/child restriction/facet operations consumed; scalar trig
+stress and selected exact fallback remain explicitly host checks. Module
+observed SHA4dc828ac7f701c84c10ce3fec024cb534e456ef87aeb38d300f8f2330d9f11d1.
+Stop this bounded numerical qualification cohort; parent owns integrated cache
+mesh/caller closure and coherent commits.
