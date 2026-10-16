@@ -43,8 +43,16 @@ Use these finite packets, with exact spelling reconciled to the geometry header:
   separate. Image acceptance requires both the geometry proof and the query's
   explicit compatible correspondence policy.
 
-The function table provides create, samples, paired_children, nodes, poll, stats
-and destroy. Reuse existing DeviceConfig, DeviceError, DeviceStats and the
+The function table provides create, samples, install_controls, paired_children,
+nodes, trace_bounds, poll, stats and destroy. install_controls admits the counted
+initial forest/map-cut restrictions and demanded promoted numerical tiers into
+uninitialized control slots. It cannot overwrite retained source/base nets and
+does not replace GPU midpoint child construction with per-leaf host restriction.
+trace_bounds consumes AffineTraceBoundInput records and
+a batch flat control pool from the common geometry service. Its rational and
+direct-derivative variants are bound-only source restrictions; an analytic
+carrier trace is never registered as a fictitious analytic curve evaluator.
+Reuse existing DeviceConfig, DeviceError, DeviceStats and the
 DeviceSession token. Poll capacity is RESULT RECORD COUNT; restrictions have no
 result payload. One operation may be pending per session. Inputs are copied to
 owned pinned staging before asynchronous work. Pending/retired allocations and
