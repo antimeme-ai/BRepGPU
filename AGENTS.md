@@ -262,6 +262,22 @@ source authority, error semantics, shared topology, parallel CPU/P100 placement
 and independent actual-output/performance families belong to one design. Do not
 resume isolated hotspot patches or unchanged watch trials while it is reviewed.
 
+The operator subsequently selects cached adaptive subdivision as the primary
+construction architecture, to make BRepGPU a useful GPU-accelerated counterpart
+to USD/BRep. Read docs/ADAPTIVE_MESHER_DESIGN.md and its current review/plan.
+The previous direct-refinement design/plan retain historical source contracts
+and a measured control; they no longer select the primary constructor. Thoroughly
+study the reference and wider literature for additional advantage: do not
+doggedly inherit NVIDIA's cache layout, numerical representation, split rules,
+trim algorithm or other implementation tradeoffs. Preserve original source
+authority and actual-output accuracy, shared topology and deterministic
+CPU/P100 semantics; revisit self-imposed choices such as correctly-nearest
+transcendental point construction explicitly when a bounded construction is
+sufficient. GPU placement must include actual adaptive geometry work. Compare
+cold and declared warm-cache operations with source, quality, transfers, memory,
+failures and unsupported outcomes accounted for. GPU advantage is a hypothesis
+to test, not an outcome to manufacture. Source IDs/names never select dispatch.
+
 ## Development workflow
 
 Use a feature branch for each substantial delivery. Make frequent, coherent

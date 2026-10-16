@@ -1,5 +1,10 @@
 # Deliver the whole native mesher
 
+The operator selected [cached adaptive subdivision](ADAPTIVE_MESHER_DESIGN.md)
+on2026-10-16. The previous plan below is historical context for the delivered
+native components; it no longer schedules direct refinement as the primary
+constructor. A concrete successor plan follows the revised design review.
+
 Status: accepted after independent algorithm, geometry and runtime plan review.
 Implementation follows the concrete unit procedures and interface reconciliation
 below. The selected
