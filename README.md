@@ -28,7 +28,26 @@ solids. Construction, meshing and these views run on CPU.
 [Images, source/history exports and scoped costs](results/watch-2026-10-15/REPORT.md) ·
 [Target and design notes](docs/WATCH_TARGET.md).
 
-The supplied real OM10 movement is driving an owned
+**Current mesher development:** an owned
+[cached adaptive subdivision design](docs/ADAPTIVE_MESHER_DESIGN.md), with
+[a concrete delivery plan](docs/ADAPTIVE_MESHER_PLAN.md), is now primary.
+We study NVIDIA USD/BRep and the wider literature for stronger numerical,
+cache, trim and GPU algorithms. CPU and P100 will execute the same source-linked
+operation, with cold and declared cache-reuse costs reported separately.
+The design is under implementation-unit review; no new adaptive mesh or GPU
+speedup is claimed yet. The complete OM10 render remains pending.
+
+```mermaid
+flowchart LR
+  S[Original B-rep] --> C[Reusable curve and surface caches]
+  C --> A[Adaptive geometry on CPU or P100]
+  A --> I[Conforming interior packets]
+  A --> B[Shared trims and local boundary regions]
+  I --> M[Source-linked bounded mesh]
+  B --> M
+```
+
+Earlier work on the supplied real OM10 movement delivered an owned
 [C++20 direct constrained Delaunay constructor](docs/DIRECT_CDT.md):
 alternating-cut initial triangulation, randomized constraint recovery, compact
 indexed topology and filtered exact metric predicates. An **8,192-site forced

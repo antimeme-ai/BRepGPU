@@ -585,3 +585,26 @@ public helper seam in the existing ordinary face-preparation fixture. Root's
 coordinator guard also avoids unnecessary cap math for ordinary source events.
 No cap arithmetic or completed source-case results changed. Root owns the final
 affected ordinary fixture rerun; no additional geometry campaign is started.
+
+### Adaptive cached-subdivision research checkpoint
+
+Operator selected cached adaptive subdivision as primary mesher. Research only:
+read actual pinned SMLib curve/surface caches and trim-embedding/remaining-polygon
+path, current owned geometry/store/residual/interval/point interfaces, and primary
+Filip1986 interpolation bounds plus Balazs2004 original source trim treatment.
+Saved concrete proposal `papers/native-adaptive-subdivision-geometry.md` for
+root/peer review. It selects original analytic harmonic/Gram directional bounds
+rather than universally approximating analytic carriers, cached rational
+Bernstein subdivision, one original S→actual bilinear B→SAME actual facet L error,
+common RN/outward CPU/P100 point/bound profile with charged departures, and
+compiled source harmonic cancellation. No old full preparation startup, new
+dependency, product code or geometry execution. Remaining finite numerical
+primitive/profile decisions are explicit before revised plan acceptance.
+
+Reviewed integrated ADAPTIVE_MESHER_DESIGN/PLAN and saved scoped geometry ACCEPT
+in papers/native-adaptive-subdivision-geometry-review.md. One wording correction
+sent to root: an inactive axis is proved affine-separable approximation
+independence (pure/mixed second derivatives zero), not literal S_v=0; cylinders
+have nonzero linear S_v but need no V curvature splitting. The RN-first finite
+runtime profile was independently read and accepted; heuristic axis comparisons
+do not escalate to exact trig. Typed first geometry-unit plan follows; no code.
