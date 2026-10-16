@@ -13,6 +13,9 @@ def main():
     edges = tuple(Edge(400+i,(300+i,300+(i+1)%4),600+i,
                        (1.,-1.) if i == 0 else (0.,1.),
                        False, False, False, 0.) for i in range(4))
+    # Definition inventory can contain an edge unused by every selected face.
+    # A whole-definition export must preserve it without inventing a coedge.
+    edges += (Edge(404,(300,301),600,(1.,-1.),False,False,False,0.),)
     curves = []
     for i in range(4):
         a,b = xyz[i],xyz[(i+1)%4]

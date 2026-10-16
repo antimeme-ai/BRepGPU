@@ -79,8 +79,7 @@ struct DefinitionBoundaryForest::Impl final {
   std::optional<BoundaryEvaluationBatch> pending;
   Phase phase = Phase::initial;
   BoundaryEpoch epoch{};
-  uint32_t export_ordinal = 0;
-  uint32_t batch_ordinal = 0;
+  uint32_t table_ordinal = 0;
   std::size_t arrivals = 0;
   BoundaryStats counters;
   Impl(bgfd::Budget &b, SourceStore original, Slot<DefinitionTag> d, std::shared_ptr<RunResource> r)
@@ -233,14 +232,15 @@ struct DefinitionBoundaryForest::Impl final {
     return {data().edges[edges[leaves[static_cast<std::size_t>(index)].edge].source.value].id.value,
             index};
   }
+  ExactTableKey next_table() {
+    if (table_ordinal == UINT32_MAX)
+      throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "boundary table ordinal exhausted");
+    return {{OwnerKind::boundary, definition.value, data().definitions[definition.value].id.value},
+            epoch.value,
+            table_ordinal++};
+  }
   BoundaryEvaluationBatch make_batch(std::span<const uint64_t> existing) {
-    ExactBuilder builder(resource, {{OwnerKind::boundary, definition.value,
-                                     data().definitions[definition.value].id.value},
-                                    epoch.value,
-                                    batch_ordinal});
-    if (batch_ordinal == UINT32_MAX)
-      throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "boundary batch ordinal exhausted");
-    ++batch_ordinal;
+    ExactBuilder builder(resource, next_table());
     std::pmr::vector<BoundaryEvaluationTask> tasks(resource.get());
     tasks.reserve(existing.empty() ? proposals.size() : existing.size());
     if (!existing.empty())
@@ -552,6 +552,61 @@ const Rational &DefinitionBoundaryForest::parameter(BoundarySampleSlot slot) con
     invalid("unknown boundary sample");
   return impl_->samples[slot.value].t;
 }
+std::pmr::vector<uint8_t>
+DefinitionBoundaryForest::sample_path(Slot<EdgeTag> edge, BoundarySampleSlot sample_slot) const {
+  impl_->check();
+  if (sample_slot.value >= impl_->samples.size() || !impl_->samples[sample_slot.value].ready)
+    invalid("unknown or unsettled source sample path");
+  const auto &state = impl_->edges[impl_->edge_index(edge)];
+  std::pmr::vector<uint8_t> path(budget_);
+  if (sample_slot == state.endpoints[0] || sample_slot == state.endpoints[1])
+    return path;
+  if (state.roots.empty())
+    invalid("sample does not belong to degenerate edge");
+  const auto &t = impl_->samples[sample_slot.value].t;
+  const auto direction = impl_->samples[state.endpoints[1].value].t.compare(
+      impl_->samples[state.endpoints[0].value].t);
+  std::size_t first = 0, last = state.roots.size();
+  while (first < last) {
+    budget_->charge(1);
+    const auto middle = first + (last - first) / 2;
+    const auto &root = impl_->leaves[static_cast<std::size_t>(state.roots[middle])];
+    if (t.compare(impl_->samples[root.samples[1].value].t) * direction > 0)
+      first = middle + 1;
+    else
+      last = middle;
+  }
+  if (first == state.roots.size())
+    invalid("sample outside source edge roots");
+  auto current = state.roots[first];
+  const auto &root = impl_->leaves[static_cast<std::size_t>(current)];
+  for (const auto endpoint : root.samples)
+    if (sample_slot == endpoint)
+      return path;
+  if (t.compare(impl_->samples[root.samples[0].value].t) * direction <= 0 ||
+      t.compare(impl_->samples[root.samples[1].value].t) * direction >= 0)
+    invalid("sample identity does not belong to original source root");
+  uint64_t steps = 0;
+  while (true) {
+    budget_->charge(1);
+    if (++steps > impl_->leaves.size())
+      internal("source path interval cycle");
+    const auto &interval = impl_->leaves[static_cast<std::size_t>(current)];
+    if (interval.leaf)
+      invalid("sample is not an installed source midpoint");
+    const auto &left = impl_->leaves[static_cast<std::size_t>(interval.children[0])];
+    const auto midpoint = left.samples[1];
+    if (sample_slot == midpoint)
+      return path;
+    const auto order = t.compare(impl_->samples[midpoint.value].t) * direction;
+    if (order == 0)
+      invalid("source midpoint has a different sample identity");
+    const uint8_t child = order < 0 ? 0u : 1u;
+    reserve_more(path, 1);
+    path.push_back(child);
+    current = interval.children[child];
+  }
+}
 SourceBoundarySnapshot DefinitionBoundaryForest::freeze_face_boundary(Slot<FaceTag> face) const {
   impl_->check();
   if (impl_->phase != Impl::Phase::idle)
@@ -576,18 +631,38 @@ SourceBoundarySnapshot DefinitionBoundaryForest::freeze_face_boundary(Slot<FaceT
     return source.edges[a.value].id < source.edges[b.value].id;
   });
   incident.erase(std::unique(incident.begin(), incident.end()), incident.end());
-  if (impl_->export_ordinal == UINT32_MAX)
-    throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "boundary snapshot ordinal exhausted");
-  const auto export_ordinal = ++impl_->export_ordinal;
-  ExactBuilder builder(impl_->resource, {{OwnerKind::boundary, impl_->definition.value,
-                                          source.definitions[impl_->definition.value].id.value},
-                                         impl_->epoch.value,
-                                         export_ordinal});
+  auto rows = freeze_rows(incident);
+  return std::allocate_shared<SourceBoundarySnapshotData>(
+      RunAllocator<SourceBoundarySnapshotData>(impl_->resource), std::move(*rows), face,
+      generation);
+}
+DefinitionBoundarySnapshot DefinitionBoundaryForest::freeze_definition_boundary() const {
+  impl_->check();
+  std::pmr::vector<Slot<EdgeTag>> inventory(budget_);
+  inventory.reserve(impl_->edges.size());
+  for (const auto &edge : impl_->edges) {
+    budget_->charge(1);
+    inventory.push_back(edge.source);
+  }
+  std::sort(inventory.begin(), inventory.end(), [&](auto a, auto b) {
+    budget_->charge(1);
+    return impl_->data().edges[a.value].id < impl_->data().edges[b.value].id;
+  });
+  return freeze_rows(inventory);
+}
+std::shared_ptr<DefinitionBoundarySnapshotData>
+DefinitionBoundaryForest::freeze_rows(std::span<const Slot<EdgeTag>> incident) const {
+  impl_->check();
+  if (impl_->phase != Impl::Phase::idle)
+    invalid("original boundary is not settled for export");
+  ExactBuilder builder(impl_->resource, impl_->next_table());
   // Collect transport rows in the owner arena while the parameter table is
   // still open. The published object receives only sealed values and copies.
   std::pmr::vector<SourceBoundaryEdge> edge_rows(&impl_->budget);
   std::pmr::vector<PhysicalNode> node_rows(&impl_->budget);
   std::pmr::vector<BoundaryKey> interval_rows(&impl_->budget);
+  std::pmr::vector<Range<uint8_t>> paths(budget_);
+  std::pmr::vector<uint8_t> bits(budget_);
   for (const auto edge : incident) {
     impl_->budget.charge(1);
     const auto samples = chain(edge);
@@ -598,16 +673,21 @@ SourceBoundarySnapshot DefinitionBoundaryForest::freeze_face_boundary(Slot<FaceT
       impl_->budget.charge(1);
       const auto value = sample(slot);
       node_rows.push_back({value.key, value.xyz, builder.append(parameter(slot))});
+      const auto path = sample_path(edge, slot);
+      paths.push_back({bits.size(), path.size()});
+      bits.insert(bits.end(), path.begin(), path.end());
     }
     interval_rows.insert(interval_rows.end(), keys.begin(), keys.end());
     edge_rows.push_back({edge, nodes, constraints});
   }
-  auto result = std::allocate_shared<SourceBoundarySnapshotData>(
-      RunAllocator<SourceBoundarySnapshotData>(impl_->resource), impl_->resource, impl_->source,
-      impl_->definition, face, impl_->epoch, generation, builder.seal());
+  auto result = std::allocate_shared<DefinitionBoundarySnapshotData>(
+      RunAllocator<DefinitionBoundarySnapshotData>(impl_->resource), impl_->resource, impl_->source,
+      impl_->definition, impl_->epoch, builder.seal());
   result->edges.assign(edge_rows.begin(), edge_rows.end());
   result->nodes.assign(node_rows.begin(), node_rows.end());
   result->intervals.assign(interval_rows.begin(), interval_rows.end());
+  result->sample_paths.assign(paths.begin(), paths.end());
+  result->path_bits.assign(bits.begin(), bits.end());
   return result;
 }
 BoundaryStats DefinitionBoundaryForest::stats() const {
