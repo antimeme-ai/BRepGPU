@@ -21,3 +21,12 @@ construction separate from169.985s independent qualification. General CDT
 workloads, private-source aggregate outcomes, source/binary pins and numerical
 reviews are published. No extra verification campaign follows this bounded
 delivery. The fresh full107-definition trial follows the existing watch plan.
+
+The fresh whole-source geometry and all166 original assembly placements pass
+before meshing. The run has reached the2,000/25,871 edge marker. One bounded
+three-second nonblocking sample (178 valid samples/121 sampling errors) locates
+actual work in edge-refinement bounds, original curve de Casteljau evaluation,
+frame coordinates and planar/angular trim bounds. This does not estimate
+whole-run percentages or select an implementation. It supports the recorded
+source-sampling/bounds study rather than another connectivity microbenchmark.
+The complete watch remains running with its original30-minute process bound.
