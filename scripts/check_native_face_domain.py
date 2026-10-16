@@ -49,12 +49,17 @@ def tools():
         raise RuntimeError('Required native static checks unavailable')
 
 
-def lint(build):
-    module = ROOT / 'native/face_domain'
-    if any(p.is_symlink() for p in module.rglob('*')):
+def lint(build, unit):
+    modules = [ROOT / 'native/face_domain']
+    if unit == 'direct-cdt':
+        modules.append(ROOT / 'native/direct_cdt')
+    if any(p.is_symlink() for module in modules for p in module.rglob('*')):
         raise RuntimeError('Owned native source symlinks require an explicit source policy')
-    cpp = sorted(p for p in module.rglob('*') if p.suffix in ('.cpp', '.hpp', '.h'))
+    cpp = sorted(p for module in modules for p in module.rglob('*')
+                 if p.suffix in ('.cpp', '.hpp', '.h'))
     cpp += sorted((ROOT/'tests').glob('native_face_domain*.cpp'))
+    if unit == 'direct-cdt':
+        cpp += sorted((ROOT/'tests').glob('native_direct_cdt*.cpp'))
     cpp += [ROOT/'tooling/native_cpu_profile.hpp']
     if not cpp:
         raise RuntimeError('No owned native face-domain sources to analyze')
@@ -100,23 +105,27 @@ def main(args):
     tools()
     if args.doctor:
         return
-    build = (args.build_dir or ROOT/f'build/face-domain-{args.profile}').resolve()
+    build = (args.build_dir or ROOT/f'build/{args.unit}-{args.profile}').resolve()
     mode, instrumentation = PROFILES[args.profile]
-    run(('/usr/bin/cmake', '-S', ROOT/'native/face_domain', '-B', build, '-G', 'Ninja',
+    module = 'direct_cdt' if args.unit == 'direct-cdt' else 'face_domain'
+    run(('/usr/bin/cmake', '-S', ROOT/'native'/module, '-B', build, '-G', 'Ninja',
          '-DCMAKE_CXX_COMPILER='+str(COMPILER), '-DCMAKE_MAKE_PROGRAM=/usr/bin/ninja',
          '-DCMAKE_BUILD_TYPE='+mode, '-DBREPGPU_NATIVE_PROFILE=linux-clang18',
          '-DBREPGPU_NATIVE_INSTRUMENTATION='+instrumentation))
     run(('/usr/bin/cmake', '--build', build, '--parallel', '4'))
     if args.lint:
-        lint(build)
+        lint(build, args.unit)
     if args.build_only:
         return
     if args.profile == 'fuzz':
         raise RuntimeError('Select the actual owning fuzz target and its oracle explicitly')
     run(('/usr/bin/ctest', '--test-dir', build, '--output-on-failure', '--no-tests=error'))
+    library = 'libbrepgpu_direct_cdt.so' if args.unit == 'direct-cdt' else 'libbrepgpu_face_domain.so'
     environment = dict(os.environ, CUDA_VISIBLE_DEVICES='',
-                       PYTHONPATH=str(ROOT/'python'),
-                       BREPGPU_FACE_DOMAIN_LIBRARY=str(build/'libbrepgpu_face_domain.so'))
+                       PYTHONPATH=os.pathsep.join((str(ROOT/'python'), str(ROOT/'tests'), str(ROOT/'examples'))),
+                       BREPGPU_FACE_DOMAIN_LIBRARY=str(build/library))
+    if args.unit == 'direct-cdt':
+        environment['BREPGPU_DIRECT_CDT_LIBRARY'] = str(build/library)
     # ASan shared-library tests must be hosted by a correctly instrumented process;
     # the caller must select a native fixture or an explicit matching ASan host.
     if args.profile in ('asan', 'tsan') and args.tests:
@@ -128,6 +137,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--unit', choices=('face-domain', 'direct-cdt'), default='face-domain')
     parser.add_argument('--profile', choices=tuple(PROFILES), default='debug')
     parser.add_argument('--build-dir', type=Path)
     parser.add_argument('--tests', nargs='*', default=[])

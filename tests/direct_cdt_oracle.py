@@ -5,7 +5,7 @@ from fractions import Fraction
 
 from brepgpu.imported_oracles import turn
 from face_domain_external_cases import ExternalCase
-from face_domain_oracle import qualify_external
+from face_domain_oracle import qualify_chain, qualify_external
 
 
 @dataclass(frozen=True)
@@ -63,7 +63,7 @@ def _admitted_case(case):
     return ExternalCase(case.name, loops, nodes)
 
 
-def qualify_cdt(case, triangles, *, metric=(1., 1.)):
+def qualify_cdt(case, triangles, *, metric=(1., 1.), input_validator=None):
     """Require fixed-site source-domain coverage/embedding and local metric CDT."""
     try:
         scales = tuple(Fraction(value) for value in metric)
@@ -75,7 +75,12 @@ def qualify_cdt(case, triangles, *, metric=(1., 1.)):
     triangles = tuple(tuple(triangle) for triangle in triangles)
     if any(type(i) is not int or not 0 <= i < 2**64 for triangle in triangles for i in triangle):
         raise AssertionError('output source node IDs must be unsigned64 integers')
-    qualify_external(original, triangles)
+    if input_validator is None:
+        qualify_external(original, triangles)
+    else:
+        if input_validator(original) is not True:
+            raise AssertionError('independent original input validation did not pass')
+        qualify_chain(original, triangles)
     points = original.points
     constraints = {tuple(sorted((a, b))) for loop in original.loops
                    for a, b in zip(loop, loop[1:] + loop[:1])}
