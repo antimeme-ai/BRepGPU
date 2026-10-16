@@ -146,6 +146,17 @@ homogeneous rationals avoid a global LCM but increase cross-products/predicate
 degree. Fixed watch-plane coordinates derived from one inverse are a much more
 structured family than arbitrary unrelated rational constructions.
 
+For that specific producer there is a useful stronger observation. Scale every
+finite binary64 frame/XYZ value by one common power of two to integers. Write
+`M=A/S` and `P-O=b/S`; then UV is `adj(A)*b/det(A)`. Every reduced coordinate
+denominator divides the same `abs(det(A))`, so adding more sampled points on
+that unchanged plane cannot introduce unrelated odd denominator factors. This
+does not bound the generic API's rational inputs, nor imply 128 bits suffice.
+It suggests measuring inverse construction separately from normalization:
+`_plane_uv` currently recomputes exact frame covectors per point even though
+the frame is unchanged. A cached exact inverse or direct cofactor-numerator
+producer is a later complete slice, outside the first domain-engine edit.
+
 Anisotropic denominator scaling preserves orientation but not Euclidean circles.
 The existing Lawson metric weights compensate explicitly. Do not feed integer
 XY into an ordinary unweighted incircle routine or distance ranking.
@@ -198,6 +209,26 @@ per-point expansion caches. [arXiv 2105.09772v2, sections 4–5](https://arxiv.o
 
 ## Change triangulation only when the remaining cost warrants it
 
+A deferred specialization may be stronger than merely pruning dead leaves:
+**simple, hole-free weakly convex rings**, with all exact cyclic turns
+nonnegative, still contain many protected collinear samples. For a strict corner
+ear, another boundary point can lie in its closed triangle only on its proposed
+diagonal. Convexity then forces the rest of the ring onto that supporting line:
+the current ring has exactly three strict corners, both immediate neighbors of
+the ear tip are strict, and more than three occurrences remain. That is the
+triangle-with-flat-opposite-edge blocker identified above. Otherwise a strict
+corner has no blocker. Maintain exact strict-corner flags/count after each
+removal and preserve the current cursor, skipping this exceptional blocked ear.
+
+This is a proposed proof direction for a separate bounded unit, not implemented
+or performance-qualified here. It could eliminate point queries entirely for
+exact rectangular charts while preserving every source sample; the first unit's
+strict-only shortcut deliberately does less. Exact tiny zigzags invalidate this
+admission, even if a chart looks rectangular on screen. Measure actual turn
+signs before selecting it, and never snap coordinates to manufacture convexity.
+Bridge slits/holes remain outside this argument. A full review must check the
+supporting-line argument and total cursor work before advertising linear time.
+
 Eberly's simple-polygon method maintains reflex and ear lists and updates the
 neighbors of a removed ear, achieving quadratic rather than straightforward
 cubic work. It uses array-backed links. Our slit representation after hole
@@ -242,6 +273,27 @@ ear/predicate control is not the first answer: the existing GPU geometry
 consumer already needs stable native buffers, and CPU candidate elimination is
 the measured defect. GPU broadphase can be evaluated later with total transfer,
 fallback and publication costs visible.
+
+## After connectivity: is refinement doing useful geometric work?
+
+Another measured experiment should distinguish slow construction from excessive
+output. Current acceptance uses Hessian/chord error, while split selection uses
+first-derivative physical edge length. These are different objectives. For a
+cylinder, the interpolation bound depends on U width and has zero V curvature;
+a very long V extent can nevertheless dominate the edge-length priority.
+Predicting child error bounds or using a curvature-weighted edge score could
+prefer splits that reduce the actual failing term. This is a counterexample
+direction, not a demonstrated OM10 cost share: shared boundary sampling and the
+preceding Lawson pass can already eliminate that situation on ordinary strips.
+
+Measure accepted/rejected triangle counts, created nodes, queue/stale storage,
+failing bound terms and maximum-child-bound reduction per selected split before
+choosing an upgrade. Compare unchanged source-derived boundary samples and final
+world-space quality. Do not make a faster algorithm look better by relaxing its
+error bound. A later local Bézier/subdivision bound may reduce conservatism,
+but it must bound the actual carrier-to-triangle error rather than merely
+report smaller sampled residuals. The first fixed-domain native unit deliberately
+does not implement any of these refinement changes.
 
 ## Performance experiments that can reject these recommendations
 
