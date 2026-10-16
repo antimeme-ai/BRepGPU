@@ -18,6 +18,12 @@ The [reviewed plan](OM10_IMPLEMENTATION_PLAN.md),
 [source/recovery study](../papers/2026-10-15-om10-import-mesh-study.md) and
 [independent-oracle subplan](OM10_ORACLE_SUBPLAN.md) describe those obligations.
 
+The operator requested diagnosis before further implementation after the owned
+CPU mesh exceeded four hours. The [diagnosis](../papers/2026-10-15-om10-mesher-diagnosis.md)
+identifies sampled-boundary pair enumeration and repeated ear-point scanning,
+including an8,300-node face. The live run remains unchanged; repair and new
+experiments are held pending the operator-facing report and next direction.
+
 The operator also requires **NVIDIA USD/BRep on CPU** on this same complete
 movement and both views. The owned CPU/P100 matrix isolates our acceleration;
 it does not supply that external baseline. The genuine NVIDIA producer and raw CPU display are implemented and tested on
@@ -26,6 +32,11 @@ admission and measurements remain pending. External results
 must identify their actual source translation and renderer; no OCCT or owned
 triangles may be reported as NVIDIA output. The final comparison remains
 incomplete until that reference run and its outcomes are reported.
+A fresh parallel original-source geometry attempt now records all107 outcomes
+under each policy:103 emitted meshes pass existing physical/original-Euler
+checks and four definitions fail. This is not full boundary-distance admission
+or a reference render. The current owned hard part is among those failures;
+see the [reference diagnosis](../papers/2026-10-15-om10-mesher-surgical-diagnosis-reference.md).
 
 | Stage | Ownership and execution |
 | --- | --- |

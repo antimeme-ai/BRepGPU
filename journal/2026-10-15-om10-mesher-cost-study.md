@@ -16,3 +16,13 @@ post-edge schedule/canonical-vertex phases. No dominant hotspot or complete
 watch runtime has been measured by this study.
 
 No production implementation selected. Root owns integration and git.
+
+After the operator requested diagnosis before further work, performed a second
+read-only algorithm review and re-read the retained Eberly/Shewchuk material.
+Saved the specific complexity, exact-arithmetic and bounded intervention/oracle
+analysis in `papers/2026-10-15-om10-mesher-surgical-diagnosis-algorithms.md`.
+Root supplied the nonblocking live samples and numeric locals; no further
+process attachment, execution, implementation or restart was performed here.
+The current 8,300-node/four-coedge face demonstrates why actual sampled counts
+must replace original topology size when diagnosing this run. Recommendations
+remain proposals pending the operator-facing report.
