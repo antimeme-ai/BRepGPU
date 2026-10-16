@@ -1150,7 +1150,7 @@ def _circle_candidate(source,joint,parameters,mandatory,step,width,quality,prote
     return result,collars
 
 
-def _coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bounds,quality,errors):
+def _coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bounds,quality,errors,*,boundary_intersection=_boundary_intersection):
     eligible={};joint_count=0;protected={};checked={};accepted=0
     for face in source.faces:
         if source.carrier(face.carrier_id).kind!=1:continue
@@ -1169,7 +1169,7 @@ def _coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bound
                     plane_uses.setdefault(source.coedge(ci).edge_id,set()).add(face.id)
     for fid,pairs in eligible.items():
         face=source.face(fid);loops,points,owners=_planar_schedule_boundary(source,face,parameters,contexts)
-        crossing=_boundary_intersection(loops,points)
+        crossing=boundary_intersection(loops,points)
         if crossing is None:
             checked[fid]=tuple(tuple(points[i] for i in loop) for loop in loops);continue
         joint=pairs.get(frozenset((owners[crossing[0]],owners[crossing[2]])))
@@ -1199,7 +1199,7 @@ def _coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bound
             trial=parameters|replacements;results={}
             for affected in sorted(set.union(*(plane_uses[eid] for eid in replacements))):
                 ls,ps,_=_planar_schedule_boundary(source,source.face(affected),trial,contexts)
-                if _boundary_intersection(ls,ps) is not None:admitted=False;break
+                if boundary_intersection(ls,ps) is not None:admitted=False;break
                 results[affected]=tuple(tuple(ps[i] for i in loop) for loop in ls)
             if not admitted:continue
             accepted+=1
@@ -1214,13 +1214,26 @@ def _coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bound
     return checked
 
 
-def mesh_imported(source,quality=None,*,progress=None):
-    """Mesh every supplied solid definition without a foreign mesh fallback."""
+def mesh_imported(source,quality=None,*,progress=None,domain_backend='native'):
+    """Mesh every supplied definition using the selected exact domain engine.
+
+    Native ears remain the default. Direct CDT and the Python legacy reference
+    are explicit choices; all retain source sampling and quality limits.
+    """
     if type(source) is not ImportedSource:raise TypeError('expected ImportedSource')
     if source.units_mm!=1.0:raise ValueError('imported meshing requires explicit millimetre source parameters')
     if quality is None:quality=MeshQuality()
     if type(quality) is not MeshQuality:raise TypeError('expected MeshQuality')
     if progress is not None and not callable(progress):raise TypeError('progress must be callable')
+    if domain_backend in ('native','direct'):
+        from .face_domain import first_crossing as boundary_intersection, triangulate, require_available
+        require_available()  # Load and validate symbols before expensive source preparation.
+        if domain_backend=='direct':
+            from .face_domain import constrained_delaunay, require_direct_cdt_available
+            require_direct_cdt_available()
+    elif domain_backend=='python':
+        boundary_intersection,triangulate=_boundary_intersection,_triangulate
+    else:raise ValueError("domain_backend must be 'native', 'direct' or 'python'")
     begin=time.perf_counter();validate_source(source)
     vertices=[];triangles=[];face_meshes=[];edge_samples=[]
     vertex_by_key={};endpoint_keys={};edge_records={};incidents={};edge_owners={}
@@ -1290,7 +1303,8 @@ def mesh_imported(source,quality=None,*,progress=None):
         if len(samples)>quality.max_edge_samples:raise ValueError('source edge exceeds sample budget')
         parameters[edge.id]=tuple(samples);edge_bounds[edge.id]=maximum
         if progress is not None and (edge_index+1)%1000==0:progress('edges',edge_index+1,len(source.edges),edge.id)
-    checked_planes=_coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bounds,quality,errors)
+    checked_planes=_coordinate_circle_schedules(source,parameters,mandatory,contexts,edge_bounds,quality,errors,
+                                               boundary_intersection=boundary_intersection)
     errors['max_edge_chord_bound_mm']=max(edge_bounds.values(),default=0.)
     for edge in source.edges:
         owner=edge_owners[edge.id];samples=parameters[edge.id]
@@ -1472,16 +1486,20 @@ def mesh_imported(source,quality=None,*,progress=None):
         mu,mv=metric_cache[carrier.id]
         metric_scale=math.hypot(mu*(max(p[0] for p in points.values())-min(p[0] for p in points.values())),
                                 mv*(max(p[1] for p in points.values())-min(p[1] for p in points.values())))
-        # Direct domain simplicity is required before ears; no epsilon cleanup.
-        sequence=tuple(tuple(points[i] for i in loop) for loop in node_loops)
-        if checked_planes.get(face.id)!=sequence and _boundary_intersection(node_loops,points) is not None:
-            raise ValueError(f'face {face.id}: intersecting sampled UV boundary')
-        for hole in node_loops[1:]:
-            if _winding([points[i] for i in node_loops[0]],points[hole[0]])!=1:
-                raise ValueError(f'face {face.id}: hole outside source outer boundary')
-        try:initial=_triangulate(node_loops,points)
+        # Direct CDT validates the complete original domain itself. The ear
+        # paths retain their historical prechecks before constructing triangles.
+        if domain_backend!='direct':
+            sequence=tuple(tuple(points[i] for i in loop) for loop in node_loops)
+            if checked_planes.get(face.id)!=sequence and boundary_intersection(node_loops,points) is not None:
+                raise ValueError(f'face {face.id}: intersecting sampled UV boundary')
+            for hole in node_loops[1:]:
+                if _winding([points[i] for i in node_loops[0]],points[hole[0]])!=1:
+                    raise ValueError(f'face {face.id}: hole outside source outer boundary')
+        try:
+            initial=(constrained_delaunay(node_loops,points,metric=metric_cache[carrier.id],seed=0)
+                     if domain_backend=='direct' else triangulate(node_loops,points))
         except ValueError as exc:raise ValueError(f'face {face.id}: {exc}') from None
-        if any(_surface_error(carrier,[points[i] for i in tri],derivative_cache)+max(displacements[i] for i in tri)>quality.tolerance_mm*.75 for tri in initial):
+        if domain_backend!='direct' and any(_surface_error(carrier,[points[i] for i in tri],derivative_cache)+max(displacements[i] for i in tri)>quality.tolerance_mm*.75 for tri in initial):
             try:initial=_improve_connectivity(initial,points,boundary_edges,metric_cache[carrier.id])
             except ValueError as exc:raise ValueError(f'face {face.id}: {exc}') from None
         active={i:(tri,0) for i,tri in enumerate(initial)};next_tri=len(active)

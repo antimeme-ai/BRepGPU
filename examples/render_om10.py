@@ -32,6 +32,10 @@ def tsv(path, header, rows):
 def pin_files():
     files = tuple((ROOT/'python/brepgpu').glob('imported_*.py'))
     files += tuple((ROOT/'native/om10').glob('*'))+tuple((ROOT/'native/step_source').glob('*'))+tuple((ROOT/'native/source_uv').glob('*'))
+    files += tuple((ROOT/'native/face_domain').glob('*'))
+    files += tuple((ROOT/'native/direct_cdt').glob('*'))
+    files += (ROOT/'python/brepgpu/face_domain.py', ROOT/'tooling/native_cpu_profile.hpp',
+              ROOT/'tooling/native_cpu_rigor.cmake')
     files += (ROOT/'examples/om10_scene.py', ROOT/'examples/render_om10.py')
     files += tuple(ROOT/p for p in ('native/evaluator.hpp', 'native/backend_api.h', 'include/brepgpu.h',
                                     'python/brepgpu/interchange_oracles.py'))
@@ -41,6 +45,12 @@ def pin_files():
 
 def binary_pins(args):
     binaries = [('step_source_adapter', args.adapter)] if args.step else []
+    if args.domain_backend in ('native', 'direct'):
+        from brepgpu.face_domain import library_path
+        binaries.append(('native_face_domain', library_path()))
+    if args.domain_backend == 'direct':
+        from brepgpu.face_domain import direct_cdt_library_path
+        binaries.append(('native_direct_cdt', direct_cdt_library_path()))
     if args.mode != 'prepare':
         binaries.append(('native_executable', args.native))
         if args.backend == 'cuda':
@@ -156,7 +166,7 @@ def main(args):
     start = time.perf_counter()
     quality = MeshQuality(tolerance_mm=args.tolerance, source_residual_mm=args.source_residual,
                           max_refinement=args.max_refinement, max_edge_samples=args.max_edge_samples)
-    mesh = mesh_imported(source, quality)
+    mesh = mesh_imported(source, quality, domain_backend=args.domain_backend)
     times.append(('owned_trimmed_mesh', time.perf_counter()-start))
     start = time.perf_counter()
     assembly = assemble(source)
@@ -275,6 +285,8 @@ def main(args):
         ('unique_mesh_vertices', len(mesh.vertices)), ('unique_uv_cells', len(mesh.triangles)),
         ('placed_rendered_triangles', placed_triangles), ('frames', len(requested_views)),
         ('tolerance_mm', args.tolerance), ('source_residual_limit_mm', args.source_residual),
+        ('domain_backend', args.domain_backend),
+        ('connectivity_seed', 0 if args.domain_backend == 'direct' else 'not applicable'),
         ('foreign_preparation', 'CPU STEP/XDE; original pcurves absent and reconstructed'),
         ('owned_mesh', 'CPU shared-edge/trim-domain construction'),
         ('native_gpu_work', gpu_work),
@@ -307,6 +319,7 @@ def parser():
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--mode', choices=('prepare', 'evaluate', 'render'), default='prepare')
     p.add_argument('--backend', choices=('cpu', 'cuda'), default='cpu')
+    p.add_argument('--domain-backend', choices=('native', 'direct', 'python'), default='native')
     p.add_argument('--threads', type=int, default=24)
     p.add_argument('--device', type=int, choices=(0, 1), default=0)
     p.add_argument('--view', choices=('assembled', 'exploded', 'both'), default='both')

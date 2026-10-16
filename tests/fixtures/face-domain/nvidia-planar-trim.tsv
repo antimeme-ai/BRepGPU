@@ -1,0 +1,12 @@
+# Original literal geometry from TestSmTrimSurfaceWith3dCurves; see PROVENANCE.md.
+# kind x y radius; ordered outer CCW and triangle hole CW.
+outer	0	0
+outer	10	0
+outer	10	5
+outer	5	5
+outer	5	10
+outer	0	10
+hole	1	5
+hole	1	8
+hole	4	5
+circle	6	2.5	1.5
