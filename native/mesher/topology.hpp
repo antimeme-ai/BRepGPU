@@ -30,6 +30,12 @@ class HeuristicTicket final {
   friend class MutableFaceTopology;
 };
 enum class BoundaryOwnerKind { source_edge, face_cut };
+class FlipTicket final {
+  const void *owner_;
+  uint64_t serial_;
+  FlipTicket(const void *owner, uint64_t serial) : owner_(owner), serial_(serial) {}
+  friend class MutableFaceTopology;
+};
 struct BoundaryKey final {
   uint64_t owner = 0, interval = 0;
   BoundaryOwnerKind kind = BoundaryOwnerKind::source_edge;
@@ -48,12 +54,13 @@ struct EdgeView final {
   uint32_t incident_count;
   std::optional<BoundaryKey> constraint;
 };
-enum class LineageOperation { initial, heuristic, bisection };
+enum class LineageOperation { initial, heuristic, bisection, flip };
 struct TriangleLineage final {
   std::array<SiteSlot, 3> sites;
   uint64_t parent = UINT64_MAX;
   LineageOperation operation = LineageOperation::initial;
   bool heuristic_spent = false;
+  uint64_t secondary_parent = UINT64_MAX;
 };
 struct TopologyStats final {
   uint64_t sites = 0;
@@ -97,6 +104,8 @@ public:
   [[nodiscard]] TriangleHandle add_initial_triangle(std::array<SiteSlot, 3>);
   void seal_initial();
   [[nodiscard]] bool is_live(TriangleHandle) const;
+  [[nodiscard]] bool is_live(EdgeHandle) const;
+  [[nodiscard]] std::pmr::vector<EdgeHandle> internal_edges() const;
   [[nodiscard]] TriangleView triangle(TriangleHandle) const;
   [[nodiscard]] EdgeView edge(EdgeHandle) const;
   [[nodiscard]] std::optional<EdgeHandle> find_edge(SiteSlot, SiteSlot) const;
@@ -107,6 +116,7 @@ public:
   [[nodiscard]] int compare_axis(SiteSlot, SiteSlot, CoordinateAxis) const;
   [[nodiscard]] int orient(std::array<SiteSlot, 3>) const;
   [[nodiscard]] const TriangleLineage &lineage(uint64_t) const;
+  [[nodiscard]] uint64_t lineage_count() const;
   [[nodiscard]] TopologyStats stats() const;
   [[nodiscard]] std::pmr::vector<TopologyEdit> take_changes();
   void protect_edge(EdgeHandle, BoundaryKey);
@@ -126,6 +136,11 @@ public:
   [[nodiscard]] SiteSlot bisect_internal_edge(EdgeHandle);
   // LEPP selection only: lets the same owner stage canonical XYZ before commit.
   [[nodiscard]] EdgeHandle next_terminal(TriangleHandle);
+  [[nodiscard]] std::optional<FlipTicket> stage_flip(EdgeHandle);
+  [[nodiscard]] std::array<std::array<SiteSlot, 3>, 2> flip_sites(FlipTicket) const;
+  [[nodiscard]] std::array<TriangleHandle, 2> flip_cells(FlipTicket) const;
+  void cancel_flip(FlipTicket);
+  void commit_flip(FlipTicket);
   [[nodiscard]] RefineResult refine_longest(TriangleHandle);
 };
 } // namespace bgmesh

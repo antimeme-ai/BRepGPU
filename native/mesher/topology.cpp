@@ -114,6 +114,15 @@ struct MutableFaceTopology::Impl final {
     std::array<Rational, 2> coordinate;
     uint64_t serial;
   };
+  struct FlipPlan final {
+    std::array<TriangleHandle, 2> old;
+    std::array<std::array<SiteSlot, 3>, 2> sites;
+    std::array<uint64_t, 2> parents;
+    bool spent;
+    uint64_t serial;
+  };
+  std::optional<FlipPlan> staged_flip;
+  uint64_t flip_serial = 0;
   std::optional<HeuristicPlan> staged_heuristic;
   uint64_t heuristic_serial = 0;
   bgfd::Budget &budget;
@@ -148,8 +157,8 @@ struct MutableFaceTopology::Impl final {
       internal("mutable topology generation failed");
   }
   void require_no_stage() const {
-    if (staged_heuristic)
-      invalid("finish staged heuristic before another topology mutation");
+    if (staged_heuristic || staged_flip)
+      invalid("finish staged transaction before another topology mutation");
   }
   void require_sealed() const {
     require_usable();
@@ -316,7 +325,10 @@ struct MutableFaceTopology::Impl final {
     counters.edge_peak = std::max(counters.edge_peak, counters.live_edges);
     return slot;
   }
-  uint32_t install(std::array<SiteSlot, 3> sites, uint64_t parent, LineageOperation operation,
+  struct Parentage final {
+    uint64_t primary, secondary = UINT64_MAX;
+  };
+  uint32_t install(std::array<SiteSlot, 3> sites, Parentage parent, LineageOperation operation,
                    bool spent) {
     budget.charge(1);
     uint32_t slot;
@@ -336,7 +348,7 @@ struct MutableFaceTopology::Impl final {
     triangle.sites = sites;
     triangle.live = true;
     triangle.lineage = lineages.size();
-    lineages.push_back({sites, parent, operation, spent});
+    lineages.push_back({sites, parent.primary, operation, spent, parent.secondary});
     for (uint32_t side = 0; side < 3; ++side) {
       const auto a = sites[side], b = sites[(side + 1) % 3];
       const auto edge_slot = create_edge(a, b);
@@ -391,9 +403,10 @@ struct MutableFaceTopology::Impl final {
     std::array<SiteSlot, 3> sites;
     uint64_t parent;
     bool spent;
+    uint64_t secondary_parent = UINT64_MAX;
   };
   void replace(std::span<const uint32_t> old, std::span<const PatchTriangle> children,
-               LineageOperation operation, SiteSlot new_site) {
+               LineageOperation operation, std::optional<SiteSlot> new_site) {
     struct SavedConstraint final {
       uint64_t key;
       BoundaryKey value;
@@ -421,7 +434,8 @@ struct MutableFaceTopology::Impl final {
       for (const auto slot : old)
         remove(slot);
       for (const auto &child : children) {
-        const auto inserted = install(child.sites, child.parent, operation, child.spent);
+        const auto inserted =
+            install(child.sites, {child.parent, child.secondary_parent}, operation, child.spent);
         change.inserted[change.inserted_count++] = handle(inserted);
       }
       for (std::size_t i = 0; i < saved_count; ++i) {
@@ -614,7 +628,7 @@ TriangleHandle MutableFaceTopology::add_initial_triangle(std::array<SiteSlot, 3>
     invalid("initial triangle must be positive");
   impl_->prepare(1, 3);
   try {
-    return impl_->handle(impl_->install(sites, UINT64_MAX, LineageOperation::initial, false));
+    return impl_->handle(impl_->install(sites, {UINT64_MAX}, LineageOperation::initial, false));
   } catch (...) {
     impl_->usable = false;
     throw;
@@ -635,6 +649,22 @@ bool MutableFaceTopology::is_live(TriangleHandle handle) const {
   impl_->require_usable();
   return handle.slot < impl_->triangles.size() && impl_->triangles[handle.slot].live &&
          impl_->triangles[handle.slot].generation == handle.generation;
+}
+bool MutableFaceTopology::is_live(EdgeHandle handle) const {
+  impl_->require_usable();
+  return handle.slot < impl_->edges.size() && impl_->edges[handle.slot].live &&
+         impl_->edges[handle.slot].generation == handle.generation;
+}
+std::pmr::vector<EdgeHandle> MutableFaceTopology::internal_edges() const {
+  impl_->require_sealed();
+  std::pmr::vector<EdgeHandle> result(budget_);
+  for (uint32_t i = 0; i < impl_->edges.size(); ++i) {
+    budget_->charge(1);
+    const auto &edge = impl_->edges[i];
+    if (edge.live && edge.count == 2 && !edge.constraint)
+      result.push_back(impl_->edge_handle(i));
+  }
+  return result;
 }
 TriangleView MutableFaceTopology::triangle(TriangleHandle handle) const {
   const auto &row = impl_->checked(handle);
@@ -702,6 +732,10 @@ const TriangleLineage &MutableFaceTopology::lineage(uint64_t index) const {
   if (index >= impl_->lineages.size())
     invalid("triangle lineage missing");
   return impl_->lineages[static_cast<std::size_t>(index)];
+}
+uint64_t MutableFaceTopology::lineage_count() const {
+  impl_->require_sealed();
+  return impl_->lineages.size();
 }
 TopologyStats MutableFaceTopology::stats() const {
   impl_->require_usable();
@@ -846,6 +880,61 @@ SiteSlot MutableFaceTopology::bisect_internal_edge(EdgeHandle handle) {
   impl_->require_no_stage();
   (void)impl_->checked(handle);
   return impl_->split_edge(handle.slot, std::nullopt, false);
+}
+std::optional<FlipTicket> MutableFaceTopology::stage_flip(EdgeHandle handle) {
+  impl_->require_sealed();
+  impl_->require_no_stage();
+  const auto &edge = impl_->checked(handle);
+  if (edge.count != 2 || edge.constraint)
+    return std::nullopt;
+  const auto first = edge.incidents[0], second = edge.incidents[1];
+  const auto &left = impl_->triangles[first.triangle], &right = impl_->triangles[second.triangle];
+  const auto a = left.sites[first.side], b = left.sites[(first.side + 1) % 3],
+             c = left.sites[(first.side + 2) % 3], d = right.sites[(second.side + 2) % 3];
+  const std::array<std::array<SiteSlot, 3>, 2> sites{{{c, d, b}, {d, c, a}}};
+  if (impl_->orientation(sites[0]) <= 0 || impl_->orientation(sites[1]) <= 0 ||
+      impl_->lookup(edge_key(c, d)) != none)
+    return std::nullopt;
+  if (impl_->flip_serial == UINT64_MAX)
+    throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "flip ticket exhausted");
+  const auto serial = ++impl_->flip_serial;
+  const bool spent = impl_->lineages[left.lineage].heuristic_spent ||
+                     impl_->lineages[right.lineage].heuristic_spent;
+  impl_->staged_flip =
+      Impl::FlipPlan{{impl_->handle(first.triangle), impl_->handle(second.triangle)},
+                     sites,
+                     {left.lineage, right.lineage},
+                     spent,
+                     serial};
+  return FlipTicket(impl_, serial);
+}
+std::array<std::array<SiteSlot, 3>, 2> MutableFaceTopology::flip_sites(FlipTicket ticket) const {
+  impl_->require_sealed();
+  if (ticket.owner_ != impl_ || !impl_->staged_flip || ticket.serial_ != impl_->staged_flip->serial)
+    invalid("stale or foreign flip ticket");
+  return impl_->staged_flip->sites;
+}
+std::array<TriangleHandle, 2> MutableFaceTopology::flip_cells(FlipTicket ticket) const {
+  (void)flip_sites(ticket);
+  if (!impl_->staged_flip)
+    internal("validated flip missing");
+  return impl_->staged_flip->old;
+}
+void MutableFaceTopology::cancel_flip(FlipTicket ticket) {
+  (void)flip_sites(ticket);
+  impl_->staged_flip.reset();
+}
+void MutableFaceTopology::commit_flip(FlipTicket ticket) {
+  (void)flip_sites(ticket);
+  if (!impl_->staged_flip)
+    internal("validated flip missing");
+  const auto plan = *impl_->staged_flip;
+  impl_->staged_flip.reset();
+  const std::array<uint32_t, 2> old{plan.old[0].slot, plan.old[1].slot};
+  const std::array<Impl::PatchTriangle, 2> children{
+      {{plan.sites[0], plan.parents[0], plan.spent, plan.parents[1]},
+       {plan.sites[1], plan.parents[0], plan.spent, plan.parents[1]}}};
+  impl_->replace(old, children, LineageOperation::flip, std::nullopt);
 }
 EdgeHandle MutableFaceTopology::next_terminal(TriangleHandle target) {
   impl_->require_sealed();

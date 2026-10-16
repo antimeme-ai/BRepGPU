@@ -44,6 +44,39 @@ void check_links(const bgmesh::MutableFaceTopology &mesh) {
   }
 }
 
+void fixed_site_flip() {
+  bgfd::Budget budget({1u << 26, uint64_t{1} << 31});
+  bgmesh::MutableFaceTopology mesh(budget);
+  const auto a = mesh.append_site({0, 0}), b = mesh.append_site({2, 1}),
+             c = mesh.append_site({0, 1}), d = mesh.append_site({2, 0});
+  const auto left = mesh.add_initial_triangle({a, b, c}),
+             right = mesh.add_initial_triangle({b, a, d});
+  mesh.seal_initial();
+  mesh.protect_edge(required(mesh.find_edge(a, c), "outer edge missing"), {17, 4});
+  const auto diagonal = required(mesh.find_edge(a, b), "flip diagonal missing");
+  const auto ticket = required(mesh.stage_flip(diagonal), "strict convex flip rejected");
+  require(mesh.flip_sites(ticket)[0] == std::array{c, d, b} && mesh.stats().sites == 4 &&
+              mesh.stats().live_triangles == 2 && mesh.take_changes().empty(),
+          "flip staging changed sites/topology or role order");
+  mesh.cancel_flip(ticket);
+  const auto next = required(mesh.stage_flip(diagonal), "restaged flip rejected");
+  mesh.commit_flip(next);
+  require(!mesh.is_live(left) && !mesh.is_live(right) && !mesh.find_edge(a, b) &&
+              mesh.find_edge(c, d) && mesh.stats().sites == 4,
+          "fixed-site flip failed local diagonal replacement");
+  const auto outer = mesh.edge(required(mesh.find_edge(a, c), "flip lost outer edge"));
+  require(outer.constraint == bgmesh::BoundaryKey{17, 4},
+          "flip lost protected exterior declaration");
+  const auto edits = mesh.take_changes();
+  require(edits.size() == 1 && edits[0].removed_count == 2 && edits[0].inserted_count == 2 &&
+              !edits[0].new_site,
+          "flip emitted wrong local delta");
+  check_links(mesh);
+  mesh.protect_edge(required(mesh.find_edge(c, d), "flipped diagonal absent"), {18, 5});
+  require(!mesh.stage_flip(required(mesh.find_edge(c, d), "protected diagonal absent")),
+          "optimizer staged a protected constraint");
+}
+
 void midpoint_and_patch() {
   bgfd::Budget budget({1u << 26, uint64_t{1} << 30});
   bgmesh::MutableFaceTopology mesh(budget);
@@ -160,9 +193,9 @@ void sticky_lineage() {
              cc = cancelled.append_site({0, 2});
   const auto cancel_target = cancelled.add_initial_triangle({ca, cb, cc});
   cancelled.seal_initial();
-  const auto cancel_ticket = required(
-      cancelled.stage_heuristic(cancel_target, std::array<double, 2>{.5, .5}),
-      "cancel fixture staging rejected");
+  const auto cancel_ticket =
+      required(cancelled.stage_heuristic(cancel_target, std::array<double, 2>{.5, .5}),
+               "cancel fixture staging rejected");
   cancelled.cancel_heuristic(cancel_ticket);
   require(cancelled.stats().sites == 3 && cancelled.triangle(cancel_target).heuristic_spent &&
               !cancelled.stage_heuristic(cancel_target, std::array<double, 2>{.5, .5}),
@@ -422,6 +455,7 @@ void local_edit_log() {
 
 int main() {
   try {
+    fixed_site_flip();
     midpoint_and_patch();
     terminal_tie();
     anisotropic_choice();
@@ -432,7 +466,7 @@ int main() {
     constraints_and_rejection();
     resource_failure();
     local_edit_log();
-    std::cout << "native mutable topology: 10 semantic cases PASS\n";
+    std::cout << "native mutable topology: 11 semantic cases PASS\n";
   } catch (const bgfd::Failure &failure) {
     std::cerr << "native failure: " << failure.what() << '\n';
     return 1;
