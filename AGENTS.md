@@ -250,6 +250,18 @@ not observed in the current workload cohort. Many-hole admission remains a
 measured quadratic cost. No new alpha or GPU CDT claim follows from these CPU
 results.
 
+The operator subsequently rejects continued piecemeal mesher changes and selects
+a coherent whole native mesher: literature/reference study, holistic design,
+adversarial design/plan review, then integrated delivery. Read
+journal/2026-10-16-whole-mesher-redesign.md and the whole-mesher research papers.
+The existing direct CDT is a candidate component, not a constraint on the new
+architecture. Native ownership covers source decoding, geometry/bounds, shared
+boundaries, face construction/refinement and full output. Python may remain an
+optional boundary/research oracle; no production geometry callbacks. Original
+source authority, error semantics, shared topology, parallel CPU/P100 placement
+and independent actual-output/performance families belong to one design. Do not
+resume isolated hotspot patches or unchanged watch trials while it is reviewed.
+
 ## Development workflow
 
 Use a feature branch for each substantial delivery. Make frequent, coherent

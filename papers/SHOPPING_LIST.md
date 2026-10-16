@@ -64,3 +64,22 @@ their design relevance. They do not block the positive-weight hierarchy study.
 These gaps do not block reading the acquired Chew, Shewchuk–Brown, BRIO,
 predicate and2026 GPU CDT originals. They remain explicit acquisition work,
 not algorithms claimed read or implemented.
+
+## Whole-mesher geometry-based methods, 2026-10-16
+
+- **Aubry, Dey, Mestreau, Karamete, Gayman2015**, *A robust conforming NURBS
+  tessellation for industrial applications based on a mesh generation approach*,
+  CAD63:26–38, DOI10.1016/j.cad.2014.12.009. Publisher abstract/introduction
+  inspected; full text remains unavailable after publisher, title/author and
+  open-access-location searches. Needed for its complete three-dimensional
+  anisotropic/tiered algorithm and singularity treatment; no detailed theorem
+  or implementation is attributed to the preview.
+- **Piegl–Tiller1998**, *Geometry-based triangulation of trimmed NURBS surfaces*,
+  CAD30(1):11–18, DOI10.1016/S0010-4485(97)00047-X. Bibliography/preview only.
+  Needed to compare its geometry-based subdivision with parameter-bound
+  refinement. Piegl–Richard1995 is acquired in full and is a different paper.
+
+These remain comparison gaps; the acquired full primary subdivision,
+anisotropic refinement, feature-protection and trimming papers support the
+current whole-mesher design study. See `whole-mesher/RESTORATION.md` and the
+algorithm/geometry-contract bibliographies for exact acquisition/read scopes.
