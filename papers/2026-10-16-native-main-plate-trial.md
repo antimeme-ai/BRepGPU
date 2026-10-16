@@ -82,6 +82,34 @@ next algorithm/data-structure/native migration unit from that actual input and
 the geometry literature; do not launch another whole-watch retry to find out
 whether the remaining Python connectivity/refinement cost improved.
 
+## Follow-up input capture completed
+
+The separately accepted bounded reproduction completed in155.552 s, with all
+438 faces' preparation and canonical schedules retained, then only face165063
+visited in the final face loop. Its first pre-Lawson input has **one loop,
+1114 source nodes,1112 initial triangles and1114 constrained boundary edges**.
+The original source face has20 coedges. No connectivity flip, further refinement,
+complete-part qualification or render ran in this capture.
+
+The BGFAC001 exact UV/loop/source-ID/token round trip passed. The BGCON001
+version/header/count/length bounds, canonical positive exact metric fractions,
+original triangle words and sorted constrained-edge set were decoded and
+re-encoded byte-identically. The existing independent exact positive complete
+boundary-chain reader plus source-ID edge incidence/no omitted or new nodes
+accepted the actual initial triangles in0.063053 s. These checks qualify the
+captured initial polygonal domain, not the eventual refined physical part.
+Original source/module/library/provenance pins were unchanged at capture.
+
+Captured input hashes (SHA-256):
+
+- Exact sampled domain: `011a24f3fc54244e4167d16357925dfe2d52f8144968b5a091b7e20bc8dbd1e6`.
+- Initial connectivity/constraints/exact metric: `14f3df76b7f367e6343d1cac88e69cccd17113de888b9923e6e1dbf972c50099`.
+
+The original occurrence relations, exact UV, original edge/coedge/physical
+sample identities, quality, prepared part and capture scripts remain private.
+This provides a fixed actual input for the next connectivity algorithm/native
+ownership unit. No further compute or production change was made after capture.
+
 Relevant sources: [consumer design](../docs/NATIVE_FACE_DOMAIN_INTEGRATION.md),
 [native domain design](../docs/NATIVE_FACE_DOMAIN_DESIGN.md),
 [actual boundary capture](../journal/2026-10-16-native-face-domain-actual-capture.md),

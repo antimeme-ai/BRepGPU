@@ -175,3 +175,9 @@ captures its fixed original input and evaluates owned native
 triangle/edge incidence, exact weighted incircle arithmetic and queue ownership,
 keeping the same constraints, strict flip rule and quality. It does not tune ears
 further or widen tolerances to make this complete-part attempt green.
+
+The [next exact connectivity input](../../papers/2026-10-16-native-main-plate-trial.md#follow-up-input-capture-completed)
+is now retained:1114 source nodes,1112 initial triangles and1114 constrained
+boundary edges from original face165063. Lossless round trips and independent
+exact domain/source-incidence checks pass. This is input acquisition for the
+next native unit; the connectivity upgrade has not been implemented here.
