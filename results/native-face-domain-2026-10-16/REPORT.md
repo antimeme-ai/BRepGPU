@@ -170,7 +170,8 @@ locals read during that interval are not reliable counters.
 
 The first native domain unit passed its practical target; the actual larger
 consumer exposed a different remaining Python algorithm. The next bounded
-study captures a fixed original connectivity input and evaluates owned native
+study [designs fixed-vertex native connectivity](../../papers/2026-10-16-native-lawson-connectivity-option.md),
+captures its fixed original input and evaluates owned native
 triangle/edge incidence, exact weighted incircle arithmetic and queue ownership,
 keeping the same constraints, strict flip rule and quality. It does not tune ears
 further or widen tolerances to make this complete-part attempt green.
