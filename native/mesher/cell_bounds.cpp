@@ -1,6 +1,7 @@
 #include "cell_bounds.hpp"
 #include "geometry_enclosure.hpp"
 #include <algorithm>
+#include <limits>
 
 namespace bgmesh {
 namespace {
@@ -332,10 +333,17 @@ CellBoundFold::CellBoundFold(const std::shared_ptr<RunResource> &resource,
   seen_.resize(prepared_.pieces().size());
 }
 void CellBoundFold::add(const BoundCompleted &completion) {
-  const auto answers = completion.answers();
-  const auto headers = completion.headers();
-  if (answers.size() != headers.size() || answers.empty())
+  if (completion.answers().size() > std::numeric_limits<uint32_t>::max())
+    invalid("actual cell completion count overflow");
+  add(completion, {0, static_cast<uint32_t>(completion.answers().size())});
+}
+void CellBoundFold::add(const BoundCompleted &completion, CellPieceRange range) {
+  if (completion.answers().size() != completion.headers().size() || range.count == 0 ||
+      range.first > completion.answers().size() ||
+      range.count > completion.answers().size() - range.first)
     invalid("invalid actual cell completion");
+  const auto answers = completion.answers().subspan(range.first, range.count);
+  const auto headers = completion.headers().subspan(range.first, range.count);
   for (std::size_t i = 0; i < answers.size(); ++i) {
     const auto &key = answers[i].key;
     auto parent = key;

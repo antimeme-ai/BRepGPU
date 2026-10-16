@@ -65,6 +65,7 @@ class CellBoundFold final {
 public:
   CellBoundFold(const std::shared_ptr<RunResource> &, PreparedCellBounds);
   void add(const BoundCompleted &);
+  void add(const BoundCompleted &, CellPieceRange response_range);
   [[nodiscard]] bool complete() const noexcept;
   [[nodiscard]] CellBoundResult result() const;
 };
