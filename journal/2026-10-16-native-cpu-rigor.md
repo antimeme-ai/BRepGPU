@@ -23,6 +23,12 @@ compile with the required libstdc++13 diagnostic. Default actual module builds
 select release13. Target-scoped flags, required warning rejection, actual
 compilation-database units and owned-header reachability were reviewed.
 
+Root also made the target standard explicitly20, rather than a minimum compile
+feature that could inherit a higher global CMake standard. The actual-unit guard
+rejects `__cplusplus` outside C++20. An actual Clang18 `-std=c++23` compilation
+failed at that guard with the expected diagnostic. Normal module settings remain
+C++20; no CUDA target is affected.
+
 The CLI runs actual native CTest fixtures and explicitly selected Python tests.
 Instrumented shared libraries require native fixtures or an explicitly selected
 matching host; it refuses to present an uninstrumented Python host as an ASan

@@ -14,7 +14,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 function(brepgpu_native_cpu_rigor target)
   target_compile_features(${target} PUBLIC cxx_std_20)
-  set_target_properties(${target} PROPERTIES CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+  set_target_properties(${target} PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
   target_compile_options(${target} PRIVATE
     -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/native_cpu_profile.hpp"
     -stdlib=libstdc++ -Wall -Wextra -Wpedantic -Werror -Wconversion

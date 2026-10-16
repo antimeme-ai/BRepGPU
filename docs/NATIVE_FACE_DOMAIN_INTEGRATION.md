@@ -12,7 +12,9 @@ standalone module alone does not accelerate a watch render.
 sampled boundary simplicity and initial hole/ear triangulation. A named
 `domain_backend='python'` remains an explicit legacy reference for same-input
 comparisons and diagnosis. Unknown backends and missing native libraries fail
-visibly; there is no automatic fallback. Existing `_boundary_intersection` and
+visibly; load the engine and validate its symbols before expensive preparation,
+so an invalid library or missing runtime dependency fails there too. There is
+no automatic fallback. Existing `_boundary_intersection` and
 `_triangulate` implementations remain independent legacy models.
 
 Select the two callables once at the beginning of the operation. Pass the selected
