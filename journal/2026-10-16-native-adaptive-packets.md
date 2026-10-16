@@ -85,3 +85,51 @@ cover the reviewed admission/ownership findings; callback count and native live
 reservation baseline must return exactly. Root owns registration and the module
 factory's original missing-operation RED; no new driver-loss injection or
 numerical certification campaign was added.
+
+Focused protocol closure is GREEN on both actual P100s: 513 exclusive prefixes,
+all finite admission/ticket/overlap cases, successful restriction and destroy
+with outstanding actual sample work, and every callback lease returned to the
+native resource baseline. Strict Release target and actual-source tidy exited0.
+Logs are `context/adaptive-device-protocol-{configure,build,0,1,tidy}.log` in
+`~/BRepGPU/cached-adaptive-mesher`. The first scan fixture used an exactly affine
+plane with deliberately failing cached data; the module correctly returned its
+selected all-affine unresolved action rather than a split. The fixture now uses
+the actual CELL cylinder's active curved direction for mixed marks, preserving
+the plane only for the point/drain path. This was a fixture correction, not a
+production fallback. Tidy annotations are confined to the fixed void*/void*
+callback ABI and the deliberate malformed enum admission input. No further
+geometry, sanitizer or performance campaign was introduced by this protocol
+unit; independent device geometry and integrated CPU/P100 output remain their
+owners' checks.
+
+Root then assigned exactly two deeper general2D patch qualities (1e-4,1e-5),
+CPU1/4 and both P100s, two fresh same-quality queries per process,120s censor and
+2048MiB/262144nodes/depth64. The written subplan is
+`docs/adaptive-patch-general2d-observation.md`; source author/whole-cell check
+live in the SAME `tests/native_adaptive_caller.py`, preserving root's unit-
+metadata case. Geometry peer source-only ACCEPT independently derived the
+Bernstein source and variance/covariance whole-facet bound. External runner is
+`benchmarks/native_mesher/adaptive_patches.py`; no product geometry was changed.
+The helper's make_bowl name denotes the authored coupled quadratic but the
+actual mixed Hessian is indefinite, so reports call it a saddle, not a convex
+bowl.
+
+The first writer-only attempt exposed its required extracted-span hint; the
+literal whole patch net is now supplied as that hint while SourceCache still
+compiles original coefficients. No native operation ran in that attempt. One
+fixed eight-process cohort then started using pinned root CUDA caller/module.
+The caller binary emits earlier host peak column names and lacks aggregate run
+peak. After coarse modes completed, extraction-only recovery was selected
+instead of repeating workloads. The old session host peak is a SUM of scoped
+peaks and will be labelled an upper bound; aggregate run peak is unavailable.
+The executable/module hashes identify this observation; root will not rebuild
+these artifact paths during the cohort. New /4 bilinear-transfer source changes
+are explicitly outside this measured binary. No deeper rerun follows them.
+
+An optional root-authorized1s perf attachment to the existing fine CPU4 process
+was refused before sampling by perf_event_paranoid=4. No sysctl, privilege request,
+replacement workload or timeout extension followed. Consequently no precise
+arithmetic hotspot cause is claimed from that failed attachment. The old six-
+coefficient bound driving many precise false failures remains a source-based
+hypothesis until separately measured. Final observations follow after the fixed
+cohort completes.
