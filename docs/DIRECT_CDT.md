@@ -89,3 +89,10 @@ inputs supplement authored families; this is not the complete alpha corpus.
 The actual signed-cap helper has independent release/debug/ASan output checks,
 including clockwise and vertical seeds. A public marked-fan repair hit remains
 unobserved in the selected cohort and is not inferred from the helper checks.
+
+The [complete original main plate](../results/main-plate-direct-2026-10-16/REPORT.md)
+also passes:438 source faces,95,766 physical vertices and191,688 triangles at the
+unchanged quality. One CPU constructs the complete part in208.258s; the existing
+independent original-source/domain/physical-shell checks take169.985s separately.
+Its input-domain reader now uses independent exact ranked-box candidate pruning.
+Whole-watch CPU/P100 qualification and rendering remain separate unfinished work.
