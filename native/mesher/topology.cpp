@@ -701,10 +701,10 @@ void MutableFaceTopology::mark_accepted(TriangleHandle handle) {
 }
 std::optional<SiteSlot> MutableFaceTopology::insert_heuristic(TriangleHandle handle,
                                                               std::array<double, 2> value) {
-  if(!std::isfinite(value[0])||!std::isfinite(value[1])){
+  if (!std::isfinite(value[0]) || !std::isfinite(value[1])) {
     impl_->require_sealed();
-    const auto&target=impl_->checked(handle);
-    impl_->lineages[target.lineage].heuristic_spent=true;
+    const auto &target = impl_->checked(handle);
+    impl_->lineages[target.lineage].heuristic_spent = true;
     return std::nullopt;
   }
   return insert_heuristic(handle,

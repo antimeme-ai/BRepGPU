@@ -1,6 +1,6 @@
 #include "../native/mesher/topology.hpp"
-#include <array>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
@@ -132,11 +132,14 @@ void sticky_lineage() {
   require(rejected && mesh.is_usable(), "spent attempt did not reject before mutation");
   check_links(mesh);
   bgmesh::MutableFaceTopology overflow(budget);
-  const auto oa=overflow.append_site({0,0}),ob=overflow.append_site({2,0}),oc=overflow.append_site({0,2});
-  const auto failed=overflow.add_initial_triangle({oa,ob,oc});overflow.seal_initial();
-  const auto no_site=overflow.insert_heuristic(failed,{std::numeric_limits<double>::infinity(),0});
-  require(!no_site && overflow.triangle(failed).heuristic_spent && overflow.stats().sites==3 &&
-              !overflow.insert_heuristic(failed,{.5,.5}),
+  const auto oa = overflow.append_site({0, 0}), ob = overflow.append_site({2, 0}),
+             oc = overflow.append_site({0, 2});
+  const auto failed = overflow.add_initial_triangle({oa, ob, oc});
+  overflow.seal_initial();
+  const auto no_site =
+      overflow.insert_heuristic(failed, {std::numeric_limits<double>::infinity(), 0});
+  require(!no_site && overflow.triangle(failed).heuristic_spent && overflow.stats().sites == 3 &&
+              !overflow.insert_heuristic(failed, {.5, .5}),
           "nonfinite rounded circumcenter failed to spend/reject without publishing");
 }
 
@@ -363,7 +366,8 @@ void local_edit_log() {
   std::sort(expected.begin(), expected.end());
   auto actual = mesh.triangles();
   std::sort(actual.begin(), actual.end());
-  require(expected.size() == actual.size() && std::equal(expected.begin(), expected.end(), actual.begin()),
+  require(expected.size() == actual.size() &&
+              std::equal(expected.begin(), expected.end(), actual.begin()),
           "local edit replay disagrees with final active mesh");
   require(mesh.take_changes().empty(), "edit log was not consumed");
   check_links(mesh);
