@@ -35,7 +35,7 @@ template <class T> void reserve_more(std::pmr::vector<T> &v, std::size_t count) 
 }
 struct Segment final {
   SiteSlot a, b;
-  uint32_t loop;
+  DomainSegmentLocation original;
   Box box;
 };
 struct Event final {
@@ -248,7 +248,7 @@ public:
       (void)build(0, input.size());
     stats.event_entries = events.size();
   }
-  void validate_crossings() {
+  std::optional<std::array<uint32_t, 2>> crossing() {
     std::pmr::vector<uint32_t> stack(&budget);
     for (uint32_t i = 0; i < segments.size(); ++i) {
       budget.charge(1);
@@ -274,11 +274,11 @@ public:
             continue;
           ++stats.segment_candidates;
           if (bad_pair(segments[i], segments[j]))
-            throw bgfd::Failure(BGFD_CROSSING,
-                                "selected domain boundaries cross, overlap or touch nonincidently");
+            return std::array{i, j};
         }
       }
     }
+    return std::nullopt;
   }
   int64_t winding_except(SiteSlot p, std::span<const Segment> own) {
     ++stats.ray_queries;
@@ -384,8 +384,12 @@ std::pmr::vector<bgcdt::TriangleWord> construct_cdt(bgfd::Budget &budget, Mutabl
 } // namespace
 
 InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &mesh,
-                                     std::span<const DomainLoopView> original, uint64_t seed) {
-  if (mesh.stats().live_triangles != 0 || mesh.stats().sites < 3)
+                                     std::span<const DomainLoopView> original, uint64_t seed,
+                                     DomainFailureMode mode) {
+  if (mode != DomainFailureMode::reject && mode != DomainFailureMode::report_geometry)
+    invalid("unknown selected-domain failure mode");
+  if (mesh.stats().live_triangles != 0 || mesh.stats().sites == 0 ||
+      (mesh.stats().sites < 3 && mode == DomainFailureMode::reject))
     invalid("domain requires pristine boundary sites");
   const auto n = mesh.stats().sites;
   if (n > UINT32_MAX)
@@ -393,6 +397,16 @@ InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &
   if (&mesh.coordinate(SiteSlot{0}, CoordinateAxis::x).budget() != &budget)
     internal("domain/topology budget mismatch");
   InitialDomain result(&budget);
+  std::optional<DomainIssue> geometric_issue;
+  const auto report = [&](DomainIssue issue) {
+    if (mode == DomainFailureMode::reject) {
+      if (issue.kind == DomainIssueKind::boundary_contact)
+        throw bgfd::Failure(BGFD_CROSSING,
+                            "selected domain boundaries cross, overlap or touch nonincidently");
+      invalid("selected domain loop is collapsed or has invalid hole placement");
+    }
+    result.issue = issue;
+  };
   result.traversal_adapters.resize(original.size());
   std::size_t outer = original.size(), outer_count = 0;
   for (std::size_t i = 0; i < original.size(); ++i) {
@@ -420,8 +434,10 @@ InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &
   segments.reserve(static_cast<std::size_t>(n));
   for (const auto index : loop_order) {
     const auto &loop = original[index];
-    if (loop.sites.size() < 3 || loop.constraints.size() != loop.sites.size())
+    if (loop.sites.empty() || loop.constraints.size() != loop.sites.size())
       invalid("invalid original domain loop inventory");
+    if (loop.sites.size() < 3 && !geometric_issue)
+      geometric_issue = DomainIssue{DomainIssueKind::too_few_sites, {{{index, 0}, {}}}, 1};
     Rational area(budget);
     for (std::size_t i = 0; i < loop.sites.size(); ++i) {
       budget.charge(1);
@@ -434,9 +450,9 @@ InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &
                           .subtract(mesh.coordinate(a, CoordinateAxis::y)
                                         .multiply(mesh.coordinate(b, CoordinateAxis::x))));
     }
-    if (area.sign() == 0)
-      invalid("domain loop has zero signed area");
-    const int32_t adapter = (loop.outer ? 1 : -1) * area.sign();
+    if (area.sign() == 0 && !geometric_issue)
+      geometric_issue = DomainIssue{DomainIssueKind::zero_area, {{{index, 0}, {}}}, 1};
+    const int32_t adapter = area.sign() == 0 ? 1 : (loop.outer ? 1 : -1) * area.sign();
     result.traversal_adapters[index] = adapter;
     const auto offset = slots.size();
     loops.push_back({offset, loop.sites.size()});
@@ -460,21 +476,33 @@ InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &
         box.lo[axis] = std::min(x.lower, y.lower);
         box.hi[axis] = std::max(x.upper, y.upper);
       }
-      segments.push_back({a, b, index, box});
+      const auto occurrence = adapter == 1 ? i : loop.sites.size() - 1 - i;
+      segments.push_back({a, b, {index, occurrence}, box});
     }
   }
   budget.charge(seen.size());
   if (std::find(seen.begin(), seen.end(), uint8_t{0}) != seen.end())
     invalid("unowned initial domain site");
+  if (geometric_issue) {
+    report(*geometric_issue);
+    return result;
+  }
   {
     SegmentIndex index(budget, mesh, result.stats, segments);
-    index.validate_crossings();
+    if (const auto pair = index.crossing()) {
+      report({DomainIssueKind::boundary_contact,
+              {segments[(*pair)[0]].original, segments[(*pair)[1]].original},
+              2});
+      return result;
+    }
     for (std::size_t h = 1; h < loops.size(); ++h) {
       const auto &loop = loops[h];
       const auto own = std::span<const Segment>(segments).subspan(
           static_cast<std::size_t>(loop.offset), static_cast<std::size_t>(loop.count));
-      if (index.winding_except(SiteSlot{slots[static_cast<std::size_t>(loop.offset)]}, own) != 1)
-        invalid("hole lies outside outer domain or inside another hole");
+      if (index.winding_except(SiteSlot{slots[static_cast<std::size_t>(loop.offset)]}, own) != 1) {
+        report({DomainIssueKind::hole_placement, {own.front().original, {}}, 1});
+        return result;
+      }
     }
   }
   const auto triangles = construct_cdt(budget, mesh, slots, loops, seed, result.stats.cdt);

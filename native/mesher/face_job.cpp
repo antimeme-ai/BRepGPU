@@ -31,6 +31,7 @@ struct FaceOwnerJob::Impl final {
   FaceOwnerInput input;
   FaceOwnerLimits limits;
   std::shared_ptr<ResourceReservation> lease;
+  std::stop_token stop;
   bgfd::Budget budget;
   GeometryContext context;
   FaceEngine *engine = nullptr;
@@ -38,14 +39,20 @@ struct FaceOwnerJob::Impl final {
   std::pmr::vector<CellBoundResult> answers;
   std::optional<FaceCandidateResult> candidate_answer;
   std::pmr::vector<CellResultKey> contacts;
+  enum class Command { none, begin_optimizer, prepare_flip, reject_flip, finish_flip };
+  Command command = Command::none;
+  EdgeHandle selected_edge;
+  std::optional<std::array<CellBoundResult, 2>> flip_answers;
+  std::optional<ContactApproval> flip_approval;
+  FaceResult output;
   bool incoming = false, finish = false, usable = true;
   uint64_t reported_work = 0;
   Impl(const std::shared_ptr<RunResource> &resource, FaceOwnerInput source, FaceOwnerLimits cap,
-       std::stop_token stop)
+       std::stop_token token)
       : input(std::move(source)), limits(cap), lease(reserve_resource(resource, cap.bytes)),
-        budget({cap.bytes, cap.work}, lease.get(), std::move(stop)), context(budget),
+        stop(std::move(token)), budget({cap.bytes, cap.work}, lease.get(), stop), context(budget),
         answers(resource.get()), contacts(resource.get()) {
-    if (!cap.bytes || !cap.work || !cap.cell_batch)
+    if (!cap.bytes || !cap.work || !cap.cell_batch || !stop.stop_possible())
       invalid("zero face task limit");
   }
   ~Impl() {
@@ -78,6 +85,82 @@ struct FaceOwnerJob::Impl final {
     }
     engine = value;
   }
+  FaceHorizon snapshot_contacts() {
+    const auto &b = *input.boundary;
+    const auto &source = b.geometry.view().source.view();
+    const FaceFrontierIdentity face{
+        {OwnerKind::face, b.definition.value, source.faces[b.face.value].id.value},
+        b.face_generation,
+        b.boundary_generation};
+    auto result = std::allocate_shared<FaceHorizonData>(RunAllocator<FaceHorizonData>(b.resource),
+                                                        b.resource, face);
+    for (const auto &edit : engine->take_changes())
+      for (uint32_t i = 0; i < edit.removed_count; ++i)
+        result->removed.push_back(edit.removed[i]);
+    for (const auto &key : engine->take_settled()) {
+      budget.charge(1);
+      const auto triangle = engine->topology().triangle(key.triangle);
+      std::array<PhysicalNode, 3> nodes;
+      for (std::size_t i = 0; i < 3; ++i) {
+        const auto &node = engine->node(triangle.sites[i]);
+        // Contact work carries physical identity/words, no unleased parameter.
+        nodes[i] = {node.key, node.xyz, {}};
+      }
+      result->inserted.push_back({key, nodes, engine->declared_edges(key.triangle)});
+    }
+    return result;
+  }
+  std::shared_ptr<FaceOptimizerReplyData> optimizer_reply(std::span<const EdgeHandle> edges) {
+    auto result = std::allocate_shared<FaceOptimizerReplyData>(
+        RunAllocator<FaceOptimizerReplyData>(input.boundary->resource), input.boundary->resource);
+    result->edges.reserve(edges.size());
+    for (const auto edge : edges) {
+      budget.charge(1);
+      result->edges.push_back({edge, engine->optimizer_edge_key(edge)});
+    }
+    std::sort(result->edges.begin(), result->edges.end(),
+              [](const auto &a, const auto &b) { return a.key < b.key; });
+    return result;
+  }
+  StepState optimize() {
+    const auto selected = command;
+    command = Command::none;
+    if (selected == Command::prepare_flip) {
+      auto work = engine->prepare_flip(selected_edge);
+      event = {};
+      if (work) {
+        event.kind = FaceOwnerEventKind::optimizer_proposal;
+        event.optimization = std::move(*work);
+        return StepState::wait_child;
+      }
+      event.kind = FaceOwnerEventKind::optimizer_queue;
+      event.optimizer = optimizer_reply({});
+      return StepState::wait_barrier;
+    }
+    std::shared_ptr<FaceOptimizerReplyData> reply;
+    if (selected == Command::begin_optimizer) {
+      const auto edges = engine->begin_optimizer();
+      reply = optimizer_reply(edges);
+    } else if (selected == Command::reject_flip) {
+      engine->reject_flip(event.optimization->ordinal);
+      reply = optimizer_reply({});
+    } else if (selected == Command::finish_flip) {
+      if (!flip_answers || !flip_approval)
+        invalid("optimizer continuation has no accepted numerical/contact replies");
+      const auto committed =
+          engine->complete_flip(event.optimization->ordinal, *flip_answers, *flip_approval);
+      reply = optimizer_reply(committed.affected_edges);
+      reply->committed = committed.cells;
+      flip_answers.reset();
+      flip_approval.reset();
+    } else
+      invalid("optimizer continuation has no command");
+    event = {};
+    event.kind = reply->committed ? FaceOwnerEventKind::optimizer_committed
+                                  : FaceOwnerEventKind::optimizer_queue;
+    event.optimizer = std::move(reply);
+    return StepState::wait_barrier;
+  }
   void consume() {
     if (!incoming)
       invalid("face continuation has no complete child/contact input");
@@ -104,7 +187,9 @@ struct FaceOwnerJob::Impl final {
 FaceOwnerJob::FaceOwnerJob(const std::shared_ptr<RunResource> &resource, FaceOwnerInput input,
                            FaceOwnerLimits limits, std::stop_token stop)
     : NativeTask(identity(input)), resource_(resource), impl_(nullptr) {
-  if (!resource_)
+  if (!resource_ || resource_ != input.boundary->resource ||
+      resource_ != input.metric_values.resource() ||
+      resource_ != input.boundary->geometry.view().source.view().resource)
     invalid("face task requires run resource");
   std::pmr::polymorphic_allocator<Impl> allocator(resource_.get());
   impl_ = allocator.allocate(1);
@@ -119,24 +204,27 @@ FaceOwnerJob::~FaceOwnerJob() {
   std::destroy_at(impl_);
   std::pmr::polymorphic_allocator<Impl>(resource_.get()).deallocate(impl_, 1);
 }
-StepState FaceOwnerJob::step(JobContext &) {
+StepState FaceOwnerJob::step(JobContext &job) {
   impl_->check();
   try {
+    if (job.stop != impl_->stop)
+      invalid("face owner requires its scheduler stop token");
     impl_->budget.charge(1);
     if (impl_->finish) {
+      impl_->output = impl_->engine->freeze_result();
       impl_->event = {FaceOwnerEventKind::finished, {}, {}, {}};
       return StepState::done;
     }
+    if (impl_->command != Impl::Command::none)
+      return impl_->optimize();
     if (!impl_->engine)
       impl_->initialize();
     else
       impl_->consume();
-    if (auto cells = impl_->engine->take_cell_work(impl_->limits.cell_batch)) {
-      impl_->event = {FaceOwnerEventKind::cells, std::move(*cells), {}, {}};
-      return StepState::wait_child;
-    }
-    const auto next = impl_->engine->advance();
-    switch (next.kind) {
+    for (;;) {
+      impl_->budget.charge(1);
+      const auto next = impl_->engine->advance();
+      switch (next.kind) {
     case FaceAdvanceKind::candidate:
       impl_->event = {FaceOwnerEventKind::candidate, {}, next.candidate, {}};
       return StepState::wait_child;
@@ -145,13 +233,20 @@ StepState FaceOwnerJob::step(JobContext &) {
       return StepState::wait_barrier;
     case FaceAdvanceKind::settled:
       impl_->event = {FaceOwnerEventKind::settled, {}, {}, {}};
+      impl_->event.horizon = impl_->snapshot_contacts();
       return StepState::wait_barrier;
     case FaceAdvanceKind::unresolved:
       throw Error(ErrorCode::unresolved, "face cell exceeds fixed numerical profile");
-    case FaceAdvanceKind::pending:
-      throw Error(ErrorCode::internal_error, "face pending cell has no outstanding child packet");
+    case FaceAdvanceKind::pending: {
+      auto cells = impl_->engine->take_cell_work(impl_->limits.cell_batch);
+      if (!cells)
+        continue; // Host domain decisions enter the same canonical frontier.
+      impl_->event = {FaceOwnerEventKind::cells, std::move(*cells), {}, {}};
+      return StepState::wait_child;
     }
-    throw Error(ErrorCode::internal_error, "unknown face advance state");
+    }
+      throw Error(ErrorCode::internal_error, "unknown face advance state");
+    }
   } catch (...) {
     impl_->usable = false;
     throw;
@@ -204,8 +299,8 @@ void FaceOwnerJob::finish_candidate(FaceCandidateResult result) {
 }
 void FaceOwnerJob::mark_contacts(std::span<const CellResultKey> cells) {
   impl_->check();
-  if (impl_->incoming || impl_->finish || impl_->event.kind != FaceOwnerEventKind::settled ||
-      cells.empty())
+  if (impl_->incoming || impl_->finish || impl_->command != Impl::Command::none ||
+      impl_->event.kind != FaceOwnerEventKind::settled || cells.empty())
     invalid("contact refinement requires settled face horizon");
   const auto &boundary = *impl_->input.boundary;
   const FaceFrontierIdentity expected{key.owner, boundary.face_generation,
@@ -222,9 +317,58 @@ void FaceOwnerJob::mark_contacts(std::span<const CellResultKey> cells) {
 }
 void FaceOwnerJob::finish_generation() {
   impl_->check();
-  if (impl_->finish || impl_->incoming || impl_->event.kind != FaceOwnerEventKind::settled)
+  if (impl_->finish || impl_->incoming || impl_->command != Impl::Command::none ||
+      (impl_->event.kind != FaceOwnerEventKind::settled &&
+       impl_->event.kind != FaceOwnerEventKind::optimizer_queue &&
+       impl_->event.kind != FaceOwnerEventKind::optimizer_committed))
     invalid("only a settled face generation can finish");
   impl_->finish = true;
+}
+void FaceOwnerJob::begin_optimizer() {
+  impl_->check();
+  if (impl_->finish || impl_->incoming || impl_->command != Impl::Command::none ||
+      impl_->event.kind != FaceOwnerEventKind::settled)
+    invalid("optimizer requires the settled face horizon");
+  impl_->command = Impl::Command::begin_optimizer;
+}
+void FaceOwnerJob::prepare_flip(EdgeHandle edge) {
+  impl_->check();
+  if (impl_->finish || impl_->incoming || impl_->command != Impl::Command::none ||
+      (impl_->event.kind != FaceOwnerEventKind::optimizer_queue &&
+       impl_->event.kind != FaceOwnerEventKind::optimizer_committed))
+    invalid("optimizer proposal requires an idle optimizer owner");
+  impl_->selected_edge = edge;
+  impl_->command = Impl::Command::prepare_flip;
+}
+void FaceOwnerJob::reject_flip() {
+  impl_->check();
+  if (impl_->command != Impl::Command::none ||
+      impl_->event.kind != FaceOwnerEventKind::optimizer_proposal || !impl_->event.optimization)
+    invalid("optimizer rejection requires current proposal");
+  impl_->command = Impl::Command::reject_flip;
+}
+void FaceOwnerJob::finish_flip(const std::array<CellBoundResult, 2> &answers,
+                               ContactApproval approval) {
+  impl_->check();
+  if (impl_->command != Impl::Command::none ||
+      impl_->event.kind != FaceOwnerEventKind::optimizer_proposal || !impl_->event.optimization)
+    invalid("optimizer completion requires current proposal");
+  const auto &work = *impl_->event.optimization;
+  for (std::size_t i = 0; i < 2; ++i)
+    if (!same_header(answers[i].header, work.cells->cells[i].header) ||
+        answers[i].decision != BoundDecision::accept)
+      invalid("optimizer completion requires its two accepted current bounds");
+  if (!contact_approval_matches(approval, {work.ordinal, work.old_cells, work.nodes, work.edges}))
+    invalid("optimizer completion requires matching contact approval");
+  impl_->flip_answers = answers;
+  impl_->flip_approval = std::move(approval);
+  impl_->command = Impl::Command::finish_flip;
+}
+FaceResult FaceOwnerJob::result() const {
+  impl_->check();
+  if (!impl_->output)
+    invalid("face generation has not published its final result");
+  return impl_->output;
 }
 const FaceEngine &FaceOwnerJob::engine() const {
   impl_->check();

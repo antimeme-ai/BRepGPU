@@ -129,7 +129,7 @@ BoundRootBank prepare_bound_roots(bgfd::Budget &budget,
                                   ExactTableKey key) {
   resource_required(resource);
   try {
-    if (selections.empty() || selections.size() > std::numeric_limits<uint32_t>::max() ||
+    if (selections.size() > std::numeric_limits<uint32_t>::max() ||
         key == geometry.view().table.key())
       invalid("invalid bound root bank selection/anchor identity");
     std::pmr::vector<BoundRootSelection> sorted(selections.begin(), selections.end(), &budget);

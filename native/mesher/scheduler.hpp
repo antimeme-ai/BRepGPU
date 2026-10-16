@@ -62,6 +62,8 @@ public:
   void stop() noexcept;
   void drain(); // coordinator only; completed records remain available to take
   [[nodiscard]] std::stop_token stop_token() const noexcept;
+  [[nodiscard]] SchedulerLimits limits() const noexcept;
+  [[nodiscard]] bool idle() const;
 };
 } // namespace bgmesh
 #endif

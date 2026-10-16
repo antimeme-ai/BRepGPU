@@ -21,12 +21,18 @@ struct BoundarySiteChoice final {
   Rational source_parameter, pcurve_parameter;
   std::array<Rational, 2> chart, original_uv;
   Rational node_carrier_upper, endpoint_curve_upper;
+  std::optional<std::array<Rational,4>> original_uv_enclosure{};
 };
 struct BoundaryJointChoice final {
   Slot<VertexTag> vertex;
   std::array<Rational, 2> chart, original_uv;
   std::pmr::vector<BoundarySiteChoice> occurrences;
+  std::optional<std::array<Rational,4>> original_uv_enclosure{};
 };
+struct OriginalUsePoint final {Slot<CoedgeTag> use;const Rational &source_parameter;};
+[[nodiscard]] Rational map_original_use_parameter(GeometryContext &,const WorkingChart &,OriginalUsePoint);
+void require_authoritative_point_agreement(GeometryContext &,const WorkingChart &,
+ std::array<OriginalUsePoint,2>,GeometryBoundPrecision = {});
 [[nodiscard]] BoundarySiteChoice locate_boundary_site(GeometryContext &, const WorkingChart &,
                                                       const UseNodeRequest &);
 // All incident occurrences name the same original vertex on one face branch.

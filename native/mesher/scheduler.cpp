@@ -169,4 +169,9 @@ void NativeScheduler::drain() {
   p.completion_changed.wait(lock, [&] { return p.ready_count == 0 && p.running == 0; });
 }
 std::stop_token NativeScheduler::stop_token() const noexcept { return impl_->stop.get_token(); }
+SchedulerLimits NativeScheduler::limits() const noexcept { return impl_->limits; }
+bool NativeScheduler::idle() const {
+  std::lock_guard lock(impl_->mutex);
+  return impl_->ready_count == 0 && impl_->running == 0 && impl_->complete_count == 0;
+}
 } // namespace bgmesh
