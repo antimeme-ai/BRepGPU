@@ -47,3 +47,20 @@ their design relevance. They do not block the positive-weight hierarchy study.
   [company-records catalog](https://www.nawcc.org/research/company-records/) lists
   membership-gated Hamilton watch service records; its separate engineering
   drawing index belongs to clock records and is not evidence of watch-part CAD.
+
+## Direct constrained triangulation full texts, 2026-10-16
+
+- **Chin–Wang1998**, *Finding the Constrained Delaunay Triangulation and
+  Constrained Voronoi Diagram of a Simple Polygon in Linear Time*, SIAM Journal
+  on Computing28(2):471–486. Publisher abstract/bibliography inspected; full
+  algorithm not acquired. Needed to evaluate the ordered simple-polygon
+  specialization, its degeneracies and relation to the general holes contract.
+- **Seidel1988**, *Constrained Delaunay Triangulations and Voronoi Diagrams with
+  Obstacles*, in *1978–1988 Ten Years IIG*,178–191. Bibliographic/theorem leads
+  inspected; full original not acquired. Needed for a serious optimal sweep
+  comparison. Do not substitute Chew's different constrained divide-and-conquer
+  method or infer a cavity algorithm from the title.
+
+These gaps do not block reading the acquired Chew, Shewchuk–Brown, BRIO,
+predicate and2026 GPU CDT originals. They remain explicit acquisition work,
+not algorithms claimed read or implemented.
