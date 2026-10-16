@@ -372,9 +372,12 @@ void cleanup(Session &s, Error *e, bool &ok) {
     }
   }
 }
-bool create(const SceneView *view, uint32_t, int32_t device, void **out,
-            Error *e, Times *times) {
+bool create_profile(const SceneView *view, int32_t device, void **out,
+                    Error *e, Times *times,bool source_profile) {
   *out = nullptr;
+  if(!scene_vertex_profile(view,source_profile)) {
+    record(e,"session_create","invalid scene vertex profile");return false;
+  }
   Session *s = nullptr;
   try {
     s = new Session;
@@ -601,7 +604,15 @@ bool close_gpu(void *token, Error *e, Times *times) {
   times->close = ms(t);
   return clean && selected_ok;
 }
+bool create(const SceneView *view,uint32_t,int32_t device,void **out,Error *e,Times *times) {
+  return create_profile(view,device,out,e,times,false);
+}
+bool create_v2(const SceneView *view,uint32_t,int32_t device,void **out,Error *e,Times *times) {
+  return create_profile(view,device,out,e,times,true);
+}
 const Api api = {1, sizeof(Api), create, evaluate_gpu, render_gpu, close_gpu};
+const Api api_v2 = {2, sizeof(Api), create_v2, evaluate_gpu, render_gpu, close_gpu};
 } // namespace
 } // namespace bgom10
 extern "C" const bgom10::Api *brepgpu_om10_cuda_v1() { return &bgom10::api; }
+extern "C" const bgom10::Api *brepgpu_om10_cuda_v2() { return &bgom10::api_v2; }

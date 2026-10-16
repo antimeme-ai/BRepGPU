@@ -120,12 +120,12 @@ void first_error(std::atomic<uint64_t> &out, uint64_t i) {
   while (i < old && !out.compare_exchange_weak(old, i)) {
   }
 }
-bool create(const SceneView *scene, uint32_t threads, int32_t, void **out,
-            Error *e, Times *times) {
+bool create_profile(const SceneView *scene, uint32_t threads, void **out,
+                    Error *e, Times *times,bool source_profile) {
   *out = nullptr;
   auto t = Clock::now();
   bool ok = guard(e, "session_create", [&] {
-    if (!scene || threads < 1 || threads > 256) {
+    if (!scene_vertex_profile(scene,source_profile) || threads < 1 || threads > 256) {
       error(e, "session_create", "invalid CPU scene/thread count");
       return false;
     }
@@ -134,6 +134,12 @@ bool create(const SceneView *scene, uint32_t threads, int32_t, void **out,
   });
   times->create = elapsed(t);
   return ok;
+}
+bool create(const SceneView *scene,uint32_t threads,int32_t,void **out,Error *e,Times *times) {
+  return create_profile(scene,threads,out,e,times,false);
+}
+bool create_v2(const SceneView *scene,uint32_t threads,int32_t,void **out,Error *e,Times *times) {
+  return create_profile(scene,threads,out,e,times,true);
 }
 bool evaluate_cpu(void *token, Jet *output, Error *e, Times *times) {
   return guard(e, "source_evaluate", [&] {
@@ -332,6 +338,8 @@ bool close_cpu(void *token, Error *e, Times *times) {
   return ok;
 }
 const Api api = {1, sizeof(Api), create, evaluate_cpu, render_cpu, close_cpu};
+const Api api_v2 = {2, sizeof(Api), create_v2, evaluate_cpu, render_cpu, close_cpu};
 } // namespace
 const Api *cpu_api() { return &api; }
+const Api *cpu_api_v2() { return &api_v2; }
 } // namespace bgom10

@@ -28,10 +28,41 @@ BGOM_HD bool unit(Vec a, Vec &out) {
   double m = maxd(fabs(a.x), maxd(fabs(a.y), fabs(a.z)));
   if (!finite(m) || m == 0)
     return false;
-  Vec b = mul(a, 1 / m);
+  Vec b = {a.x / m, a.y / m, a.z / m};
   double n = sqrt(dot(b, b));
   out = mul(b, 1 / n);
   return good(out);
+}
+BGOM_HD double maximum_component(Vec a) {
+  return maxd(fabs(a.x), maxd(fabs(a.y), fabs(a.z)));
+}
+BGOM_HD Vec divided(Vec a, double scale) {
+  return {a.x / scale, a.y / scale, a.z / scale};
+}
+// Normalization removes the common positive square scale. Keep the actual
+// relative source axes and affine matrix entries; never orthonormalize them.
+BGOM_HD Vec cofactor_normal(const double *matrix, Vec n) {
+  Vec a = vec(matrix), b = vec(matrix + 4), c = vec(matrix + 8);
+  const double scale = maxd(maximum_component(a), maxd(maximum_component(b), maximum_component(c)));
+  if (!finite(scale) || scale == 0) return {};
+  a = divided(a, scale); b = divided(b, scale); c = divided(c, scale);
+  return {dot(cross(b, c), n), dot(cross(c, a), n), dot(cross(a, b), n)};
+}
+BGOM_HD bool source_vertex_flags(const Carrier &c, uint32_t flags) {
+  if ((flags & ~63u) != 0 || (flags & (STORED_XYZ | COFACTOR_NORMAL)) != (STORED_XYZ | COFACTOR_NORMAL))
+    return false;
+  if ((flags & (NEGATIVE_RADIAL_SHEET | SPHERE_SOUTH)) && !(flags & ANALYTIC_NORMAL_LIMIT)) return false;
+  if ((flags & ANALYTIC_NORMAL_LIMIT) && c.tag != 3 && c.tag != 4) return false;
+  return !(flags & SPHERE_SOUTH) || c.tag == 4;
+}
+inline bool scene_vertex_profile(const SceneView *scene, bool source_profile) {
+  if (!scene || (scene->nvertices && !scene->vertices) || (scene->ncarriers && !scene->carriers)) return false;
+  for (uint64_t i = 0; i < scene->nvertices; ++i) {
+    const auto &v = scene->vertices[i];
+    if (v.carrier >= scene->ncarriers || (source_profile ? !source_vertex_flags(scene->carriers[v.carrier], v.flags)
+                                                       : (v.flags & ~3u) != 0)) return false;
+  }
+  return true;
 }
 BGOM_HD void save(Vec a, double *p) {
   p[0] = a.x;
@@ -81,6 +112,11 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
     du = x;
     dv = y;
     normal = cross(x, y);
+    if(v.flags & COFACTOR_NORMAL) {
+      const double scale=maxd(maximum_component(x),maximum_component(y));
+      if(!finite(scale)||scale==0)return false;
+      normal=cross(divided(x,scale),divided(y,scale));
+    }
   } else if (c.tag >= 2 && c.tag <= 5) {
     double su = sin(u), cu = cos(u);
     Vec e = add(mul(x, cu), mul(y, su)), ep = add(mul(x, -su), mul(y, cu));
@@ -154,15 +190,32 @@ BGOM_HD bool evaluate(const Carrier &c, const Control *controls,
     normal = cross(du, dv);
   } else
     return false;
+  if (v.flags & ANALYTIC_NORMAL_LIMIT) {
+    if (!(v.flags & COFACTOR_NORMAL) || (c.tag != 3 && c.tag != 4)) return false;
+    const double scale = maxd(maximum_component(x), maxd(maximum_component(y), maximum_component(z)));
+    if (!finite(scale) || scale == 0) return false;
+    const Vec sx = divided(x, scale), sy = divided(y, scale), sz = divided(z, scale);
+    if (c.tag == 4) {
+      normal = cross(sx, sy);
+      if (v.flags & SPHERE_SOUTH) normal = mul(normal, -1);
+    } else {
+      const Vec e = add(mul(sx, cos(u)), mul(sy, sin(u))),
+                ep = add(mul(sx, -sin(u)), mul(sy, cos(u)));
+      normal = add(mul(cross(ep, e), sin(c.r1)), mul(cross(ep, sz), cos(c.r1)));
+    }
+    if (v.flags & NEGATIVE_RADIAL_SHEET) normal = mul(normal, -1);
+    out.flags |= SINGULAR_PARAMETER;
+  }
   if (!good(p) || !good(du) || !good(dv) || !unit(normal, normal))
     return false;
-  if (v.flags & 2)
+  if (v.flags & REVERSE_NORMAL)
     normal = mul(normal, -1);
   save(p, out.position);
   save(du, out.du);
   save(dv, out.dv);
   save(normal, out.normal);
-  save((v.flags & 1) ? vec(v.xyz) : p, out.used);
+  save((v.flags & STORED_XYZ) ? vec(v.xyz) : p, out.used);
+  if (v.flags & COFACTOR_NORMAL) out.flags |= COFACTOR_INSTANCE_NORMAL;
   return good(vec(out.used));
 }
 BGOM_HD Vec rotate(const double *m, Vec p) {
@@ -177,7 +230,9 @@ BGOM_HD bool project(const SceneView &s, const Request &r, uint64_t slot,
   p = add(p, {i.matrix[3], i.matrix[7], i.matrix[11]});
   if (r.alpha != 0)
     p = add(p, mul(vec(i.explosion), r.alpha));
-  Vec n = rotate(i.matrix, vec(jets[ref.source].normal));
+  const auto &jet = jets[ref.source];
+  Vec n = (jet.flags & COFACTOR_INSTANCE_NORMAL) ? cofactor_normal(i.matrix, vec(jet.normal))
+                                               : rotate(i.matrix, vec(jet.normal));
   if (!good(p) || !unit(n, n))
     return false;
   Vec v = sub(p, vec(r.center));

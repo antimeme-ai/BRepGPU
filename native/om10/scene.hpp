@@ -85,7 +85,27 @@ inline bool orthogonal(const double *x, const double *y, const double *z,
          (right ? fabs(dot(cross(a, b), c) - 1) < tol
                 : fabs(fabs(dot(cross(a, b), c)) - 1) < tol);
 }
+inline bool independent_axes(const double *x, const double *y, const double *z, bool positive) {
+  Vec a=vec(x), b=vec(y), c=vec(z);
+  const double scale=maxd(maximum_component(a),maxd(maximum_component(b),maximum_component(c)));
+  if(!finite(scale)||scale==0)return false;
+  a=divided(a,scale);b=divided(b,scale);c=divided(c,scale);
+  const double determinant=dot(cross(a,b),c);
+  // At most six triple products of normalized components. This conservative
+  // absolute guard refuses uncertain signs, including underflow; it does not
+  // treat a rounded zero as proof of source degeneracy.
+  return finite(determinant) && (positive ? determinant>64*DBL_EPSILON
+                                         : fabs(determinant)>64*DBL_EPSILON);
+}
+inline bool independent_plane_axes(const double *x,const double *y) {
+  const Vec a=vec(x),b=vec(y);
+  const double scale=maxd(maximum_component(a),maximum_component(b));
+  if(!finite(scale)||scale==0)return false;
+  const Vec normal=cross(divided(a,scale),divided(b,scale));
+  return good(normal)&&maximum_component(normal)>16*DBL_EPSILON;
+}
 struct Scene {
+  uint32_t source_profile=0;
   std::vector<Definition> definitions;
   std::vector<Instance> instances;
   std::vector<Vertex> vertices;
@@ -106,8 +126,10 @@ struct Scene {
   explicit Scene(const std::string &path) {
     Bytes b(path);
     b.magic("BGMESH01");
-    require(b.u32() == 1 && b.u32() == 0,
-            "decode: unsupported scene version/flags");
+    require(b.u32() == 1,"decode: unsupported scene version");
+    source_profile=b.u32();
+    require((source_profile & ~SOURCE_GEOMETRY_PROFILE)==0,
+            "decode: unsupported scene flags");
     uint64_t n[7];
     for (auto &x : n)
       x = b.u64();
@@ -210,7 +232,8 @@ struct Scene {
               "decode: duplicate/reserved instance ID");
       require(i.definition < definitions.size() && i.reserved == 0,
               "decode: instance definition/reserved");
-      require(orthogonal(i.matrix, i.matrix + 4, i.matrix + 8, true),
+      require(source_profile ? independent_axes(i.matrix,i.matrix+4,i.matrix+8,true)
+                             : orthogonal(i.matrix, i.matrix + 4, i.matrix + 8, true),
               "decode: nonrigid instance matrix");
       const Definition &d = definitions[i.definition];
       require(checked_add(vertex_refs.size(), d.vertex_count) <= UINT32_MAX &&
@@ -247,7 +270,8 @@ struct Scene {
         require(c.control_count == 0 && c.control_offset == 0 && c.p == 0 &&
                     c.q == 0,
                 "decode: analytic control fields");
-        require(orthogonal(c.x, c.y, c.z, false),
+        require(source_profile ? (c.tag==1?independent_plane_axes(c.x,c.y):independent_axes(c.x,c.y,c.z,false))
+                               : orthogonal(c.x, c.y, c.z, false),
                 "decode: invalid analytic axes");
         if (c.tag == 1)
           require(c.r0 == 0 && c.r1 == 0, "decode: unused plane radius");
@@ -267,7 +291,8 @@ struct Scene {
     for (const auto &c : controls)
       require(c.h[3] > 0, "decode: nonpositive homogeneous weight");
     for (const auto &v : vertices) {
-      require(v.carrier < carriers.size() && (v.flags & ~3u) == 0,
+      require(v.carrier < carriers.size(), "decode: vertex carrier");
+      require(source_profile ? source_vertex_flags(carriers[v.carrier],v.flags) : (v.flags & ~3u) == 0,
               "decode: vertex carrier/flags");
       const Carrier &c = carriers[v.carrier];
       require(v.uv[0] >= c.uv[0] && v.uv[0] <= c.uv[1] && v.uv[1] >= c.uv[2] &&
