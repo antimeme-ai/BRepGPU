@@ -39,7 +39,7 @@ fleet checkout/build profiles, integration, commits and final delivery.
    (only live counts/source metadata exist today). Report normalization and whole native
    call, stage walls, actual work, exact bit width, output size and peak RSS;
    counters and timing configuration match across ratios. Baseline timeout300s;
-   native practical budget300s/2GiB. Sparse strip exact candidates <64*N at8192.
+   native practical budget300s/2GiB. Sparse strip crossing-only node visits plus leaf box tests <64*N at8192.
    Three fresh trials where affordable; no full-watch retry to discover scaling.
 8. Return code + focused tests + actual correctness/performance report to root.
    Root selects the separately reviewed production integration and complete-part
