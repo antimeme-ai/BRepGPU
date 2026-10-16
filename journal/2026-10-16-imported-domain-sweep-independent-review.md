@@ -27,3 +27,25 @@ Asked the owner to make the counters precise: `projected_pairs` is the complete
 chosen-axis count; `active_visits` may stop early when invalid geometry raises.
 `max_active` must state whether it includes the newly inserted current segment.
 These are small work observations, not a second qualification system.
+
+## Actual code review
+
+Reviewed `_DomainSweepWork`, `_domain_box_candidates`, the changed
+`_simple_domains` and all eight focused methods. ACCEPT; no code findings.
+Both counting and enumeration heaps retain equal-coordinate ends. The chosen
+other-axis box components are correct for both X and Y sweeps. Current insertion
+occurs after earlier active pairs are yielded, and no active dictionary mutation
+occurs during its iteration. Ordinal canonicalization restores the exact old
+loop-owner/neighbor exemption. Original Fraction geometry and nesting source
+are unchanged. Counter reset, complete projected count, early-stopped visits,
+pre-adjacency box candidates and occupancy agree with the documented meanings.
+
+Root/owner report the genuine old-reader RED: 590,566 Fraction comparisons for
+the actual 512-site protected strip against the predeclared 32,768 operation
+bound. Six semantic methods passed the old implementation; the eight focused
+methods passed the new implementation in 0.259s on the fleet. Those runtime
+observations are the owning lane's work; this reviewer did not repeat them.
+The input fixtures exercise nonzero-area proper crossing, vertical/closed
+touches, exact wide translations, arbitrary loop starts, inter-loop ownership
+and unchanged outer/hole containment behavior. Root was cleared to replay the
+actual complete-part qualifier with newly recorded oracle pins.
