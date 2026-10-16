@@ -25,9 +25,10 @@ uint32_t checked_slot(std::size_t value) {
 }
 } // namespace
 BoundaryEvaluationData::BoundaryEvaluationData(std::shared_ptr<RunResource> owner,
-                                               BoundaryEpoch identity, ExactTable table,
+                                               BoundaryEpoch identity, SourceStore original,
+                                               Slot<DefinitionTag> definition_slot, ExactTable table,
                                                std::pmr::vector<BoundaryEvaluationTask> rows)
-    : resource(std::move(owner)), epoch(identity), parameters(std::move(table)),
+    : resource(std::move(owner)), epoch(identity), source(std::move(original)), definition(definition_slot), parameters(std::move(table)),
       tasks(std::move(rows)) {}
 
 struct DefinitionBoundaryForest::Impl final {
@@ -259,7 +260,7 @@ struct DefinitionBoundaryForest::Impl final {
         tasks.push_back({epoch, proposal.sample, *curve, builder.append(proposal.t)});
       }
     return BoundaryEvaluationBatch(std::allocate_shared<BoundaryEvaluationData>(
-        RunAllocator<BoundaryEvaluationData>(resource), resource, epoch, builder.seal(),
+        RunAllocator<BoundaryEvaluationData>(resource), resource, epoch, source, definition, builder.seal(),
         std::move(tasks)));
   }
   std::pmr::vector<uint64_t> ordered_leaves(Slot<EdgeTag> source_edge) const {

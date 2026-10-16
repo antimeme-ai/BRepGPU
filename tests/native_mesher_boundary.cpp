@@ -28,6 +28,8 @@ void epochs(const bgmesh::SourceStore &source,
   if (!initial)
     throw std::runtime_error("source map breakpoint omitted");
   require(initial->tasks().size() == 1, "source map breakpoint omitted");
+  require(&initial->source().view()==&source.view() && initial->definition().value==0,
+          "evaluation batch lost source authority/definition lease");
   (void)forest.complete_evaluations(initial->epoch(), evaluate_literal(budget, *initial));
   const bgmesh::Slot<bgmesh::EdgeTag> edge{0};
   const auto chain = forest.chain(edge);
