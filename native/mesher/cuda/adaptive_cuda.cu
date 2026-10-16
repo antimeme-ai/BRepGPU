@@ -1,5 +1,7 @@
+#include "../adaptive_curve_numeric.hpp"
 #include "../adaptive_numeric.hpp"
 #include "adaptive_api.h"
+#include "adaptive_curve_api.h"
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -59,7 +61,17 @@ enum Pool : unsigned {
 struct Span {
   uint32_t begin, end;
 };
-enum class Operation { none, samples, restrictions, nodes, facets };
+enum class Operation {
+  none,
+  samples,
+  restrictions,
+  nodes,
+  facets,
+  curve_samples,
+  curve_restrictions,
+  curve_nodes,
+  curve_traces
+};
 template <class T> T *data(Buffer &buffer) { return static_cast<T *>(buffer.pointer); }
 unsigned blocks(uint32_t count, unsigned width = tile) {
   return count / width + (count % width != 0);
@@ -290,7 +302,7 @@ struct DeviceSession {
   uint64_t ticket = 0, work = 0;
   uint32_t count = 0, result_width = 0;
   Operation operation = Operation::none;
-  bool broken = false;
+  bool broken = false, curve_mode = false;
 };
 namespace {
 void charge(DeviceSession &s, uint64_t amount) {
@@ -425,6 +437,43 @@ template <class F> int32_t call(DeviceSession *s, DeviceError *error, F &&functi
     return 2;
   }
 }
+DeviceSession &create_owner(const DeviceConfig *config, DeviceSession **output, bool curve_mode) {
+  require(config && output, "invalid device owner inputs");
+  require(config->abi == adaptive_cuda_abi && config->size >= sizeof(DeviceConfig) &&
+              config->device >= 0 && config->points && config->controls && config->nodes &&
+              config->frontier && config->frontier <= UINT32_MAX / 2 && config->reserve &&
+              config->release,
+          "unsupported adaptive device configuration");
+  if (config->host_bytes < sizeof(DeviceSession))
+    throw Failure{2, "adaptive owner exceeds host capacity"};
+  int device_count = 0;
+  checked(cudaGetDeviceCount(&device_count));
+  require(config->device < device_count, "adaptive device index outside installed devices");
+  auto *lease = config->reserve(config->reservation_context, sizeof(DeviceSession));
+  if (!lease)
+    throw Failure{2, "device owner reservation refused"};
+  DeviceSession *owner = nullptr;
+  try {
+    owner = new DeviceSession;
+  } catch (...) {
+    config->release(config->reservation_context, lease);
+    throw;
+  }
+  *output = owner;
+  auto &s = *owner;
+  s.config = *config;
+  s.owner_lease = lease;
+  s.broken = true;
+  s.curve_mode = curve_mode;
+  s.counters.host_reserved_bytes = s.counters.host_peak_bytes = sizeof(DeviceSession);
+  checked(cudaSetDevice(config->device));
+  cudaDeviceProp properties{};
+  checked(cudaGetDeviceProperties(&properties, config->device));
+  require(properties.major == 6 && properties.minor == 0, "adaptive module requires sm60 P100");
+  checked(cudaStreamCreateWithFlags(&s.stream, cudaStreamNonBlocking));
+  checked(cudaEventCreateWithFlags(&s.event, cudaEventDisableTiming));
+  return s;
+}
 int32_t create(const DeviceConfig *config, const RootDescriptor *prepared, uint32_t nr,
                const RootDescriptor *original, uint32_t no, const Interval *coefficients,
                uint32_t nc, DeviceSession **output, DeviceError *error) {
@@ -432,42 +481,11 @@ int32_t create(const DeviceConfig *config, const RootDescriptor *prepared, uint3
     *output = nullptr;
   return call(nullptr, error, [&] {
     require(config && output && prepared && original && nr && no, "invalid device create inputs");
-    require(config->abi == adaptive_cuda_abi && config->size >= sizeof(DeviceConfig) &&
-                config->device >= 0 && config->points && config->controls && config->nodes &&
-                config->frontier && config->frontier <= UINT32_MAX / 2 && config->reserve &&
-                config->release,
-            "unsupported adaptive device configuration");
     require(nc <= config->controls && (!nc || coefficients),
             "source controls exceed device capacity");
-    if (config->host_bytes < sizeof(DeviceSession))
-      throw Failure{2, "adaptive owner exceeds host capacity"};
-    int device_count = 0;
-    checked(cudaGetDeviceCount(&device_count));
-    require(config->device < device_count, "adaptive device index outside installed devices");
-    auto *lease = config->reserve(config->reservation_context, sizeof(DeviceSession));
-    if (!lease)
-      throw Failure{2, "device owner reservation refused"};
-    DeviceSession *owner = nullptr;
-    try {
-      owner = new DeviceSession;
-    } catch (...) {
-      config->release(config->reservation_context, lease);
-      throw;
-    }
-    *output = owner;
-    auto &s = *owner;
-    s.config = *config;
-    s.owner_lease = lease;
-    s.broken = true;
-    s.counters.host_reserved_bytes = s.counters.host_peak_bytes = sizeof(DeviceSession);
+    auto &s = create_owner(config, output, false);
     s.root_count = nr;
     s.original_count = no;
-    checked(cudaSetDevice(config->device));
-    cudaDeviceProp properties{};
-    checked(cudaGetDeviceProperties(&properties, config->device));
-    require(properties.major == 6 && properties.minor == 0, "adaptive module requires sm60 P100");
-    checked(cudaStreamCreateWithFlags(&s.stream, cudaStreamNonBlocking));
-    checked(cudaEventCreateWithFlags(&s.event, cudaEventDisableTiming));
     grow(s, host_roots, product(nr, sizeof(RootDescriptor)), true);
     grow(s, host_originals, product(no, sizeof(RootDescriptor)), true);
     std::memcpy(s.buffers[host_roots].pointer, prepared,
@@ -521,6 +539,7 @@ int32_t samples(DeviceSession *s, const DeviceSample *tasks, uint32_t count, uin
   return call(s, error, [&] {
     require(s && tasks && ticket && count && count <= s->config.frontier,
             "invalid sample operation");
+    require(!s->curve_mode, "surface operation on curve session");
     idle(*s);
     charge(*s, product(count, 128));
     grow(*s, validation, product(count, sizeof(Span)), true);
@@ -569,6 +588,7 @@ int32_t restrictions(DeviceSession *s, const DeviceRestriction *tasks, uint32_t 
   return call(s, error, [&] {
     require(s && tasks && ticket && count && count <= s->config.frontier,
             "invalid restriction operation");
+    require(!s->curve_mode, "surface operation on curve session");
     idle(*s);
     charge(*s, product(count, 512));
     grow(*s, validation, product(count, sizeof(Span)), true);
@@ -627,6 +647,7 @@ int32_t node_operation(DeviceSession *s, const DeviceNode *tasks, uint32_t count
                        DeviceError *error) {
   return call(s, error, [&] {
     require(s && tasks && ticket && count && count <= s->config.frontier, "invalid node operation");
+    require(!s->curve_mode, "surface operation on curve session");
     idle(*s);
     charge(*s, product(count, 8192));
     grow(*s, validation, product(count, sizeof(Span)), true);
@@ -707,6 +728,7 @@ int32_t facets(DeviceSession *s, const ActualFacetInput *tasks, uint32_t count, 
   return call(s, error, [&] {
     require(s && tasks && ticket && count && count <= s->config.frontier,
             "invalid facet operation");
+    require(!s->curve_mode, "surface operation on curve session");
     idle(*s);
     charge(*s, product(count, 256));
     for (uint32_t i = 0; i < count; ++i) {
@@ -781,6 +803,7 @@ int32_t destroy(DeviceSession *s, DeviceError *error) {
     config.release(config.reservation_context, lease);
   });
 }
+#include "adaptive_curve_ops.cuh"
 const AdaptiveCudaAPI api{adaptive_cuda_abi,
                           sizeof(AdaptiveCudaAPI),
                           create,
@@ -795,4 +818,7 @@ const AdaptiveCudaAPI api{adaptive_cuda_abi,
 } // namespace bgmesh::adaptive
 extern "C" const bgmesh::adaptive::AdaptiveCudaAPI *brepgpu_adaptive_cuda_v1() {
   return &bgmesh::adaptive::api;
+}
+extern "C" const bgmesh::adaptive::CurveCudaAPI *brepgpu_adaptive_curve_cuda_v1() {
+  return &bgmesh::adaptive::curve_api;
 }
