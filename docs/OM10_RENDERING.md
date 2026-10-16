@@ -18,11 +18,14 @@ The [reviewed plan](OM10_IMPLEMENTATION_PLAN.md),
 [source/recovery study](../papers/2026-10-15-om10-import-mesh-study.md) and
 [independent-oracle subplan](OM10_ORACLE_SUBPLAN.md) describe those obligations.
 
-The operator requested diagnosis before further implementation after the owned
-CPU mesh exceeded four hours. The [diagnosis](../papers/2026-10-15-om10-mesher-diagnosis.md)
-identifies sampled-boundary pair enumeration and repeated ear-point scanning,
-including an8,300-node face. The live run remains unchanged; repair and new
-experiments are held pending the operator-facing report and next direction.
+The operator requested diagnosis after the owned CPU mesh exceeded four hours.
+The [diagnosis](../papers/2026-10-15-om10-mesher-diagnosis.md) identified sampled-
+boundary pair enumeration and repeated ear-point scanning, including an8,300-
+node face. The subsequently authorized C++ transition now supplies an opt-in
+[native direct CDT](DIRECT_CDT.md), replacing ear construction and Python Lawson
+repair. Its general workload results and actual main-plate trial are separate
+from whole-watch completion. The historical live checkout remains untouched;
+new implementation and trials use an isolated checkout.
 
 The operator also requires **NVIDIA USD/BRep on CPU** on this same complete
 movement and both views. The owned CPU/P100 matrix isolates our acceleration;
@@ -35,13 +38,15 @@ incomplete until that reference run and its outcomes are reported.
 A fresh parallel original-source geometry attempt now records all107 outcomes
 under each policy:103 emitted meshes pass existing physical/original-Euler
 checks and four definitions fail. This is not full boundary-distance admission
-or a reference render. The current owned hard part is among those failures;
-see the [reference diagnosis](../papers/2026-10-15-om10-mesher-surgical-diagnosis-reference.md).
+or a reference render. The later [delivery audit](../journal/2026-10-16-nvidia-reference-delivery-audit.md)
+records the four remaining bridge/export failures and confirms that rectangle
+support already rescued the date disc. Main plate1713 has reference meshes under
+both policies. See also the [reference diagnosis](../papers/2026-10-15-om10-mesher-surgical-diagnosis-reference.md).
 
 | Stage | Ownership and execution |
 | --- | --- |
 | STEP/XDE extraction | Isolated pinned OCCT8.0.1 CPU adapter; original IDs, units, source geometry, reconstructed pcurves and diagnostics |
-| Boundary recovery and mesh | Owned Python CPU machinery; shared original-edge samples, exact predicates, complete multi-hole domains, conforming refinement and provenance |
+| Boundary recovery and mesh | Owned CPU machinery: Python source sampling/refinement and native C++ exact domain/CDT option; shared original-edge samples, complete multi-hole domains and provenance |
 | Assembly and explosion | Owned CPU occurrence graph and rigid composition; authored world offsets, exact original assembled endpoint |
 | First jets, placement and display | Owned C++17 CPU implementation or explicit CUDA12/P100 plugin; original-UV positions/normals, tiled visibility/shading and image resolve |
 | Presentation | Owned standard-library PNG/SVG composition; source-linked callouts and actual timings |

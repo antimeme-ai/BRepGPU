@@ -1,0 +1,5 @@
+field	value
+tolerance_mm	0.005
+source_residual_mm	0.001
+max_refinement	20
+max_edge_samples	16384
