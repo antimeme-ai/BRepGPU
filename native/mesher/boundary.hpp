@@ -79,26 +79,37 @@ struct SourceBoundaryEdge final {
   Range<PhysicalNode> nodes;
   Range<BoundaryKey> intervals;
 };
-struct SourceBoundarySnapshotData final {
+struct DefinitionBoundarySnapshotData {
   std::shared_ptr<RunResource> resource;
   SourceStore source;
   Slot<DefinitionTag> definition;
-  Slot<FaceTag> face;
   BoundaryEpoch epoch;
-  uint64_t boundary_generation;
   ExactTable parameters;
   std::pmr::vector<SourceBoundaryEdge> edges;
   std::pmr::vector<PhysicalNode> nodes;
   std::pmr::vector<BoundaryKey> intervals;
-  SourceBoundarySnapshotData(std::shared_ptr<RunResource> owner, SourceStore original,
-                             Slot<DefinitionTag> definition_slot, Slot<FaceTag> face_slot,
-                             BoundaryEpoch identity, uint64_t generation, ExactTable table)
+  // One range per nodes row. Directions are literal root first/second child,
+  // from that original root to the interval whose midpoint created the sample.
+  std::pmr::vector<Range<uint8_t>> sample_paths;
+  std::pmr::vector<uint8_t> path_bits;
+  DefinitionBoundarySnapshotData(std::shared_ptr<RunResource> owner, SourceStore original,
+                                 Slot<DefinitionTag> definition_slot, BoundaryEpoch identity,
+                                 ExactTable table)
       : resource(std::move(owner)), source(std::move(original)), definition(definition_slot),
-        face(face_slot), epoch(identity), boundary_generation(generation),
-        parameters(std::move(table)), edges(resource.get()), nodes(resource.get()),
-        intervals(resource.get()) {}
-  SourceBoundarySnapshotData(const SourceBoundarySnapshotData &) = delete;
-  SourceBoundarySnapshotData &operator=(const SourceBoundarySnapshotData &) = delete;
+        epoch(identity), parameters(std::move(table)), edges(resource.get()), nodes(resource.get()),
+        intervals(resource.get()), sample_paths(resource.get()), path_bits(resource.get()) {}
+  DefinitionBoundarySnapshotData(const DefinitionBoundarySnapshotData &) = delete;
+  DefinitionBoundarySnapshotData &operator=(const DefinitionBoundarySnapshotData &) = delete;
+  DefinitionBoundarySnapshotData(DefinitionBoundarySnapshotData &&) = default;
+};
+using DefinitionBoundarySnapshot = std::shared_ptr<const DefinitionBoundarySnapshotData>;
+struct SourceBoundarySnapshotData final : DefinitionBoundarySnapshotData {
+  Slot<FaceTag> face;
+  uint64_t boundary_generation;
+  SourceBoundarySnapshotData(DefinitionBoundarySnapshotData &&rows, Slot<FaceTag> original_face,
+                             uint64_t generation)
+      : DefinitionBoundarySnapshotData(std::move(rows)), face(original_face),
+        boundary_generation(generation) {}
 };
 using SourceBoundarySnapshot = std::shared_ptr<const SourceBoundarySnapshotData>;
 struct BoundaryStats final {
@@ -112,6 +123,8 @@ class DefinitionBoundaryForest final {
   struct Impl;
   bgfd::Budget *budget_;
   Impl *impl_;
+  [[nodiscard]] std::shared_ptr<DefinitionBoundarySnapshotData>
+      freeze_rows(std::span<const Slot<EdgeTag>>) const;
 
 public:
   DefinitionBoundaryForest(bgfd::Budget &, SourceStore, Slot<DefinitionTag>,
@@ -135,6 +148,8 @@ public:
   [[nodiscard]] const Rational &parameter(BoundarySampleSlot) const;
   [[nodiscard]] BoundaryStats stats() const;
   [[nodiscard]] SourceBoundarySnapshot freeze_face_boundary(Slot<FaceTag>) const;
+  [[nodiscard]] DefinitionBoundarySnapshot freeze_definition_boundary() const;
+  [[nodiscard]] std::pmr::vector<uint8_t> sample_path(Slot<EdgeTag>, BoundarySampleSlot) const;
 };
 } // namespace bgmesh
 #endif

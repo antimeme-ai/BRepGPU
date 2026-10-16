@@ -44,6 +44,11 @@ void epochs(const bgmesh::SourceStore &source,
           "frozen boundary lost source/definition/face identity");
   require(frozen->edges.front().edge.value == 0 && frozen->edges.front().nodes.count == 3,
           "frozen boundary lost incident source chain");
+  const auto whole = forest.freeze_definition_boundary();
+  require(whole->edges.size() == source.view().definition_edges.at(0).size() &&
+              whole->sample_paths.size() == whole->nodes.size() &&
+              whole->edges.size() > frozen->edges.size(),
+          "definition export omitted unused inventory or path rows");
   const auto &frozen_first = frozen->nodes[frozen->edges.front().nodes.first];
   require(
       frozen_first.original_parameter &&
@@ -116,6 +121,9 @@ void epochs(const bgmesh::SourceStore &source,
   require(sample.key.generator == bgmesh::NodeGenerator::original_edge && sample.key.ordinal == 2 &&
               forest.parameter(update.new_samples[0]).to_double() == .75,
           "sample identity/order or exact descending midpoint wrong");
+  require(forest.sample_path(edge, update.new_samples[0]).empty() &&
+              forest.sample_path(edge, chain[1]).empty(),
+          "root midpoint/source seed path was not empty");
   const auto refrozen = forest.freeze_face_boundary(first);
   require(refrozen->boundary_generation == 1 && refrozen->edges.front().nodes.count == 5 &&
               frozen->boundary_generation == 0 && frozen->edges.front().nodes.count == 3,
@@ -138,6 +146,30 @@ void epochs(const bgmesh::SourceStore &source,
   forest.arrive(third, last, 1, {});
   (void)forest.prepare_splits(third);
   (void)forest.complete_evaluations(third, {});
+  const auto deeper = forest.begin_epoch();
+  const auto split_children = forest.intervals(edge);
+  const std::array deeper_requests{split_children[0], split_children[1]};
+  forest.arrive(deeper, first, 1, deeper_requests);
+  forest.arrive(deeper, last, 1, {});
+  const auto deeper_batch = forest.prepare_splits(deeper);
+  const auto deeper_update =
+      forest.complete_evaluations(deeper, evaluate_literal(budget, deeper_batch));
+  require(deeper_update.new_samples.size() == 2,
+          "nested source interval did not split both children");
+  const auto first_path = forest.sample_path(edge, deeper_update.new_samples[0]),
+             second_path = forest.sample_path(edge, deeper_update.new_samples[1]);
+  require(first_path.size() == 1 && second_path.size() == 1 && first_path[0] == 0 &&
+              second_path[0] == 1,
+          "literal descending root child paths lost first/second direction");
+  const auto final = forest.freeze_definition_boundary();
+  require(final->parameters.key() != deeper_batch.parameters().key(),
+          "definition export aliases retained source evaluation table key");
+  const auto final_chain = forest.chain(edge);
+  const auto node_index = final->edges.front().nodes.first + 1;
+  const auto path = final->sample_paths[static_cast<std::size_t>(node_index)];
+  require(path.count == 1 && final->path_bits[static_cast<std::size_t>(path.first)] == 0 &&
+              final_chain.size() == 7 && whole->edges.front().nodes.count == 3,
+          "frozen definition paths changed an earlier immutable snapshot");
   bgmesh::DefinitionBoundaryForest other(budget, source, bgmesh::Slot<bgmesh::DefinitionTag>{1},
                                          resource);
   const auto other_pending = other.pending_evaluations();
