@@ -35,3 +35,10 @@ sanitizer checks and actual-source peer review remain pending the geometry,
 packet and runtime bodies. No adaptive mesh/performance delivery is claimed at
 this checkpoint. CMake registers real unit targets as their actual bodies land;
 it supplies no placeholder library or fixture-backed product operation.
+
+Geometry peer review caught the default NURBS rectangle reading the adapter's
+uv_bounds hint. Fixed it to read the original natural knot domain using degree,
+control count and original knot multiplicities. Explicit rectangles remain
+explicit query inputs. The independent source writer now optionally authors a
+deliberately wrong hint; this caller's default-domain test uses it on all three
+families, so a hint-based crop cannot silently pass as a complete requested patch.

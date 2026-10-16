@@ -208,6 +208,27 @@ void digest(std::ostream &out, const SourceDigest &source) {
     out << digits[value >> 4] << digits[value & 15];
   }
 }
+std::array<double, 2> natural_axis(const SourceData &source, Range<double> knot_range,
+                                  Range<uint32_t> multiplicity_range, uint32_t degree,
+                                  uint32_t control_count) {
+  const auto knots = source.view(knot_range);
+  const auto multiplicities = source.view(multiplicity_range);
+  if (knots.size() != multiplicities.size() || control_count <= degree)
+    invalid("invalid original rational knot axis");
+  std::array<std::optional<double>, 2> endpoints;
+  uint64_t expanded = 0;
+  for (std::size_t i = 0; i < knots.size(); ++i) {
+    const auto next = expanded + multiplicities[i];
+    if (expanded <= degree && degree < next)
+      endpoints[0] = knots[i];
+    if (expanded <= control_count && control_count < next)
+      endpoints[1] = knots[i];
+    expanded = next;
+  }
+  if (!endpoints[0] || !endpoints[1] || *endpoints[0] >= *endpoints[1])
+    invalid("empty original rational knot domain");
+  return {*endpoints[0], *endpoints[1]};
+}
 void run(const Options &o, std::string_view &stage) {
   const auto full = Clock::now();
   const uint64_t bytes = o.memory_mib << 20;
@@ -227,7 +248,15 @@ void run(const Options &o, std::string_view &stage) {
   const auto source = load_source(o.source, resource);
   timing(stage, tick);
   const auto slot = source.view().carrier_index.find(CarrierId{o.carrier});
-  auto rectangle = source.view().carriers[slot.value].uv_bounds;
+  const auto &carrier = source.view().carriers[slot.value];
+  auto rectangle = carrier.uv_bounds;
+  if (!o.rectangle[0] && carrier.kind == 6) {
+    const auto u = natural_axis(source.view(), carrier.knot_u, carrier.mult_u,
+                                carrier.degrees[0], carrier.control_shape[0]);
+    const auto v = natural_axis(source.view(), carrier.knot_v, carrier.mult_v,
+                                carrier.degrees[1], carrier.control_shape[1]);
+    rectangle = {u[0], u[1], v[0], v[1]};
+  }
   if (o.rectangle[0])
     for (std::size_t i = 0; i < 4; ++i)
       rectangle[i] = *o.rectangle[i];

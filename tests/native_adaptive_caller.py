@@ -10,6 +10,8 @@ import math
 from pathlib import Path
 import struct
 import subprocess
+import tempfile
+import time
 
 from native_mesher_run_fixture import make
 
@@ -117,7 +119,10 @@ def invoke(executable, source, output, tolerances, threads, device_args=()):
     for epsilon in tolerances:
         command += ['--positional-mm', str(epsilon)]
     command += list(device_args)
-    return subprocess.run(command, text=True, capture_output=True, timeout=90, check=False)
+    started = time.perf_counter()
+    completed = subprocess.run(command, text=True, capture_output=True, timeout=90, check=False)
+    completed.wall_seconds = time.perf_counter() - started
+    return completed
 
 
 def main():
@@ -126,10 +131,13 @@ def main():
     parser.add_argument('destination', type=Path)
     parser.add_argument('--cuda-module', type=Path)
     args = parser.parse_args()
-    args.destination.mkdir(parents=True, exist_ok=False)
+    args.destination.mkdir(parents=True, exist_ok=True)
+    args.destination = Path(tempfile.mkdtemp(prefix='run-', dir=args.destination))
     for kind in ('polynomial', 'weighted', 'c0'):
         source = args.destination/f'{kind}.bgsource'
-        make(source, kind, 12 if kind == 'polynomial' else 1)
+        # Adapter hints deliberately differ from the original knot domain.
+        make(source, kind, 12 if kind == 'polynomial' else 1,
+             hint=(.125, .875, .25, .75))
         # Fine/coarse/fine plus equal-quality remesh tests cache history while
         # independently checking every actual output against original source.
         qualities = (.02, .08, .02, .02)
@@ -142,6 +150,7 @@ def main():
             output = args.destination/f'{kind}-{name}'
             run = invoke(args.executable, source, output, qualities, threads, device_args)
             assert run.returncode == 0, (name, kind, run.returncode, run.stderr, run.stdout)
+            print('complete_process', kind, name, 'four_queries_seconds', run.wall_seconds, flush=True)
             meshes = [read_patch(output/f'query-{i}.bgapch', kind, q) for i, q in enumerate(qualities)]
             assert meshes[0] == meshes[2] == meshes[3], "warm history changed mesh semantics"
             if reference is None:
@@ -180,7 +189,8 @@ def main():
                    '--max-nodes', '1']
         run = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
         assert run.returncode != 0 and not exhausted.exists()
-    print('original-source adaptive caller: source accuracy, complete coverage, history and publication PASS')
+    print('original-source adaptive caller: source accuracy, complete coverage, history and publication PASS',
+          args.destination)
 
 
 if __name__ == '__main__':
