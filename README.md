@@ -49,8 +49,16 @@ These are single observations; CPU4 is the best observed CPU baseline and the
 complete-process difference is modest. Setup, output, transfers and close remain
 accounted for. The report retains earlier timeouts and distinguishes actual
 warm remeshing from returning a cached result. This is an untrimmed patch
-operation; shared trims, complete components and the OM10 render remain pending.
+operation; connected trimmed faces, complete components and the OM10 render remain pending.
 The NVIDIA CPU reference has not been run on this new scenario.
+
+The [shared-curve operation](docs/ADAPTIVE_SHARED_CURVES.md) is now delivered too:
+one physical edge chain, every original occurrence/UV seam, and separate source,
+chord and boundary-domain bounds. Its real C++/CUDA caller passes200 queries
+across10 original-source families on CPU1/CPU4/both P100s. GPU samples, paired
+subdivision and bounds are real; CPU wins these small complete operations after
+setup. [Results, sources and all measured costs](results/adaptive-curves-2026-10-16/REPORT.md).
+Next comes connected trimmed-face construction and its holes/domain maps.
 
 ```mermaid
 flowchart LR

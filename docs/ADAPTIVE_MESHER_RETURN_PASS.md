@@ -34,3 +34,21 @@ old-revision operation is censored at 120s on every backend. A reviewed
 quarter-twist/actual-vertex transfer strengthening addresses one conservative
 facet-bound gap; its separate affected observation must not overwrite the old
 cohort or imply a measured hotspot where profiling was unavailable.
+
+The shared-curve checkpoint adds these concrete observations, deferred until
+complete trimmed construction/publication:
+
+- Tiny shared-boundary operations lose to CPU after device open and still have
+  native exact identity/trace/output coordination. Batch enough useful work and
+  measure complete operations before tuning launch or lifecycle details.
+- Ordinary curve sample commands still carry an unused supplied-result payload;
+  dynamic bound tasks stage their current flat nets. Consider retained exact-key
+  bound tiers and a narrower command ABI only with measured traffic/work benefit.
+- Preserve early original endpoint/alias guards, including wires. Source-node
+  mismatch must never be diagnosed by exhausting geometric split depth.
+- Original and prepared root identity, physical owner identity and occurrence
+  identity remain separate. Multiple faces sharing a carrier compile one united
+  demanded source envelope; numerical reuse does not merge physical edge owners.
+- Full facet/domain error needs an actual interior map. A boundary-only domain
+  upper or max edge displacement cannot become a whole-face theorem. The next
+  numerical/construction studies spell the real remaining dependencies.

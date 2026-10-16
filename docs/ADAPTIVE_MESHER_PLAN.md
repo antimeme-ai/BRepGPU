@@ -7,8 +7,10 @@ operator has selected the architecture and authorized implementation; reviews
 resolve concrete engineering decisions rather than request permission again.
 The first regular-surface checkpoint is now delivered in
 [the patch report](../results/adaptive-patch-2026-10-16/REPORT.md). Continue with
-original curve caches/shared chosen domains and complete trimmed components;
-the whole-mesher PR remains unfinished.
+connected trimmed faces and complete components; the whole-mesher PR remains
+unfinished. The second [shared-curve operation](ADAPTIVE_SHARED_CURVES.md) is also
+delivered with original-output CPU/P100 checks and measured complete costs in
+[its report](../results/adaptive-curves-2026-10-16/REPORT.md).
 
 ## Complete operation and checkpoints
 
