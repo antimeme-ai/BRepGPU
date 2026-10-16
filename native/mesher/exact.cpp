@@ -508,4 +508,40 @@ Binary64Bounds Rational::bounds() const {
             std::bit_cast<double>(lower | (uint64_t{1} << 63))};
   return {std::bit_cast<double>(lower), std::bit_cast<double>(upper)};
 }
+
+namespace {
+bgfd::Integer integer_square_root(const bgfd::Integer &value) {
+  auto &owner = value.budget();
+  if (value.sign() == 0)
+    return bgfd::Integer(owner);
+  const auto bits = value.bit_length();
+  auto x = integer(owner, 1).shift_left(bits / 2 + bits % 2);
+  const auto two = integer(owner, 2);
+  // x starts above sqrt(value). Integer Newton steps decrease to floor(sqrt),
+  // where the next step is equal or larger (including the two-cycle case).
+  for (;;) {
+    auto quotient = bgfd::Integer::divmod_nonnegative(value, x).first;
+    auto next = bgfd::Integer::divmod_nonnegative(x.add(quotient), two).first;
+    if (next.compare(x) >= 0)
+      return x;
+    x = std::move(next);
+  }
+}
+} // namespace
+
+SqrtBounds Rational::square_root_bounds(uint32_t fractional_bits) const {
+  if (sign() < 0)
+    throw bgfd::Failure(BGFD_INVALID_INPUT, "negative rational square root");
+  if (sign() == 0)
+    return {Rational(budget()), Rational(budget())};
+  auto scaled = numerator_.shift_left(uint64_t{2} * fractional_bits);
+  auto qr = bgfd::Integer::divmod_nonnegative(scaled, denominator_);
+  auto root = integer_square_root(qr.first);
+  const bool exact = qr.second.sign() == 0 && root.multiply(root).compare(qr.first) == 0;
+  auto grid = integer(budget(), 1).shift_left(fractional_bits);
+  auto lower = from_ratio(bgfd::Integer(root), bgfd::Integer(grid));
+  auto upper =
+      exact ? Rational(lower) : from_ratio(root.add(integer(budget(), 1)), std::move(grid));
+  return {std::move(lower), std::move(upper)};
+}
 } // namespace bgmesh
