@@ -45,3 +45,9 @@ resource cleanup after exceptions, allocator propagation on copies/moves,
 closed-box touching, bridge endpoint exemptions, source-node boundary chains,
 ear stall/final ordering, and real measured candidate work. No test or CAD run
 was performed by this read-only review.
+
+Also reviewed `docs/NATIVE_CPP_RIGOR_PLAN.md`: ACCEPT its target-scoped pinned
+compiler/warnings, separate release and instrumented profiles, actual compiled
+header analysis, bounded setup probes and meaningful-oracle requirement for any
+future fuzzer. It starts no additional geometric qualification campaign and
+does not change the live watch files or CUDA configuration.

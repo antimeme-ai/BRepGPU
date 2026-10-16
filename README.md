@@ -52,8 +52,11 @@ cover result meshing, composable history, external qualification and measured
 runtime ownership. Actual extrusion/bore composition is now delivered; external
 adapters and runtime/language study remain. The [post-watch roadmap proposal](docs/POST_WATCH_ROADMAP.md)
 connects required CPU references, measured preparation/runtime work, real edits
-and GPU topology construction in the next broad cycle. No language rewrite or
-general modeling support is implied.
+and GPU topology construction in the next broad cycle. The first
+[native C++20 ownership unit](docs/NATIVE_FACE_DOMAINS.md) now handles exact
+sampled-face crossing and triangulation in imported meshing, with an explicit
+Python reference path and selected external geometry cases. General modeling
+support remains a separate goal.
 
 [![Actual trim-aware plate mesh](assets/meshing/plate.svg)](docs/MESHING.md)
 
@@ -70,7 +73,10 @@ system at all, and in which role.
 Development can continue while those suites are incomplete; required missing,
 unsupported, skipped or failing cases cannot count as green. The
 [OCCT, CGAL and oracle audit](papers/README.md#external-oracles-and-alpha-qualification)
-records the current gap: we have not yet replayed community cases against our output.
+records the remaining full-suite gap. Selected NVIDIA trim and Manifold polygon
+inputs now exercise our native face-domain output with independent exact
+boundary/incidence/embedding checks; this first cohort does not complete alpha
+qualification.
 
 [NVIDIA USD/BRep CPU reference timings are required for every README scenario](https://github.com/antimeme-ai/BRepGPU/issues/63).
 Complete the OM10 watch comparison first, then backfill all advertised scenarios
