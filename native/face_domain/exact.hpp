@@ -8,6 +8,7 @@
 #include <memory_resource>
 #include <span>
 #include <stdexcept>
+#include <stop_token>
 #include <utility>
 #include <vector>
 
@@ -21,10 +22,15 @@ struct Failure final {
 struct Limits final {
   uint64_t bytes, work;
 };
+class Cancelled final : public std::exception {
+public:
+  [[nodiscard]] const char *what() const noexcept override { return "native exact work cancelled"; }
+};
 class Budget final : public std::pmr::memory_resource {
   uint64_t limit_, live_ = 0, peak_ = 0, work_limit_, work_ = 0, max_limbs_ = 0;
   uint64_t divisions_ = 0, quotient_corrections_ = 0, division_addbacks_ = 0, lehmer_batches_ = 0;
   std::pmr::memory_resource *upstream_;
+  std::stop_token stop_;
   void *do_allocate(std::size_t bytes, std::size_t alignment) override {
     const auto size = static_cast<uint64_t>(bytes);
     if (size > limit_ - live_)
@@ -44,14 +50,18 @@ class Budget final : public std::pmr::memory_resource {
 
 public:
   explicit Budget(Limits limits,
-                  std::pmr::memory_resource *upstream = std::pmr::new_delete_resource())
-      : limit_(limits.bytes), work_limit_(limits.work), upstream_(upstream) {
+                  std::pmr::memory_resource *upstream = std::pmr::new_delete_resource(),
+                  std::stop_token stop = {})
+      : limit_(limits.bytes), work_limit_(limits.work), upstream_(upstream),
+        stop_(std::move(stop)) {
     if (upstream == nullptr || upstream == this)
       throw Failure(BGFD_INVALID_INPUT, "invalid budget upstream");
   }
   Budget(const Budget &) = delete;
   Budget &operator=(const Budget &) = delete;
   void charge(uint64_t amount) {
+    if (stop_.stop_requested())
+      throw Cancelled();
     if (amount > work_limit_ - work_)
       throw Failure(BGFD_RESOURCE_EXHAUSTED, "exact work budget exhausted");
     work_ += amount;

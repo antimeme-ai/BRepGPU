@@ -33,6 +33,14 @@ samples/children and local generation changes are prepared before mutation;
 mid-commit failure makes the mutable forest unusable. Every incident face in
 this definition is invalidated once, with local deltas returned to scheduling.
 
+The runtime producer review found a valid missing lease: a curve slot/table alone
+cannot distinguish a foreign GeometryStore with the same slot count. Batches now
+retain the actual SourceStore and definition slot. The producer can require
+identical SourceData ownership before evaluating, and the direct fixture checks
+that retained identity. Source-boundary snapshot generation remains separate from
+face/cut revision; an internal pole-cut rebuild does not impersonate a source
+edge schedule change.
+
 The source-backed authored test was written first; fleet compilation observed
 the genuinely absent `boundary.hpp` RED. Actual strict Clang18 execution then
 passed, followed by the strengthened ASan/UBSan/LSan execution. The fixture has

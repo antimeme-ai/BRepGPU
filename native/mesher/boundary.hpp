@@ -30,9 +30,12 @@ struct BoundaryEvaluationResult final {
 struct BoundaryEvaluationData final {
   std::shared_ptr<RunResource> resource;
   BoundaryEpoch epoch;
+  SourceStore source;
+  Slot<DefinitionTag> definition;
   ExactTable parameters;
   std::pmr::vector<BoundaryEvaluationTask> tasks;
-  BoundaryEvaluationData(std::shared_ptr<RunResource>, BoundaryEpoch, ExactTable,
+  BoundaryEvaluationData(std::shared_ptr<RunResource>, BoundaryEpoch, SourceStore,
+                         Slot<DefinitionTag>, ExactTable,
                          std::pmr::vector<BoundaryEvaluationTask>);
 };
 class BoundaryEvaluationBatch final {
@@ -43,6 +46,8 @@ class BoundaryEvaluationBatch final {
 
 public:
   [[nodiscard]] BoundaryEpoch epoch() const noexcept { return data_->epoch; }
+  [[nodiscard]] const SourceStore& source() const noexcept { return data_->source; }
+  [[nodiscard]] Slot<DefinitionTag> definition() const noexcept { return data_->definition; }
   [[nodiscard]] const ExactTable &parameters() const noexcept { return data_->parameters; }
   [[nodiscard]] std::span<const BoundaryEvaluationTask> tasks() const noexcept {
     return data_->tasks;
