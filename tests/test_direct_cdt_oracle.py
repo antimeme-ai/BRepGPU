@@ -5,7 +5,8 @@ import unittest
 from brepgpu.face_domain import triangulate
 from brepgpu.imported_meshing import _improve_connectivity
 from direct_cdt_oracle import qualify_cdt
-from direct_cdt_cases import authored_cases, transformed
+from direct_cdt_cases import (SCALING_FAMILIES, authored_cases, scaling_case,
+                              transformed, validate_scaling_input)
 from face_domain_external_cases import ExternalCase, external_cases
 
 
@@ -107,6 +108,26 @@ class DirectCDTOracleTests(unittest.TestCase):
                               tuple((i, (8*F(x), F(y)/4)) for i, (x, y) in case.nodes))
         stats = qualify_cdt(scaled, triangles, metric=(.25, 4.))
         self.assertEqual(stats, qualify_cdt(case, triangles, metric=metric))
+
+    def test_scaling_family_chain_reader_on_actual_existing_consumer_outputs(self):
+        for family in SCALING_FAMILIES:
+            case = scaling_case(family, 64)
+            with self.subTest(family=family):
+                output = improve(case)
+                full = qualify_cdt(case, output)
+                chain = qualify_cdt(case, output,
+                                    input_validator=lambda actual: validate_scaling_input(family, actual))
+                self.assertEqual(chain, full)
+
+    def test_scaling_input_must_match_actual_geometric_preconditions(self):
+        case = scaling_case('protected-strip', 16)
+        nodes = list(case.nodes)
+        identifier, (x, y) = nodes[-1]
+        nodes[-1] = (identifier, (x, y+F(1, 7)))
+        changed = ExternalCase('changed-strip', case.loops, tuple(nodes))
+        with self.assertRaisesRegex(AssertionError, 'actual source coordinates'):
+            qualify_cdt(changed, improve(changed),
+                        input_validator=lambda actual: validate_scaling_input('protected-strip', actual))
 
 
 if __name__ == '__main__':

@@ -4,11 +4,15 @@ from collections import Counter, defaultdict
 from brepgpu.imported_oracles import qualify_domain, turn, _simple_domains
 
 
-def qualify_external(case, triangles):
-    """Source-ID incidence + independent exact domain/embedding, not SDK counts."""
+def qualify_chain(case, triangles):
+    """Exact positive chain/incidence on an independently admitted simple domain.
+
+    Winding multiplicity proves complete nonoverlapping output coverage. Input
+    simplicity must be established by the caller; arbitrary inputs use the
+    complete bounded reader below instead of assuming that precondition.
+    """
     points = case.points
     boundary = tuple(tuple(points[i] for i in loop) for loop in case.loops)
-    _simple_domains(boundary, (True,) + (False,) * (len(boundary)-1))
     converted = []
     edges = defaultdict(list)
     used = set()
@@ -37,6 +41,15 @@ def qualify_external(case, triangles):
     expected_count = len(used) + 2*(len(case.loops)-1) - 2
     if len(triangles) != expected_count:
         raise AssertionError('actual external planar domain Euler triangle count differs')
+    return converted, edges
+
+
+def qualify_external(case, triangles):
+    """Source-ID incidence + independent exact domain/embedding, not SDK counts."""
+    points = case.points
+    boundary = tuple(tuple(points[i] for i in loop) for loop in case.loops)
+    _simple_domains(boundary, (True,) + (False,) * (len(boundary)-1))
+    converted, edges = qualify_chain(case, triangles)
     # Bounded direct embedding checks attack crossings/T junctions independently
     # of the positive boundary-chain reader; no native predicate is reused here.
     all_edges = tuple(edges)

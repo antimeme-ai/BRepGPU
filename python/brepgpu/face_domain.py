@@ -89,7 +89,9 @@ def library_path():
                   [root / 'build' / 'face-domain-release' / 'libbrepgpu_face_domain.so',
                    root / 'build' / 'face-domain-debug' / 'libbrepgpu_face_domain.so',
                    root / 'build' / 'native-face-domain-release' / 'libbrepgpu_face_domain.so',
-                   root / 'build' / 'native-face-domain' / 'libbrepgpu_face_domain.so'])
+                   root / 'build' / 'native-face-domain' / 'libbrepgpu_face_domain.so',
+                   root / 'build' / 'direct-cdt-release' / 'libbrepgpu_direct_cdt.so',
+                   root / 'build' / 'direct-cdt-debug' / 'libbrepgpu_direct_cdt.so'])
     path = next((p for p in candidates if p.is_file()), None)
     if path is None:
         raise RuntimeError('native face-domain library unavailable; set BREPGPU_FACE_DOMAIN_LIBRARY')
@@ -287,6 +289,219 @@ def first_crossing(loops, points, **kwargs):
 
 def triangulate(loops, points, **kwargs):
     with FaceDomain(loops, points, **kwargs) as domain:
+        return domain.triangulate()
+
+
+class _CDTInput(C.Structure):
+    _fields_ = [('abi', C.c_uint32), ('size', C.c_uint32),
+                ('seed', C.c_uint64), ('reserved', C.c_uint64), ('domain', _Input)]
+
+
+_CDT_STAT_NAMES = (
+    'token seed node_count triangles validation_work work memory_peak max_limbs '
+    'validation_ns prepare_ns construct_ns copy_ns merge_steps crossed_edges '
+    'cavity_occurrences cavity_insertions secondary_deletions max_cavity quadedge_peak triangle_peak constraints '
+    'location_steps hash_probes secondary_calls initial_triangles void_triangles '
+    'order_ns initial_ns conversion_ns recovery_ns selection_ns '
+    'axis_compares orientations incircles line_distance_compares scalar_signs interval_signs '
+    'exact_signs exact_zeros floating_disabled enclosure_values exact_lifts').split()
+
+
+class _CDTStats(C.Structure):
+    _fields_ = [('abi', C.c_uint32), ('size', C.c_uint32)] + [
+        (name, C.c_uint64) for name in _CDT_STAT_NAMES]
+
+
+CDTStatistics = make_dataclass('CDTStatistics', [(name, int) for name in _CDT_STAT_NAMES], frozen=True)
+
+
+def _strict_uint(value, label):
+    if type(value) is not int:
+        raise DomainError(f'{label} must be an unsigned64-bit integer')
+    return _uint(value, label)
+
+
+def direct_cdt_library_path():
+    configured = os.environ.get('BREPGPU_DIRECT_CDT_LIBRARY')
+    root = Path(__file__).resolve().parents[2]
+    candidates = ([Path(configured)] if configured else [
+        root / 'build' / 'direct-cdt-release' / 'libbrepgpu_direct_cdt.so',
+        root / 'build' / 'direct-cdt-debug' / 'libbrepgpu_direct_cdt.so'])
+    path = next((p for p in candidates if p.is_file()), None)
+    if path is None:
+        raise RuntimeError('native direct CDT library unavailable; set BREPGPU_DIRECT_CDT_LIBRARY')
+    return path.resolve()
+
+
+def _cdt_library():
+    lib = C.CDLL(str(direct_cdt_library_path()))
+    lib.bgcdt_abi_size.argtypes = [C.c_uint32]
+    lib.bgcdt_abi_size.restype = C.c_uint32
+    expected = (1, C.sizeof(_CDTInput), C.sizeof(_Error), C.sizeof(_CDTStats),
+                C.sizeof(_Node), C.sizeof(_Integer), C.sizeof(_Loop), C.sizeof(_Input))
+    if any(lib.bgcdt_abi_size(i) != value for i, value in enumerate(expected)):
+        raise RuntimeError('native direct CDT ABI or record layout differs')
+    lib.bgcdt_create.argtypes = [C.POINTER(_CDTInput), C.POINTER(C.c_void_p), C.POINTER(_Error)]
+    lib.bgcdt_construct.argtypes = [C.c_void_p, C.POINTER(_Error)]
+    lib.bgcdt_copy_triangles.argtypes = [C.c_void_p, C.POINTER(C.c_uint64), C.c_uint64,
+                                       C.POINTER(C.c_uint64), C.POINTER(_Error)]
+    lib.bgcdt_get_stats.argtypes = [C.c_void_p, C.POINTER(_CDTStats), C.POINTER(_Error)]
+    lib.bgcdt_destroy.argtypes = [C.c_void_p]
+    for name in ('bgcdt_create', 'bgcdt_construct', 'bgcdt_copy_triangles', 'bgcdt_get_stats'):
+        getattr(lib, name).restype = C.c_int
+    lib.bgcdt_destroy.restype = None
+    return lib
+
+
+def require_direct_cdt_available():
+    """Resolve all direct symbols and record layouts before source preparation."""
+    _cdt_library()
+
+
+def _metric_weights(metric, denominators, available):
+    try:
+        scales = tuple(Fraction(value) for value in metric)
+    except (ValueError, TypeError, OverflowError) as error:
+        raise DomainError('metric requires two finite positive exact scales') from error
+    if len(scales) != 2 or any(value <= 0 for value in scales):
+        raise DomainError('metric requires two finite positive exact scales')
+    # Primitive positive integral ratio of the exact squared metric weights.
+    # Cancel before products/squares so a common huge scale costs no extra bits.
+    left = [scales[0].numerator, denominators[1], scales[1].denominator]
+    right = [scales[1].numerator, denominators[0], scales[0].denominator]
+    for i in range(len(left)):
+        for j in range(len(right)):
+            common = math.gcd(left[i], right[j])
+            left[i] //= common
+            right[j] //= common
+    weights = []
+    for factors in (left, right):
+        bits = 2 * sum(value.bit_length() for value in factors)
+        if 4*((bits+31)//32) > available:
+            raise ResourceError('metric weights exceed encoded input budget')
+        product = math.prod(factors)
+        value = product * product
+        available -= 4*((value.bit_length()+31)//32)
+        weights.append(value)
+    return scales, tuple(weights)
+
+
+class DirectCDT:
+    """Own exact fixed sites and one bounded native constrained construction."""
+    def __init__(self, loops, points, *, metric=(1., 1.), seed=0, token=0,
+                 input_limit=1 << 28, memory_limit=1 << 30, work_limit=1 << 34):
+        start = time.perf_counter_ns()
+        self._handle = C.c_void_p()
+        self.seed = _strict_uint(seed, 'seed')
+        self.token = _strict_uint(token, 'token')
+        self.input_limit = _strict_uint(input_limit, 'input_limit')
+        self.memory_limit = _strict_uint(memory_limit, 'memory_limit')
+        self.work_limit = _strict_uint(work_limit, 'work_limit')
+        try:
+            words = tuple(tuple(word) for word in loops)
+            identifiers = tuple(points)
+        except TypeError as error:
+            raise DomainError('source mapping and loop words required') from error
+        for identifier in identifiers:
+            _strict_uint(identifier, 'source node ID')
+        for word in words:
+            for identifier in word:
+                _strict_uint(identifier, 'loop source node ID')
+        self.loops, self.points, scaled, denominators, fixed = _exact_inputs(
+            words, points, input_limit)
+        fixed += C.sizeof(_CDTInput) - C.sizeof(_Input)
+        coordinate_bytes = sum(4*((abs(value).bit_length()+31)//32)
+                               for point in scaled.values() for value in point)
+        if fixed + coordinate_bytes > input_limit:
+            raise ResourceError('encoded exact input budget exhausted')
+        self.metric, weights = _metric_weights(metric, denominators,
+                                               input_limit-fixed-coordinate_bytes)
+        slots = {identifier: i for i, identifier in enumerate(identifiers)}
+        limbs = []
+
+        def integer(value):
+            offset = len(limbs)
+            sign = (value > 0) - (value < 0)
+            value = abs(value)
+            count = (value.bit_length()+31)//32
+            if count >= 2**32 or fixed + 4*(offset+count) > input_limit:
+                raise ResourceError('encoded exact input budget exhausted')
+            data = value.to_bytes(4*count, 'little')
+            limbs.extend(int.from_bytes(data[i:i+4], 'little') for i in range(0, len(data), 4))
+            return _Integer(offset, count, sign)
+
+        nodes = (_Node * len(identifiers))(*(
+            _Node(i, integer(scaled[i][0]), integer(scaled[i][1])) for i in identifiers))
+        wx, wy = map(integer, weights)
+        loop_records = []
+        indices = []
+        for word in self.loops:
+            loop_records.append(_Loop(len(indices), len(word)))
+            indices.extend(slots[i] for i in word)
+        word_array = (_Loop * len(loop_records))(*loop_records)
+        index_array = (C.c_uint32 * len(indices))(*indices)
+        limb_array = (C.c_uint32 * len(limbs))(*limbs)
+        source = _Input(1, C.sizeof(_Input), 0, token, memory_limit, work_limit,
+                        nodes, len(nodes), word_array, len(word_array), index_array, len(index_array),
+                        limb_array, len(limb_array), wx, wy)
+        record = _CDTInput(1, C.sizeof(_CDTInput), seed, 0, source)
+        self.encoded_bytes = fixed + 4*len(limbs)
+        self.normalize_ns = time.perf_counter_ns() - start
+        self._lib = _cdt_library()
+        error = _Error()
+        _check(self._lib.bgcdt_create(C.byref(record), C.byref(self._handle), C.byref(error)), error)
+
+    def _live(self):
+        if not self._handle.value:
+            raise DomainError('native direct CDT context is closed')
+
+    def triangulate(self):
+        self._live()
+        error = _Error()
+        _check(self._lib.bgcdt_construct(self._handle, C.byref(error)), error)
+        count = C.c_uint64()
+        _check(self._lib.bgcdt_copy_triangles(self._handle, None, 0, C.byref(count), C.byref(error)), error)
+        expected = len(self.points) + 2*(len(self.loops)-1) - 2
+        if count.value != 3*expected:
+            raise RuntimeError('native direct CDT result count differs from source domain')
+        values = (C.c_uint64 * count.value)()
+        _check(self._lib.bgcdt_copy_triangles(self._handle, values, count.value,
+                                            C.byref(count), C.byref(error)), error)
+        if count.value != len(values) or any(i not in self.points for i in values):
+            raise RuntimeError('native direct CDT result contains invalid source nodes')
+        return tuple(tuple(values[i:i+3]) for i in range(0, count.value, 3))
+
+    @property
+    def stats(self):
+        self._live()
+        result = _CDTStats()
+        result.abi = 1
+        result.size = C.sizeof(result)
+        error = _Error()
+        _check(self._lib.bgcdt_get_stats(self._handle, C.byref(result), C.byref(error)), error)
+        if result.token != self.token or result.seed != self.seed:
+            raise RuntimeError('native direct CDT source identity differs')
+        return CDTStatistics(*(getattr(result, name) for name in _CDT_STAT_NAMES))
+
+    def close(self):
+        if self._handle.value:
+            self._lib.bgcdt_destroy(self._handle)
+            self._handle.value = None
+
+    def __enter__(self):
+        self._live()
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+    def __del__(self):
+        if getattr(self, '_handle', None) is not None and self._handle.value:
+            self.close()
+
+
+def constrained_delaunay(loops, points, **kwargs):
+    with DirectCDT(loops, points, **kwargs) as domain:
         return domain.triangulate()
 
 

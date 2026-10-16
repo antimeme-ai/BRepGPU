@@ -85,3 +85,28 @@ and bool output IDs alias int IDs through dict/set equality, while source IDs
 claim uint64 identity. Explicit output-ID validation (and bool input rejection)
 closes this bounded checker gap. No production-native defect or new geometry
 execution was claimed. Exact arithmetic review is not duplicated here.
+
+## Constructor design and journal-version acquisition
+
+Root assigned constructor ownership after strategy review: native/direct_cdt
+core; separate colleagues own predicates and root owns ABI/build/binding. Wrote
+docs/DIRECT_CDT_DESIGN.md and PLAN and requested review before implementation.
+No constructor implementation was started during unresolved design review.
+
+Acquired the actual 29-page May 4 2015 author manuscript from
+https://people.eecs.berkeley.edu/~jrs/papers/inccdtj.pdf into ignored
+papers/pdfs/shewchuk-brown-incremental-cdt-journal2015.pdf; 309563 bytes;
+SHA-256 fdb5134a3d00d95ba0f5ef3bf60ac6d20eb798b8c47dd8506868b06e568dfed8.
+Restoration: curl -fL the URL above to the stated path, then shasum -a 256.
+Read Figures6–9 and algorithm/precondition/correctness sections. This acquisition
+supersedes the earlier study's explicit lack of full journal text; source archive
+and earlier conference PDF remain intact.
+
+Predicates colleague independently confirmed a concrete Chew secondary-fan
+representation issue: a nonconvex valid DT deletion cavity can have a negative
+XY orientation surviving triple under random deletion. Reversing its seed breaks
+saved boundary order. Proposed resolution for review: signed oriented lifted-cap
+scratch uses raw incircle as 3D facet visibility, retaining negative/zero XY
+intermediate faces, and only final material output must be positive. Exactzero/
+collinear cap handling still requires explicit argument; no silent substitute
+algorithm or expected bound was claimed.
