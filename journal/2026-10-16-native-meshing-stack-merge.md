@@ -30,3 +30,19 @@ frame coordinates and planar/angular trim bounds. This does not estimate
 whole-run percentages or select an implementation. It supports the recorded
 source-sampling/bounds study rather than another connectivity microbenchmark.
 The complete watch remains running with its original30-minute process bound.
+
+Subsequent status check: that direct trial ended with process exit124 at the
+30-minute bound. Its log contains all25,871 sampled edges and the last coarse
+face checkpoint5,400/9,162. Complete original geometry and assembly outcomes
+are retained, but `owned_complete_mesh` never returned; no complete mesh,
+CPU/P100 qualification or image follows. There is no CAD exception in the log.
+The100-face reporting cadence cannot identify which later face was active or
+separate preparation time from accumulated face work. No percentage or runtime
+estimate is inferred from the count.
+
+Started the separately documented bounded whole-definition diagnosis for the
+parts covering faces5,401..5,499. It preserves exact complete-part closure,
+quality and direct library, stops at the first failure/censor and adds no
+production implementation or new qualification gate. The unchanged whole-watch
+trial will not simply be repeated. The older historical original checkout/job
+remains untouched, distinct from the now-stopped direct trial.
