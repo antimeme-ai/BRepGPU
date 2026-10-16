@@ -26,3 +26,21 @@ Python whole-part baseline is deferred because the native part did not complete.
 
 Actual outcomes, boundaries, source scope and sampling limitations are in
 `papers/2026-10-16-native-main-plate-trial.md`; raw artifacts remain ignored.
+
+The accepted next-input capture completed in155.552 s within its300-second
+limit: original face165063, one loop,1114 source nodes,1112 initial triangles,
+1114 constrained boundary edges,20 original coedges. It preserved all complete-
+part preparation/schedules and stopped before its first Lawson flip.
+BGFAC001 exact values/source words and BGCON001 canonical positive metric
+fractions/triangle words/constraints passed bounded read/decode/re-encode round
+trips. Independent exact positive full boundary-chain plus source-ID incidence
+and no new/omitted node checks accepted the initial domain in0.063053 s.
+All recorded input/source/module/library pins were unchanged at capture.
+
+Exact domain SHA-256:
+`011a24f3fc54244e4167d16357925dfe2d52f8144968b5a091b7e20bc8dbd1e6`.
+Initial connectivity SHA-256:
+`14f3df76b7f367e6343d1cac88e69cccd17113de888b9923e6e1dbf972c50099`.
+Raw binary/occurrence maps/capture scripts remain private, ready for the next
+connectivity unit. This is not complete refined mesh, part or watch success.
+No further compute or production edit follows this capture in the current unit.
