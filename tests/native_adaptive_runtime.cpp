@@ -50,6 +50,13 @@ int main(int argc, char **argv) {
     limits.host_bytes = uint64_t{1} << 29;
     limits.device_bytes = uint64_t{1} << 29;
     limits.cpu_threads = 4;
+    {
+      auto trace_only=prepare_trace_source_cache(source,std::span(&request,1),resource,{},{},budget);
+      bool refused=false;
+      try {PatchSession invalid(resource,trace_only,limits);}
+      catch(const Error &error) {refused=error.code==ErrorCode::invalid_source;}
+      require(refused,"regular patch admitted trace-only source geometry");
+    }
     PatchSession session(resource, cache, limits);
     if (argc == 4)
       session.open_device({static_cast<int32_t>(std::stoi(argv[3])), argv[2]});

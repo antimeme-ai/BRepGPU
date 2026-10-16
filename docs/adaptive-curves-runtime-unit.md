@@ -96,3 +96,36 @@ checks pass. Report cold process versus retained source/cache query costs,
 per-stage work, transfer/memory and refused/unsupported cases. Small GPU batches
 may lose. The next dependency is trimmed boundary-region construction, not a
 further runtime tuning/certification campaign.
+
+## Actual review resolutions in this unit
+
+Original endpoint source guards run once per query after original endpoint
+samples complete and before any positional splitting. This covers unused wire
+edges as well as incident face edges. The effective node cap is the tightest
+definition/incident-face cap. Original V-to-Ce and original-to-declared-alias
+comparisons use interval fast checks, exact original line/rational values or
+bounded analytic enclosure escalation. A fixed source discrepancy is refused;
+refinement cannot cure it. Carrier V/Ce-to-S guards remain in occurrence
+construction. Declared no-curve edges still check original alias distances.
+
+Curve node READY results far above the allowance split directly. A deterministic
+degree-squared RN-operation-count band may route a near-threshold case to the
+existing exact comparison; this heuristic proves nothing and consumes the
+configured ambiguity cap. The exact predicate decides equality. When that
+comparison proves an upper at the requested exact allowance, retain that exact
+allowance as the valid upper, avoiding a subsequent binary64 rounding above it.
+The precise response retains its independent endpoint numerical floor.
+
+Source carrier compilation uses one canonical request per immutable CarrierSlot,
+merging the demanded face/guide envelopes before the factory. Rational roots
+use original natural knot domains rather than adapter UV hints; analytic lifts
+extend the finite trace envelope. Every face/use occurrence remains present.
+A chosen locator outside the admitted finite profile is an explicit unsupported
+outcome. This checkpoint does not invent general rational inverse recovery.
+
+Per-use results are reused only while their captured incident boundary generation
+matches. At final publication, original edge/use traversal remaps each retained
+site to the new whole-definition snapshot; stale global row offsets are never
+reused. Source/t/override-bit point identity and actual restriction history remain
+separate from transient forest slots. BASE replay starts every query even when
+a higher point/bound tier is already cached.
