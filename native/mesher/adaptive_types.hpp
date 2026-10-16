@@ -36,7 +36,7 @@ struct PointRecord final {
 };
 struct SelectedLeaf final {
   LeafKey key;
-  std::array<ExactRef, 4> box; // xmin,xmax,ymin,ymax in construction chart
+  std::array<ExactRef, 4> box;      // xmin,xmax,ymin,ymax in construction chart
   std::array<PointSlot, 4> corners; // 00,10,01,11
   double source_to_bilinear_upper = 0, twist_upper = 0;
   ArithmeticStage stage = ArithmeticStage::rn64;
@@ -58,8 +58,8 @@ struct PatchSelection final {
   std::pmr::vector<uint64_t> path_words;
   PatchSelection(std::shared_ptr<RunResource> owner, SourceCache roots, ExactTable exact,
                  SelectionKey identity = {})
-      : resource(std::move(owner)), source(std::move(roots)), values(std::move(exact)), key(identity),
-        points(resource.get()), leaves(resource.get()), path_words(resource.get()) {
+      : resource(std::move(owner)), source(std::move(roots)), values(std::move(exact)),
+        key(identity), points(resource.get()), leaves(resource.get()), path_words(resource.get()) {
     if (!resource || source.source().view().resource != resource || values.resource() != resource)
       throw Error(ErrorCode::internal_error, "adaptive selection resource mismatch");
   }

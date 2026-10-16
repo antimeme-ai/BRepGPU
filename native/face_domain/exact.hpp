@@ -69,6 +69,7 @@ public:
   void reset_work() noexcept { work_ = 0; }
   [[nodiscard]] uint64_t work() const noexcept { return work_; }
   [[nodiscard]] uint64_t peak() const noexcept { return peak_; }
+  [[nodiscard]] uint64_t live() const noexcept { return live_; }
   void observe(std::size_t count) noexcept {
     max_limbs_ = std::max(max_limbs_, static_cast<uint64_t>(count));
   }

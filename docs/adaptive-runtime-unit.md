@@ -1,8 +1,9 @@
 # Adaptive cache execution unit
 
 2026-10-16. Implements the accepted first checkpoint in ADAPTIVE_MESHER_PLAN.md.
-Runtime owns adaptive_types.hpp, adaptive_cache.hpp/.cpp,
-cuda/adaptive_api.h and cuda/adaptive_cuda.cu plus direct runtime fixtures.
+Runtime owns adaptive_types.hpp, adaptive_cache.hpp/.cpp and direct runtime
+fixtures. Root owns cuda/adaptive_api.h and cuda/adaptive_cuda.cu after the
+explicit device-unit handoff; native session lifetime remains this unit.
 Geometry owns source_cache.hpp/.cpp, CUDA17 adaptive_geometry_types.h and the
 shared host/device numerical header. Construction owns adaptive_packets.hpp/.cpp.
 Root owns CMake and the complete patch caller. Product code follows this finite
@@ -48,7 +49,7 @@ struct PacketMeshData; // supplied by packet owner; actual complete triangles
 class PatchSession {
  public:
   PatchSession(std::shared_ptr<RunResource>, SourceCache, CacheLimits,
-               std::stop_token = {});
+               const std::stop_token& = {});
   ~PatchSession();
   void open_device(const CacheDevice&); // optional, before begin; explicit errors
   void begin(const PatchQuery&); // copies span; retains immutable table/source
@@ -240,3 +241,22 @@ lease lifetime and count-before-mutation paths. Root wires CMake targets after
 headers/tests physically exist. Keep complete cold/prepared/warm source-to-patch
 operation times, memory, transfers, misses/fallbacks and mesh counts. No GPU
 speedup or full-component completion is promised by the unit.
+
+## Delivered implementation boundaries
+
+The current implementation retains parent controls and every created node under
+finite configured caps. Eviction/reconstruction is a future capacity policy,
+not a delivered mode. Native metadata is a contiguous indexed NodeMeta array;
+control, point, tier, frontier and output pools are separate packed arrays.
+No per-node pointer tree or per-node heap allocation is used. Native exact key
+interning, canonical full-path ordering, missing-point enumeration and compact
+ambiguity handling remain CPU coordinator work. Device owns resident roots,
+controls/points/node bounds/frontiers and mark/scan/compact execution; it performs
+actual source point evaluation, interval restriction and analytic/rational bounds.
+No all-host geometric evaluation is hidden behind device rendering.
+
+The native host_peak_bytes observation sums coordinator allocation peak, fixed
+worker scratch reservations and module host peak. These peaks need not coincide,
+so it is a conservative upper bound, distinct from actual aggregate RunResource
+peak. Transfer counters are module payload/count/result bytes in both directions.
+Cold process and warm source/cache query scopes remain separate measurements.
