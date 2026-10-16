@@ -516,6 +516,20 @@ brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cache)
 add_executable(brepgpu-adaptive-patch adaptive_main.cpp)
 target_link_libraries(brepgpu-adaptive-patch PRIVATE brepgpu_mesher_adaptive_cache)
 brepgpu_native_cpu_rigor(brepgpu-adaptive-patch)
+add_library(brepgpu_mesher_adaptive_curve_geometry STATIC curve_source_cache.cpp adaptive_curve_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_curve_geometry PUBLIC brepgpu_mesher_adaptive_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_curve_geometry)
+add_library(brepgpu_mesher_adaptive_traces STATIC adaptive_traces.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_traces PUBLIC brepgpu_mesher_adaptive_curve_geometry
+  brepgpu_mesher_boundary)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_traces)
+add_library(brepgpu_mesher_adaptive_curves STATIC adaptive_curves.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_curves PUBLIC brepgpu_mesher_adaptive_traces
+  brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_curves)
+add_executable(brepgpu-adaptive-curves adaptive_curves_main.cpp)
+target_link_libraries(brepgpu-adaptive-curves PRIVATE brepgpu_mesher_adaptive_curves)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-curves)
 if(BREPGPU_MESHER_ENABLE_CUDA)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
@@ -529,6 +543,61 @@ if(BREPGPU_MESHER_ENABLE_CUDA)
 endif()
 
 if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_curves_geometry ../../tests/native_adaptive_curves_geometry.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curves_geometry PRIVATE brepgpu_mesher_adaptive_curve_geometry
+    ${CMAKE_DL_LIBS})
+  set(ADAPTIVE_CURVE_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/original-adaptive-curves.bgsource")
+  add_custom_command(OUTPUT "${ADAPTIVE_CURVE_FIXTURE}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_curve_fixture.py"
+      "${GEOMETRY_FIXTURE}" "${ADAPTIVE_CURVE_FIXTURE}"
+    DEPENDS "${GEOMETRY_FIXTURE}" ../../tests/native_adaptive_curve_fixture.py
+      ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_curve_fixture DEPENDS "${ADAPTIVE_CURVE_FIXTURE}")
+  add_dependencies(brepgpu_native_adaptive_curves_geometry brepgpu_native_adaptive_curve_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curves_geometry)
+  set(ADAPTIVE_CURVE_ORACLE "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_curves_oracle.py")
+  add_test(NAME native_adaptive_curves_geometry COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_CURVE_ORACLE}"
+    "$<TARGET_FILE:brepgpu_native_adaptive_curves_geometry>" "${ADAPTIVE_CURVE_FIXTURE}")
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_curves_geometry_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+        "${ADAPTIVE_CURVE_ORACLE}" "$<TARGET_FILE:brepgpu_native_adaptive_curves_geometry>"
+        "${ADAPTIVE_CURVE_FIXTURE}" "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+    endforeach()
+  endif()
+  add_executable(brepgpu_native_adaptive_curve_forest ../../tests/native_adaptive_curve_forest.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curve_forest PRIVATE brepgpu_mesher_boundary)
+  add_dependencies(brepgpu_native_adaptive_curve_forest brepgpu_native_mesher_boundary_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curve_forest)
+  add_test(NAME native_adaptive_curve_forest COMMAND brepgpu_native_adaptive_curve_forest
+    "${BOUNDARY_FIXTURE}")
+  set(TRACE_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/adaptive-trace-sources")
+  add_custom_command(OUTPUT "${TRACE_FIXTURE_DIR}/maps.bgsource"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trace_fixture.py"
+      "${CELL_FIXTURE}" "${TRACE_FIXTURE_DIR}"
+    DEPENDS "${CELL_FIXTURE}" ../../tests/native_adaptive_trace_fixture.py
+      ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_trace_fixture DEPENDS "${TRACE_FIXTURE_DIR}/maps.bgsource")
+  add_executable(brepgpu_native_adaptive_traces ../../tests/native_adaptive_traces.cpp)
+  target_link_libraries(brepgpu_native_adaptive_traces PRIVATE brepgpu_mesher_adaptive_traces)
+  add_dependencies(brepgpu_native_adaptive_traces brepgpu_native_adaptive_trace_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_traces)
+  add_test(NAME native_adaptive_traces COMMAND brepgpu_native_adaptive_traces
+    "${CELL_FIXTURE}" "${TRACE_FIXTURE_DIR}")
+  add_executable(brepgpu_native_adaptive_curves_runtime ../../tests/native_adaptive_curves_runtime.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curves_runtime PRIVATE brepgpu_mesher_adaptive_curves)
+  add_dependencies(brepgpu_native_adaptive_curves_runtime brepgpu_native_adaptive_trace_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curves_runtime)
+  foreach(threads 1 4)
+    add_test(NAME native_adaptive_curves_runtime_cpu${threads} COMMAND brepgpu_native_adaptive_curves_runtime
+      "${TRACE_FIXTURE_DIR}/speed.bgsource" "${threads}")
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_curves_runtime_p100_${device} COMMAND brepgpu_native_adaptive_curves_runtime
+        "${TRACE_FIXTURE_DIR}/speed.bgsource" 4 "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+    endforeach()
+  endif()
   add_executable(brepgpu_native_adaptive_geometry ../../tests/native_adaptive_geometry.cpp)
   target_link_libraries(brepgpu_native_adaptive_geometry PRIVATE brepgpu_mesher_adaptive_geometry ${CMAKE_DL_LIBS})
   add_dependencies(brepgpu_native_adaptive_geometry brepgpu_native_mesher_geometry_fixture)
@@ -582,6 +651,10 @@ if(BUILD_TESTING)
   if(TARGET brepgpu_mesher_adaptive_cuda)
     list(APPEND ADAPTIVE_CALLER_DEVICE_ARGS --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>")
   endif()
+  add_test(NAME native_adaptive_curves_caller COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_curves_caller.py"
+    "$<TARGET_FILE:brepgpu-adaptive-curves>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-curves-caller"
+    --trace-fixtures "${TRACE_FIXTURE_DIR}" ${ADAPTIVE_CALLER_DEVICE_ARGS})
   add_test(NAME native_adaptive_caller COMMAND "${Python3_EXECUTABLE}" -B
     "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_caller.py"
     "$<TARGET_FILE:brepgpu-adaptive-patch>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-caller"
@@ -589,6 +662,13 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_cuda)
+  add_executable(brepgpu_native_adaptive_curve_device ../../tests/native_adaptive_curve_device.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curve_device PRIVATE ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curve_device)
+  foreach(device 0 1)
+    add_test(NAME native_adaptive_curve_device_${device} COMMAND brepgpu_native_adaptive_curve_device
+      "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+  endforeach()
   add_executable(brepgpu_native_adaptive_device ../../tests/native_adaptive_device.cpp)
   target_link_libraries(brepgpu_native_adaptive_device PRIVATE brepgpu_mesher_adaptive_geometry ${CMAKE_DL_LIBS})
   add_dependencies(brepgpu_native_adaptive_device brepgpu_native_mesher_cell_fixture)

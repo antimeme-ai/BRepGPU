@@ -1,8 +1,8 @@
 # Complete original-source shared-curve caller
 
-Status: finite caller plan for cross-review with the shared-curve unit. The
-native geometry/session/trace field definitions in the focused curve reports
-are reconciled before RED and implementation. This caller emits bounded shared
+Status: implemented after scoped plan/source review and direct RED. The real
+original-output caller passes CPU1/CPU4/both-P100 geometry, lifecycle and
+publication checks; see results/adaptive-curves-2026-10-16/REPORT.md. This caller emits bounded shared
 chains and occurrence traces; it does not fabricate a complete NativeMesh.
 
 Grounding: pinned SmTess::TessellateEdge and OCCT EdgeDiscret::Tessellate2d
@@ -62,7 +62,8 @@ UV from a rounded source evaluation. Every count/index/optional tag is checked;
 no trailing or partial successful artifact is published.
 
 Write queries.tsv with source/profile/backend/threads, requested allowances,
-inventory and actual output counts, point/node/restriction/cache/promotion work,
+inventory and actual output counts, point/node/restriction/cache work and actual
+promotion revisions,
 trace/request rounds, actual host-device bytes and separately scoped memory.
 Write timings.tsv for source decode, root compilation, forest/session/device
 setup, query construction, actual output and session close. The external runner
@@ -140,3 +141,19 @@ optional exact authoritative-domain bound, optional line map and optional
 cylinder identity. A cylinder identity writes original spatial-curve/carrier IDs
 (uint64), orientation(int32), exact t2/chosenUV4/constant-v. No query table keys,
 cache pointers or transient numerical pool offsets are written as source IDs.
+
+A closed point request on a declared quotient still requires an original curve
+evaluator. Select one REAL positive original span: analytic saved source domain,
+Bezier[0,1], or the lower adjacent compact-knot span inside the true expanded
+natural B-spline domain (first positive span at natural start). This reuses the
+original/prepared separation and canonical source endpoint ownership described
+in the numerical report; it is not a fabricated t±epsilon curve interval. The
+physical forest still publishes two original endpoint occurrences and zero
+positive intervals. No finite positive source profile means named unsupported.
+Source endpoint/alias guards precede positional refinement, including wires;
+adaptive splitting cannot cure a fixed original endpoint discrepancy.
+
+
+Keys in BGACRV01 are qualified by the retained artifact/query. Cross-quality
+logical sample comparisons use original edge plus exact t, as in the native
+runtime contract; a transient per-forest ordinal alone is not a global key.
