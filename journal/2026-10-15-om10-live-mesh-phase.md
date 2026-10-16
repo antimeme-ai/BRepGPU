@@ -19,3 +19,14 @@ Private output stays in context/. The qualifier kept running; no source decode,
 mesh, benchmark, image, production change or second qualification was launched.
 The previously deferred candidate-generation/indexing notes now have one actual
 phase observation; no optimization is selected from this short sample.
+
+## Later progress observation
+
+At an operator status check the same durable V4 process had elapsed 4 h 09 min,
+used approximately one full CPU core and 1.57 GiB RSS, and had advanced past
+circle scheduling into face meshing. The latest emitted marker was
+2,600/9,162 faces. No exception or final mesh/native qualification output had
+been emitted. Face counts are progress markers, not an elapsed-time forecast.
+The independently closed SDK rectangle export now passes the actual date disc
+under both policies; two bridge and two nonsimple polygon failures remain.
+No complete owned or reference watch image exists at this observation.
