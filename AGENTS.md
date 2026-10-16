@@ -293,6 +293,15 @@ in docs/ADAPTIVE_MESHER_RETURN_PASS.md. SourceStore spatial values are already m
 units_mm is original metadata and must not rescale tolerances or geometry again.
 Keep the NVIDIA reference/backfill and external alpha suite requirements live.
 
+The operator explicitly requires every subsequent implementation step to be
+grounded in literature and reference implementations. Record the concrete
+source revision/function or paper section, the actual mathematical assumptions,
+our selected mechanism/improvement and the direct oracle in the unit plan.
+Reference tradeoffs are evaluated, not inherited by default; distinguish owned
+derivations from claims actually established by a source. For the next shared
+curve/occurrence stage read docs/adaptive-shared-curves-unit.md and the focused
+curve studies before product code.
+
 ## Development workflow
 
 Use a feature branch for each substantial delivery. Make frequent, coherent
