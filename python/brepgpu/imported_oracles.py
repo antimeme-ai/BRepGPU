@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from fractions import Fraction as F
 from dataclasses import dataclass
 from bisect import bisect_left, bisect_right
+from heapq import heappop, heappush
 import hashlib
 import math
 from pathlib import Path
@@ -870,7 +871,73 @@ def _winding(loop, p):
     return result
 
 
-def _simple_domains(loops, outer):
+@dataclass
+class _DomainSweepWork:
+    segments: int = 0
+    sweep_axis: int = 0
+    projected_pairs: int = 0
+    active_visits: int = 0
+    box_candidates: int = 0
+    exact_tests: int = 0
+    max_active: int = 0
+
+
+def _domain_box_candidates(segments, work):
+    """Exact closed-box candidates; original endpoints remain the answer input."""
+    ranks = tuple({value: rank for rank, value in enumerate(sorted(
+        {point[axis] for _, _, a, b in segments for point in (a, b)}))}
+        for axis in range(2))
+    boxes = []
+    for _, _, a, b in segments:
+        x, u = ranks[0][a[0]], ranks[0][b[0]]
+        y, v = ranks[1][a[1]], ranks[1][b[1]]
+        boxes.append((min(x, u), max(x, u), min(y, v), max(y, v)))
+    orders = tuple(sorted(range(len(boxes)), key=lambda i: (boxes[i][2*axis], i))
+                   for axis in range(2))
+    projected = []
+    for axis, order in enumerate(orders):
+        ends = []
+        pairs = 0
+        for index in order:
+            low, high = boxes[index][2*axis:2*axis+2]
+            while ends and ends[0] < low:
+                heappop(ends)
+            pairs += len(ends)
+            heappush(ends, high)
+        projected.append(pairs)
+    axis = 0 if projected[0] <= projected[1] else 1
+    if work is not None:
+        work.segments = len(segments)
+        work.sweep_axis = axis
+        work.projected_pairs = projected[axis]
+    active, ends = {}, []
+    other = 2*(1-axis)
+    for index in orders[axis]:
+        low, high = boxes[index][2*axis:2*axis+2]
+        while ends and ends[0][0] < low:
+            _, expired = heappop(ends)
+            del active[expired]
+        ymin, ymax = boxes[index][other:other+2]
+        for previous, box in active.items():
+            if work is not None:
+                work.active_visits += 1
+            if ymax < box[other] or box[other+1] < ymin:
+                continue
+            if work is not None:
+                work.box_candidates += 1
+            # Sweep order can reverse source word order. Restore the original
+            # ordering before applying the unchanged adjacent-edge exemption.
+            yield (previous, index) if previous < index else (index, previous)
+        active[index] = boxes[index]
+        heappush(ends, (high, index))
+        if work is not None:
+            work.max_active = max(work.max_active, len(active))
+
+
+def _simple_domains(loops, outer, *, work=None):
+    if work is not None:
+        work.segments = work.sweep_axis = work.projected_pairs = 0
+        work.active_visits = work.box_candidates = work.exact_tests = work.max_active = 0
     segments = []
     for li, loop in enumerate(loops):
         require(len(loop) >= 3, 'original trim loop has too few UV corners')
@@ -879,14 +946,14 @@ def _simple_domains(loops, outer):
         for i, (a, b) in enumerate(zip(loop, loop[1:] + loop[:1])):
             require(a != b, 'original trim UV segment collapses')
             segments.append((li, i, a, b))
-    # Exact bbox filtering avoids expensive predicates for disjoint segment pairs.
-    for index, (li, i, a, b) in enumerate(segments):
-        for lj, j, c, d in segments[index+1:]:
-            if li == lj and (j == i + 1 or (i == 0 and j == len(loops[li])-1)):
-                continue
-            if any(max(a[k], b[k]) < min(c[k], d[k]) or max(c[k], d[k]) < min(a[k], b[k]) for k in range(2)):
-                continue
-            require(not _intersect(a, b, c, d), 'original sampled trim domain crosses/touches')
+    for left, right in _domain_box_candidates(segments, work):
+        li, i, a, b = segments[left]
+        lj, j, c, d = segments[right]
+        if li == lj and (j == i + 1 or (i == 0 and j == len(loops[li])-1)):
+            continue
+        if work is not None:
+            work.exact_tests += 1
+        require(not _intersect(a, b, c, d), 'original sampled trim domain crosses/touches')
     for li, loop in enumerate(loops):
         if not outer[li]:
             containers = sum(_winding(other, loop[0]) for lj, other in enumerate(loops) if outer[lj])
