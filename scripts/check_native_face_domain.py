@@ -50,14 +50,18 @@ def tools():
 
 
 def lint(build, unit):
-    modules = [ROOT / 'native/face_domain']
+    modules = [ROOT / ('native/mesher' if unit == 'native-mesher' else 'native/face_domain')]
     if unit == 'direct-cdt':
         modules.append(ROOT / 'native/direct_cdt')
     if any(p.is_symlink() for module in modules for p in module.rglob('*')):
         raise RuntimeError('Owned native source symlinks require an explicit source policy')
     cpp = sorted(p for module in modules for p in module.rglob('*')
                  if p.suffix in ('.cpp', '.hpp', '.h'))
-    cpp += sorted((ROOT/'tests').glob('native_face_domain*.cpp'))
+    if unit == 'native-mesher':
+        cpp += sorted((ROOT/'tests').glob('native_mesher*.cpp'))
+        cpp += [ROOT/'tests/exact_test.cpp', ROOT/'native/face_domain/exact.hpp']
+    else:
+        cpp += sorted((ROOT/'tests').glob('native_face_domain*.cpp'))
     if unit == 'direct-cdt':
         cpp += sorted((ROOT/'tests').glob('native_direct_cdt*.cpp'))
     cpp += [ROOT/'tooling/native_cpu_profile.hpp']
@@ -107,7 +111,8 @@ def main(args):
         return
     build = (args.build_dir or ROOT/f'build/{args.unit}-{args.profile}').resolve()
     mode, instrumentation = PROFILES[args.profile]
-    module = 'direct_cdt' if args.unit == 'direct-cdt' else 'face_domain'
+    module = {'direct-cdt': 'direct_cdt', 'face-domain': 'face_domain',
+              'native-mesher': 'mesher'}[args.unit]
     run(('/usr/bin/cmake', '-S', ROOT/'native'/module, '-B', build, '-G', 'Ninja',
          '-DCMAKE_CXX_COMPILER='+str(COMPILER), '-DCMAKE_MAKE_PROGRAM=/usr/bin/ninja',
          '-DCMAKE_BUILD_TYPE='+mode, '-DBREPGPU_NATIVE_PROFILE=linux-clang18',
@@ -120,6 +125,10 @@ def main(args):
     if args.profile == 'fuzz':
         raise RuntimeError('Select the actual owning fuzz target and its oracle explicitly')
     run(('/usr/bin/ctest', '--test-dir', build, '--output-on-failure', '--no-tests=error'))
+    if args.unit == 'native-mesher':
+        if args.tests:
+            raise RuntimeError('Select native mesher CTest fixtures; no Python production host')
+        return
     library = 'libbrepgpu_direct_cdt.so' if args.unit == 'direct-cdt' else 'libbrepgpu_face_domain.so'
     environment = dict(os.environ, CUDA_VISIBLE_DEVICES='',
                        PYTHONPATH=os.pathsep.join((str(ROOT/'python'), str(ROOT/'tests'), str(ROOT/'examples'))),
@@ -137,7 +146,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--unit', choices=('face-domain', 'direct-cdt'), default='face-domain')
+    parser.add_argument('--unit', choices=('face-domain', 'direct-cdt', 'native-mesher'), default='face-domain')
     parser.add_argument('--profile', choices=tuple(PROFILES), default='debug')
     parser.add_argument('--build-dir', type=Path)
     parser.add_argument('--tests', nargs='*', default=[])

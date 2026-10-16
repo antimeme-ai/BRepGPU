@@ -8,8 +8,9 @@
 #include <memory_resource>
 
 namespace bgmesh {
-// This resource counts reserved allocation blocks, including container capacity.
-// A RunResource outlives every arena and sealed value allocated from it.
+// This resource counts reserved allocation blocks, including container
+// capacity. A RunResource outlives every arena and sealed value allocated from
+// it.
 class RunResource final : public std::pmr::memory_resource {
   uint64_t limit_;
   std::atomic<uint64_t> live_{0}, peak_{0};
@@ -26,7 +27,8 @@ class RunResource final : public std::pmr::memory_resource {
       void *result = std::pmr::new_delete_resource()->allocate(bytes, alignment);
       const auto now = previous + amount;
       auto peak = peak_.load(std::memory_order_relaxed);
-      while (peak < now && !peak_.compare_exchange_weak(peak, now, std::memory_order_relaxed)) {}
+      while (peak < now && !peak_.compare_exchange_weak(peak, now, std::memory_order_relaxed)) {
+      }
       return result;
     } catch (...) {
       live_.fetch_sub(amount, std::memory_order_relaxed);

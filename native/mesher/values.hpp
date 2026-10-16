@@ -8,8 +8,16 @@
 #include <string>
 
 namespace bgmesh {
-enum class ErrorCode { invalid_source, unsupported, resource_exhausted, unresolved, cancelled,
-                       device_failure, io_failure, internal_error };
+enum class ErrorCode {
+  invalid_source,
+  unsupported,
+  resource_exhausted,
+  unresolved,
+  cancelled,
+  device_failure,
+  io_failure,
+  internal_error
+};
 class Error final : public std::runtime_error {
 public:
   ErrorCode code;

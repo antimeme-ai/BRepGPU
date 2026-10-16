@@ -20,7 +20,7 @@ template <class Tag> struct IdIndex final {
   explicit IdIndex(std::pmr::memory_resource *resource) : entries(resource) {}
   [[nodiscard]] Slot<Tag> find(SourceId<Tag> id) const {
     const auto it = std::lower_bound(entries.begin(), entries.end(), id,
-                                    [](const auto &entry, auto key) { return entry.first < key; });
+                                     [](const auto &entry, auto key) { return entry.first < key; });
     if (it == entries.end() || it->first != id)
       throw Error(ErrorCode::invalid_source, "unknown source ID " + std::to_string(id.value));
     return it->second;
@@ -32,7 +32,8 @@ struct Csr final {
   explicit Csr(std::pmr::memory_resource *resource) : offsets(resource), values(resource) {}
   [[nodiscard]] std::span<const uint32_t> at(uint32_t slot) const;
 };
-// The builder is private to source.cpp; callers receive const data through SourceStore.
+// The builder is private to source.cpp; callers receive const data through
+// SourceStore.
 struct SourceData final {
   std::shared_ptr<RunResource> resource;
   std::pmr::vector<std::byte> original_bytes;
@@ -77,21 +78,26 @@ struct SourceData final {
   IdIndex<StyleTag> style_index;
   Csr definition_faces, definition_edges, definition_vertices, edge_coedges, edge_faces;
   explicit SourceData(std::shared_ptr<RunResource> owner);
+  SourceData(const SourceData &) = delete;
+  SourceData &operator=(const SourceData &) = delete;
   [[nodiscard]] std::span<const double> view(Range<double> range) const;
   [[nodiscard]] std::span<const uint32_t> view(Range<uint32_t> range) const;
   [[nodiscard]] std::string_view text(Range<char> range) const;
 };
 class SourceStore final {
   std::shared_ptr<const SourceData> data_;
-public:
   explicit SourceStore(std::shared_ptr<const SourceData> data) : data_(std::move(data)) {}
+  friend SourceStore read_source(std::span<const std::byte>, const std::shared_ptr<RunResource> &,
+                                 SourceLimits);
+
+public:
   [[nodiscard]] const SourceData &view() const noexcept { return *data_; }
 };
 [[nodiscard]] SourceStore read_source(std::span<const std::byte> bytes,
-                                    std::shared_ptr<RunResource> resource,
-                                    SourceLimits limits = {});
+                                      const std::shared_ptr<RunResource> &resource,
+                                      SourceLimits limits = {});
 [[nodiscard]] SourceStore load_source(const std::filesystem::path &path,
-                                    std::shared_ptr<RunResource> resource,
-                                    SourceLimits limits = {});
+                                      const std::shared_ptr<RunResource> &resource,
+                                      SourceLimits limits = {});
 } // namespace bgmesh
 #endif
