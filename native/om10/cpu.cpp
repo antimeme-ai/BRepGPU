@@ -1,3 +1,4 @@
+#include "math.hpp"
 #include "scene.hpp"
 #include <algorithm>
 #include <atomic>
@@ -120,12 +121,17 @@ void first_error(std::atomic<uint64_t> &out, uint64_t i) {
   while (i < old && !out.compare_exchange_weak(old, i)) {
   }
 }
-bool create_profile(const SceneView *scene, uint32_t threads, void **out,
-                    Error *e, Times *times,bool source_profile) {
+bool create_profile(const SceneView *scene, uint32_t threads, void **out, Error *e, Times *times,
+                    bool source_profile) {
+  if (!out || !times) {
+    error(e, "session_create", "missing CPU output/times");
+    return false;
+  }
   *out = nullptr;
   auto t = Clock::now();
   bool ok = guard(e, "session_create", [&] {
-    if (!scene_vertex_profile(scene,source_profile) || threads < 1 || threads > 256) {
+    validate_scene_view(scene, source_profile);
+    if (threads < 1 || threads > 256) {
       error(e, "session_create", "invalid CPU scene/thread count");
       return false;
     }
@@ -135,11 +141,12 @@ bool create_profile(const SceneView *scene, uint32_t threads, void **out,
   times->create = elapsed(t);
   return ok;
 }
-bool create(const SceneView *scene,uint32_t threads,int32_t,void **out,Error *e,Times *times) {
-  return create_profile(scene,threads,out,e,times,false);
+bool create(const SceneView *scene, uint32_t threads, int32_t, void **out, Error *e, Times *times) {
+  return create_profile(scene, threads, out, e, times, false);
 }
-bool create_v2(const SceneView *scene,uint32_t threads,int32_t,void **out,Error *e,Times *times) {
-  return create_profile(scene,threads,out,e,times,true);
+bool create_v2(const SceneView *scene, uint32_t threads, int32_t, void **out, Error *e,
+               Times *times) {
+  return create_profile(scene, threads, out, e, times, true);
 }
 bool evaluate_cpu(void *token, Jet *output, Error *e, Times *times) {
   return guard(e, "source_evaluate", [&] {
@@ -152,8 +159,7 @@ bool evaluate_cpu(void *token, Jet *output, Error *e, Times *times) {
     std::atomic<uint64_t> bad{UINT64_MAX};
     s.pool.parallel(s.scene.nvertices, [&](uint64_t i) {
       const Vertex &v = s.scene.vertices[i];
-      if (!evaluate(s.scene.carriers[v.carrier], s.scene.controls, v,
-                    s.jets[i])) {
+      if (!evaluate(s.scene.carriers[v.carrier], s.scene.controls, v, s.jets[i])) {
         s.jets[i].status = 1;
         first_error(bad, i);
       }
@@ -161,8 +167,7 @@ bool evaluate_cpu(void *token, Jet *output, Error *e, Times *times) {
     times->evaluate = elapsed(t);
     if (bad != UINT64_MAX) {
       s.poisoned = true;
-      error(e, "source_evaluate", "nonfinite or singular source first jet",
-            bad);
+      error(e, "source_evaluate", "nonfinite or singular source first jet", bad);
       return false;
     }
     s.evaluated = true;
@@ -174,9 +179,13 @@ bool evaluate_cpu(void *token, Jet *output, Error *e, Times *times) {
     return true;
   });
 }
-bool render_cpu(void *token, const Request *request, FrameOutput *output,
-                Error *e, Times *times) {
+bool render_cpu(void *token, const Request *request, FrameOutput *output, Error *e, Times *times) {
   return guard(e, "render", [&] {
+    require(token && request && output && times, "render: missing required argument");
+    validate_request(*request);
+    require((request->flags & PROJECT_ONLY) ||
+                (output->rgba && output->depth && output->primitive && output->instance),
+            "render: missing frame output arrays");
     Session &s = *static_cast<Session *>(token);
     const Request &r = *request;
     if (s.poisoned || !s.evaluated) {
@@ -193,8 +202,7 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
     times->project = elapsed(t);
     if (bad != UINT64_MAX) {
       s.poisoned = true;
-      error(e, "instance_transform_project",
-            "nonfinite or out-of-range projection", bad);
+      error(e, "instance_transform_project", "nonfinite or out-of-range projection", bad);
       return false;
     }
     if (output->projected) {
@@ -206,17 +214,14 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
       return true;
     uint32_t width = r.width * r.supersample, height = r.height * r.supersample,
              tiles_x = (width + 15) / 16, tiles_y = (height + 15) / 16;
-    uint64_t ntiles = uint64_t(tiles_x) * tiles_y,
-             npixels = uint64_t(width) * height;
+    uint64_t ntiles = uint64_t(tiles_x) * tiles_y, npixels = uint64_t(width) * height;
     t = Clock::now();
     s.triangles.resize(s.scene.nprimitives);
-    s.pool.parallel(s.scene.nprimitives, [&](uint64_t i) {
-      setup(s.scene, r, i, s.points.data(), s.triangles[i]);
-    });
+    s.pool.parallel(s.scene.nprimitives,
+                    [&](uint64_t i) { setup(s.scene, r, i, s.points.data(), s.triangles[i]); });
     times->setup = elapsed(t);
     t = Clock::now();
-    std::unique_ptr<std::atomic<uint32_t>[]> counts(
-        new std::atomic<uint32_t>[ntiles]);
+    std::unique_ptr<std::atomic<uint32_t>[]> counts(new std::atomic<uint32_t>[ntiles]);
     for (uint64_t i = 0; i < ntiles; ++i)
       counts[i] = 0;
     s.pool.parallel(s.triangles.size(), [&](uint64_t i) {
@@ -225,8 +230,7 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
         return;
       for (int32_t y = p.ymin / 16; y <= p.ymax / 16; ++y)
         for (int32_t x = p.xmin / 16; x <= p.xmax / 16; ++x)
-          counts[uint64_t(y) * tiles_x + x].fetch_add(
-              1, std::memory_order_relaxed);
+          counts[uint64_t(y) * tiles_x + x].fetch_add(1, std::memory_order_relaxed);
     });
     s.offsets.resize(ntiles + 1);
     s.offsets[0] = 0;
@@ -234,8 +238,7 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
       s.offsets[i + 1] = checked_add(s.offsets[i], counts[i].load());
       counts[i] = 0;
     }
-    require(s.offsets.back() <= SIZE_MAX / sizeof(uint32_t),
-            "tile bins size overflow");
+    require(s.offsets.back() <= SIZE_MAX / sizeof(uint32_t), "tile bins size overflow");
     s.bins.resize(s.offsets.back());
     s.pool.parallel(s.triangles.size(), [&](uint64_t i) {
       const auto &p = s.triangles[i];
@@ -244,27 +247,23 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
       for (int32_t y = p.ymin / 16; y <= p.ymax / 16; ++y)
         for (int32_t x = p.xmin / 16; x <= p.xmax / 16; ++x) {
           uint64_t tile = uint64_t(y) * tiles_x + x;
-          s.bins[s.offsets[tile] +
-                 counts[tile].fetch_add(1, std::memory_order_relaxed)] = i;
+          s.bins[s.offsets[tile] + counts[tile].fetch_add(1, std::memory_order_relaxed)] = i;
         }
     });
     times->bins = elapsed(t);
     t = Clock::now();
     s.samples.resize(npixels);
     s.pool.parallel(ntiles, [&](uint64_t tile) {
-      uint32_t tx = tile % tiles_x, ty = tile / tiles_x, x0 = tx * 16,
-               y0 = ty * 16, x1 = std::min(width, x0 + 16),
-               y1 = std::min(height, y0 + 16);
+      uint32_t tx = tile % tiles_x, ty = tile / tiles_x, x0 = tx * 16, y0 = ty * 16,
+               x1 = std::min(width, x0 + 16), y1 = std::min(height, y0 + 16);
       for (uint32_t y = y0; y < y1; ++y)
         for (uint32_t x = x0; x < x1; ++x)
-          s.samples[uint64_t(y) * width + x] = {-INFINITY, UINT64_MAX,
-                                                UINT64_MAX};
+          s.samples[uint64_t(y) * width + x] = {-INFINITY, UINT64_MAX, UINT64_MAX};
       for (uint64_t k = s.offsets[tile]; k < s.offsets[tile + 1]; ++k) {
         const Prepared &p = s.triangles[s.bins[k]];
-        for (int32_t y = std::max<int32_t>(y0, p.ymin);
-             y < std::min<int32_t>(y1, p.ymax + 1); ++y)
-          for (int32_t x = std::max<int32_t>(x0, p.xmin);
-               x < std::min<int32_t>(x1, p.xmax + 1); ++x) {
+        for (int32_t y = std::max<int32_t>(y0, p.ymin); y < std::min<int32_t>(y1, p.ymax + 1); ++y)
+          for (int32_t x = std::max<int32_t>(x0, p.xmin); x < std::min<int32_t>(x1, p.xmax + 1);
+               ++x) {
             double w[3], z;
             if (!covered(p, x, y, w, z))
               continue;
@@ -273,8 +272,7 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
               continue;
             }
             Sample &sample = s.samples[uint64_t(y) * width + x];
-            if (z > sample.depth ||
-                (z == sample.depth && p.primitive < sample.primitive))
+            if (z > sample.depth || (z == sample.depth && p.primitive < sample.primitive))
               sample = {z, p.primitive, p.instance};
           }
       }
@@ -282,8 +280,7 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
     s.pool.parallel(uint64_t(r.width) * r.height, [&](uint64_t index) {
       uint32_t x = index % r.width, y = index / r.width;
       Vec color{};
-      const Sample &chosen =
-          s.samples[uint64_t(y * r.supersample) * width + x * r.supersample];
+      const Sample &chosen = s.samples[uint64_t(y * r.supersample) * width + x * r.supersample];
       output->depth[index] = chosen.depth;
       output->primitive[index] = chosen.primitive;
       output->instance[index] = chosen.instance;
@@ -316,8 +313,8 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output,
     times->display = elapsed(t);
     if (bad != UINT64_MAX) {
       s.poisoned = true;
-      error(e, "visibility_shading_resolve",
-            "nonfinite depth or singular interpolated normal", bad);
+      error(e, "visibility_shading_resolve", "nonfinite depth or singular interpolated normal",
+            bad);
       return false;
     }
     if (output->samples) {

@@ -7,6 +7,7 @@ constexpr uint32_t SOURCE_GEOMETRY_PROFILE = 1;
 constexpr uint32_t STORED_XYZ = 1, REVERSE_NORMAL = 2, ANALYTIC_NORMAL_LIMIT = 4,
                    NEGATIVE_RADIAL_SHEET = 8, SPHERE_SOUTH = 16, COFACTOR_NORMAL = 32;
 constexpr uint32_t SINGULAR_PARAMETER = 1, COFACTOR_INSTANCE_NORMAL = 2;
+constexpr uint32_t INHERIT_OCCURRENCE_MATERIAL = UINT32_MAX;
 struct Vec {
   double x, y, z;
 };
