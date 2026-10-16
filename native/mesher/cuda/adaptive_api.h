@@ -16,7 +16,10 @@ struct DeviceConfig {
   void *(*reserve)(void *, uint64_t bytes);
   void (*release)(void *, void *lease);
 };
-struct DeviceError { int32_t status; char message[188]; };
+struct DeviceError {
+  int32_t status;
+  char message[188];
+};
 struct DeviceRestriction {
   RootSlot root;
   ScalarRange parent;
@@ -54,24 +57,22 @@ struct AdaptiveCudaAPI {
   uint32_t abi, size;
   // Any nonnull output is owned, even on failed create/rollback. The enclosing
   // native owner preregisters it and retains reservations through failed drain.
-  int32_t (*create)(const DeviceConfig *, const RootDescriptor *, uint32_t,
-                    const RootDescriptor *, uint32_t, const Interval *, uint32_t,
-                    DeviceSession **, DeviceError *);
+  int32_t (*create)(const DeviceConfig *, const RootDescriptor *, uint32_t, const RootDescriptor *,
+                    uint32_t, const Interval *, uint32_t, DeviceSession **, DeviceError *);
   // One outstanding operation. Inputs are copied into owned staging. Root,
   // point and restricted-control pools persist until destroy. Capacities are
   // upper limits, not a requirement to allocate their entire size at create.
   int32_t (*samples)(DeviceSession *, const DeviceSample *, uint32_t, uint64_t *, DeviceError *);
-  int32_t (*restrict_nodes)(DeviceSession *, const DeviceRestriction *, uint32_t,
-                            uint64_t *, DeviceError *);
+  int32_t (*restrict_nodes)(DeviceSession *, const DeviceRestriction *, uint32_t, uint64_t *,
+                            DeviceError *);
   int32_t (*nodes)(DeviceSession *, const DeviceNode *, uint32_t, uint64_t *, DeviceError *);
-  int32_t (*facets)(DeviceSession *, const ActualFacetInput *, uint32_t,
-                    uint64_t *, DeviceError *);
+  int32_t (*facets)(DeviceSession *, const ActualFacetInput *, uint32_t, uint64_t *, DeviceError *);
   // ready0 leaves output untouched; ready1 consumes ticket. Output is the
   // operation's SampleResult/DeviceNodeAnswer/ActualFacetBounds array. Restricted
   // controls remain resident; that operation has no result payload.
   // capacity is a RESULT RECORD COUNT, not bytes; restriction uses nullptr/0.
-  int32_t (*poll)(DeviceSession *, uint64_t, uint32_t *ready, void *output,
-                  uint32_t capacity, DeviceError *);
+  int32_t (*poll)(DeviceSession *, uint64_t, uint32_t *ready, void *output, uint32_t capacity,
+                  DeviceError *);
   int32_t (*stats)(DeviceSession *, DeviceStats *, DeviceError *);
   int32_t (*destroy)(DeviceSession *, DeviceError *);
 };
