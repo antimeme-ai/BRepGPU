@@ -50,8 +50,10 @@ flowchart LR
 ```
 
 Explicit imported-mesh direct mode now constructs all **438 main-plate faces**
-and191,688 triangles in209.608s at unchanged quality. Complete independent
-part qualification is still pending. The earlier
+and191,688 triangles in209.608s at unchanged quality. Independent qualification
+reached its separate300s bound in the old all-pairs trim reader; an
+[exact ranked sweep](docs/IMPORTED_DOMAIN_ORACLE_SWEEP_PLAN.md) is replacing
+that candidate search. The part is not yet qualified. The earlier
 [native ear results](results/native-face-domain-2026-10-16/REPORT.md) remain
 available, including the main-plate300s construction censor. The full OM10
 render remains pending.
