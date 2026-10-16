@@ -1,5 +1,6 @@
 """Literal shared-feature source; writer is never part of native meshing."""
 from pathlib import Path
+from dataclasses import replace
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 from brepgpu.imported_source import (
@@ -44,6 +45,24 @@ def main():
         (),vertices,edges,tuple(uses),tuple(loops),tuple(faces),
         (Carrier(1000,1,ZERO_FRAME,(0.,0.),(-2.,2.,-2.,2.)),),tuple(curves),(),())
     write_source(source,sys.argv[1])
+    if len(sys.argv) > 2:
+        # A declared chain joins distinct original vertices, including a regular
+        # incident edge. A coincident but undeclared vertex must stay separate.
+        extra = (Vertex(310,(.125,.25,0.),0.),
+                 Vertex(311,(.125+2.**-20,.25,0.),0.),
+                 Vertex(312,(.125-2.**-20,.25,0.),0.),
+                 Vertex(313,(.125,.25,0.),0.))
+        extra_edges = (Edge(405,(312,311),0,(0.,0.),False,False,True,0.),
+                       Edge(406,(311,310),0,(0.,0.),True,False,True,0.),
+                       Edge(407,(312,313),608,(0.,1.),False,True,False,0.),
+                       Edge(408,(300,300),0,(0.,0.),False,False,True,0.))
+        frame = (*extra[2].xyz,2.**-20,0.,0.,0.,0.,0.,0.,0.,0.)
+        extra_curve = Curve(608,3,1,frame,(0.,0.),(0.,1.))
+        definitions = tuple(replace(d,edge_ids=d.edge_ids+tuple(e.id for e in extra_edges),
+                                    vertex_ids=d.vertex_ids+tuple(v.id for v in extra))
+                            for d in source.definitions)
+        write_source(replace(source,vertices=source.vertices+extra,edges=source.edges+extra_edges,
+                             curves=source.curves+(extra_curve,),definitions=definitions),sys.argv[2])
 
 if __name__ == "__main__":
     main()

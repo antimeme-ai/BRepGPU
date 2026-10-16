@@ -3,6 +3,7 @@
 #include "../native/mesher/face_preparation.hpp"
 #include "../native/mesher/geometry_candidate.hpp"
 #include "../native/mesher/geometry_domain.hpp"
+#include "../native/mesher/geometry_pole_control.hpp"
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -65,6 +66,10 @@ void check(const std::filesystem::path &path, bool curved, bool tight) {
     require(prep.state() == FacePreparationState::ready,
             "complete source geometry and keyed chord fold settle seed");
     const auto seed = prep.snapshot();
+    const auto ordinary_control = continue_pole_cut(b, seed, seed->segments.front().constraint);
+    require(ordinary_control.angular_level == 0 && ordinary_control.revision == 0 &&
+                !ordinary_control.history,
+            "ordinary source forwarding without a cap must preserve empty control");
     require(seed->protection != nullptr, "settled seed retains its source feature index");
     require(seed->face_generation == 17 &&
                 seed->boundary_generation == original->boundary_generation &&
@@ -109,77 +114,145 @@ void check(const std::filesystem::path &path, bool curved, bool tight) {
             "ExactRefs");
   }
 }
-void authoritative(const std::filesystem::path &path,bool curved,bool mixed) {
- const auto resource=std::make_shared<RunResource>(uint64_t{1}<<28);
- const auto source=load_source(path,resource);bgfd::Budget b({uint64_t{1}<<27,uint64_t{1}<<36},resource.get());
- const auto geometry=compile_geometry(source,resource,{{OwnerKind::geometry,0,145},0,0},b);GeometryContext ctx(b);
- DefinitionBoundaryForest forest(b,source,{0},resource);
- require(!forest.pending_evaluations(),"authored whole source has only original endpoints");
- FaceBoundaryPreparation prep(b,ctx,geometry,forest.freeze_face_boundary({0}),{.face={0},.generation=21,
-  .positional_allowance=Rational(b,1),.node_source_allowance=Rational(b,1).divide(Rational(b,1000000))});
- const auto roots=prep.curve_roots();
- const auto bank=prepare_bound_roots(b,resource,geometry,roots,{{OwnerKind::geometry,0,145},0,1});
- BoundRuntime runtime(resource,bank,{8,8,uint64_t{1}<<24,uint64_t{1}<<34,uint64_t{1}<<36});
- while(const auto work=prep.take_curve_work(bank,{8,8}))prep.complete(runtime.resolve(runtime.filter_cpu(*work)));
- require(prep.state()==FacePreparationState::ready,"whole authoritative producer settles actual source/chord fold");
- const auto seed=prep.snapshot();
- require(seed->chart_kind==WorkingChartKind::original_uv&&seed->domain_map,
-  "authoritative source retains actual map after optional plane fallback, never relabeled reconstructed");
- require(seed->domain_map->strips.size()==(curved?1U:0U)&&seed->domain_map->fans.empty(),
-  "same producer retains actual curved strip or named identity authority");
- require(seed->domain_map->policy==(mixed?DomainReferencePolicy::hybrid_pullback:DomainReferencePolicy::authoritative_original),
-  "same producer preserves mixed per-use authority");
- require(seed->protection!=nullptr,"authoritative seed prepares actual physical feature protection");
- const auto z=Rational(b,0),o=Rational(b,1);
- FaceEngine engine(b,ctx,seed,{{o,z,z,o},{Rational(b,2),o,o,o}},o,23);
- const auto work=engine.take_cell_work(8);
- require(work&&(*work)->cells.size()==2,"actual authoritative seed enters same direct CDT/cell engine");
- for(const auto &cell:(*work)->cells) {
-  const auto allowance=import_exact(b,(*work)->values.view(cell.allowance));
-  require(allowance.compare(curved?o.subtract(o.divide(Rational(b,32))):o)==0,
-   "engine subtracts actual source-domain displacement exactly once before numeric bound");
- }
- runtime.close();
+void authoritative(const std::filesystem::path &path, bool curved, bool mixed) {
+  const auto resource = std::make_shared<RunResource>(uint64_t{1} << 28);
+  const auto source = load_source(path, resource);
+  bgfd::Budget b({uint64_t{1} << 27, uint64_t{1} << 36}, resource.get());
+  const auto geometry =
+      compile_geometry(source, resource, {{OwnerKind::geometry, 0, 145}, 0, 0}, b);
+  GeometryContext ctx(b);
+  DefinitionBoundaryForest forest(b, source, {0}, resource);
+  require(!forest.pending_evaluations(), "authored whole source has only original endpoints");
+  FaceBoundaryPreparation prep(
+      b, ctx, geometry, forest.freeze_face_boundary({0}),
+      {.face = {0},
+       .generation = 21,
+       .positional_allowance = Rational(b, 1),
+       .node_source_allowance = Rational(b, 1).divide(Rational(b, 1000000))});
+  const auto roots = prep.curve_roots();
+  const auto bank =
+      prepare_bound_roots(b, resource, geometry, roots, {{OwnerKind::geometry, 0, 145}, 0, 1});
+  BoundRuntime runtime(resource, bank,
+                       {8, 8, uint64_t{1} << 24, uint64_t{1} << 34, uint64_t{1} << 36});
+  while (const auto work = prep.take_curve_work(bank, {8, 8}))
+    prep.complete(runtime.resolve(runtime.filter_cpu(*work)));
+  require(prep.state() == FacePreparationState::ready,
+          "whole authoritative producer settles actual source/chord fold");
+  const auto seed = prep.snapshot();
+  require(seed->chart_kind == WorkingChartKind::original_uv && seed->domain_map,
+          "authoritative source retains actual map after optional plane fallback, never relabeled "
+          "reconstructed");
+  require(seed->domain_map->strips.size() == (curved ? 1U : 0U) && seed->domain_map->fans.empty(),
+          "same producer retains actual curved strip or named identity authority");
+  require(seed->domain_map->policy == (mixed ? DomainReferencePolicy::hybrid_pullback
+                                             : DomainReferencePolicy::authoritative_original),
+          "same producer preserves mixed per-use authority");
+  require(seed->protection != nullptr,
+          "authoritative seed prepares actual physical feature protection");
+  const auto z = Rational(b, 0), o = Rational(b, 1);
+  FaceEngine engine(b, ctx, seed, {{o, z, z, o}, {Rational(b, 2), o, o, o}}, o, 23);
+  const auto work = engine.take_cell_work(8);
+  require(work && (*work)->cells.size() == 2,
+          "actual authoritative seed enters same direct CDT/cell engine");
+  for (const auto &cell : (*work)->cells) {
+    const auto allowance = import_exact(b, (*work)->values.view(cell.allowance));
+    require(allowance.compare(curved ? o.subtract(o.divide(Rational(b, 32))) : o) == 0,
+            "engine subtracts actual source-domain displacement exactly once before numeric bound");
+  }
+  runtime.close();
 }
 void tiny_hole(const std::filesystem::path &path) {
- const auto resource=std::make_shared<RunResource>(uint64_t{1}<<28);
- const auto source=load_source(path,resource);bgfd::Budget b({uint64_t{1}<<27,uint64_t{1}<<38},resource.get());
- const auto geometry=compile_geometry(source,resource,{{OwnerKind::geometry,0,146},0,0},b);GeometryContext ctx(b);
- DefinitionBoundaryForest forest(b,source,{0},resource);
- const auto evaluate=[&](const BoundaryEvaluationBatch &batch) {
-  std::pmr::vector<BoundaryEvaluationResult> results(&b);
-  for(const auto &task:batch.tasks()) {
-   const auto t=import_exact(b,batch.parameters().view(task.parameter));
-   const auto p=canonical_original_curve(ctx,geometry,task.curve,t);results.push_back({task,p.dimension,p.xyz});
+  const auto resource = std::make_shared<RunResource>(uint64_t{1} << 28);
+  const auto source = load_source(path, resource);
+  bgfd::Budget b({uint64_t{1} << 27, uint64_t{1} << 38}, resource.get());
+  const auto geometry =
+      compile_geometry(source, resource, {{OwnerKind::geometry, 0, 146}, 0, 0}, b);
+  GeometryContext ctx(b);
+  DefinitionBoundaryForest forest(b, source, {0}, resource);
+  const auto evaluate = [&](const BoundaryEvaluationBatch &batch) {
+    std::pmr::vector<BoundaryEvaluationResult> results(&b);
+    for (const auto &task : batch.tasks()) {
+      const auto t = import_exact(b, batch.parameters().view(task.parameter));
+      const auto p = canonical_original_curve(ctx, geometry, task.curve, t);
+      results.push_back({task, p.dimension, p.xyz});
+    }
+    static_cast<void>(forest.complete_evaluations(batch.epoch(), results));
+  };
+  if (const auto initial = forest.pending_evaluations())
+    evaluate(*initial);
+  bool settled = false;
+  for (uint32_t epoch = 0; epoch < 8; ++epoch) {
+    FaceBoundaryPreparation prep(
+        b, ctx, geometry, forest.freeze_face_boundary({0}),
+        {.face = {0},
+         .generation = 30 + epoch,
+         .positional_allowance = Rational(b, 1),
+         .node_source_allowance = Rational(b, 1).divide(Rational(b, 1000000)),
+         .allow_plane_profile = false});
+    const auto roots = prep.curve_roots();
+    const auto bank = prepare_bound_roots(b, resource, geometry, roots,
+                                          {{OwnerKind::geometry, 0, 146}, 0, epoch + 1});
+    BoundRuntime runtime(resource, bank,
+                         {16, 16, uint64_t{1} << 24, uint64_t{1} << 34, uint64_t{1} << 36});
+    while (const auto work = prep.take_curve_work(bank, {16, 16}))
+      prep.complete(runtime.resolve(runtime.filter_cpu(*work)));
+    runtime.close();
+    if (epoch == 0)
+      require(prep.state() == FacePreparationState::boundary_request,
+              "tiny nonconstant closed original cubic must refine topology even when chord error "
+              "is below epsilon");
+    if (prep.state() == FacePreparationState::ready) {
+      const auto seed = prep.snapshot();
+      require(seed->loops.size() == 2 && seed->loops[1].segments.count >= 3,
+              "source-driven master splits preserve complete small hole, never delete or "
+              "tolerance-weld it");
+      const auto z = Rational(b, 0), o = Rational(b, 1);
+      FaceEngine engine(b, ctx, seed, {{o, z, z, o}, {Rational(b, 2), o, o, o}}, o, 23);
+      require(engine.topology().triangles().size() >= 7,
+              "same direct CDT consumes actual independently sized closed hole");
+      settled = true;
+      break;
+    }
+    const auto requested = prep.boundary_request();
+    require(requested && requested->owner == 404,
+            "coarse source loop requests its own original spatial interval");
+    const auto next = forest.begin_epoch();
+    const std::array keys{*requested};
+    forest.arrive(next, {0}, forest.face_generation({0}), keys);
+    evaluate(forest.prepare_splits(next));
   }
-  static_cast<void>(forest.complete_evaluations(batch.epoch(),results));
- };
- if(const auto initial=forest.pending_evaluations())evaluate(*initial);
- bool settled=false;
- for(uint32_t epoch=0;epoch<8;++epoch) {
-  FaceBoundaryPreparation prep(b,ctx,geometry,forest.freeze_face_boundary({0}),{.face={0},.generation=30+epoch,
-   .positional_allowance=Rational(b,1),.node_source_allowance=Rational(b,1).divide(Rational(b,1000000)),.allow_plane_profile=false});
-  const auto roots=prep.curve_roots();
-  const auto bank=prepare_bound_roots(b,resource,geometry,roots,{{OwnerKind::geometry,0,146},0,epoch+1});
-  BoundRuntime runtime(resource,bank,{16,16,uint64_t{1}<<24,uint64_t{1}<<34,uint64_t{1}<<36});
-  while(const auto work=prep.take_curve_work(bank,{16,16}))prep.complete(runtime.resolve(runtime.filter_cpu(*work)));
-  runtime.close();
-  if(epoch==0)require(prep.state()==FacePreparationState::boundary_request,
-   "tiny nonconstant closed original cubic must refine topology even when chord error is below epsilon");
-  if(prep.state()==FacePreparationState::ready) {
-   const auto seed=prep.snapshot();require(seed->loops.size()==2&&seed->loops[1].segments.count>=3,
-    "source-driven master splits preserve complete small hole, never delete or tolerance-weld it");
-   const auto z=Rational(b,0),o=Rational(b,1);
-   FaceEngine engine(b,ctx,seed,{{o,z,z,o},{Rational(b,2),o,o,o}},o,23);
-   require(engine.topology().triangles().size()>=7,"same direct CDT consumes actual independently sized closed hole");
-   settled=true;break;
+  require(settled, "bounded source-driven small hole reaches usable ordinary topology");
+}
+void endpoint_binding(const std::filesystem::path &path) {
+  const auto resource = std::make_shared<RunResource>(uint64_t{1} << 28);
+  const auto source = load_source(path, resource);
+  bgfd::Budget b({uint64_t{1} << 27, uint64_t{1} << 36}, resource.get());
+  const auto geometry =
+      compile_geometry(source, resource, {{OwnerKind::geometry, 0, 147}, 0, 0}, b);
+  GeometryContext ctx(b);
+  DefinitionBoundaryForest forest(b, source, {0}, resource);
+  const auto snapshot = forest.freeze_face_boundary({0});
+  const auto chart =
+      choose_chart(ctx, geometry,
+                   {.face = {0},
+                    .generation = 1,
+                    .positional_allowance = Rational(b, 1),
+                    .node_source_allowance = Rational(b, 1).divide(Rational(b, 1000000)),
+                    .allow_plane_profile = false});
+  UseNodeRequest request{{0}, Rational(b, 0), Rational(b, 1).divide(Rational(b, 1000000))};
+  request.endpoint = UseEndpointRequest{snapshot, 0};
+  const auto choice = locate_boundary_site(ctx, chart, request);
+  require(choice.original_uv[0].sign() == 0 && choice.original_uv[1].sign() == 0 &&
+              choice.node_carrier_upper.sign() == 0,
+          "explicit endpoint binding retains original source endpoint checks");
+  request.endpoint = UseEndpointRequest{snapshot, 1};
+  bool refused = false;
+  try {
+    static_cast<void>(locate_boundary_site(ctx, chart, request));
+  } catch (const Error &e) {
+    refused = e.code == ErrorCode::invalid_source;
   }
-  const auto requested=prep.boundary_request();require(requested&&requested->owner==404,
-    "coarse source loop requests its own original spatial interval");
-  const auto next=forest.begin_epoch();const std::array keys{*requested};
-  forest.arrive(next,{0},forest.face_generation({0}),keys);evaluate(forest.prepare_splits(next));
- }
- require(settled,"bounded source-driven small hole reaches usable ordinary topology");
+  require(refused, "explicit original endpoint cannot disagree with literal source t");
 }
 void candidates(const std::filesystem::path &path, bool plane = false) {
   const auto resource = std::make_shared<RunResource>(uint64_t{1} << 28);
@@ -206,8 +279,10 @@ void candidates(const std::filesystem::path &path, bool plane = false) {
        .node_source_allowance = Rational(b, 1).divide(Rational(b, 1000000)),
        .allow_plane_profile = plane});
   const auto seed = prep.snapshot();
-  for(const auto &site:seed->sites) require(site.original_uv_enclosure.has_value()==plane,
-    "actual plane inverse enclosure survives producer transport; UV stays direct parameter");
+  for (const auto &site : seed->sites)
+    require(
+        site.original_uv_enclosure.has_value() == plane,
+        "actual plane inverse enclosure survives producer transport; UV stays direct parameter");
   const OwnerKey owner{OwnerKind::face, 0, source.view().faces[0].id.value};
   const auto candidate = [&](int64_t y, uint64_t ordinal) {
     ExactBuilder values(
@@ -283,24 +358,35 @@ void candidates(const std::filesystem::path &path, bool plane = false) {
 }
 
 void plane_fallback(const std::filesystem::path &path) {
- const auto resource=std::make_shared<RunResource>(uint64_t{1}<<28);
- const auto source=load_source(path,resource);
- bgfd::Budget b({uint64_t{1}<<27,uint64_t{1}<<36},resource.get());
- const auto geometry=compile_geometry(source,resource,{{OwnerKind::geometry,0,141},0,0},b);
- GeometryContext context(b);DefinitionBoundaryForest forest(b,source,{0},resource);
- require(!forest.pending_evaluations(),"authored source has no mandatory interior map breaks");
- FaceBoundaryPreparation prep(b,context,geometry,forest.freeze_face_boundary({0}),{.face={0},.generation=20,
-  .positional_allowance=Rational(b,1),.node_source_allowance=Rational(b,1).divide(Rational(b,1000000))});
- const auto roots=prep.curve_roots();
- const auto bank=prepare_bound_roots(b,resource,geometry,roots,{{OwnerKind::geometry,0,141},0,1});
- BoundRuntime runtime(resource,bank,{8,8,uint64_t{1}<<24,uint64_t{1}<<34,uint64_t{1}<<36});
- while(const auto work=prep.take_curve_work(bank,{8,8}))prep.complete(runtime.resolve(runtime.filter_cpu(*work)));
- runtime.close();
- require(prep.state()==FacePreparationState::ready,"optional plane failure retries originalUV before publication");
- const auto seed=prep.snapshot();
- require(seed->chart_kind==WorkingChartKind::original_uv&&!seed->plane,
-  "source-node tolerance does not force a false inverse outside Q");
- for(const auto &site:seed->sites)require(!site.original_uv_enclosure,"fallback UV remains original parameter");
+  const auto resource = std::make_shared<RunResource>(uint64_t{1} << 28);
+  const auto source = load_source(path, resource);
+  bgfd::Budget b({uint64_t{1} << 27, uint64_t{1} << 36}, resource.get());
+  const auto geometry =
+      compile_geometry(source, resource, {{OwnerKind::geometry, 0, 141}, 0, 0}, b);
+  GeometryContext context(b);
+  DefinitionBoundaryForest forest(b, source, {0}, resource);
+  require(!forest.pending_evaluations(), "authored source has no mandatory interior map breaks");
+  FaceBoundaryPreparation prep(
+      b, context, geometry, forest.freeze_face_boundary({0}),
+      {.face = {0},
+       .generation = 20,
+       .positional_allowance = Rational(b, 1),
+       .node_source_allowance = Rational(b, 1).divide(Rational(b, 1000000))});
+  const auto roots = prep.curve_roots();
+  const auto bank =
+      prepare_bound_roots(b, resource, geometry, roots, {{OwnerKind::geometry, 0, 141}, 0, 1});
+  BoundRuntime runtime(resource, bank,
+                       {8, 8, uint64_t{1} << 24, uint64_t{1} << 34, uint64_t{1} << 36});
+  while (const auto work = prep.take_curve_work(bank, {8, 8}))
+    prep.complete(runtime.resolve(runtime.filter_cpu(*work)));
+  runtime.close();
+  require(prep.state() == FacePreparationState::ready,
+          "optional plane failure retries originalUV before publication");
+  const auto seed = prep.snapshot();
+  require(seed->chart_kind == WorkingChartKind::original_uv && !seed->plane,
+          "source-node tolerance does not force a false inverse outside Q");
+  for (const auto &site : seed->sites)
+    require(!site.original_uv_enclosure, "fallback UV remains original parameter");
 }
 
 } // namespace
@@ -311,13 +397,14 @@ int main(int argc, char **argv) {
     check(root / "warped-plane.bgsource", false, false);
     check(root / "parabolic-sheet.bgsource", true, false);
     check(root / "parabolic-sheet.bgsource", true, true);
-    authoritative(root/"authoritative-joint.bgsource",false,false);
-    authoritative(root/"authoritative-curved-trim.bgsource",true,false);
-    authoritative(root/"mixed-curved-trim.bgsource",true,true);
-    tiny_hole(root/"tiny-closed-cubic-hole.bgsource");
+    authoritative(root / "authoritative-joint.bgsource", false, false);
+    authoritative(root / "authoritative-curved-trim.bgsource", true, false);
+    authoritative(root / "mixed-curved-trim.bgsource", true, true);
+    tiny_hole(root / "tiny-closed-cubic-hole.bgsource");
+    endpoint_binding(root / "affine-plane.bgsource");
     candidates(root / "affine-plane.bgsource");
     candidates(root / "warped-plane.bgsource", true);
-    plane_fallback(root/"plane-exterior-node.bgsource");
+    plane_fallback(root / "plane-exterior-node.bgsource");
     std::cout << "PASS\tactual original face preparation\n";
     return 0;
   } catch (const std::exception &e) {

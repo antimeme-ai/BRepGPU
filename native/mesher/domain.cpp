@@ -385,9 +385,11 @@ std::pmr::vector<bgcdt::TriangleWord> construct_cdt(bgfd::Budget &budget, Mutabl
 
 InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &mesh,
                                      std::span<const DomainLoopView> original, uint64_t seed,
-                                     DomainFailureMode mode) {
+                                     DomainFailureMode mode, DomainInitialSeal seal) {
   if (mode != DomainFailureMode::reject && mode != DomainFailureMode::report_geometry)
     invalid("unknown selected-domain failure mode");
+  if (seal != DomainInitialSeal::complete && seal != DomainInitialSeal::deferred)
+    invalid("unknown initial domain sealing policy");
   if (mesh.stats().live_triangles != 0 || mesh.stats().sites == 0 ||
       (mesh.stats().sites < 3 && mode == DomainFailureMode::reject))
     invalid("domain requires pristine boundary sites");
@@ -518,7 +520,8 @@ InitialDomain initialize_face_domain(bgfd::Budget &budget, MutableFaceTopology &
       internal("initial CDT omitted a source constraint");
     mesh.protect_edge(*edge, keys[i]);
   }
-  mesh.seal_initial();
+  if (seal == DomainInitialSeal::complete)
+    mesh.seal_initial();
   return result;
 }
 } // namespace bgmesh

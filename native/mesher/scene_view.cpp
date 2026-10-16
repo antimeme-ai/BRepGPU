@@ -118,8 +118,10 @@ class SceneBuilder final {
       std::copy_n(original.frame.begin() + 3, 3, record.x);
       std::copy_n(original.frame.begin() + 6, 3, record.y);
       std::copy_n(original.frame.begin() + 9, 3, record.z);
-      record.r0 = original.radii[0];
-      record.r1 = original.radii[1];
+      // Display's finite record omits unused analytic fields. The complete
+      // original radius words remain in the retained NativeMesh SourceStore.
+      record.r0 = original.kind == 1 ? 0 : original.radii[0];
+      record.r1 = original.kind == 3 || original.kind == 5 ? original.radii[1] : 0;
       record.uv[0] = record.uv[1] = corner.uv.chosen[0];
       record.uv[2] = record.uv[3] = corner.uv.chosen[1];
       index = narrow(out.carriers.size());

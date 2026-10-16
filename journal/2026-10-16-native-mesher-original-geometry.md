@@ -455,3 +455,133 @@ The same-producer authoritative identity/curved/mixed cases are now ASan/UBSan/l
 Small-feature actual RED used the target's exact same CMake ASan flags/static libraries through its retained link command while another newly registered fixture path was not yet uploaded. `ASAN_OPTIONS=detect_leaks=1 taskset -c 2 build/geometry-owner-asan/brepgpu_native_mesher_face_preparation build/geometry-owner-asan/chart-fixtures` failed `tiny nonconstant closed original cubic must refine topology even when chord error is below epsilon` (exit1). The source is an exact degree3 Bezier closed loop with one nondegenerate original edge, one repeated endpoint vertex, no mandatory interior knot, scale2^-10 and positional epsilon1. Preparation now checks the exact selected inventory before topology: count and coordinate alias failures request a canonical source interval only from retained nonzero whole-trace deviation. Real source forest epochs and canonical original evaluation produce a usable >=3-segment hole, retained in SAME direct CDT. The full actual face-preparation executable then ASan GREEN (exit0), including ordinary, plane, authoritative, mixed and small-hole cases. No circle-specific seeding or tolerance welding exists.
 
 Final actual-source tidy of domain/boundary/preparation/candidate/protection found only two optional-access analyzer expressions; both now use an explicitly guarded feature chooser. The final narrow geometry_domain.cpp tidy rerun is GREEN (only non-user-header warnings suppressed by the existing checked-in profile). No suppressions were added. Current source map helpers binary-search original monotone t rows and retain original mapped-s truth; no new numerical backend was introduced. Stored source inventory TSV now also records all51742 uses reconstructed/mapkind1 and the actual analytic/NURBS face counts. This inventory affects expected watch coverage only; generic authoritative B/T delivery is retained.
+
+### Finite analytic cap source/endpoint integration
+
+Root accepted the concrete cap transport and identity-authoritative finite profile. Original source loops/segments stay intact; separate construction cycles may describe an empty ordinary remainder. Pole coverage remains symbolic xi/rho with actual nonzero facets, positive-chart topology roles, and publisher-only face orientation. Forest owns declared distinct-ID components and their exact original min-ID representative; no coordinate weld or geometry-owned second union-find is introduced.
+
+Genuine fleet endpoint API RED: focused ASan face-preparation build failed missing `UseNodeRequest.endpoint` / `UseEndpointRequest` on the new actual source-bound endpoint case. Implemented a retained SourceBoundarySnapshot plus explicit original endpoint side. This distinguishes coincident spatial t endpoints and reads the forest's sorted declared aliases. Recovery still checks original V/Ce against S(storedUV); canonical representative Q supplies a proposal with additional Q-to-originalV/Ce and Q-to-carrier checks under the same source-only node cap. It never substitutes rounded forestXYZ for original truth. Ordinary nonalias requests retain the original path without extra checks.
+
+The same focused native face-preparation executable then ASan/UBSan/leak GREEN21.65s, including endpoint-side mismatch refusal; original pole bound tests GREEN10.30s after exposing the already-computed angular/radial/corner decomposition. This is transport/recovery/primitive closure only; full cap producer/engine/publication remains in progress. New authored source generator covers north/south spheres and cone apex, same/distinct declared IDs and identity-authoritative variants. Its source pcurve interval remains independent from possibly-equal spatial edge endpoints.
+
+### Finite analytic pole producer and source ownership
+
+The SAME FaceEngine specialized-quotient operation reproduced genuine RED in
+`context/face-poles-red.log` (`quotient use requires specialized coverage dispatch`)
+using the original north analytic source and complete source dispositions. The
+existing topology owner implemented that dispatch; no separate mesher was added.
+A focused fixed-term RED on the fleet was additionally observed in
+`context/pole-fixed-red.log`: the actual primitive fixture required the missing
+`PoleFanPlan::pole_departure_upper`. This term is the ideal symbolic pole versus
+actual canonical Q departure before the changing cut-corner maximum. The exact
+known displaced-pole case requires 1/16. It is distinct from refinable radial and
+angular terms and from changing cut corner errors.
+
+The producer admits strict-interior source-master cuts only. A missing master
+sample requests its actual meridian source interval, even when its chord error
+already fits. This keeps private angular cut nodes away from the opposite
+original shared boundary. Empty-remainder authored engine transport retains its
+actual source-edge cut keys; continuation of those keys forwards the original
+forest request without changing private angular level. Full source occurrences,
+including collapsed literal pcurve ranges and declared aliases, remain retained.
+The finite identity-authoritative cap path uses a named source-domain map;
+nontrivial B/T-cap coupling is explicitly unsupported.
+
+The source-determined base angular partition bounds the finite-source-to-ideal
+band independently of extra angular refinement and radial cut heights. Its
+upper plus the pole departure may cause typed unresolved inability to certify
+within that fixed profile; this is not an asserted lower bound or diagnosis of
+true source infeasibility. Full producer semantic tests are still in progress.
+
+Actual first complete producer run failed `settled source chain has invalid
+interval inventory` (`context/pole-producer-first.log`). The original forest
+correctly retains TWO endpoint occurrences and ZERO splittable intervals for a
+declared-degenerate edge. The preparation guard now admits exactly that case;
+ordinary nodes=intervals+1 stays unchanged. The collapsed disposition retains
+its named source fact and literal pcurve coverage, and coarse-domain retry
+never asks the forest to split a declared collapsed edge.
+
+The fixed-pole primitive then passed ASan/UBSan/leak execution, including exact
+1/16 departure. The north full-producer ASan run was bounded at120 seconds
+without a completed row. A read-only native stack at the limit was in existing
+96-bit trig_range/Taylor through analytic_coupled during radial-history
+preparation; initial seed construction, same engine settlement, and angular
+continuation assertions had already completed. This is censored, not GREEN.
+The source-backed breadth/history run is moving to strict Release, with
+observable per-case/preparation stages and a selected ASan continuation run.
+
+The finite-to-ideal band math review found a substantive error before closure:
+Sv bounded only over the near-pole finite↔ideal strip did not cover the retained
+whole affine-rho source correspondence. Parent selected the whole-cap derivative
+correction. Genuine actual RED in `context/pole-band-red.log` uses a nonorthogonal
+sphere with Z100, finite_v1.5, cut_v.25 and independent analytic xi=rho1/2 source
+positions. The corrected bound uses the full convex v hull of ideal pole,
+finite source boundary and both cut heights. Fixed source-band upper uses the
+complete original prepared source meridian/face envelope and source base u
+partition, independently of current radial cuts and extra angular levels.
+Release primitive passes (`context/pole-band-release-green.log`).
+
+Actual strict Release full producer/continuation cohort completed EXIT0, all12
+families, in `context/pole-producer-release.log`; public rows are retained in
+`results/native-poles-2026-10-16/producer.tsv`. Each case checks all six source
+preparation stages: initial ownership requests, complete initial cap+ordinary
+engine settlement, angular-only generation, and BOTH radial3/4 replacements
+across the one-sided intermediate epoch. Final source-only guards additionally
+check history table owner/generation, meridian branches and capacity arithmetic.
+
+Final bounded sanitizer closure completed EXIT0:
+`ASAN_OPTIONS=detect_leaks=1 taskset -c 2 timeout 180
+build/geometry-owner-asan/brepgpu_native_mesher_pole_preparation
+context/pole-fixtures north.bgsource`. All six actual preparation stages,
+ordinary actual-cell plus host fan settlement, internal angular restart and
+one-sided/two-sided radial history passed (`context/pole-final-asan-north.log`).
+This is the selected full producer sanitizer path, not all12 variants under
+sanitizers. Existing SAME-engine per-kind/same+distinct sanitizer cases remain
+the topology owner's separate actual-cell scope.
+
+The corrected primitive passed ASan/UBSan/leaks EXIT0 in
+`context/pole-band-asan-green.log`, including nonorthogonal finite-band regression,
+exact 1/16 pole departure and unequal cut heights in the existing independent
+source/Phi grids. The whole original-source numerator/interval machinery is
+reused; no alternate geometry evaluator was introduced.
+
+Actual-source clang-tidy over preparation, poles, source boundary, domain map and
+envelope completed with one project finding: request_parameter's optional guard
+was enforced inside a called helper, so the analyzer could not establish safety
+at the subsequent dereference. An explicit local guard now states that admitted
+seam; no suppression or optional.value escape was added. The four other source
+units were clean. Only the changed boundary unit is rechecked afterward.
+
+Independent topology/algorithm review accepted the actual corrected whole-cap
+band, source-dependent fixed upper, interval history and construction path.
+The frozen cap now retains the actual explicit GeometryBoundPrecision and SAME
+consumer uses it; nondefault80/112 consumer case passed on that owner's lane.
+No more modeling, benchmarks or expanding sanitizer cohort are launched by this
+unit after the selected closure.
+
+Changed boundary-unit clang-tidy recheck completed EXIT0, no project findings
+(`context/pole-geometry-boundary-tidy.log`). The aggregate five-file run's other
+four source units were already clean. All final owned source and fixtures use
+the named LLVM/100-column style, uploaded through sibling temporary files and
+atomic rename. The only change after successful north sanitizer execution is
+the explicit duplicate admission guard and formatting; accepted valid geometry
+arithmetic did not change.
+
+Performance follow-up stays with the coherent geometry owner rather than a
+watch-specific branch: the retained native stack for the censored sanitizer run
+shows `Integer::gcd_nonnegative -> Rational::add -> taylor -> trig_at_stage ->
+trig_range -> enclose_original_curve_jet -> analytic_coupled -> prepare_use`.
+This supports investigating a source-independent fixed-precision dyadic interval
+filter for explicit-profile jets/correspondence (same source formula, deterministic
+canonical bound-grid policy and exact fallback), rather than relaxing source or
+mesh tolerances. It does not quantify Release whole-watch stage attribution and
+no such performance change is implemented in this unit.
+
+A final helper review caught my overly narrow one-cap guard: it rejected ordinary
+source-key forwarding for an empty-cap seed, defeating the original no-op
+fallthrough. Restored empty-cap source forwarding by rejecting only more than
+one cap; unknown face-cut still rejects. An assertion now exercises this direct
+public helper seam in the existing ordinary face-preparation fixture. Root's
+coordinator guard also avoids unnecessary cap math for ordinary source events.
+No cap arithmetic or completed source-case results changed. Root owns the final
+affected ordinary fixture rerun; no additional geometry campaign is started.

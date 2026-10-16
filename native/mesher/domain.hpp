@@ -16,6 +16,9 @@ struct DomainStats final {
   bgcdt::CoreStats cdt;
 };
 enum class DomainFailureMode { reject, report_geometry };
+// Deferred construction still admits every CURRENT site through its cycles.
+// The same topology owner may then append finite mapped cells before one seal.
+enum class DomainInitialSeal { complete, deferred };
 enum class DomainIssueKind { too_few_sites, zero_area, boundary_contact, hole_placement };
 struct DomainSegmentLocation final {
   uint32_t loop;
@@ -40,6 +43,7 @@ struct InitialDomain final {
 // the face generation must be destroyed, never partially published.
 [[nodiscard]] InitialDomain initialize_face_domain(bgfd::Budget &, MutableFaceTopology &,
                                                    std::span<const DomainLoopView>, uint64_t seed,
-                                                   DomainFailureMode = DomainFailureMode::reject);
+                                                   DomainFailureMode = DomainFailureMode::reject,
+                                                   DomainInitialSeal = DomainInitialSeal::complete);
 } // namespace bgmesh
 #endif

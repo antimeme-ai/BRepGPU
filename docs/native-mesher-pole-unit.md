@@ -92,8 +92,14 @@ or cone, two adjacent constant-u meridians, one regular side and a convex cap
 cut disjoint from every other selected trim. Actual source pcurve/meridian
 interval bounds must justify the finite collapsed band and constant-u branch;
 unsupported curved polar trims return a typed refusal. Choose existing master
-samples only; if both are the opposite original endpoints, an empty ordinary
-remainder is permitted. A failed fan can request actual meridian master splits
+samples only. The product producer first requests original meridian splits
+until BOTH chosen cuts are strict interior master samples; this is a source
+ownership obligation independent of positional epsilon. It does not generate
+private angular nodes on the opposite original regular-side edge. The engine
+can also consume a separately authored empty-remainder descriptor, but that
+cut must use the actual opposite source-edge master nodes/interval keys; its
+angular requests remain source-edge requests. The product producer does not
+select that optimization in this unit. A failed fan can request actual meridian master splits
 for radial contraction or face-owned dyadic angular subdivision. Radial source
 requests use original edge keys; angular requests carry face-cut revision and
 restart the face generation without entering the source forest. Both endpoints'
@@ -106,3 +112,24 @@ VertexID canonical key/XYZ and retained original aliases. Original V/Ce-to-carri
 node checks remain separate from actual canonical-Q departures; neither source
 IDs nor their original values are erased. Every emitted pole facet has nonzero
 exact-binary64 area and a full xi/rho source-coverage map, including rho=0.
+
+The fixed pole term is ideal symbolic pole versus actual canonical pole Q,
+separate from the changing maximum of cut-corner departures. The finite-source
+band uses a source-determined base dyadic partition with each width<=pi/2; its
+maximum is independent of later extra angular levels and radial cut heights.
+These canonical profile upper bounds are retained. Only after an actual cell
+bound fails may their inability to fit cause typed unresolved; a loose upper
+is never a lower-bound diagnosis of infeasible source geometry. A successful
+actual cell remains successful. Both-endpoint radial history survives an epoch
+that splits only one meridian; preparation requests the other side before
+publishing the contracted replacement.
+
+The retained source correspondence is pointwise on the full cap:
+`Fsrc(xi,rho)=S(u(xi),(1-rho)*finite_v(xi)+rho*g(xi))`, while
+`Fideal` uses the symbolic pole in place of finite_v. Their difference is at
+most `(1-rho)*|finite_v-vpole|*sup||Sv||`. The derivative supremum spans the
+convex v hull of the ideal pole, finite source heights, and BOTH cut heights,
+for that entire u piece. A near-pole strip derivative alone is insufficient on
+nonorthogonal frames. The fixed-profile band uses the complete prepared
+original meridian/face v envelope and the source-determined base angular
+partition; changing the current cut or extra angular level cannot change it.

@@ -51,6 +51,9 @@ void precision(GeometryContext &ctx, GeometryBoundPrecision profile) {
 }
 std::array<Rational, 2> mapped_range(bgfd::Budget &b, const SourceData &source, const Coedge &use,
                                      const Edge &edge) {
+  if (edge.degenerate)
+    return ordered(Rational::from_double(b, use.parameter_range[0]),
+                   Rational::from_double(b, use.parameter_range[1]));
   const auto begin = Rational::from_double(b, edge.parameter_range[0]),
              end = Rational::from_double(b, edge.parameter_range[1]);
   const auto domain = ordered(begin, end);

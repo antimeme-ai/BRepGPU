@@ -194,6 +194,11 @@ void optimizer(const std::shared_ptr<RunResource> &resource, const GeometryStore
                 frozen->values.key().ordinal > again->cells->values.key().ordinal,
             "final face export dropped source/coordinates/live topology");
     require(engine.freeze_result() == frozen, "repeat freeze did not reuse immutable lease");
+    require(frozen->source_sites.size() == frozen->boundary->sites.size(),
+            "final result omitted source occurrence to active topology mapping");
+    for (std::size_t i = 0; i < frozen->source_sites.size(); ++i)
+      require(frozen->source_sites[i] && frozen->source_sites[i]->value == i,
+              "ordinary source site mapping changed active topology identity");
     for (const auto &triangle : frozen->triangles) {
       const auto &ancestry = frozen->lineages.at(static_cast<std::size_t>(triangle.lineage));
       require(ancestry.operation == LineageOperation::flip && ancestry.parent < triangle.lineage &&

@@ -92,6 +92,7 @@ struct FaceEngineStats final {
   uint64_t cell_packets = 0, candidates = 0, accepted_candidates = 0;
   uint64_t rejected_results = 0, optimizer_proposals = 0, optimizer_flips = 0;
   uint64_t domain_failures = 0;
+  uint64_t host_pole_cells = 0;
   TopologyStats topology;
   FaceFrontierStats frontier;
 };

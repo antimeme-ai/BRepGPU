@@ -231,15 +231,16 @@ if(BUILD_TESTING)
 
   if(TARGET brepgpu_mesher_boundary)
     set(BOUNDARY_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/shared-boundary.bgsource")
-    add_custom_command(OUTPUT "${BOUNDARY_FIXTURE}"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_boundary_fixture.py" "${BOUNDARY_FIXTURE}"
+    set(BOUNDARY_QUOTIENT_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/boundary-quotient.bgsource")
+    add_custom_command(OUTPUT "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_boundary_fixture.py" "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}"
       DEPENDS ../../tests/native_mesher_boundary_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
-    add_custom_target(brepgpu_native_mesher_boundary_fixture DEPENDS "${BOUNDARY_FIXTURE}")
+    add_custom_target(brepgpu_native_mesher_boundary_fixture DEPENDS "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}")
     add_executable(brepgpu_native_mesher_boundary ../../tests/native_mesher_boundary.cpp)
     add_dependencies(brepgpu_native_mesher_boundary brepgpu_native_mesher_boundary_fixture)
     target_link_libraries(brepgpu_native_mesher_boundary PRIVATE brepgpu_mesher_boundary)
     brepgpu_native_cpu_rigor(brepgpu_native_mesher_boundary)
-    add_test(NAME native_mesher_boundary COMMAND brepgpu_native_mesher_boundary "${BOUNDARY_FIXTURE}")
+    add_test(NAME native_mesher_boundary COMMAND brepgpu_native_mesher_boundary "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}")
     if(TARGET brepgpu_mesher_boundary_evaluation)
       add_executable(brepgpu_native_mesher_boundary_points ../../tests/native_mesher_boundary_points.cpp)
       target_link_libraries(brepgpu_native_mesher_boundary_points PRIVATE brepgpu_mesher_boundary_evaluation)
@@ -285,8 +286,10 @@ if(BUILD_TESTING)
     COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
       "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_chart_fixture.py"
       "${CHART_FIXTURE_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_run_fixture.py" "${CHART_FIXTURE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E touch "${CHART_FIXTURE_STAMP}"
     DEPENDS ../../tests/native_mesher_chart_fixture.py ../../tests/native_mesher_geometry_fixture.py
+      ../../tests/native_mesher_run_fixture.py
       ../../python/brepgpu/imported_source.py VERBATIM)
   add_custom_target(brepgpu_native_mesher_chart_fixture DEPENDS "${CHART_FIXTURE_STAMP}")
   add_dependencies(brepgpu-mesh brepgpu_native_mesher_chart_fixture)
@@ -331,6 +334,30 @@ if(BUILD_TESTING)
   add_dependencies(brepgpu_native_mesher_domain_maps brepgpu_native_mesher_chart_fixture)
   brepgpu_native_cpu_rigor(brepgpu_native_mesher_domain_maps)
   add_test(NAME native_mesher_domain_maps COMMAND brepgpu_native_mesher_domain_maps "${CHART_FIXTURE_DIR}")
+  set(POLE_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/pole-fixtures")
+  set(POLE_FIXTURE_STAMP "${POLE_FIXTURE_DIR}/complete.stamp")
+  add_custom_command(OUTPUT "${POLE_FIXTURE_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_pole_fixture.py" "${POLE_FIXTURE_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${POLE_FIXTURE_STAMP}"
+    DEPENDS ../../tests/native_mesher_pole_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_mesher_pole_fixture DEPENDS "${POLE_FIXTURE_STAMP}")
+  add_executable(brepgpu_native_mesher_face_poles ../../tests/native_mesher_face_poles.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_poles PRIVATE brepgpu_mesher_face_engine brepgpu_mesher_boundary brepgpu_mesher_geometry)
+  add_dependencies(brepgpu_native_mesher_face_poles brepgpu_native_mesher_pole_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_poles)
+  add_test(NAME native_mesher_face_poles COMMAND brepgpu_native_mesher_face_poles "${POLE_FIXTURE_DIR}/north.bgsource")
+  add_test(NAME native_mesher_face_poles_south COMMAND brepgpu_native_mesher_face_poles "${POLE_FIXTURE_DIR}/south.bgsource")
+  add_test(NAME native_mesher_face_poles_cone COMMAND brepgpu_native_mesher_face_poles "${POLE_FIXTURE_DIR}/cone.bgsource")
+  add_executable(brepgpu_native_mesher_pole_preparation ../../tests/native_mesher_pole_preparation.cpp)
+  target_link_libraries(brepgpu_native_mesher_pole_preparation PRIVATE brepgpu_mesher_face_preparation brepgpu_mesher_face_engine)
+  add_dependencies(brepgpu_native_mesher_pole_preparation brepgpu_native_mesher_pole_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_pole_preparation)
+  add_test(NAME native_mesher_pole_preparation COMMAND brepgpu_native_mesher_pole_preparation "${POLE_FIXTURE_DIR}")
+  add_executable(brepgpu_native_mesher_pole_publish ../../tests/native_mesher_pole_publish.cpp)
+  target_link_libraries(brepgpu_native_mesher_pole_publish PRIVATE brepgpu_mesher_run brepgpu_mesher_mesh_publish brepgpu_mesher_scene brepgpu_mesher_face_engine brepgpu_mesher_face_preparation brepgpu_mesher_numerical_service brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
+  add_dependencies(brepgpu_native_mesher_pole_publish brepgpu_native_mesher_pole_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_pole_publish)
+  add_test(NAME native_mesher_pole_publish COMMAND brepgpu_native_mesher_pole_publish "${POLE_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/pole-publish-fixture")
   add_executable(brepgpu_native_mesher_face_plane ../../tests/native_mesher_face_plane.cpp)
   target_link_libraries(brepgpu_native_mesher_face_plane PRIVATE brepgpu_mesher_face_preparation brepgpu_mesher_face_engine brepgpu_mesher_numerical_service)
   add_dependencies(brepgpu_native_mesher_face_plane brepgpu_native_mesher_chart_fixture)

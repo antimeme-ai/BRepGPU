@@ -212,6 +212,37 @@ void aligned_holes(uint32_t count) {
             << "\taggregates\t" << result.stats.winding_aggregates << "\tevent_entries\t"
             << result.stats.event_entries << '\n';
 }
+void mapped_initial_extension() {
+  using namespace bgmesh;
+  bgfd::Budget budget({1u << 26, uint64_t{1} << 31});
+  MutableFaceTopology mesh(budget);
+  const std::array<std::array<double, 2>, 4> xy{{{0, 0}, {1, 0}, {1, 1}, {0, 1}}};
+  std::array<SiteSlot, 4> sites{};
+  std::array<BoundaryKey, 4> keys{
+      {{10, 0}, {11, 0}, {900, 0, BoundaryOwnerKind::face_cut}, {13, 0}}};
+  for (uint32_t i = 0; i < sites.size(); ++i)
+    sites[i] = mesh.append_site(xy[i]);
+  const std::array<DomainLoopView, 1> loops{{{true, sites, keys}}};
+  (void)initialize_face_domain(budget, mesh, loops, 7, DomainFailureMode::reject,
+                               DomainInitialSeal::deferred);
+  const auto proxy = mesh.append_site({.5, 2});
+  (void)mesh.add_initial_triangle({sites[3], sites[2], proxy});
+  const auto left = mesh.find_edge(sites[3], proxy), right = mesh.find_edge(proxy, sites[2]);
+  if (!left || !right)
+    throw std::runtime_error("mapped initial fan boundary absent");
+  mesh.protect_edge(*left, {20, 0});
+  mesh.protect_edge(*right, {21, 0});
+  mesh.seal_initial();
+  const auto shared = mesh.find_edge(sites[2], sites[3]);
+  if (!shared)
+    throw std::runtime_error("mapped fan lost ordinary shared cut");
+  require(mesh.stats().live_triangles == 3 && mesh.stats().sites == 5 &&
+              mesh.edge(*shared).incident_count == 2 && mesh.edge(*shared).constraint == keys[2],
+          "deferred domain did not retain one coherent protected cut and complete sites");
+  for (const auto triangle : mesh.triangles())
+    require(mesh.orient(mesh.triangle(triangle).sites) > 0,
+            "mapped initial extension lost positive roles");
+}
 } // namespace
 int main() {
   try {
@@ -219,6 +250,7 @@ int main() {
     invalid_domains();
     protected_collinear();
     reported_geometry();
+    mapped_initial_extension();
     aligned_holes(16);
     aligned_holes(64);
     std::cout << "native indexed domain and typed metric CDT PASS\n";

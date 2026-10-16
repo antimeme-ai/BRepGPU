@@ -28,6 +28,7 @@ struct FaceEngine::Impl final {
   FaceCellFrontier frontier;
   Rational h2, width_u, width_v, allowance;
   std::pmr::vector<PhysicalNode> nodes;
+  std::pmr::vector<std::optional<SiteSlot>> source_sites;
   std::pmr::vector<std::array<Rational, 2>> original_locations;
   std::pmr::vector<std::optional<std::array<Rational, 4>>> original_enclosures;
   std::optional<std::array<Rational, 4>> plane_factor;
@@ -49,6 +50,11 @@ struct FaceEngine::Impl final {
     BoundaryKey feature;
   };
   std::pmr::vector<std::optional<DomainFailure>> domain_failures;
+  struct PoleCell final {
+    TriangleHandle triangle;
+    uint32_t piece;
+  };
+  std::pmr::vector<std::optional<PoleCell>> pole_cells;
   FaceOptimizationWork optimization;
   std::optional<FlipTicket> flip;
   uint64_t optimizer_ordinal = 0;
@@ -66,8 +72,8 @@ struct FaceEngine::Impl final {
         h2(metric.scales.physical_diagonal_squared.clone_into(b)),
         width_u(metric.scales.chart_width_u.clone_into(b)),
         width_v(metric.scales.chart_width_v.clone_into(b)), allowance(tau.clone_into(b)), nodes(&b),
-        original_locations(&b), original_enclosures(&b), changes(&b), adapters(&b),
-        protected_keys(&b), potentials(&b), domain_failures(&b) {
+        source_sites(&b), original_locations(&b), original_enclosures(&b), changes(&b),
+        adapters(&b), protected_keys(&b), potentials(&b), domain_failures(&b), pole_cells(&b) {
     if (&context.budget() != &budget)
       invalid("face geometry context uses another owner");
     if (boundary->chart_kind != WorkingChartKind::original_uv &&
@@ -82,32 +88,18 @@ struct FaceEngine::Impl final {
         boundary->values.key().generation != boundary->face_generation)
       invalid("face seed table owner/generation mismatch");
     table_ordinal = boundary->values.key().ordinal;
+    if (boundary->construction_domain_present != !boundary->pole_caps.empty() ||
+        boundary->pole_caps.empty() != boundary->pole_pieces.empty() || (has_poles() && is_plane()))
+      invalid("finite cap/construction domain inventory mismatch");
     nodes.reserve(boundary->sites.size());
+    source_sites.resize(boundary->sites.size());
     original_locations.reserve(boundary->sites.size());
     original_enclosures.reserve(boundary->sites.size());
-    for (const auto &site : boundary->sites) {
+    for (std::size_t index = 0; index < boundary->sites.size(); ++index) {
       budget.charge(1);
-      const std::array uv{read(site.chart[0]), read(site.chart[1])};
-      const std::array locator{read(site.original_uv[0]), read(site.original_uv[1])};
-      for (std::size_t axis = 0; axis < 2; ++axis)
-        if (!is_plane() && uv[axis].compare(locator[axis]) != 0)
-          invalid("ordinary chart and original UV disagree");
-      if (site.node.key.definition != boundary->definition.value)
-        invalid("boundary physical node belongs to another definition");
-      finite(site.node.xyz);
-      const auto slot = mesh.append_site(uv);
-      if (slot.value != nodes.size())
-        internal("face site/node append mismatch");
-      nodes.push_back(site.node);
-      original_locations.push_back(locator);
-      if (site.original_uv_enclosure) {
-        const auto &refs = *site.original_uv_enclosure;
-        std::array bounds{read(refs[0]), read(refs[1]), read(refs[2]), read(refs[3])};
-        if (bounds[0].compare(bounds[1]) > 0 || bounds[2].compare(bounds[3]) > 0)
-          invalid("boundary source locator enclosure is reversed");
-        original_enclosures.emplace_back(std::move(bounds));
-      } else
-        original_enclosures.push_back(std::nullopt);
+      const auto &site = boundary->sites[index];
+      if (!has_poles())
+        (void)activate_source(static_cast<uint32_t>(index));
       if (site.node.key.generator == NodeGenerator::face_site && site.node.key.source == owner.id &&
           site.node.key.generation == boundary->face_generation) {
         if (site.node.key.ordinal == UINT64_MAX)
@@ -147,7 +139,7 @@ struct FaceEngine::Impl final {
       for (uint64_t i = 0; i < loop.segments.count; ++i) {
         budget.charge(1);
         const auto &segment = boundary->segments[static_cast<std::size_t>(loop.segments.first + i)];
-        if (segment.site >= nodes.size() || segment.use.value >= source().coedges.size())
+        if (segment.site >= boundary->sites.size() || segment.use.value >= source().coedges.size())
           invalid("face seed segment site/use invalid");
         const auto &use = source().coedges[segment.use.value];
         if (use.loop_id != original.id)
@@ -155,15 +147,17 @@ struct FaceEngine::Impl final {
         if (segment.constraint.kind == BoundaryOwnerKind::source_edge &&
             segment.constraint.owner != use.edge_id.value)
           invalid("face source constraint owner mismatch");
-        cycles.push_back({segment.site});
+        if (!has_poles())
+          cycles.push_back(active_source(segment.site));
         constraints.push_back(segment.constraint);
       }
-      loops.push_back(
-          {loop.outer,
-           std::span<const SiteSlot>(cycles.data() + begin,
-                                     static_cast<std::size_t>(loop.segments.count)),
-           std::span<const BoundaryKey>(constraints.data() + begin,
-                                        static_cast<std::size_t>(loop.segments.count))});
+      if (!has_poles())
+        loops.push_back(
+            {loop.outer,
+             std::span<const SiteSlot>(cycles.data() + begin,
+                                       static_cast<std::size_t>(loop.segments.count)),
+             std::span<const BoundaryKey>(constraints.data() + begin,
+                                          static_cast<std::size_t>(loop.segments.count))});
     }
     std::sort(loop_slots.begin(), loop_slots.end(), [&](auto a, auto c) {
       budget.charge(1);
@@ -179,12 +173,285 @@ struct FaceEngine::Impl final {
     protected_keys.erase(std::unique(protected_keys.begin(), protected_keys.end()),
                          protected_keys.end());
     validate_domain_map();
-    auto domain =
-        initialize_face_domain(budget, mesh, loops, seed, DomainFailureMode::report_geometry);
-    if (domain.issue)
-      request = classify_coarse_domain_issue(budget, *boundary, *domain.issue);
-    adapters = std::move(domain.traversal_adapters);
+    if (has_poles())
+      initialize_poles(seed);
+    else {
+      auto domain =
+          initialize_face_domain(budget, mesh, loops, seed, DomainFailureMode::report_geometry);
+      if (domain.issue)
+        request = classify_coarse_domain_issue(budget, *boundary, *domain.issue);
+      adapters = std::move(domain.traversal_adapters);
+    }
     frontier.initialize();
+  }
+  bool has_poles() const { return !boundary->pole_caps.empty(); }
+  SiteSlot active_source(uint32_t index) const {
+    if (index >= source_sites.size())
+      invalid("source site outside active mapping");
+    const auto &site = source_sites[index];
+    if (!site)
+      internal("source occurrence has no active topology site");
+    return *site;
+  }
+  SiteSlot activate_source(uint32_t index) {
+    if (index >= boundary->sites.size())
+      invalid("construction site outside complete source pool");
+    if (source_sites[index])
+      return active_source(index);
+    const auto &site = boundary->sites[index];
+    const std::array uv{read(site.chart[0]), read(site.chart[1])};
+    const std::array locator{read(site.original_uv[0]), read(site.original_uv[1])};
+    for (std::size_t axis = 0; axis < 2; ++axis)
+      if (!is_plane() && uv[axis].compare(locator[axis]) != 0)
+        invalid("ordinary chart and original UV disagree");
+    if (site.node.key.definition != boundary->definition.value)
+      invalid("boundary physical node belongs to another definition");
+    finite(site.node.xyz);
+    const auto slot = mesh.append_site(uv);
+    if (slot.value != nodes.size())
+      internal("face site/node append mismatch");
+    nodes.push_back(site.node);
+    source_sites[index] = slot;
+    original_locations.push_back(locator);
+    if (site.original_uv_enclosure) {
+      const auto &refs = *site.original_uv_enclosure;
+      std::array bounds{read(refs[0]), read(refs[1]), read(refs[2]), read(refs[3])};
+      if (bounds[0].compare(bounds[1]) > 0 || bounds[2].compare(bounds[3]) > 0)
+        invalid("boundary source locator enclosure is reversed");
+      original_enclosures.emplace_back(std::move(bounds));
+    } else
+      original_enclosures.push_back(std::nullopt);
+    return slot;
+  }
+  void initialize_poles(uint64_t seed) {
+    if (boundary->pole_caps.size() != 1 || !boundary->source_boundary)
+      throw Error(ErrorCode::unsupported, "finite cap requires one retained source quotient");
+    std::pmr::vector<SiteSlot> cycles(&budget);
+    std::pmr::vector<BoundaryKey> constraints(&budget);
+    std::pmr::vector<DomainLoopView> loops(&budget);
+    cycles.reserve(boundary->construction_segments.size());
+    constraints.reserve(boundary->construction_segments.size());
+    loops.reserve(boundary->construction_loops.size());
+    uint64_t cursor = 0;
+    for (const auto &loop : boundary->construction_loops) {
+      budget.charge(1);
+      if (loop.source_loop.value >= source().loops.size() ||
+          source().loops[loop.source_loop.value].face_id != face().id ||
+          source().loops[loop.source_loop.value].outer != loop.outer ||
+          loop.segments.first != cursor ||
+          loop.segments.count > boundary->construction_segments.size() - cursor)
+        invalid("finite cap ordinary construction loop ownership/range mismatch");
+      const auto begin = cycles.size();
+      for (uint64_t i = 0; i < loop.segments.count; ++i) {
+        budget.charge(1);
+        const auto &segment = boundary->construction_segments[static_cast<std::size_t>(cursor + i)];
+        cycles.push_back(activate_source(segment.site));
+        constraints.push_back(segment.constraint);
+      }
+      loops.push_back(
+          {loop.outer,
+           std::span<const SiteSlot>(cycles.data() + begin,
+                                     static_cast<std::size_t>(loop.segments.count)),
+           std::span<const BoundaryKey>(constraints.data() + begin,
+                                        static_cast<std::size_t>(loop.segments.count))});
+      cursor += loop.segments.count;
+    }
+    if (cursor != boundary->construction_segments.size())
+      invalid("unowned finite construction segments");
+    if (!loops.empty()) {
+      const auto domain =
+          initialize_face_domain(budget, mesh, loops, seed, DomainFailureMode::report_geometry,
+                                 DomainInitialSeal::deferred);
+      if (domain.issue)
+        throw Error(ErrorCode::unresolved, "finite cap ordinary remainder is not embedded");
+    }
+    // Source adapters describe ORIGINAL occurrence traversal, even when the
+    // ordinary remainder is empty or its boundary has a different cut chain.
+    for (const auto &loop : boundary->loops) {
+      Rational area(budget);
+      for (uint64_t i = 0; i < loop.segments.count; ++i) {
+        budget.charge(1);
+        const auto a = boundary->segments[static_cast<std::size_t>(loop.segments.first + i)].site;
+        const auto b = boundary
+                           ->segments[static_cast<std::size_t>(loop.segments.first +
+                                                               (i + 1) % loop.segments.count)]
+                           .site;
+        const auto &p = boundary->sites[a].chart, &q = boundary->sites[b].chart;
+        area = area.add(read(p[0]).multiply(read(q[1])).subtract(read(p[1]).multiply(read(q[0]))));
+      }
+      if (area.sign() == 0)
+        throw Error(ErrorCode::unresolved, "finite cap original chart loop is collapsed");
+      adapters.push_back((loop.outer ? 1 : -1) * area.sign());
+    }
+    const auto &cap = boundary->pole_caps.front();
+    if (cap.pieces.first != 0 || cap.pieces.count != boundary->pole_pieces.size() ||
+        cap.pieces.count == 0)
+      invalid("finite cap piece partition is incomplete");
+    for (std::size_t side = 0; side < 2; ++side) {
+      const auto range = cap.consumed_meridians[side];
+      if (range.count != 1 || range.first >= boundary->segments.size() ||
+          boundary->segments[static_cast<std::size_t>(range.first)].use !=
+              cap.meridian_uses[side] ||
+          boundary->segments[static_cast<std::size_t>(range.first)].constraint !=
+              cap.radial_features[side] ||
+          cap.radial_features[side].kind != BoundaryOwnerKind::source_edge)
+        invalid("finite cap cut must consume the nearest current original meridian interval");
+    }
+    const auto pole = activate_source(cap.pole_site);
+    for (uint32_t i = 0; i < boundary->pole_pieces.size(); ++i) {
+      budget.charge(1);
+      const auto &piece = boundary->pole_pieces[i];
+      if (piece.cap != 0 ||
+          (piece.cut.kind == BoundaryOwnerKind::face_cut && piece.cut.owner != face().id.value))
+        invalid("finite fan piece owner mismatch");
+      const std::array roles{pole, activate_source(piece.cut_sites[0]),
+                             activate_source(piece.cut_sites[1])};
+      std::array<SiteSlot, 3> sites{};
+      std::array<bool, 3> used{};
+      for (uint32_t j = 0; j < 3; ++j) {
+        const auto role = piece.positive_chart_roles[j];
+        if (role >= 3 || used[role])
+          invalid("finite fan role permutation invalid");
+        used[role] = true;
+        sites[j] = roles[role];
+      }
+      for (std::size_t endpoint = 0; endpoint < 2; ++endpoint)
+        for (std::size_t axis = 0; axis < 2; ++axis)
+          if (read(piece.cut_uv[2 * endpoint + axis])
+                  .compare(mesh.coordinate(roles[endpoint + 1],
+                                           axis == 0 ? CoordinateAxis::x : CoordinateAxis::y)) != 0)
+            invalid("finite fan cut sites disagree with source coverage map");
+      if (i != 0 && boundary->pole_pieces[i - 1].cut_sites[1] != piece.cut_sites[0])
+        invalid("finite fan cut chain has gaps or changed shared nodes");
+      const auto triangle = mesh.add_initial_triangle(sites);
+      if (triangle.slot >= pole_cells.size())
+        pole_cells.resize(static_cast<std::size_t>(triangle.slot) + 1);
+      pole_cells[triangle.slot] = PoleCell{triangle, i};
+      const auto protect = [&](SiteSlot a, SiteSlot b, BoundaryKey key) {
+        const auto edge = mesh.find_edge(a, b);
+        if (!edge)
+          internal("finite fan source edge absent");
+        mesh.protect_edge(*edge, key);
+        protected_keys.push_back(key);
+      };
+      protect(roles[1], roles[2], piece.cut);
+      if (i == 0)
+        protect(roles[0], roles[1], cap.radial_features[0]);
+      if (i + 1 == boundary->pole_pieces.size())
+        protect(roles[0], roles[2], cap.radial_features[1]);
+      const auto cut_edge = mesh.find_edge(roles[1], roles[2]);
+      if (!cut_edge || mesh.edge(*cut_edge).incident_count !=
+                           (piece.cut.kind == BoundaryOwnerKind::face_cut ? 2u : 1u))
+        invalid(
+            "finite cut source/interior provenance disagrees with ordinary remainder incidence");
+    }
+    std::sort(protected_keys.begin(), protected_keys.end(), [&](auto a, auto b) {
+      budget.charge(1);
+      return a < b;
+    });
+    protected_keys.erase(std::unique(protected_keys.begin(), protected_keys.end()),
+                         protected_keys.end());
+    validate_pole_source_coverage();
+    mesh.seal_initial();
+  }
+  void validate_pole_source_coverage() {
+    struct CoverageEdge final {
+      BoundaryKey key;
+      std::array<PhysicalNodeKey, 2> nodes;
+      auto operator<=>(const CoverageEdge &) const = default;
+    };
+    std::pmr::vector<CoverageEdge> expected(&budget), actual(&budget);
+    const auto add = [&](auto &rows, BoundaryKey key, std::array<uint32_t, 2> endpoints) {
+      budget.charge(1);
+      const auto first = endpoints[0], second = endpoints[1];
+      if (first >= boundary->sites.size() || second >= boundary->sites.size())
+        invalid("finite source coverage site outside complete inventory");
+      auto a = boundary->sites[first].node.key, b = boundary->sites[second].node.key;
+      if (b < a)
+        std::swap(a, b);
+      rows.push_back({key, {a, b}});
+    };
+    for (const auto &loop : boundary->loops)
+      for (uint64_t i = 0; i < loop.segments.count; ++i) {
+        const auto &segment = boundary->segments[static_cast<std::size_t>(loop.segments.first + i)];
+        const auto &use = source().coedges[segment.use.value];
+        if (source().edges[source().edge_index.find(use.edge_id).value].degenerate)
+          continue;
+        const auto &next = boundary->segments[static_cast<std::size_t>(
+            loop.segments.first + (i + 1) % loop.segments.count)];
+        add(expected, segment.constraint, {segment.site, next.site});
+      }
+    for (const auto &loop : boundary->construction_loops)
+      for (uint64_t i = 0; i < loop.segments.count; ++i) {
+        const auto &segment =
+            boundary->construction_segments[static_cast<std::size_t>(loop.segments.first + i)];
+        const auto &next = boundary->construction_segments[static_cast<std::size_t>(
+            loop.segments.first + (i + 1) % loop.segments.count)];
+        if (segment.constraint.kind == BoundaryOwnerKind::source_edge)
+          add(actual, segment.constraint, {segment.site, next.site});
+      }
+    for (const auto &cap : boundary->pole_caps) {
+      const auto &first = boundary->pole_pieces[static_cast<std::size_t>(cap.pieces.first)];
+      const auto &last =
+          boundary->pole_pieces[static_cast<std::size_t>(cap.pieces.first + cap.pieces.count - 1)];
+      add(actual, cap.radial_features[0], {cap.pole_site, first.cut_sites[0]});
+      add(actual, cap.radial_features[1], {cap.pole_site, last.cut_sites[1]});
+    }
+    for (const auto &piece : boundary->pole_pieces)
+      if (piece.cut.kind == BoundaryOwnerKind::source_edge)
+        add(actual, piece.cut, {piece.cut_sites[0], piece.cut_sites[1]});
+    const auto sort = [&](auto &rows) {
+      std::sort(rows.begin(), rows.end(), [&](const auto &a, const auto &b) {
+        budget.charge(1);
+        return a < b;
+      });
+    };
+    sort(expected);
+    sort(actual);
+    budget.charge(std::max(expected.size(), actual.size()));
+    if (expected != actual)
+      invalid("finite construction omitted or invented original physical source segments");
+  }
+  std::optional<uint32_t> pole_piece(TriangleHandle triangle) const {
+    if (triangle.slot < pole_cells.size()) {
+      const auto &cell = pole_cells[triangle.slot];
+      if (cell && cell->triangle == triangle)
+        return cell->piece;
+    }
+    return std::nullopt;
+  }
+  PoleFanPlan evaluate_pole(uint32_t index) {
+    const auto &piece = boundary->pole_pieces[index];
+    const auto &cap = boundary->pole_caps[piece.cap];
+    const std::array roles{active_source(cap.pole_site), active_source(piece.cut_sites[0]),
+                           active_source(piece.cut_sites[1])};
+    std::array<double, 9> xyz{};
+    for (std::size_t corner = 0; corner < 3; ++corner)
+      for (std::size_t axis = 0; axis < 3; ++axis)
+        xyz[3 * corner + axis] = nodes[roles[corner].value].xyz[axis];
+    const auto plan =
+        bound_analytic_pole_fan(context, source().carriers[carrier.value],
+                                {cap.kind,
+                                 {read(piece.cut_uv[0]), read(piece.cut_uv[1]),
+                                  read(piece.cut_uv[2]), read(piece.cut_uv[3])},
+                                 xyz,
+                                 {read(cap.original_pole_v[0]), read(cap.original_pole_v[1])},
+                                 1,
+                                 cap.precision});
+    if (plan.facet_roles != piece.positive_chart_roles)
+      invalid("finite cap map orientation differs from installed positive chart roles");
+    if (plan.regular_sheet_sign != cap.regular_sheet_sign)
+      invalid("finite cap sheet differs from its original regular source branch");
+    return plan;
+  }
+  BoundaryKey pole_refinement(uint32_t index, const PoleFanPlan &plan) const {
+    const auto &piece = boundary->pole_pieces[index];
+    const auto &cap = boundary->pole_caps[piece.cap];
+    // These are the actual same-map Hessian contributions. Corner/band terms
+    // are never assumed to be removable by angular subdivision.
+    return plan.angular_upper.compare(plan.radial_upper) >= 0
+               ? piece.cut
+               : std::min(cap.radial_features[0], cap.radial_features[1]);
   }
   void validate_domain_map() const {
     bool authoritative = false, reconstructed = false;
@@ -215,6 +482,9 @@ struct FaceEngine::Impl final {
         map->policy != (reconstructed ? DomainReferencePolicy::hybrid_pullback
                                       : DomainReferencePolicy::authoritative_original))
       invalid("source-domain map escaped its actual face generation");
+    if (has_poles() && (!map->fans.empty() || !map->strips.empty()))
+      throw Error(ErrorCode::unsupported,
+                  "finite source cap requires named identity authoritative domain map");
   }
   DomainDisplacement domain_displacement(const std::array<Rational, 6> &chart) {
     if (!boundary->domain_map)
@@ -259,9 +529,33 @@ struct FaceEngine::Impl final {
     if (site >= boundary->sites.size())
       invalid("source use endpoint site out of range");
     const auto &node = boundary->sites[site].node;
-    const auto &vertex = source().vertices[source().vertex_index.find(expected).value];
-    const PhysicalNodeKey key{boundary->definition.value, NodeGenerator::original_vertex,
-                              expected.value, 0, 0};
+    auto representative = source().vertex_index.find(expected);
+    auto generator = NodeGenerator::original_vertex;
+    if (const auto &master = boundary->source_boundary) {
+      if (&master->source.view() != &source() || master->definition != boundary->definition ||
+          master->face != boundary->face ||
+          master->boundary_generation != boundary->boundary_generation)
+        invalid("face source quotient snapshot belongs to another boundary generation");
+      if (master->vertex_alias_owner
+              ? (master->vertex_aliases.data() != master->vertex_alias_owner->rows.data() ||
+                 master->vertex_aliases.size() != master->vertex_alias_owner->rows.size())
+              : !master->vertex_aliases.empty())
+        invalid("source quotient relation lost its immutable storage lease");
+      const auto &aliases = master->vertex_aliases;
+      const auto it = std::lower_bound(aliases.begin(), aliases.end(), representative,
+                                       [&](const auto &row, auto value) {
+                                         budget.charge(1);
+                                         return row.original < value;
+                                       });
+      if (it != aliases.end() && it->original == representative) {
+        representative = it->representative;
+        generator = NodeGenerator::declared_quotient;
+      }
+    }
+    if (representative.value >= source().vertices.size())
+      invalid("source quotient representative outside source");
+    const auto &vertex = source().vertices[representative.value];
+    const PhysicalNodeKey key{boundary->definition.value, generator, vertex.id.value, 0, 0};
     if (node.key != key || node.xyz != vertex.xyz)
       invalid("source use endpoint lost original physical vertex authority");
   }
@@ -282,8 +576,9 @@ struct FaceEngine::Impl final {
       const auto expected = source().coedge_index.find(source_id);
       if (disposition.source_use != expected)
         invalid("source coedge order/inventory changed");
-      if (disposition.kind != FaceUseKind::ordinary_chain)
-        throw Error(ErrorCode::unsupported, "quotient use requires specialized coverage dispatch");
+      const bool quotient = disposition.kind == FaceUseKind::declared_quotient;
+      if (disposition.kind != FaceUseKind::ordinary_chain && !quotient)
+        invalid("unknown source use disposition");
       if (disposition.segments.first != cursor || disposition.segments.count == 0 ||
           disposition.segments.count > end - cursor)
         invalid("source coedge segment partition has gaps/overlap");
@@ -291,7 +586,7 @@ struct FaceEngine::Impl final {
       const auto &edge = source().edges[source().edge_index.find(use.edge_id).value];
       if (use.sense != 1 && use.sense != -1)
         invalid("source use sense invalid");
-      if (edge.degenerate || edge.parameter_range[0] == edge.parameter_range[1])
+      if (!quotient && (edge.degenerate || edge.parameter_range[0] == edge.parameter_range[1]))
         throw Error(ErrorCode::unsupported,
                     "degenerate source use requires explicit quotient disposition");
       const auto from = use.sense == 1 ? 0u : 1u, to = 1u - from;
@@ -304,6 +599,30 @@ struct FaceEngine::Impl final {
       const auto direction = finish.compare(begin);
       original_vertex(boundary->segments[static_cast<std::size_t>(cursor)].site,
                       edge.vertex_ids[from]);
+      if (quotient) {
+        if (!edge.degenerate || !has_poles() || boundary->pole_caps.size() != 1 ||
+            boundary->pole_caps.front().quotient_use != expected ||
+            disposition.segments.count != 1 || !disposition.quotient_pcurve_parameter)
+          throw Error(ErrorCode::unsupported, "quotient use lacks its finite source cap coverage");
+        const auto pcurve_from = ((use.sense == 1) == edge.curve_same_sense) ? 0u : 1u;
+        const auto &pc = *disposition.quotient_pcurve_parameter;
+        if (read(pc[0]).compare(Rational::from_double(budget, use.parameter_range[pcurve_from])) !=
+                0 ||
+            read(pc[1]).compare(
+                Rational::from_double(budget, use.parameter_range[1 - pcurve_from])) != 0)
+          invalid("source quotient pcurve traversal is incomplete or applies ordinary sense");
+        const auto &segment = boundary->segments[static_cast<std::size_t>(cursor)];
+        if (segment.use != expected || read(segment.source_parameter[0]).compare(begin) != 0 ||
+            read(segment.source_parameter[1]).compare(finish) != 0)
+          invalid("source quotient spatial endpoint inventory changed");
+        ++cursor;
+        const auto next_segment = cursor == end ? loop.segments.first : cursor;
+        original_vertex(boundary->segments[static_cast<std::size_t>(next_segment)].site,
+                        edge.vertex_ids[to]);
+        continue;
+      }
+      if (disposition.quotient_pcurve_parameter)
+        invalid("ordinary use has quotient pcurve coverage");
       for (uint64_t si = 0; si < disposition.segments.count; ++si) {
         budget.charge(1);
         const auto &segment = boundary->segments[static_cast<std::size_t>(cursor + si)];
@@ -555,6 +874,43 @@ std::optional<FaceCellWork> FaceEngine::take_cell_work(uint32_t maximum) {
     for (const auto key : keys) {
       budget_->charge(1);
       const auto triangle = impl_->mesh.triangle(key.triangle);
+      if (const auto piece = impl_->pole_piece(key.triangle)) {
+        const auto plan = impl_->evaluate_pole(*piece);
+        ++impl_->counters.host_pole_cells;
+        const bool accepted =
+            plan.position_upper.add(plan.band_upper).compare(impl_->allowance) <= 0;
+        const auto &cap = impl_->boundary->pole_caps[impl_->boundary->pole_pieces[*piece].cap];
+        if (cap.fixed_pole_upper.has_value() != cap.fixed_band_upper.has_value())
+          invalid("finite cap fixed source profile is incomplete");
+        if (cap.fixed_pole_upper && cap.fixed_band_upper) {
+          const auto pole = impl_->read(*cap.fixed_pole_upper),
+                     band = impl_->read(*cap.fixed_band_upper);
+          if (pole.sign() < 0 || band.sign() < 0)
+            invalid("finite cap source floor has negative bound");
+          const auto fixed =
+              (pole.compare(plan.pole_departure_upper) > 0 ? pole : plan.pole_departure_upper)
+                  .add(band);
+          if (!accepted && fixed.compare(impl_->allowance) >= 0) {
+            if (!impl_->frontier.complete(key, CellNumericalState::unresolved))
+              internal("finite cap fixed profile lost its canonical pending cell");
+            continue;
+          }
+        } else if (!accepted && plan.pole_departure_upper.compare(impl_->allowance) >= 0) {
+          if (!impl_->frontier.complete(key, CellNumericalState::unresolved))
+            internal("finite cap fixed pole departure lost its pending cell");
+          continue;
+        }
+        if (!accepted) {
+          if (key.triangle.slot >= impl_->domain_failures.size())
+            impl_->domain_failures.resize(static_cast<std::size_t>(key.triangle.slot) + 1);
+          impl_->domain_failures[key.triangle.slot] =
+              Impl::DomainFailure{key, impl_->pole_refinement(*piece, plan)};
+        }
+        if (!impl_->frontier.complete(key, accepted ? CellNumericalState::accepted
+                                                    : CellNumericalState::needs_refine))
+          internal("finite pole result lost its canonical pending cell");
+        continue;
+      }
       const auto displacement = impl_->domain_displacement(impl_->chart_coordinates(key.triangle));
       const auto remaining = impl_->allowance.subtract(displacement.upper);
       if (remaining.sign() <= 0) {
@@ -659,6 +1015,8 @@ FaceAdvance FaceEngine::advance() {
         if (failure && failure->cell == *selected)
           return impl_->boundary_request(failure->feature, *selected);
       }
+      if (const auto piece = impl_->pole_piece(selected->triangle))
+        return impl_->boundary_request(impl_->boundary->pole_pieces[*piece].cut, *selected);
       const auto triangle = impl_->mesh.triangle(selected->triangle);
       if (!triangle.heuristic_spent) {
         const auto uv = impl_->chart_coordinates(selected->triangle);
@@ -837,6 +1195,10 @@ std::optional<FaceOptimizationWork> FaceEngine::prepare_flip(EdgeHandle edge) {
     invalid("optimizer proposal state mismatch");
   if (!impl_->mesh.is_live(edge))
     return std::nullopt;
+  const auto incident = impl_->mesh.edge(edge);
+  for (uint32_t i = 0; i < incident.incident_count; ++i)
+    if (impl_->pole_piece(incident.incidents[i]))
+      return std::nullopt;
   const auto ticket = impl_->mesh.stage_flip(edge);
   if (!ticket)
     return std::nullopt;
@@ -1029,6 +1391,7 @@ FaceResult FaceEngine::freeze_result() {
     auto frozen = std::allocate_shared<FaceResultData>(
         RunAllocator<FaceResultData>(impl_->boundary->resource), impl_->boundary, builder.seal());
     frozen->sites.assign(sites.begin(), sites.end());
+    frozen->source_sites.assign(impl_->source_sites.begin(), impl_->source_sites.end());
     const auto count = impl_->mesh.lineage_count();
     if (count > frozen->lineages.max_size())
       throw Error(ErrorCode::resource_exhausted, "final lineage capacity exhausted");
@@ -1042,8 +1405,11 @@ FaceResult FaceEngine::freeze_result() {
     for (const auto handle : live) {
       budget_->charge(1);
       const auto triangle = impl_->mesh.triangle(handle);
-      frozen->triangles.push_back({impl_->frontier.key(handle), impl_->map_kind(), triangle.sites,
-                                   triangle.lineage, impl_->declarations(triangle.sites)});
+      const auto piece = impl_->pole_piece(handle);
+      frozen->triangles.push_back({impl_->frontier.key(handle),
+                                   piece ? CellMapKind::analytic_pole_fan_quad : impl_->map_kind(),
+                                   triangle.sites, triangle.lineage,
+                                   impl_->declarations(triangle.sites), piece});
     }
     frozen->traversal_adapters.assign(impl_->adapters.begin(), impl_->adapters.end());
     impl_->result = frozen;

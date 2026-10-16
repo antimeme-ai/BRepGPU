@@ -22,7 +22,7 @@ class FaceBoundaryPreparation final {
 
 public:
   FaceBoundaryPreparation(bgfd::Budget &, GeometryContext &, GeometryStore, SourceBoundarySnapshot,
-                          const FaceChartRequest &);
+                          const FaceChartRequest &,PoleCutControl = {});
   ~FaceBoundaryPreparation();
   FaceBoundaryPreparation(const FaceBoundaryPreparation &) = delete;
   FaceBoundaryPreparation &operator=(const FaceBoundaryPreparation &) = delete;
@@ -32,6 +32,7 @@ public:
   [[nodiscard]] std::optional<BoundBatch> take_curve_work(const BoundRootBank &, BoundBatchLimits);
   void complete(const BoundCompleted &);
   [[nodiscard]] FaceBoundarySnapshot snapshot();
+  [[nodiscard]] PoleCutControl next_pole_control() const;
 };
 } // namespace bgmesh
 #endif

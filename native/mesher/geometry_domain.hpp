@@ -11,6 +11,7 @@ struct DomainArcInput final {
   uint32_t begin_site, end_site;
   std::array<Rational, 2> source_parameter, pcurve_parameter;
   std::array<Rational, 4> selected;
+  bool declared_quotient = false;
 };
 enum class DomainReferencePolicy { authoritative_original, hybrid_pullback };
 struct FrozenDomainFan final {

@@ -69,3 +69,60 @@ exactly the same full semantic bytes as CPU1/CPU4. Cold P100 takes about0.48s
 versus0.24–0.25s CPU on that eight-triangle fixture. These are correctness and
 placement observations, not a mesh speedup or a watch result. The executable and
 presentation subplan is `docs/native-mesher-cli-unit.md`.
+
+## Finite cut continuation in the same whole coordinator
+
+The geometry owner now supplies immutable PoleCutControl/History and one
+continue_pole_cut helper. Root forwards it through the existing preparation job
+and complete definition horizon. A face-owned cut request participates in the
+same all-face arrival horizon, submits no invented source-edge split, completes
+the forest epoch to idle, then rebuilds only that face at a new face generation
+with the same source-boundary generation. A simultaneous actual source split
+and face cut rebuild a face once. Source-owned cut requests remain ordinary
+forest requests. Geometry alone chooses/validates angular/radial contraction;
+root never reevaluates the surface or guesses previous cuts. Contact retirement
+uses the existing old/new face-generation transaction.
+
+The first whole-watch native CPU invocation uses the complete retained v5 source
+and unchanged positional.005/source-node.001 quality,24workers and mesh-only
+scope. It is a diagnostic first complete mesh operation, not a render success.
+The largest source definition has1112faces;128GiB is an explicit run reservation
+cap for the existing64MiB owner arenas and worker reservations, not claimed RSS.
+No previous Python mesher is running. Operational progress/profile output stays
+ignored; full source inventories and errors determine the result.
+
+The diagnostic was stopped deliberately after17m15.05s wall,9143.31s user CPU
+and325080KiB peak resident memory; it published no final mesh. The final
+process status is signal15, irrespective of the time wrapper's printed exit
+status. Worker stacks place the work in parallel original analytic curve/trace
+preparation, not Python or a source-decoding deadlock. A short profile attributes
+87.22% inclusive samples to analytic curve jets and20.86% self samples to exact
+integer GCD. The existing point-only fixed-limb trigonometric filter does not
+serve this interval/jet path. These observations select the numerical service
+for a coherent performance unit; they establish neither a complete watch time
+nor an achieved speedup. No unchanged whole-watch trial follows this diagnostic.
+
+The completed finite-cap closure includes the actual source producer, SAME face
+engine, explicit source-site publication, wire and source SceneStore consumers.
+The publisher's twelve real cap families plus two-face joint pass Release CPU
+and both P100 consumers. Focused producer/engine/publisher sanitizers and scoped
+source reviews are recorded in their journals and results/native-poles-2026-10-16/.
+Peer review caught unconditional pole continuation on ordinary faces; root
+restricts it to cap snapshots, and geometry restores no-cap source-key no-op
+forwarding. The actual ordinary preparation regression passes after that change.
+
+Root's final strict whole-operation comparison passes CPU1/CPU4/P100 across
+plane, polynomial, positive-weight rational and C0 sources, including twelve
+faces and two reused placements. Full semantic bytes match all placements.
+The polynomial96-facet operation takes2.23806/1.02583/1.19665s respectively;
+the weighted20-facet operation2.68692/2.30045/3.02776s. Single cold observations,
+not a speedup claim. Family resource reservation was corrected from2GiB to4GiB
+to include all declared workers, services and face owners; source geometry and
+quality are unchanged. Actual owner bytes and RSS remain distinct.
+
+Final root coordinator/preparation-job/run-fixture source tidy is clean. Tidy
+found unchecked optional accesses in the new producer test's nested loop; one
+checked batch lease now supplies all its values. The targeted recheck is clean.
+This checkpoint retains a qualified previous-constructor control while the
+operator-selected adaptive architecture is designed; it is not a whole-watch
+delivery or permission to resume the old constructor as primary.

@@ -79,6 +79,19 @@ struct SourceBoundaryEdge final {
   Range<PhysicalNode> nodes;
   Range<BoundaryKey> intervals;
 };
+// Only explicit declared-degenerate source edges join vertices. Every member
+// of a distinct-ID component is retained; the minimum source VertexID provides
+// physical identity and original XYZ, without erasing any original endpoint.
+struct SourceVertexAlias final {
+  Slot<VertexTag> original, representative;
+};
+struct SourceVertexAliasData final {
+  std::shared_ptr<RunResource> resource;
+  std::pmr::vector<SourceVertexAlias> rows;
+  SourceVertexAliasData(std::shared_ptr<RunResource> owner,
+                        std::span<const SourceVertexAlias> aliases)
+      : resource(std::move(owner)), rows(aliases.begin(), aliases.end(), resource.get()) {}
+};
 struct DefinitionBoundarySnapshotData {
   std::shared_ptr<RunResource> resource;
   SourceStore source;
@@ -92,6 +105,9 @@ struct DefinitionBoundarySnapshotData {
   // from that original root to the interval whose midpoint created the sample.
   std::pmr::vector<Range<uint8_t>> sample_paths;
   std::pmr::vector<uint8_t> path_bits;
+  // Sorted by original VertexSlot, independent of exported edge subset.
+  std::shared_ptr<const SourceVertexAliasData> vertex_alias_owner;
+  std::span<const SourceVertexAlias> vertex_aliases;
   DefinitionBoundarySnapshotData(std::shared_ptr<RunResource> owner, SourceStore original,
                                  Slot<DefinitionTag> definition_slot, BoundaryEpoch identity,
                                  ExactTable table)
