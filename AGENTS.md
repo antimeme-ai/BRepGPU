@@ -286,8 +286,16 @@ the stated finite patch scope. Current coupled-quadratic 131,072-triangle cold
 query is 5.591s CPU4 versus 4.777s P1000; complete two-query processes are 9.681s
 versus 9.116s in one observation, not a general speedup. Older fine 120s censors
 remain published separately. Whole trimmed faces/components/watch are not done.
-Next implement original curve caches and shared chosen domains, then boundary
-regions and complete source publication per ADAPTIVE_MESHER_PLAN.md. Do not turn
+The shared-curve/chosen-trace operation is also delivered: original-source CPU1/4
+and both-P100 complete boundary snapshots,200 queries across10 authored families,
+scoped source/geometry/lifecycle/sanitizer checks and actual source reviews.
+Read docs/ADAPTIVE_SHARED_CURVES.md and its report. CPU wins these tiny complete
+operations; no general curve or whole-mesher GPU advantage is established.
+Continue connected boundary regions/trimmed faces and complete source publication
+per ADAPTIVE_MESHER_PLAN.md. Boundary authoritative_domain_upper is only a boundary
+bound; next full facets require a real interior map or explicit identity
+admission, not max edge bound. Read the new read-only boundary-region and trimmed-
+facet studies before designing that unit. Do not turn
 this checkpoint into an extra certification/tuning campaign. Record opportunities
 in docs/ADAPTIVE_MESHER_RETURN_PASS.md. SourceStore spatial values are already mm;
 units_mm is original metadata and must not rescale tolerances or geometry again.
