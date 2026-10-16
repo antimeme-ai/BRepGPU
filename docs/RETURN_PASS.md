@@ -443,3 +443,45 @@ repeated interval work, pair generation, hole/ear scans and span lookup. These
 are inferred opportunities, not measured dominant hotspots. Add useful stage
 walls and work counts before selecting an optimization; retain the existing
 exact predicates, source ownership and approximation obligations.
+
+## Native direct connectivity follow-up
+
+The operator subsequently selected direct CDT and native ownership before watch
+delivery, superseding the earlier deferral above. Read DIRECT_CDT_STRATEGY.md and
+the direct constructor design/results. The current explicit direct branch uses
+alternating-cut initial Delaunay construction and special-cavity recovery,
+filtered exact metric predicates and indexed topology; Python Lawson remains an
+explicit old-path comparison.
+
+The first independent 904-site/225-hole pilot exposes input validation rather
+than direct construction: about .317s validating versus .010s constructing,
+.366s complete call (one shared-host observation). The reused exact reader
+checks holes pairwise. A general planar point-location/sweep with winding sums
+is a serious next contender, preserving closed touching and original hole
+owners; dispatching only specially arranged benchmark holes is not the answer.
+Compare complete exact admission plus construction on arbitrary simple holes,
+not an internal triangulation-only speedup. Source-oracle pair enumeration also
+blocked actual large-model qualification. The independent
+[ranked closed-box sweep](IMPORTED_DOMAIN_ORACLE_SWEEP_PLAN.md) now replaces that
+enumeration while retaining original-value crossing/containment tests. Its
+[captured-domain results](../results/domain-oracle-2026-10-16/REPORT.md) measure
+admission separately from construction and whole-mesh qualification. Dense
+projection overlap can still produce quadratic active work; do not claim a
+general segment-intersection bound or add another validation layer around it.
+
+The complete438-face main-plate trial makes the remaining production split
+concrete:146.189s validation/sampling versus63.391s connectivity/refinement
+inside a209.608s construction wall. A second unchanged construction took208.258s.
+These shared-host single-CPU observations do not profile every geometry family
+or establish whole-watch performance. Source preparation, tighter general curve
+bounds and native batching/ownership are candidates to study with the existing
+original-value and physical/source checks. Preserve exact shared samples and
+source uncertainty; reducing work by silently coarsening the watch is not an
+admitted optimization. Qualifier time stays separate from product time.
+
+Further numerical work includes per-point homogeneous rational coordinates
+instead of a face-wide denominator LCM on hard rational families, and checked
+fixed-width predicates when actual intermediate bit bounds permit them. Keep
+lossless source values and exact zero behavior; rounding a family to fit a fast
+path would answer a different problem. GPU CDT still needs exact-source fallback,
+P100 support, conflict ownership and complete packing/transfer/cleanup timings.
