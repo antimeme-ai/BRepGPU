@@ -5,6 +5,11 @@
 #include <optional>
 
 namespace bgmesh {
+enum class CellMapKind : uint32_t {
+  uv_triangle = 1,
+  plane_xy_triangle = 2,
+  analytic_pole_fan_quad = 3
+};
 struct PhysicalNodeTag;
 struct PhysicalFacetTag;
 using NodeSlot = Slot<PhysicalNodeTag>;
