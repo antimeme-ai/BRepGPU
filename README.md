@@ -28,6 +28,15 @@ solids. Construction, meshing and these views run on CPU.
 [Images, source/history exports and scoped costs](results/watch-2026-10-15/REPORT.md) ·
 [Target and design notes](docs/WATCH_TARGET.md).
 
+The supplied real OM10 movement is driving the first
+[C++20 meshing transition](docs/NATIVE_FACE_DOMAINS.md). Its reproduced8,300-node
+spring-face domain now triangulates in **18.754s median** on one CPU core;
+the explicit Python reference timed out at300s. Independent geometry checks,
+all58 performance outcomes and the remaining quadratic behavior are in the
+[report](results/native-face-domain-2026-10-16/REPORT.md). The complete main plate
+still exceeds its300s construction budget, exposing Python connectivity work.
+The full OM10 render remains pending.
+
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen
 it. The [theme map and first-pass sequence](docs/ACCELERATION_ROADMAP.md#breadth-first-delivery-policy)
