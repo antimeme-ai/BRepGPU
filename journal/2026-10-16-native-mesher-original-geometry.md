@@ -203,3 +203,80 @@ the named 100-column format profile. Final pre-cleanup jets/chord ASan/UBSan
 GREEN was3295656 work,21528 peak; only signatures/storage references and the
 internal span guard changed for these code checks. Root owns integrated builds
 and the reviewed geometry checkpoint.
+
+The common metric consumer needs first/second source jets at a single original
+parameter. Authored an actual-source weighted-quotient derivative fixture first;
+genuine fleet RED was missing `enclose_original_surface_point_jet` (16 cascading
+compile errors). Added that narrow dispatch with stable lower original-span
+ties. Original rational derivative nets use original span widths and the same
+homogeneous de Casteljau engine, exposed through a shape/owner/unit-domain
+checked internal polynomial view. Analytic point jets use the same explicit
+request precision and finite source formulas. No finite differences, artificial
+zero-width restriction or separate evaluator was introduced. Focused strict
+debug GREEN on exact position/first/second/mixed rational answers and a source
+knot tie; topology owner can consume the actual API. Focused sanitizers and
+actual-source tidy are running before this continuation's review.
+
+Root explicitly requested a bounded bulk canonical-point cost observation before
+the watch consumer. Added one native client: 1024 exact dyadic parameters i/1024
+per original line, unit circle and positive rational curve, one reused context
+per family, source load/compile measured separately. It records wall time,
+exact work, private Budget peak and a checksum of actual output words. Line and
+rational use the real typed Store dispatch; circle uses the same original
+analytic row evaluator directly (no separate source-row lookup). Source fixture
+is authored and already covered by exact geometry tests; this client does not
+claim full mesh qualification or a CPU/reference speedup. Bound the whole run
+to60 seconds, retain any censored outcome; no point rewrite follows silently.
+
+Bulk point observation completed uncensored on CPU2: line1024=6.773 ms,
+193155 exact work/552B peak; circle1024=4307.041 ms,216541769 work/1820B;
+positive rational1024=33.560 ms,1007524 work/2492B. Source preparation separately
+1.517 ms. Results and limitations are in results/native-point-costs-2026-10-16.
+Circle canonical evaluation is material at4.206 ms/node. Record an owned fixed
+precision/double-double enclosure filter with exact fallback as a performance
+candidate; keep nearest-original semantics and continue whole geometry
+integration before attempting a point rewrite.
+
+Original image-range, source-curve root-index and explicit norm helpers are
+stable for actual-cell consumers; focused strict Debug GREEN includes a C0
+whole-curve image, closed knot intervals, outside-domain rejection and exact
+3-4-5 norm. The new envelope fixture observed genuine missing-link RED for
+prepare_face_envelope/prepare_definition_envelope before implementation.
+First strict Debug GREEN now covers true natural bounds despite tiny hints,
+whole original interior bubble, piecewise parameter-map interior extrema and
+unsupported continuation/period metadata. ASan/UBSan and actual-source tidy
+follow before claiming the source-envelope continuation complete.
+
+Envelope ASan/UBSan GREEN and actual-source Clang-tidy GREEN. The finite plane
+chart uses the original natural rectangle, exact corner-plane dual projection,
+fixed center inverse-Jacobian preconditioner and positive symmetric-Jacobian
+interval tests on bounded original-root subdivisions. Each natural boundary
+must lie exactly on its projected chord and have nonnegative/nonzero rational
+derivative-numerator Bernstein coefficients. Whole positive-weight Cartesian
+control hulls bound perpendicular height, including interior controls. No
+inverse UV samples establish image coverage. First strict Debug GREEN accepts
+the nonlinear warped planar square and rejects its interior bubble at the
+requested positional allowance. Added two further direct geometric refusals:
+folded planar projection and curved projected natural boundary. Focused
+sanitizers/tidy are running on this completed cohort. Optional geometric profile
+failure falls back to UV; no resource or source error is swallowed.
+
+All four plane chart cases pass ASan/UBSan and actual-source tidy. Root review
+found a declared cone apex could be silently omitted when fixed-precision sine
+straddles zero. Added source fixtures for angle0 and2^-200 and observed genuine
+old-code failure. Fixed angle0 to typed unsupported and uncertain nonzero sine
+to unresolved; the ideal cap is never skipped. ASan/UBSan GREEN follows.
+Cosine inverse expansion is preparation-only when invertibility is proved;
+later recovery cannot escape the prepared envelope without expansion/refusal.
+
+Boundary node recovery missing-header RED was observed on fleet before adding
+the module. First strict Debug GREEN covers nonlinear source parameterization,
+physical-plane XY choice before UV interpolation, and a deliberately wrong
+mapped reconstructed guide used only as Newton locator seed. Target is original
+V/exact original Ce, never rounded forest XYZ. Approximate Newton proposals are
+read again through original exact/enclosed surface jets; source-only node cap
+and endpoint V-to-Ce checks admit them, with branch/envelope/resource limits.
+Added common face-vertex joint selection: choose one stored UV then verify all
+incident uses at exactly that UV; authoritative raw endpoint identities remain
+distinct from chosen dyadic sites. The topology-owned frozen source boundary
+snapshot supplies the same physical identities/XYZ and exact master t.

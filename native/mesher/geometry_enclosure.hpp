@@ -13,6 +13,8 @@ namespace bgmesh::geometry_detail {
 [[nodiscard]] ExactEnclosure times(const ExactEnclosure &, const Rational &);
 [[nodiscard]] ExactEnclosure quotient(const ExactEnclosure &, const ExactEnclosure &positive);
 [[nodiscard]] ExactEnclosure squared(const ExactEnclosure &);
+[[nodiscard]] Rational enclosure_norm_upper(bgfd::Budget &,std::span<const ExactEnclosure>,
+                                               uint32_t fractional_bits);
 [[nodiscard]] SinCosEnclosure trig_range(GeometryContext &, const Rational &begin,
                                          const Rational &end, uint32_t precision_bits);
 } // namespace bgmesh::geometry_detail

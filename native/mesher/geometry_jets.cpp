@@ -1,5 +1,6 @@
 #include "geometry_jets.hpp"
 #include "geometry_enclosure.hpp"
+#include "geometry_polynomial.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -90,6 +91,20 @@ Tensor tensor_derivative(const Tensor &net, bool u, const Rational &width) {
         out.push_back(net.values[a + step].subtract(net.values[a]).multiply(factor));
       }
   return {{p, q}, std::move(out)};
+}
+Net tensor_value(const Tensor &net, const Rational &u, const Rational &v) {
+  auto &budget = u.budget();
+  Net rows(&budget);
+  const auto row_size = (static_cast<std::size_t>(net.q) + 1) * 4;
+  rows.reserve((static_cast<std::size_t>(net.p) + 1) * 4);
+  for (uint32_t i = 0; i <= net.p; ++i) {
+    const auto row = evaluate_homogeneous_polynomial(
+        std::span<const Rational>(net.values)
+            .subspan(static_cast<std::size_t>(i) * row_size, row_size),
+        {.degree = net.q, .stride = 4}, v);
+    rows.insert(rows.end(), row.begin(), row.end());
+  }
+  return evaluate_homogeneous_polynomial(rows, {.degree = net.p, .stride = 4}, u);
 }
 ExactEnclosure zero(bgfd::Budget &b) { return ExactEnclosure(Rational(b, 0)); }
 Axes zero_axes(bgfd::Budget &b) { return {zero(b), zero(b), zero(b)}; }
@@ -289,6 +304,41 @@ SurfaceJetEnclosure enclose_analytic_surface_jet(GeometryContext &context, const
           vector_negative(vector_times(ep, axial)),
           vector_negative(vector_sum(vector_times(e, radial), vector_times(z, axial)))};
 }
+EnclosedPoint enclose_original_curve_range(GeometryContext &context,const GeometryStore &store,
+                                            Slot<CurveTag> slot,const std::array<Rational,2> &bounds,
+                                            uint32_t precision_bits) {
+  owner(context,bounds[0]);owner(context,bounds[1]);
+  if(bounds[0].compare(bounds[1])>0) invalid("reversed original curve image interval");
+  auto &budget=context.budget();
+  const auto &curves=store.view().source.view().curves;
+  if(slot.value>=curves.size()) throw Error(ErrorCode::internal_error,"original curve image slot out of bounds");
+  const auto &curve=curves[slot.value];
+  if(curve.kind<=3) {
+    const auto jet=enclose_analytic_curve_jet(context,curve,bounds[0],bounds[1],precision_bits);
+    return {jet.dimension,jet.position};
+  }
+  if(bounds[0].compare(bounds[1])==0) return enclose_original_curve(context,store,slot,bounds[0]);
+  const auto roots=intersecting_curve_roots(budget,store,slot,bounds);
+  std::optional<std::array<Rational,6>> box;
+  for(const auto root_slot:roots) {
+    const auto root=import_curve_root(budget,store,root_slot);
+    const auto begin=root.begin.compare(bounds[0])>0?root.begin:bounds[0];
+    const auto end=root.end.compare(bounds[1])<0?root.end:bounds[1];
+    if(begin.compare(end)>=0) continue;
+    const auto leaf=restrict_curve(root,begin,end);
+    const auto stride=static_cast<std::size_t>(leaf.dimension)+1;
+    const auto coordinate=[&](std::size_t axis){return axis<leaf.dimension?cartesian_hull(leaf.controls,stride,axis):zero(budget);};
+    const auto x=coordinate(0),y=coordinate(1),z=coordinate(2);
+    const std::array<Rational,6> next{x.lower,x.upper,y.lower,y.upper,z.lower,z.upper};
+    if(!box) box.emplace(next);
+    else for(std::size_t axis=0;axis<3;++axis) {
+      if(next[2*axis].compare((*box)[2*axis])<0) (*box)[2*axis]=next[2*axis];
+      if(next[2*axis+1].compare((*box)[2*axis+1])>0) (*box)[2*axis+1]=next[2*axis+1];
+    }
+  }
+  if(!box) throw Error(ErrorCode::internal_error,"original curve image omitted its source interval");
+  return {curve.dimension,{ExactEnclosure((*box)[0],(*box)[1]),ExactEnclosure((*box)[2],(*box)[3]),ExactEnclosure((*box)[4],(*box)[5])}};
+}
 CurveJetEnclosure enclose_original_curve_jet(GeometryContext &context, const GeometryStore &store,
                                              Slot<CurveTag> slot, const Rational &begin,
                                              const Rational &end, uint32_t precision_bits) {
@@ -321,24 +371,86 @@ SurfaceJetEnclosure enclose_original_surface_jet(GeometryContext &context,
       import_surface_root(context.budget(), store, find_surface_root(store, slot, u, v));
   return enclose_rational_surface_jet(root, bounds);
 }
-namespace {
-struct NormRequest final {
-  uint32_t dimension, fractional_bits;
-};
-Rational norm_upper(const Axes &value, NormRequest request) {
-  const auto [dimension, fractional_bits] = request;
-  if (dimension > value.size())
+SurfaceJetEnclosure enclose_original_surface_point_jet(GeometryContext &context,
+                                                       const GeometryStore &store,
+                                                       Slot<CarrierTag> slot, const Rational &u,
+                                                       const Rational &v, uint32_t precision_bits) {
+  owner(context, u);
+  owner(context, v);
+  const auto &carriers = store.view().source.view().carriers;
+  if (slot.value >= carriers.size())
+    throw Error(ErrorCode::internal_error, "original point-jet slot out of bounds");
+  if (carriers[slot.value].kind <= 5)
+    return enclose_analytic_surface_jet(context, carriers[slot.value], {u, u, v, v},
+                                        precision_bits);
+  const auto root =
+      import_surface_root(context.budget(), store, find_surface_root(store, slot, u, v));
+  // Source evaluation admits the owner/shape/domain and provides its exact
+  // position. Derivative polynomials reuse the same de Casteljau engine, with
+  // original span widths, never a vanishing-width box or finite differences.
+  const auto position = evaluate_surface(root, u, v);
+  auto &b = context.budget();
+  const auto uw = root.bounds[1].subtract(root.bounds[0]),
+             vw = root.bounds[3].subtract(root.bounds[2]);
+  const auto s = u.subtract(root.bounds[0]).divide(uw), t = v.subtract(root.bounds[2]).divide(vw);
+  const Tensor net({root.p, root.q}, centered(root.controls, 4));
+  const auto nu = tensor_derivative(net, true, uw), nv = tensor_derivative(net, false, vw);
+  const auto nuu = tensor_derivative(nu, true, uw), nuv = tensor_derivative(nu, false, vw),
+             nvv = tensor_derivative(nv, false, vw);
+  const auto h = tensor_value(net, s, t), hu = tensor_value(nu, s, t), hv = tensor_value(nv, s, t);
+  const auto huu = tensor_value(nuu, s, t), huv = tensor_value(nuv, s, t),
+             hvv = tensor_value(nvv, s, t);
+  const auto c = [&](std::size_t axis) { return h[axis].divide(h[3]); };
+  const auto du = [&](std::size_t axis) {
+    return hu[axis].subtract(c(axis).multiply(hu[3])).divide(h[3]);
+  };
+  const auto dv = [&](std::size_t axis) {
+    return hv[axis].subtract(c(axis).multiply(hv[3])).divide(h[3]);
+  };
+  const auto duu = [&](std::size_t axis) {
+    return huu[axis]
+        .subtract(du(axis).multiply(hu[3]).multiply(Rational(b, 2)))
+        .subtract(c(axis).multiply(huu[3]))
+        .divide(h[3]);
+  };
+  const auto duv = [&](std::size_t axis) {
+    return huv[axis]
+        .subtract(du(axis).multiply(hv[3]))
+        .subtract(dv(axis).multiply(hu[3]))
+        .subtract(c(axis).multiply(huv[3]))
+        .divide(h[3]);
+  };
+  const auto dvv = [&](std::size_t axis) {
+    return hvv[axis]
+        .subtract(dv(axis).multiply(hv[3]).multiply(Rational(b, 2)))
+        .subtract(c(axis).multiply(hvv[3]))
+        .divide(h[3]);
+  };
+  return {{ExactEnclosure(position[0]), ExactEnclosure(position[1]), ExactEnclosure(position[2])},
+          {ExactEnclosure(du(0)), ExactEnclosure(du(1)), ExactEnclosure(du(2))},
+          {ExactEnclosure(dv(0)), ExactEnclosure(dv(1)), ExactEnclosure(dv(2))},
+          {ExactEnclosure(duu(0)), ExactEnclosure(duu(1)), ExactEnclosure(duu(2))},
+          {ExactEnclosure(duv(0)), ExactEnclosure(duv(1)), ExactEnclosure(duv(2))},
+          {ExactEnclosure(dvv(0)), ExactEnclosure(dvv(1)), ExactEnclosure(dvv(2))}};
+}
+namespace geometry_detail {
+Rational enclosure_norm_upper(bgfd::Budget &b,std::span<const ExactEnclosure> value,
+                                uint32_t fractional_bits) {
+  if (value.size()>3)
     throw Error(ErrorCode::internal_error, "geometry norm dimension exceeds its coordinate span");
-  auto &b = value[0].lower.budget();
   Rational squared_norm(b, 0);
-  for (uint32_t axis = 0; axis < dimension; ++axis) {
-    const auto lo = value[axis].lower.sign() < 0 ? value[axis].lower.negative() : value[axis].lower;
-    const auto hi = value[axis].upper.sign() < 0 ? value[axis].upper.negative() : value[axis].upper;
+  for (const auto &component:value) {
+    if(&component.lower.budget()!=&b||&component.upper.budget()!=&b)
+      throw Error(ErrorCode::internal_error,"geometry norm owner mismatch");
+    const auto lo = component.lower.sign() < 0 ? component.lower.negative() : component.lower;
+    const auto hi = component.upper.sign() < 0 ? component.upper.negative() : component.upper;
     const auto magnitude = lo.compare(hi) > 0 ? lo : hi;
     squared_norm = squared_norm.add(magnitude.multiply(magnitude));
   }
   return squared_norm.square_root_bounds(fractional_bits).upper;
 }
+} // namespace geometry_detail
+namespace {
 Rational gram_curvature_upper(bgfd::Budget &b, const Curve &curve, uint32_t bits) {
   Rational aa(b, 0), bb(b, 0), ab(b, 0);
   for (uint32_t axis = 0; axis < curve.dimension; ++axis) {
@@ -378,15 +490,13 @@ Rational analytic_curve_chord_upper(GeometryContext &context, const Curve &curve
     const auto point = enclose_analytic_curve_jet(context, curve, parameter, parameter,
                                                   precision.transcendental_bits);
     const Axes residual{difference(point.position[0], ExactEnclosure(actual[endpoint])),
-                        difference(point.position[1], ExactEnclosure(actual[endpoint + 1])),
-                        difference(point.position[2], ExactEnclosure(actual[endpoint + 2]))};
-    return norm_upper(residual, {.dimension = curve.dimension,
-                                 .fractional_bits = precision.norm_fractional_bits});
+                          difference(point.position[1], ExactEnclosure(actual[endpoint + 1])),
+                          curve.dimension==3?difference(point.position[2], ExactEnclosure(actual[endpoint + 2])):zero(b)};
+    return enclosure_norm_upper(b,residual,precision.norm_fractional_bits);
   };
   const auto a = departure(begin, 0), z = departure(end, 3);
   const auto endpoint_error = a.compare(z) > 0 ? a : z;
-  auto curvature = norm_upper(jet.second, {.dimension = curve.dimension,
-                                           .fractional_bits = precision.norm_fractional_bits});
+  auto curvature = enclosure_norm_upper(b,jet.second,precision.norm_fractional_bits);
   if (curve.kind != 1) {
     const auto gram = gram_curvature_upper(b, curve, precision.norm_fractional_bits);
     if (gram.compare(curvature) < 0)

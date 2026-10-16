@@ -71,6 +71,8 @@ public:
                                             const Rational &);
 [[nodiscard]] SurfaceRootSlot find_surface_root(const GeometryStore &, Slot<CarrierTag>,
                                                 const Rational &u, const Rational &v);
+[[nodiscard]] std::pmr::vector<CurveRootSlot> intersecting_curve_roots(
+    bgfd::Budget &,const GeometryStore &,Slot<CurveTag>,const std::array<Rational,2> &);
 [[nodiscard]] std::pmr::vector<SurfaceRootSlot>
 // Full-coverage query: the entire closed bbox must lie in the original natural
 // rectangle. Partial/full outside queries are unsupported, never clipped.

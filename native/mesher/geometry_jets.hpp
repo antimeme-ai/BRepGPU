@@ -13,6 +13,11 @@ struct SurfaceJetEnclosure final {
 struct GeometryBoundPrecision final {
   uint32_t transcendental_bits = 96, norm_fractional_bits = 96;
 };
+// Position-only bounds may span multiple C0 pieces; no derivative continuity
+// claim is made. Rational natural-domain exit remains unsupported.
+[[nodiscard]] EnclosedPoint enclose_original_curve_range(
+    GeometryContext &,const GeometryStore &,Slot<CurveTag>,const std::array<Rational,2> &,
+    uint32_t precision_bits=96);
 // Whole-interval bounds in ORIGINAL parameter units. Rational ranges are
 // positive and lie within one original root, so C0 breaks are never treated C2.
 // Analytic precision is a request/profile value, independent of preceding
@@ -34,6 +39,12 @@ struct GeometryBoundPrecision final {
 [[nodiscard]] SurfaceJetEnclosure
 enclose_original_surface_jet(GeometryContext &, const GeometryStore &, Slot<CarrierTag>,
                              const std::array<Rational, 4> &, uint32_t precision_bits = 96);
+// A point jet selects the stable lower original span on an exact knot tie.
+// Rational jets are exact collapsed enclosures; analytic precision is explicit.
+[[nodiscard]] SurfaceJetEnclosure
+enclose_original_surface_point_jet(GeometryContext &, const GeometryStore &, Slot<CarrierTag>,
+                                   const Rational &u, const Rational &v,
+                                   uint32_t precision_bits = 96);
 // Actual endpoint words enter once. Rational original curves use the runtime's
 // exact residual tasks; this host comparison is for original analytic kinds.
 [[nodiscard]] Rational analytic_curve_chord_upper(GeometryContext &, const Curve &,

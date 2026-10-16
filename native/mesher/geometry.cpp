@@ -1,4 +1,5 @@
 #include "geometry.hpp"
+#include "geometry_polynomial.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -16,10 +17,7 @@ struct BasisShape final {
   uint32_t degree;
   std::size_t count;
 };
-struct PolygonShape final {
-  uint32_t degree;
-  std::size_t stride;
-};
+using PolygonShape = geometry_detail::PolynomialShape;
 struct BinomialIndex final {
   uint32_t degree, index;
 };
@@ -359,6 +357,21 @@ std::pmr::vector<ScalarTriangle> composed_basis(bgfd::Budget &budget,
   return result;
 }
 } // namespace
+
+namespace geometry_detail {
+std::pmr::vector<Rational> evaluate_homogeneous_polynomial(std::span<const Rational> controls,
+                                                           PolynomialShape shape,
+                                                           const Rational &parameter) {
+  auto &budget = parameter.budget();
+  if (shape.degree > 32 || (shape.stride != 3 && shape.stride != 4) ||
+      controls.size() != product(static_cast<std::size_t>(shape.degree) + 1, shape.stride) ||
+      parameter.compare(Rational(budget, 0)) < 0 || parameter.compare(Rational(budget, 1)) > 0)
+    invalid("malformed owner-local homogeneous polynomial query");
+  for (const auto &coefficient : controls)
+    owner(coefficient, budget);
+  return evaluate_homogeneous(controls, shape, parameter);
+}
+} // namespace geometry_detail
 
 BezierCurve::BezierCurve(bgfd::Budget &budget, CurveShape shape,
                          const std::array<Rational, 2> &domain)

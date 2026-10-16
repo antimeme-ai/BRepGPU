@@ -265,6 +265,20 @@ intersecting_surface_roots(bgfd::Budget &budget, const GeometryStore &store,
     }
   return result;
 }
+std::pmr::vector<CurveRootSlot> intersecting_curve_roots(
+    bgfd::Budget &budget,const GeometryStore &store,Slot<CurveTag> source,
+    const std::array<Rational,2> &bounds) {
+  const auto &curve=record(store.view().curves,source.value);
+  if(curve.roots.count==0)
+    throw Error(ErrorCode::unsupported,"analytic source curve has no rational roots");
+  const auto range=intersecting_axis(budget,store,curve.axis,bounds[0],bounds[1]);
+  std::pmr::vector<CurveRootSlot> result(&budget);
+  for(uint64_t i=range.first;i<range.second;++i) {
+    budget.charge(1);
+    result.push_back({narrow(static_cast<std::size_t>(curve.roots.first+i))});
+  }
+  return result;
+}
 BezierCurve import_curve_root(bgfd::Budget &budget, const GeometryStore &store,
                               CurveRootSlot slot) {
   const auto &root = record(store.view().curve_roots, slot.value);
