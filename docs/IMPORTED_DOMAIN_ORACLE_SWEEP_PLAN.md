@@ -1,6 +1,6 @@
 # Independent imported-domain oracle: exact ranked sweep
 
-Status: proposed for root/numerical review before code. This replaces candidate
+Status: root and independent numerical reviewer ACCEPT before code. This replaces candidate
 enumeration inside the existing `_simple_domains`; it does not add another
 qualification layer or consume a production triangulator's validity flags.
 
@@ -77,6 +77,9 @@ Add one private owned dataclass `_DomainSweepWork` with segments, sweep_axis,
 projected_pairs, active_visits, box_candidates, exact_tests and max_active. An
 optional keyword `work=None` on `_simple_domains` fills/reset this value when
 provided. Existing callers need no change and still receive None on success.
+`max_active` includes the current segment after insertion. `projected_pairs` is
+the complete selected-axis count, whereas `active_visits` can stop early if an
+invalid contact raises. Counts reset per call rather than accumulate implicitly.
 No log stream, telemetry system, persistence format or per-predicate callback is
 introduced. Actual captured-input replays may request these counts once.
 
