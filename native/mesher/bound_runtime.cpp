@@ -57,11 +57,13 @@ struct BoundBankData final {
   GeometryStore geometry;
   ExactTable anchors;
   std::pmr::vector<RootFrameRefs> frames;
+  std::pmr::vector<std::pair<BoundRootSelection, BoundRootSlot>> lookup;
   std::pmr::vector<bgmb_root> roots;
   std::pmr::vector<bgmb_interval> coefficients;
   BoundBankData(std::shared_ptr<RunResource> owner, GeometryStore source, ExactTable values)
       : resource(std::move(owner)), geometry(std::move(source)), anchors(std::move(values)),
-        frames(resource.get()), roots(resource.get()), coefficients(resource.get()) {}
+        frames(resource.get()), lookup(resource.get()), roots(resource.get()),
+        coefficients(resource.get()) {}
 };
 struct BoundBatchData final {
   std::shared_ptr<RunResource> resource;
@@ -106,6 +108,15 @@ struct BoundModuleData final {
 };
 
 uint32_t BoundRootBank::size() const noexcept { return static_cast<uint32_t>(data_->roots.size()); }
+const GeometryStore &BoundRootBank::geometry() const noexcept { return data_->geometry; }
+BoundRootSlot BoundRootBank::find(BoundRootSelection selection) const {
+  const auto found =
+      std::lower_bound(data_->lookup.begin(), data_->lookup.end(), selection,
+                       [](const auto &entry, const auto &key) { return entry.first < key; });
+  if (found == data_->lookup.end() || found->first != selection)
+    throw Error(ErrorCode::unsupported, "actual cell source root is not resident in bound bank");
+  return found->second;
+}
 std::span<const BoundInput> BoundBatch::inputs() const noexcept { return data_->inputs; }
 std::span<const BoundAnswer> BoundFiltered::answers() const noexcept { return data_->answers; }
 std::span<const BoundTaskHeader> BoundCompleted::headers() const noexcept { return data_->headers; }
@@ -182,6 +193,11 @@ BoundRootBank prepare_bound_roots(bgfd::Budget &budget,
     auto data = std::allocate_shared<BoundBankData>(RunAllocator<BoundBankData>(resource), resource,
                                                     std::move(geometry), anchors.seal());
     data->frames = std::move(frames);
+    data->lookup.reserve(selections.size());
+    for (uint32_t i = 0; i < selections.size(); ++i)
+      data->lookup.push_back({selections[i], {i}});
+    std::sort(data->lookup.begin(), data->lookup.end(),
+              [](const auto &a, const auto &b) { return a.first < b.first; });
     data->roots = std::move(roots);
     data->coefficients = std::move(coefficients);
     return BoundRootBank(std::move(data));

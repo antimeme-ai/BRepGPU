@@ -30,7 +30,7 @@ BoundBatch packet(const std::shared_ptr<RunResource> &resource, BoundRootBank ba
   const auto exact = [&](int64_t value) { return values.append(Rational(budget, value)); };
   const auto zero = exact(0), one = exact(1), two = exact(2);
   const auto header = [&](uint64_t cell) {
-    return BoundTaskHeader{{1, cell, 3, 0}, 7, 11, wrong_revision ? 99u : 1u};
+    return BoundTaskHeader{{1, cell, 3, 0}, 7, 11, wrong_revision ? 99u : 1u, 13, 17};
   };
   SurfaceBoundInput surface{header(1),
                             {0},
@@ -73,6 +73,9 @@ void qualify(const BoundCompleted &completed) {
     require(answers[i].key == BoundTaskKey{1, i + 1, 3, 0}, "bound task key changed");
     require(completed.headers()[i].boundary_generation == 11,
             "boundary generation was not retained");
+    require(completed.headers()[i].request_revision == 13 &&
+                completed.headers()[i].face_generation == 17,
+            "request revision/face generation was not retained");
   }
 }
 void exercise(const std::shared_ptr<RunResource> &resource, BoundRootBank bank,

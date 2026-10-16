@@ -30,6 +30,8 @@ struct BoundTaskHeader {
   BoundTaskKey key;
   uint64_t source_generation, boundary_generation;
   uint32_t bound_revision; // currently1
+  uint32_t request_revision; // per-request retry identity, starts0
+  uint64_t face_generation; // separate from key's triangle-slot generation
 };
 struct SurfaceBoundInput {
   BoundTaskHeader header;

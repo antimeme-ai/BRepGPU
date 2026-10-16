@@ -16,6 +16,8 @@ struct BoundTaskHeader final {
   BoundTaskKey key;
   uint64_t source_generation, boundary_generation;
   uint32_t bound_revision;
+  uint32_t request_revision = 0;
+  uint64_t face_generation = 0;
 };
 struct SurfaceBoundInput final {
   BoundTaskHeader header;
@@ -66,6 +68,8 @@ class BoundRootBank final {
 
 public:
   [[nodiscard]] uint32_t size() const noexcept;
+  [[nodiscard]] const GeometryStore &geometry() const noexcept;
+  [[nodiscard]] BoundRootSlot find(BoundRootSelection) const;
 };
 [[nodiscard]] BoundRootBank prepare_bound_roots(bgfd::Budget &,
                                                 const std::shared_ptr<RunResource> &, GeometryStore,
