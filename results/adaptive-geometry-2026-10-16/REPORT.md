@@ -36,6 +36,22 @@ construction. Root module review corrected malformed root-net admission,
 out-of-source node boxes and failed all-affine bounds requiring numerical
 promotion rather than ineffective geometric splits.
 
+A subsequent review tightened actual-facet transfer: take the smaller of the
+six-coefficient residual upper and `||D||/4 + max_i ||B(p_i)-L_i||`. The latter
+uses the unit-box covariance bound and preserves the same actual affine facet.
+The exact fallback compares the sum of two nonnegative square roots by squared
+arithmetic, retaining threshold equality. Two independent hand-derived saddle
+facets, including a displaced actual facet, fail against the old body and pass
+after the change. The updated CPU Release and sanitizer reader reports 216
+observations plus the same seven analytic families; affected tidy also passes.
+The final registered CTest run also passed the revised independent reader on
+both P100s: 216 observations plus the same seven analytic families. The current
+module SHA256 is
+`e7c942eef2955d8e8adce4a2f1ab19d4584c621ca25dbb788728b6e8747fffd8`;
+the current Release reader is
+`e8f598e10cf59f429d0d1b7969b07e1d1b830e7b30f3a62d981b84f7d18636b5`.
+The earlier hashes below identify the initial observation, which remains retained.
+
 The observed device module SHA256 is
 `4dc828ac7f701c84c10ce3fec024cb534e456ef87aeb38d300f8f2330d9f11d1`.
 The Release reader is

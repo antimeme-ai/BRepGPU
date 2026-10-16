@@ -283,3 +283,20 @@ when W_i0=W_i1 and (N_i1-N_i0)/W_i is the same vector across U support; exact
 cross products check this once per requested original root. The p=1 dual proves
 U. This is the source identity S(u,v)=C(u)+vD on that span, not literal S_v=0.
 The original source coefficients supply the proof, not rounded extracted values.
+
+Actual-facet transfer closure: retain the six degree-two residual coefficient
+hull, and also bound the SAME actual L by
+`||D||/4 + max_i ||B(p_i)-L_i||`, taking the smaller upper. Here D is the actual
+four-corner bilinear twist and p_i are the three contained normalized chart
+vertices. For any barycentric weights, the remaining bilinear defect is
+D times the covariance of U,V in [0,1], whose absolute value is at most1/4.
+This applies to arbitrary contained/hanging triangles; it does not replace L
+or evaluate source S at virtual vertices. Exact fallback also compares this
+alternative; zero diagonal residual uses `||D||² <=16*(tau-e)²` directly so a
+quarter-twist equality is not lost to conservative square-root padding. For
+general nonzero nodal error, define A=||D||²/16, B=max nodal squared error and
+r=tau-e. With r>=0 the exact alternative accepts iff
+s=r²-A-B>=0 and s²>=4AB; no approximate square root decides the threshold. Existing
+displaced-L cases remain required. Add the focused quarter-twist and displaced
+counterpart to the same fixture, observe old-body RED, then shared HD/precise
+implementation and affected CPU/P100 reader GREEN. No new subdivision or oracle.
