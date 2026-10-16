@@ -1,5 +1,11 @@
 # One native, feature-conforming B-rep mesher
 
+Operator direction superseded this construction framework on2026-10-16:
+[cached adaptive subdivision](ADAPTIVE_MESHER_DESIGN.md) is now primary.
+This document retains the previous source/error contracts and constructor as
+an inspectable baseline. Its direct-refinement default is no longer the active
+implementation direction.
+
 Status: whole-system design accepted for implementation planning by independent
 algorithm, geometry/source and runtime/numerical reviews on2026-10-16.
 Implementation is underway against the accepted whole plan. This replaces selecting the next local change to the old imported
