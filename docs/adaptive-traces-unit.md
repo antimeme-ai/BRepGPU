@@ -31,8 +31,11 @@ table/refs and output exact-table keys. No owner-local Rational escapes.
 A face operation owns original ordered loops/use inventory and common junctions.
 A trace belongs to one use but joints are settled for both adjacent uses first.
 
-The stages are prepare_trace_sites, complete_trace_sites,
-prepare_trace_intervals and complete_trace_intervals, as in the research report.
+The actual five stages are prepare_use_trace, prepare_trace_sites,
+complete_trace_sites, prepare_trace_intervals and complete_trace_intervals. Each
+face request reserves five consecutive exact-table ordinals. Runtime session
+namespaces use a unique run owner; original source/definition/face membership is
+checked independently from that transport namespace.
 Runtime batches original curve/pcurve samples across face requests, then carrier
 samples and numerical interval work. Work/results retain immutable exact tables,
 source caches and full identities. Complete functions accept only their own
@@ -91,3 +94,26 @@ native/mesher/adaptive_traces.cpp; brepgpu_native_adaptive_traces from
 tests/native_adaptive_traces.cpp, SOURCE fixture argument. Dependencies are
 source/exact_store, SourceCache and CurveSourceCache/affine-trace geometry,
 shared frozen curve rows; no prior eager geometry library dependency.
+
+## Implemented support coverage and acceptance
+
+Authoritative derivative transport uses an indexed BVH over original carrier
+span roots. Rectangle support requires exact area coverage, line support requires
+exact union-length coverage, and point support requires containment. A zero-area
+rectangle never establishes line coverage. A conservative RN pcurve support
+hull that cannot establish coverage invokes the exact original positive-weight
+control hull once; it is never silently clipped to a source chart. The result
+retains the fallback count.
+
+Both original spatial and selected carrier/domain errors are bounded against the
+SAME actual Q chord. They independently satisfy positional allowance; their
+separately emitted Ce-to-selected-trace sum may be up to twice that allowance.
+The original V/Ce/S source-node cap excludes emitted Q and is separate. No
+arbitrary tolerance fractions are imposed. Analytic identity and hull formulas
+read both stored source radii literally, even for a curve tagged circle.
+
+The complete direct original-source fixture passed strict Release and
+ASan/UBSan/leak instrumentation after the common convex curve interpolation
+correction. Runtime and numerical geometry peers accepted actual scoped source.
+See journal/2026-10-16-adaptive-traces-implementation.md for failures corrected,
+logs, supported cases and finite remaining refusals.
