@@ -65,8 +65,7 @@ when `k` scales with `n`. The full expected theorem concerns combinatorial work;
 our exact-integer cost and nonuniform inputs still need separate measurements.
 [Author conference paper](https://people.eecs.berkeley.edu/~jrs/papers/inccdt.pdf),
 [expanded 2015 journal version](https://doi.org/10.1016/j.comgeo.2015.04.006).
-The retained/read PDF is the ten-page 2013 version; do not claim the journal full
-text was acquired.
+The initial study read the ten-page 2013 version. Constructor design subsequently acquired and read the 29-page May4 2015 author manuscript [inccdtj.pdf](https://people.eecs.berkeley.edu/~jrs/papers/inccdtj.pdf); retained SHA-256 `fdb5134a3d00d95ba0f5ef3bf60ac6d20eb798b8c47dd8506868b06e568dfed8`. Its signed-cap preconditions and clarified Figures6–9 now inform DIRECT_CDT_DESIGN.md.
 
 **Amenta–Choi–Rote 2003, locality with justified randomization.** BRIO partitions
 points into geometrically decreasing random rounds, allowing locality ordering
