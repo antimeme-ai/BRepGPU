@@ -158,7 +158,9 @@ at cutoff. Independent complete-mesh qualification never started. There is no
 complete-part result or whole-operation speedup. No extra Python whole-part
 baseline or fresh whole-watch retry was launched after this censored outcome.
 
-The separate provenance/decode/closure walls were0.495/6.922/0.235s; total
+The [complete-part outcome](MAIN_PLATE.tsv) retains its source/library/quality
+identity and non-green denominator. Separate provenance/decode/closure walls
+were0.495/6.922/0.235s; total
 supervised elapsed time was308.108s, including termination and process overhead.
 A single3s nonblocking profiler interval during construction returned210 valid
 samples and89 read errors.167 valid stacks included Python
