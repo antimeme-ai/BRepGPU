@@ -22,7 +22,7 @@ round-trip tests have structural/persistence scope. Found some OCCT regression
 data absent, but terrain.brep present; Geogram's CDT data absent. No missing case
 is marked passing and no development cohort replaces the alpha denominator.
 
-Performance plan starts with the actual saved 8,300-point boundary before another
+Performance plan starts with reproducing/retaining the actual 8,300-point boundary before another
 whole watch, compares exact same input/output/grade and measured candidates,
 predicates, ear visits, time and memory on one physical core; later complete
 main-plate and fixed 1/12/24-worker runs keep output scope and denominator fixed.
@@ -30,3 +30,32 @@ Sparse and dense synthetic families distinguish successful candidate pruning
 from a faster quadratic transcription. Timeouts remain censored failures, with
 no inferred speedup. Current NVIDIA spring/spiral failures cannot be accepted
 performance denominators. Root owns design selection/review and implementation.
+
+After independent design/plan acceptance and the operator's implementation GO,
+authored `tests/face_domain_external_cases.py`,
+`tests/test_face_domain_external.py` and `tests/fixtures/face-domain/`.
+The original 44KB Manifold corpus bytes and Apache-2.0 license are retained;
+the complete NVIDIA literal planar recipe has source-file hash, attribution
+and a declared 32-point exact rational circle schedule. These are test adapters,
+not adopted production algorithms. Tests use the existing exact positive-boundary
+reader and direct source-ID edge incidence/embedding checks on native output.
+Hole triangle ID parity is not required after the design's exact bridge-ranking
+change. Rational translated/rotated source-ID-remapped derivatives are named
+separately from the original cases.
+
+Actual initial seam RED on the clean fleet checkout:
+`PYTHONPATH=python:tests python3 -B -m unittest -v test_face_domain_external`.
+Import failed with `ModuleNotFoundError: No module named 'brepgpu.face_domain'`,
+one loader error, exit 1. This establishes only missing capability at the native
+seam, not sensitivity to a numerical or geometric defect. Native implementation
+is owned by the separate owner; actual-output GREEN is pending its build.
+
+After the owner supplied the actual strict debug library, ran the same focused
+external suite on the isolated fleet checkout with its library path selected.
+All three tests passed in 1.597 s: five original external domains, five exact
+rotated/rational-translated/source-ID-remapped derivatives, and the complete
+NVIDIA circle recipe/schedule check. These inspect actual native triangles with
+the independent positive boundary chain, directed original source-ID incidence,
+no new/omitted IDs, exact crossings/T-junctions/overlap and strict containment
+checks. This is bounded external sampled-domain evidence, not a full upstream
+suite pass, analytic circle chord-grade admission or alpha qualification.
