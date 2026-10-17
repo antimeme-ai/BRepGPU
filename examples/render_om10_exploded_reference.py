@@ -24,11 +24,14 @@ from render_om10_exploded import (rows,tsv,digest,pixel_inventory,make_annotatio
                                   CRITICAL_NAMES)
 
 
-def reference_inventory(data,source):
-    """Original face IDs and complete definition ranges; leave numeric mesh validation native."""
+def reference_inventory(data,source,reports):
+    """Check SDK ordinals; original coverage belongs to the retained source/pipeline history."""
     h=struct.unpack_from('<8sII6Q',data);nd,ni,nv,nt,nm=h[3:8]
     definitions=tuple(struct.unpack_from('<5Q',data,64+40*i) for i in range(nd))
-    expected={d.id:set(d.face_ids) for d in source.definitions}
+    expected={int(r['definition_id']):int(r['input_faces']) for r in reports}
+    require(len(expected)==len(reports)==len(source.definitions) and
+            set(expected)=={d.id for d in source.definitions} and all(n>0 for n in expected.values()),
+            'NVIDIA staged face inventory differs')
     require(len(definitions)==len(expected) and {d[0] for d in definitions}==set(expected),
             'NVIDIA original definition inventory differs')
     triangle_start=64+40*nd+136*ni+56*nv
@@ -42,7 +45,8 @@ def reference_inventory(data,source):
             require(len({a,b,c})==3 and max(a,b,c)<vc and material<nm,
                     'NVIDIA triangle range/material differs')
             faces.add(face)
-        require(faces==expected[identifier],'NVIDIA original face inventory differs')
+        require(len(faces)==expected[identifier] and min(faces)==0 and
+                max(faces)==expected[identifier]-1,'NVIDIA SDK face ordinal inventory differs')
         previous_v,previous_t=fv+vc,ft+tc
     require((previous_v,previous_t)==(nv,nt),'NVIDIA geometry ranges incomplete')
 
@@ -118,7 +122,7 @@ def main(args):
            ('labels',args.layout/'labels.tsv'),('reference_display',args.display),('svg_exporter',args.rsvg)]
     pins=[(name,digest(path)) for name,path in paths]
     data=(args.reference/'scene.bgrefmesh').read_bytes()
-    changed=translated_reference_scene(data,offsets,expected);reference_inventory(data,source)
+    changed=translated_reference_scene(data,offsets,expected);reference_inventory(data,source,reports)
     boxes=stored_geometry(match.scene_path.read_bytes())
     args.output.mkdir(parents=True)
     for name in ('labels.tsv','explosion.tsv','views.bgview'):shutil.copyfile(args.layout/name,args.output/name)

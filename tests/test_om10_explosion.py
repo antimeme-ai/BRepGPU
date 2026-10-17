@@ -1,8 +1,10 @@
 """Direct translation-only scene transport properties; run on the fleet."""
 import pathlib,struct,sys,unittest
+from types import SimpleNamespace
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'examples'))
 from om10_explosion import translated_scene,translated_reference_scene
+from render_om10_exploded_reference import reference_inventory
 
 class TranslationTransport(unittest.TestCase):
     def scene(self):
@@ -71,4 +73,22 @@ class ReferenceTranslationTransport(unittest.TestCase):
             with self.assertRaises(ValueError):translated_reference_scene(original,wrong,expected)
         duplicate=bytearray(original);struct.pack_into('<Q',duplicate,64+80+136,41)
         with self.assertRaises(ValueError):translated_reference_scene(duplicate,offsets,expected)
+    def test_sdk_ordinals_are_not_original_source_face_ids(self):
+        original,_=self.reference_scene();data=bytearray(original)
+        triangles=64+80+136*3+56*6
+        struct.pack_into('<Q',data,triangles+16,0)
+        struct.pack_into('<Q',data,triangles+24+16,0)
+        # One original face may have two prepared descendants, with SDK0,1.
+        data[triangles+24:triangles+24]=struct.pack('<4IQ',0,1,2,0,1)
+        struct.pack_into('<Q',data,40,3)
+        struct.pack_into('<Q',data,64+32,2)
+        struct.pack_into('<Q',data,64+40+24,2)
+        source=SimpleNamespace(definitions=(SimpleNamespace(id=201,face_ids=(701,)),
+                                            SimpleNamespace(id=202,face_ids=(702,))))
+        reports=({'definition_id':'201','input_faces':'2'},
+                 {'definition_id':'202','input_faces':'1'})
+        reference_inventory(data,source,reports)
+        # A source face ID is not a valid staged SDK ordinal either.
+        struct.pack_into('<Q',data,triangles+16,701)
+        with self.assertRaises(ValueError):reference_inventory(data,source,reports)
 if __name__=='__main__':unittest.main()
