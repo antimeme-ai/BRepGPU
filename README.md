@@ -44,9 +44,14 @@ dominates, so this does not establish an overall GPU advantage. Separately timed
 rasterization including result download.
 [Full-size images, every recorded phase, source-linked part legend and limitations](results/om10-watch-2026-10-17/REPORT.md).
 The independent whole-watch geometry reader and external alpha qualification
-remain incomplete. The earlier NVIDIA USD/BRep CPU attempts complete103/107 components
-under each healing policy; both report an incomplete pipeline and no reference
-image or complete-render time. Source design: [Association openmovement](https://openmovement.org/project/om10/),
+remain incomplete. The complete NVIDIA USD/BRep CPU chord-only runs now take
+**43.67s without healing /45.00s with healing**, fresh STEP through both original
+labeled views, retaining all107 definitions and passing physical/source-Euler
+checks. Those walls include STEP transfer; the owned snapshot-based walls above
+exclude it. The [complete reference report](results/om10-nvidia-complete-2026-10-17/REPORT.md)
+records actual parameters, every stage, earlier103/107 refusals and the separate
+25°/25° manifold failures. No matched-quality ratio is claimed.
+Source design: [Association openmovement](https://openmovement.org/project/om10/),
 [CC BY-SA 3.0](assets/om10/LICENSE.md); BRepGPU supplies mesh, materials,
 lighting, explosion and labels.
 

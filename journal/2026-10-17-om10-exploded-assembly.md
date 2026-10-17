@@ -209,3 +209,11 @@ history:25°/25° exported107 but one shell failed physical checks under both he
 a private advancing-front control was censored180s without a result and was not
 used in production. No further runs are selected. Ignored actual bundles are
 `context/explosion/final-nvidia-chord-only-heal{0,1}` locally and on fleet.
+
+Root integrated the completed reference branch with a merge commit, bringing
+the periodic tool, full direct results and current AGENTS notes into this
+reviewable diagram branch. The README now gives the actual43.67/45.00s reference
+outcomes and links the full report, explicitly separating fresh STEP timing
+from the owned source-snapshot timing. Root accepted the actual heal0 poster
+and policy-caption/source diff. No geometry or display implementation changed
+after the completed replays; no repeated qualification campaign followed.
