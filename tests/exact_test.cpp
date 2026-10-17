@@ -8,6 +8,7 @@
 #include <limits>
 #include <memory_resource>
 #include <string>
+#include <string_view>
 #if defined(__x86_64__)
 #include <xmmintrin.h>
 #endif
@@ -82,6 +83,54 @@ public:
   std::size_t live = 0;
   bool reject = false;
 };
+void budget_scopes() {
+  bgfd::Budget budget({10000, 100});
+  budget.charge(7);
+  {
+    auto outer = budget.scoped_work(5);
+    budget.charge(2);
+    {
+      auto inner = budget.scoped_work(1);
+      budget.charge(1);
+      failure([&] { budget.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+              "nested work cap applies at individual operation");
+    }
+    budget.charge(2);
+    failure([&] { budget.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+            "inner scope restores outer remaining cap");
+  }
+  require(budget.work() == 12, "scoped cap erased cumulative charged work");
+  budget.charge(88);
+  failure([&] { budget.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+          "scope did not preserve original run cap");
+  bgfd::Budget exceptional({10000, 32});
+  exceptional.charge(3);
+  failure(
+      [&] {
+        auto scope = exceptional.scoped_work(0);
+        exceptional.charge(1);
+      },
+      BGFD_RESOURCE_EXHAUSTED, "zero scoped cap stops before work");
+  exceptional.charge(29);
+  require(exceptional.work() == 32, "exception did not restore prior work cap");
+  bgfd::Budget overflow({10000, 100});
+  overflow.charge(9);
+  {
+    auto scope = overflow.scoped_work(UINT64_MAX);
+    overflow.charge(91);
+    failure([&] { overflow.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+            "overflow-sized scope cannot widen parent cap");
+  }
+  bgfd::Budget owner({10000, 10000});
+  const bgmesh::Rational held(owner, 17);
+  failure(
+      [&] {
+        auto scope = owner.scoped_work(0);
+        (void)held.add(held);
+      },
+      BGFD_RESOURCE_EXHAUSTED, "same-owner rational respects scoped cap");
+  require(held.to_double() == 17., "scope changed exact owner/value lifetime");
+}
 void basic() {
   bgfd::Budget budget({1ULL << 24, 1ULL << 30});
   using bgmesh::Rational;
@@ -229,6 +278,12 @@ void vectors(const char *path) {
 }
 } // namespace
 int main(int argc, char **argv) {
+  if (argc == 2 && std::string_view(argv[1]) == "--budget-only") {
+    budget_scopes();
+    std::cout << "scoped exact budget PASS\n";
+    return 0;
+  }
+  budget_scopes();
   require(argc == 2, "usage: exact_test vector-file");
   basic();
   const int rounding = std::fegetround();
