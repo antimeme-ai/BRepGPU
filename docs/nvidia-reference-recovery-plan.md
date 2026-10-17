@@ -42,3 +42,20 @@ and output directory; retain the published producer and prior103/107 outcomes.
 Code/plan reviews are scoped to the invocation/export/import concepts. Update
 public results only from actual new outcomes; do not restart owned meshing or a
 general certification campaign.
+
+The documented-angle control does not fix either polygon case under either
+healing policy. Earlier source tracing now finds the imported finite Plane
+patches exclude their own original spatial boundaries by up to2.43mm; lazy UV
+generation returns success but produces comparable spatial disagreement. Source
+3D curve images remain intact. The official converter constructs these ranges
+from24 sampled intervals per whole curve. Missing lazy UV caches are expected,
+not evidence of a defect by themselves.
+
+Root reviewed and selected the bounded Plane-range control in the existing
+polygon unit. Use exact positive rational control hulls and the actual imported
+plane frames to enclose the original boundaries conservatively, unioning the
+old finite range. Change only Plane face:range values in a copied interchange
+layer; keep support planes, curves, topology, identities, SDK and exporter
+unchanged. First run both heal0 cases, then heal1 only if both pass. Unsupported
+geometry refuses. Public integration is selected only after this private control
+demonstrates the actual repair and preserves the existing source/physical gates.
