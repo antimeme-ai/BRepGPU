@@ -1,6 +1,9 @@
 # Fast mesher design
 
-Status: draft for operator review, 2026-10-17, branch `research/fast-mesher-study`.
+Status: working draft, 2026-10-17, branch `research/fast-mesher-study`. It
+carries the operator's decisions but was patched per finding; maneuver M5 of
+[the campaign plan](fast-mesher-campaign/PLAN.md) rewrites it whole after the
+lifecycle map, gap lanes and corpus. Do not plan from this draft.
 Decisions and their sources are in
 [journal/2026-10-17-fast-mesher-direction.md](../journal/2026-10-17-fast-mesher-direction.md).
 Evidence comes from seven research reports written this shift:

@@ -218,3 +218,43 @@ Design follows synthesis of the three; no implementation unit is selected.
 - Error is measured against the desired final position (the repaired coherent
   solid), not against the source's starting gap. The source discrepancy is a
   starting-condition metric, reported per edge, never charged against ε.
+- Operator: gross starts may warrant a small or a big reconciliation leap, with
+  branches for the second leap; two passes remain. Asked whether the desired
+  final position comes mostly free from easier, well-conditioned neighbours.
+- Process correction: research arrived one paragraph at a time and the design
+  was patched per finding. Now: a whole-lifecycle mapping lane (every stage,
+  mapped to the design and code, gaps ranked), a parallel lane on deriving
+  final positions from well-conditioned neighbours, then one lane per gap,
+  then a single synthesis into the design.
+
+## Halt and regrounding
+
+The operator called a halt: "the entire point of blackbird is to attack small
+problem surfaces with the wisdom of considering the whole space relative to
+goal as mass behind us." A just-launched lifecycle lane was stopped before it
+wrote anything. Rereading BLACKBIRD in full against today's work:
+
+- The design never faced an adversarial tribunal (pattern of work step 3); a
+  single builder check ran and the draft was then treated as near final.
+- The design was patched after each operator answer instead of rebuilt from a
+  complete picture ("we never patch, we plan").
+- Research lanes launched from chat with no written brief in the repository.
+- No SHOPPING_LIST.md existed; lanes' unobtainable items were scattered in
+  their reports.
+- No B-rep corpus was acquired, though step 1 calls for CAD and TDPs.
+- One answer (OCCT default STEP processing) came from memory although the repo
+  already held papers/2026-10-15-step-shape-processing-lifecycle.md, which
+  confirms it from OCCT source.
+
+docs/fast-mesher-campaign/PLAN.md now governs: written brief per maneuver,
+M0 record repair, M1 lifecycle map, M2 neighbour reconciliation and M3 corpus
+in parallel, operator triage, M4 gap lanes, M5 whole rewrite of the design,
+M6 seven-mandate design tribunal, M7 plan and plan tribunal, M8 execution,
+then an after-action assessment in the workspace's autodroit/ directory. The
+operator approved the plan.
+
+M0 (brief: docs/fast-mesher-campaign/briefs/M0-repair-record.md): this entry;
+FAST_MESHER_DESIGN.md marked as a working draft not to plan from;
+SHOPPING_LIST.md created from every lane's not-acquired list, with four items
+needing operator decisions (BRL-CAD source, Epic CADKernel, tracker
+attachments with unstated licences, non-public OCCT fixtures).
