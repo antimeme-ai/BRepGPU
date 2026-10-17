@@ -215,3 +215,9 @@ row of `reference-outcomes.tsv`, with scope/status shown; new replay/PNG/SVG cos
 remain separate. No full-watch replay before parent provides a completed dataset
 and selected outcome. This remains genuine NVIDIA geometry; byte preservation
 and source inventory admission are not a new whole-source geometry qualifier.
+
+External face-identity correction: BGREF triangle faces are SDK ordinals, not
+original STEP FaceIDs. The adapter requires complete0…input_faces−1 ordinal
+coverage per actual definition report, including prepared descendants. Original
+source coverage is retained separately by the complete source manifest and
+parent's source-linked preparation/physical pipeline. No ordinal join is inferred.

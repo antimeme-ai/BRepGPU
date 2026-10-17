@@ -142,3 +142,24 @@ wrong ID/pose/definition and invalid offsets are checked. Logs are ignored
 actual `--help` and new Python entry import/help succeeded. No native build,
 meshing, reference repair or complete-watch replay was performed. Waiting for
 parent's completed NVIDIA dataset and selected outcome before one replay.
+
+## External ordinal correction and public diagrams
+
+Root actual-source review found an invalid API assumption in the reference
+adapter: exported face values are SDK ordinals0…input_faces−1, not original STEP
+face IDs. Prepared periodic faces can have multiple descendants. Replaced the
+false join with complete SDK ordinal coverage from each actual definitions.tsv
+`input_faces` count. Original coverage remains separate in the preserved source
+manifest and parent pipeline preparation/history/physical gates; the adapter
+does not invent an ordinal-to-original mapping. The direct authored regression
+uses different original IDs and two SDK descendants of one original face. All
+five direct methods pass on fleet (no full-watch replay or native rerun).
+
+Parent accepted final owned visual/source closure and requested publication.
+Published the accepted CPU/P1003840×5871 diagrams under new assembly filenames,
+preserving earlier images/results. Added a small result report, all new native/
+replay/caption-export stages, actual process costs, aggregate visibility, metadata
+and tool/source pins. README OM10 hero now uses the proper functional assembly
+diagram; source credit/CC BY-SA3.0 and authored-translation limitations remain.
+The NVIDIA adapter is ready, but reference physical completion remains pending;
+no NVIDIA diagram or qualified-quality claim is published.
