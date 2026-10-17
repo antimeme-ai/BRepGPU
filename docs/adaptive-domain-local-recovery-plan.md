@@ -54,3 +54,11 @@ refinement; restricting it to the hole could regress existing behavior. The one-
 claim applies to crossing and the other localized witnesses, not nesting. No new nesting
 algorithm or convergence claim is introduced. Three collinear Q samples are a zero
 curvature estimate, not a proof the whole original use is straight.
+
+Fixture observation: the three fixed rational tangent inputs and fixed curved/straight
+input already admit their initial graph. They remain controls, not recovery evidence.
+The unchanged original five-arc source subset supplies the direct crossing RED and
+recovery oracle at three predetermined initial uniform subdivision levels (0,1,2).
+Each accepted output passes the SAME independent exact simple-domain/chain reader;
+the actual curved/straight direction branch is source-reviewed, not claimed exercised.
+A literal straight bow-tie source must still refuse with no accepted output.
