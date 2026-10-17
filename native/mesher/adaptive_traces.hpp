@@ -12,6 +12,11 @@ namespace bgmesh::adaptive {
 // use.sense nor edge.curve_same_sense is a second parameter remapping.
 [[nodiscard]] Rational map_trace_parameter(const SourceStore &, Slot<CoedgeTag>, const Rational &);
 [[nodiscard]] bool trace_axis_is_periodic(const Carrier &, uint32_t axis) noexcept;
+// Whole original 2D pcurve IMAGE, including ordered exact chosen endpoints.
+// This does not identify each mapped-s subinterval with a chosen subsegment.
+[[nodiscard]] std::optional<OriginalLineImage>
+match_authoritative_line_image(const SourceStore &, const CurveSourceCache &, Slot<CoedgeTag>,
+                               const ExactTable &, std::span<const UseCurveSite>, bgfd::Budget &);
 
 struct TraceIdentity final {
   uint64_t query = 0, face_generation = 0, boundary_generation = 0;

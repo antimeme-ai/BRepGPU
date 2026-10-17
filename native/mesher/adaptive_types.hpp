@@ -43,6 +43,7 @@ struct SelectedLeaf final {
 };
 struct SelectionKey final {
   uint64_t session = 0, query = 0, cache_revision = 0, profile_revision = 0;
+  uint64_t cover_revision = 0;
   auto operator<=>(const SelectionKey &) const = default;
 };
 // Producer fills, validates and publishes as shared_ptr<const PatchSelection>.

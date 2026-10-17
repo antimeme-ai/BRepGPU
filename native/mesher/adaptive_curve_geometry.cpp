@@ -437,48 +437,7 @@ PreciseCurveBoundResult bound_curve_node_precise(const CurveSourceCache &cache, 
 }
 OriginalRootSlot find_original_carrier_root(const SourceCache &cache, Slot<CarrierTag> source,
                                             std::span<const Rational, 2> uv) {
-  auto &b = uv[0].budget();
-  owner(b, uv);
-  const auto roots = cache.original_roots();
-  size_t first = 0, last = roots.size();
-  while (first < last) {
-    b.charge(1);
-    const auto m = first + (last - first) / 2;
-    if (roots[m].source_slot < source.value ||
-        (roots[m].source_slot == source.value &&
-         Rational::from_double(b, roots[m].original_box[1].lower).compare(uv[0]) < 0))
-      first = m + 1;
-    else
-      last = m;
-  }
-  check(first < roots.size() && roots[first].source_slot == source.value &&
-            Rational::from_double(b, roots[first].original_box[0].lower).compare(uv[0]) <= 0,
-        "carrier point outside compiled U roots");
-  const auto row = roots[first].span_u;
-  size_t end = first;
-  // Binary search the contiguous U row's end; no all-span point scan.
-  last = roots.size();
-  while (end < last) {
-    b.charge(1);
-    const auto m = end + (last - end) / 2;
-    if (roots[m].source_slot == source.value && roots[m].span_u == row)
-      end = m + 1;
-    else
-      last = m;
-  }
-  last = end;
-  while (first < last) {
-    b.charge(1);
-    const auto m = first + (last - first) / 2;
-    if (Rational::from_double(b, roots[m].original_box[3].lower).compare(uv[1]) < 0)
-      first = m + 1;
-    else
-      last = m;
-  }
-  check(first < end &&
-            Rational::from_double(b, roots[first].original_box[2].lower).compare(uv[1]) <= 0,
-        "carrier point outside compiled V roots");
-  return {static_cast<uint32_t>(first)};
+  return {find_carrier_root_slot(cache.original_roots(), source, uv, RootBoxKind::original)};
 }
 std::optional<std::array<Rational, 3>> exact_carrier_value(const SourceCache &cache,
                                                            Slot<CarrierTag> source,
@@ -940,5 +899,99 @@ CurveChordPlan prepare_curve_chord(const CurveSourceCache &cache, const CurveCho
     plan.pieces.push_back({{cuts[i - 1], cuts[i]}, bound});
   }
   return plan;
+}
+namespace {
+std::pmr::vector<Rational> image_binomials(uint32_t degree, bgfd::Budget &budget) {
+  std::pmr::vector<Rational> result(&budget);
+  result.reserve(degree + 1);
+  result.emplace_back(budget, 1);
+  for (uint32_t i = 1; i <= degree; ++i)
+    result.push_back(result.back().multiply(Rational(budget, degree + 1 - i))
+                                      .divide(Rational(budget, i)));
+  return result;
+}
+} // namespace
+std::optional<OriginalLineImage> original_curve_line_image(
+    const CurveSourceCache &cache, Slot<CurveTag> source, std::span<const Rational, 2> input,
+    bgfd::Budget &budget) {
+  admit_numeric_environment();
+  owner(budget, input);
+  if (input[0].compare(input[1]) == 0)
+    return std::nullopt;
+  const auto a = exact_curve_value(cache, source, input[0], budget),
+             z = exact_curve_value(cache, source, input[1], budget);
+  if (!a || !z)
+    return std::nullopt;
+  const auto dx = (*z)[0].subtract((*a)[0]), dy = (*z)[1].subtract((*a)[1]);
+  if (dx.sign() == 0 && dy.sign() == 0)
+    return std::nullopt;
+  const auto ascending = input[0].compare(input[1]) < 0;
+  const auto &lo = ascending ? input[0] : input[1];
+  const auto &hi = ascending ? input[1] : input[0];
+  const auto first = find_original_curve_root(cache, source, lo),
+             last = find_original_curve_root(cache, source, hi);
+  auto covered = lo;
+  for (uint32_t index = first.value; index <= last.value; ++index) {
+    budget.charge(1);
+    const auto &root = cache.original_roots()[index];
+    check(root.source_slot == source.value && root.dimension == 2,
+          "line image requires complete original 2D curve interval");
+    auto begin = Rational::from_double(budget, root.original_t[0].lower),
+         end = Rational::from_double(budget, root.original_t[1].lower);
+    if (begin.compare(lo) < 0)
+      begin = lo;
+    if (end.compare(hi) > 0)
+      end = hi;
+    if (begin.compare(end) >= 0)
+      continue;
+    check(begin.compare(covered) == 0, "line image missing original span coverage");
+    covered = end;
+    if (root.family == CurveFamily::line)
+      continue;
+    if (root.family != CurveFamily::rational)
+      return std::nullopt;
+    const auto original = curve_detail::original_net_exact(cache, {index}, budget);
+    const auto net = restrict_curve(original, begin, end);
+    const auto p = net.degree;
+    if (p == 0)
+      return std::nullopt;
+    std::pmr::vector<Rational> projection(&budget), weights(&budget);
+    projection.reserve(p + 1);
+    weights.reserve(p + 1);
+    for (uint32_t i = 0; i <= p; ++i) {
+      budget.charge(1);
+      const auto &x = net.controls[i * 3], &y = net.controls[i * 3 + 1],
+                 &w = net.controls[i * 3 + 2];
+      check(w.sign() > 0, "line image original positive weight");
+      const auto cross = dx.multiply(y.subtract(w.multiply((*a)[1])))
+                             .subtract(dy.multiply(x.subtract(w.multiply((*a)[0]))));
+      if (cross.sign() != 0)
+        return std::nullopt;
+      projection.push_back(dx.multiply(x).add(dy.multiply(y)));
+      weights.push_back(w);
+    }
+    const auto lower = image_binomials(p - 1, budget),
+               upper = image_binomials(p, budget),
+               product = image_binomials(2 * p - 1, budget);
+    for (uint32_t k = 0; k < 2 * p; ++k) {
+      auto coefficient = Rational(budget);
+      for (uint32_t i = 0; i < p; ++i) {
+        if (k < i || k - i > p)
+          continue;
+        budget.charge(1);
+        const auto j = k - i;
+        const auto numerator = projection[i + 1].subtract(projection[i]).multiply(weights[j])
+                                   .subtract(weights[i + 1].subtract(weights[i]).multiply(projection[j]));
+        coefficient = coefficient.add(numerator.multiply(lower[i]).multiply(upper[j])
+                                                     .divide(product[k]));
+      }
+      if ((ascending && coefficient.sign() < 0) || (!ascending && coefficient.sign() > 0))
+        return std::nullopt;
+    }
+  }
+  check(covered.compare(hi) == 0, "line image incomplete original interval");
+  const auto sa = dx.multiply((*a)[0]).add(dy.multiply((*a)[1])),
+             sz = dx.multiply((*z)[0]).add(dy.multiply((*z)[1]));
+  return OriginalLineImage{{(*a)[0], (*a)[1], (*z)[0], (*z)[1]}, {dx, dy}, {sa, sz}};
 }
 } // namespace bgmesh::adaptive

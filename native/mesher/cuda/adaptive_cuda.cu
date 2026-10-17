@@ -1,7 +1,9 @@
 #include "../adaptive_curve_numeric.hpp"
 #include "../adaptive_numeric.hpp"
+#include "../adaptive_trimmed_numeric.hpp"
 #include "adaptive_api.h"
 #include "adaptive_curve_api.h"
+#include "adaptive_trim_api.h"
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -70,7 +72,8 @@ enum class Operation {
   curve_samples,
   curve_restrictions,
   curve_nodes,
-  curve_traces
+  curve_traces,
+  trim_source_triangles
 };
 template <class T> T *data(Buffer &buffer) { return static_cast<T *>(buffer.pointer); }
 unsigned blocks(uint32_t count, unsigned width = tile) {
@@ -804,6 +807,7 @@ int32_t destroy(DeviceSession *s, DeviceError *error) {
   });
 }
 #include "adaptive_curve_ops.cuh"
+#include "adaptive_trim_ops.cuh"
 const AdaptiveCudaAPI api{adaptive_cuda_abi,
                           sizeof(AdaptiveCudaAPI),
                           create,
@@ -821,4 +825,7 @@ extern "C" const bgmesh::adaptive::AdaptiveCudaAPI *brepgpu_adaptive_cuda_v1() {
 }
 extern "C" const bgmesh::adaptive::CurveCudaAPI *brepgpu_adaptive_curve_cuda_v1() {
   return &bgmesh::adaptive::curve_api;
+}
+extern "C" const bgmesh::adaptive::TrimCudaAPI *brepgpu_adaptive_trim_cuda_v1() {
+  return &bgmesh::adaptive::trim_api;
 }

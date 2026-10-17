@@ -4,19 +4,214 @@ from functools import lru_cache
 from pathlib import Path
 import argparse
 import subprocess
+from math import comb,isqrt
+from collections import defaultdict,Counter
+
+
+def trimmed_check(source_path, output):
+    """Original Cox values + exact nodal interpolation, not tensor blossom."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'python'))
+    from brepgpu.imported_source import load_source
+    original=load_source(source_path)
+    carrier=next(c for c in original.carriers if c.id==9)
+
+    def sqrt_upper(square):
+        if not square:return F(0)
+        bits=256+max(0,(square.denominator.bit_length()-square.numerator.bit_length()+1)//2)
+        n=isqrt((square.numerator<<(2*bits))//square.denominator)
+        if F(n*n,1<<(2*bits))<square:n+=1
+        return F(n,1<<bits)
+
+    def analytic_position(u,v):
+        frame=tuple(F(x) for x in carrier.frame)
+        if carrier.kind==1:
+            return tuple((frame[a]+u*frame[3+a]+v*frame[6+a],)*2 for a in range(3))
+        su0,su1,cu0,cu1=original_oracle(u)
+        e=[plus(times((cu0,cu1),(frame[3+a],)*2),times((su0,su1),(frame[6+a],)*2)) for a in range(3)]
+        if carrier.kind==2:radial,axial=(F(carrier.radii[0]),)*2,(v,v)
+        elif carrier.kind==3:
+            sa0,sa1,ca0,ca1=original_oracle(F(carrier.radii[1]))
+            radial=plus((F(carrier.radii[0]),)*2,times((v,v),(sa0,sa1)))
+            axial=times((v,v),(ca0,ca1))
+        else:
+            sv0,sv1,cv0,cv1=original_oracle(v)
+            radius=F(carrier.radii[0] if carrier.kind==4 else carrier.radii[1])
+            radial=times((radius,radius),(cv0,cv1))
+            if carrier.kind==5:radial=plus((F(carrier.radii[0]),)*2,radial)
+            axial=times((radius,radius),(sv0,sv1))
+        return tuple(plus((frame[a],)*2,plus(times(radial,e[a]),times(axial,(frame[9+a],)*2))) for a in range(3))
+
+    def prove_analytic(uv,actual,upper,depth=0):
+        departure=F(0)
+        for point,q in zip(uv,actual):
+            truth=analytic_position(*point)
+            square=sum(max(abs(truth[a][0]-q[a]),abs(truth[a][1]-q[a]))**2 for a in range(3))
+            departure=max(departure,sqrt_upper(square))
+        hu=max(q[0] for q in uv)-min(q[0] for q in uv)
+        hv=max(q[1] for q in uv)-min(q[1] for q in uv)
+        a=sqrt_upper(sum(F(x)**2 for x in carrier.frame[3:9]))
+        f=sqrt_upper(sum(F(x)**2 for x in carrier.frame[3:12]))
+        r=abs(F(carrier.radii[0]));muu=muv=mvv=F(0)
+        if carrier.kind==2:muu=r*a
+        elif carrier.kind==3:
+            slo,shi,_,_=original_oracle(F(carrier.radii[1]));s=max(abs(slo),abs(shi))
+            radius=r+max(abs(q[1]) for q in uv)*s
+            muu,muv=radius*a,s*a
+        elif carrier.kind==4:muu,muv,mvv=r*a,r*a,r*f
+        elif carrier.kind==5:
+            minor=abs(F(carrier.radii[1]));muu,muv,mvv=(r+minor)*a,minor*a,minor*f
+        bound=(muu*hu**2+2*muv*hu*hv+mvv*hv**2)/8+departure
+        if bound<=upper:return
+        assert depth<12,('independent analytic whole-triangle bound',carrier.kind,bound,upper)
+        miduv=[tuple((uv[i][a]+uv[(i+1)%3][a])/2 for a in range(2)) for i in range(3)]
+        midq=[tuple((actual[i][a]+actual[(i+1)%3][a])/2 for a in range(3)) for i in range(3)]
+        for i in range(3):
+            prove_analytic([uv[i],miduv[i],miduv[(i+2)%3]],
+                           [actual[i],midq[i],midq[(i+2)%3]],upper,depth+1)
+        prove_analytic(miduv,midq,upper,depth+1)
+
+    def basis(knots, mult, degree, count, t, hint):
+        knots=tuple(F(k) for k,m in zip(knots,mult) for _ in range(m))
+        @lru_cache(None)
+        def b(i,p):
+            if p==0:
+                return F(knots[i]<t<=knots[i+1]) if t==knots[count] or hint<t else F(knots[i]<=t<knots[i+1])
+            out=F(0)
+            if knots[i+p]!=knots[i]:out+=(t-knots[i])/(knots[i+p]-knots[i])*b(i,p-1)
+            if knots[i+p+1]!=knots[i+1]:out+=(knots[i+p+1]-t)/(knots[i+p+1]-knots[i+1])*b(i+1,p-1)
+            return out
+        return tuple(b(i,degree) for i in range(count))
+
+    def h(u,v,hint):
+        p,q=carrier.degrees;nu,nv=carrier.control_shape
+        bu=basis(carrier.knot_u,carrier.mult_u,p,nu,u,hint[0])
+        bv=basis(carrier.knot_v,carrier.mult_v,q,nv,v,hint[1])
+        return tuple(sum(bu[i]*bv[j]*F(carrier.controls[(i*nv+j)*4+a])
+                         for i in range(nu) for j in range(nv)) for a in range(4))
+
+    count=0;precise_count=0;parents={};chains=defaultdict(lambda:defaultdict(Counter));piece_counts=Counter()
+    def field(x):
+        if x.startswith('r:'):
+            n,d=x[2:].split('/');return F(int(n,16),int(d,16))
+        return F(float.fromhex(x))
+    def determinant(a,b,c):
+        return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+    def add_chain(parent,uv,weight):
+        for a,b in zip(uv,uv[1:]+uv[:1]):
+            dx,dy=b[0]-a[0],b[1]-a[1]
+            assert dx or dy
+            if dx:
+                slope=dy/dx;line=('x',slope,a[1]-slope*a[0]);lo,hi=a[0],b[0]
+            else:line=('y',a[0]);lo,hi=a[1],b[1]
+            if lo>hi:lo,hi=hi,lo;sign=-weight
+            else:sign=weight
+            chains[parent][line][lo]+=sign;chains[parent][line][hi]-=sign
+    for line in output.splitlines():
+        fields=line.split('\t');kind=fields[0]
+        if kind=='trim-work-parent':
+            ident=int(fields[1]);assert ident not in parents
+            values=list(map(field,fields[2:]));uv=list(zip(values[:6:2],values[1:6:2]))
+            actual=[values[6+i*3:9+i*3] for i in range(3)]
+            assert len(values)==15 and determinant(*uv)>0
+            parents[ident]=(uv,actual);add_chain(ident,uv,-1);continue
+        if kind=='trim-work-piece':
+            parent=int(fields[1]);int(fields[2]);upper=field(fields[3]);values=list(map(field,fields[4:]))
+            uv=list(zip(values[:6:2],values[1:6:2]));actual=[values[6+i*3:9+i*3] for i in range(3)]
+            assert len(values)==15 and parent in parents and determinant(*uv)>0
+            pu,pq=parents[parent];area=determinant(*pu)
+            for p,q in zip(uv,actual):
+                weights=[determinant(pu[1],pu[2],p)/area,determinant(pu[2],pu[0],p)/area,
+                         determinant(pu[0],pu[1],p)/area]
+                assert min(weights)>=0 and sum(weights)==1
+                assert all(q[a]==sum(weights[i]*pq[i][a] for i in range(3)) for a in range(3)), 'virtual point changed SAME actual L'
+            add_chain(parent,uv,1);piece_counts[parent]+=1
+            xs=None
+        else:xs=list(map(field,fields[1:]))
+        if kind=='trim-line-image':
+            direction,*values=xs
+            curve=next(c for c in original.curves if c.id==3000)
+            a=tuple(F(x)/F(curve.controls[2]) for x in curve.controls[:2])
+            b=tuple(F(x)/F(curve.controls[-1]) for x in curve.controls[-3:-1])
+            if direction<0:a,b=b,a
+            cov=tuple(b[i]-a[i] for i in range(2))
+            scalars=tuple(sum(cov[i]*p[i] for i in range(2)) for p in (a,b))
+            assert values==[*a,*b,*cov,*scalars] and scalars[1]>scalars[0]
+            continue
+        if kind=='trim-precise-plane':
+            tau,certified,upper,*values=xs
+            assert carrier.kind==1 and tau>=0 and certified in (0,1)
+            uv=list(zip(values[:6:2],values[1:6:2]));actual=[values[6+i*3:9+i*3] for i in range(3)]
+            maximum=max(sum((analytic_position(*uv[i])[a][0]-actual[i][a])**2 for a in range(3)) for i in range(3))
+            assert bool(certified)==(maximum<=tau*tau) and maximum<=upper*upper
+            precise_count+=1;count+=1;continue
+        if kind=='trim-skinny-facet':
+            shift,upper=xs
+            assert F(1,256)-shift<=upper<F(1,250)-shift, (kind,xs)
+            count+=1;continue
+        if kind!='trim-work-piece':
+            assert kind=='trim-source-triangle',kind
+            shift,upper,*values=xs
+            uv=list(zip(values[:6:2],values[1:6:2]));actual=[values[6+i*3:9+i*3] for i in range(3)]
+        if carrier.kind!=6:
+            prove_analytic(uv,actual,upper)
+            count+=1;continue
+        degree=sum(carrier.degrees)+1
+        powers=[(degree-i-j,i,j) for i in range(degree+1) for j in range(degree+1-i)]
+        interior=tuple(sum(p[a] for p in uv)/3 for a in range(2))
+        matrix=[]
+        for exponents in powers:
+            weights=tuple(F(k,degree) for k in exponents)
+            u,v=(sum(weights[i]*uv[i][a] for i in range(3)) for a in range(2))
+            n=h(u,v,interior);linear=[sum(weights[i]*actual[i][a] for i in range(3)) for a in range(3)]
+            row=[F(comb(degree,e[0])*comb(degree-e[0],e[1]))*
+                 weights[0]**e[0]*weights[1]**e[1]*weights[2]**e[2] for e in powers]
+            row += [n[a]-n[3]*linear[a] for a in range(3)]+[n[3]]
+            matrix.append(row)
+        size=len(matrix)
+        for column in range(size):
+            pivot=next(i for i in range(column,size) if matrix[i][column])
+            matrix[column],matrix[pivot]=matrix[pivot],matrix[column]
+            divisor=matrix[column][column]
+            matrix[column]=[x/divisor for x in matrix[column]]
+            for i in range(size):
+                if i==column:continue
+                factor=matrix[i][column]
+                if factor:matrix[i]=[x-factor*y for x,y in zip(matrix[i],matrix[column])]
+        coefficients=[row[size:] for row in matrix]
+        wmin=min(row[3] for row in coefficients)
+        assert wmin>0
+        assert all(sum(x*x for x in row[:3])<=upper*upper*wmin*wmin for row in coefficients),(
+            'independent original-source whole-triangle residual',upper)
+        count+=1
+    if parents:
+        assert set(piece_counts)==set(parents)
+        assert max(piece_counts.values())>1,'no cross-leaf actual facet'
+        assert all(not delta for line in chains.values() for events in line.values() for delta in events.values()), 'virtual positive-piece chain does not equal original facet'
+    else:assert count==4+precise_count,count
+    return count
 from native_mesher_point_trig_vectors import original_oracle,plus,times
 original_oracle=lru_cache(maxsize=None)(original_oracle)
 
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--fixture',type=Path,required=True)
+    p.add_argument('--fixture',type=Path)
     p.add_argument('--source',type=Path,required=True)
     p.add_argument('--analytic-fixtures',type=Path)
     p.add_argument('--cuda-module',type=Path)
     p.add_argument('--device',type=int,default=0)
+    p.add_argument('--trimmed-fixture',type=Path)
     a=p.parse_args()
+    if not a.fixture and not a.trimmed_fixture:
+        p.error('--fixture or --trimmed-fixture is required')
     backend=[] if a.cuda_module is None else ["--cuda",str(a.cuda_module),str(a.device)]
+    if a.trimmed_fixture:
+        trimmed=subprocess.run([str(a.trimmed_fixture),str(a.source),*backend],check=True,capture_output=True,text=True)
+        n=trimmed_check(a.source,trimmed.stdout)
+        print('original-trimmed-geometry-reader\tPASS\t'+str(n))
+    if not a.fixture:
+        return
     completed=subprocess.run([str(a.fixture),str(a.source),*backend],check=True,capture_output=True,text=True)
     counts={}
     for line in completed.stdout.splitlines():

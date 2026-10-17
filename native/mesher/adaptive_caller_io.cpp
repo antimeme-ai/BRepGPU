@@ -18,7 +18,8 @@ void write_curves(const std::filesystem::path &path,
                              std::byte{'C'}, std::byte{'R'}, std::byte{'V'},
                              std::byte{'0'}, std::byte{'1'}};
   out.bytes(magic);
-  out.word<4>(1);
+  out.word<4>(2); // Explicit whole-use line-image record; interval semantics
+                  // stay unchanged.
   out.word<4>(1);
   for (uint64_t value :
        {s.definitions[mesh.definition.value].id.value, uint64_t(b.nodes.size()),
@@ -145,6 +146,18 @@ void write_curves(const std::filesystem::path &path,
          {row.sites.first, row.sites.count, row.intervals.first,
           row.intervals.count, row.face_generation, row.boundary_generation})
       out.word<8>(value);
+    out.word<4>(row.whole_line_image.has_value());
+    if (row.whole_line_image) {
+      const auto &image = *row.whole_line_image;
+      out.word<8>(s.curves.at(image.raw_curve.value).id.value);
+      out.word<4>(static_cast<uint32_t>(image.raw_traversal));
+      for (auto ref : image.endpoints)
+        rational(ref);
+      for (auto ref : image.covector)
+        rational(ref);
+      for (auto ref : image.scalar_endpoints)
+        rational(ref);
+    }
   }
   for (const auto &row : mesh.sites) {
     if (row.boundary_node >= b.nodes.size())

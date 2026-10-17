@@ -628,8 +628,19 @@ BGAD_HD inline ActualFacetBounds bound_actual_facet_rn64(const ActualFacetInput 
         diagonal = maximum(diagonal, coefficient);
     }
   // B-L = D*(E[U]E[V]-E[UV]) + E[B(p_i)-L_i].  For any
-  // contained triangle, |Cov(U,V)| <= 1/4 on the normalized unit box.
-  const auto covariance = add(scale(point(norm_upper(twist)), .25), point(diagonal)).upper;
+  // contained triangle, |Cov(U,V)| <= range(U)*range(V)/4. Bounds are
+  // ranges of these actual piece vertices, not the entire containing leaf.
+  Interval ranges[2]{};
+  for (uint32_t axis = 0; axis < 2; ++axis) {
+    double lo = 1., hi = 0.;
+    for (uint32_t vertex = 0; vertex < 3; ++vertex) {
+      lo = minimum(lo, input.uv[vertex * 2 + axis].lower);
+      hi = maximum(hi, input.uv[vertex * 2 + axis].upper);
+    }
+    ranges[axis] = sub(point(hi), point(lo));
+  }
+  const auto covariance = add(mul(point(norm_upper(twist)), scale(mul(ranges[0], ranges[1]), .25)),
+                              point(diagonal)).upper;
   largest = minimum(largest, covariance);
   if (!finite(largest))
     return result;

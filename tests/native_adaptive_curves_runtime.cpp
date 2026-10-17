@@ -156,6 +156,30 @@ int main(int argc, char **argv) {
       check(counts.device_points && counts.device_bounds && counts.uploaded_bytes &&
                 counts.downloaded_bytes && (!bent || counts.device_restrictions),
             "device geometry/costs missing");
+    {
+      check(!second->boundary->intervals.empty(), "runtime fixture has no interval for feedback");
+      const auto requested = second->boundary->intervals.front();
+      session.refine(second, std::span(&requested, 1));
+      JobContext continuation({uint64_t{1} << 27, uint64_t{1} << 38}, run.get(), {});
+      bool complete = false;
+      for (uint32_t step = 0; step < 10000000; ++step) {
+        if (session.step(continuation) == StepState::done) {
+          complete = true;
+          break;
+        }
+        std::this_thread::yield();
+      }
+      check(complete, "consumer boundary continuation did not finish");
+      const auto refined = session.result();
+      check(refined->query_generation == second->query_generation &&
+                refined->boundary->epoch.value > second->boundary->epoch.value &&
+                refined->boundary->nodes.size() > second->boundary->nodes.size(),
+            "consumer request did not continue the same shared authority");
+      refused = false;
+      try { session.refine(second, std::span(&requested, 1)); }
+      catch (const Error &error) { refused = error.code == ErrorCode::invalid_source; }
+      check(refused && session.result() == refined, "stale feedback mutated current boundary");
+    }
     session.release_result();
     if (bent && first_curve.degree == 2) {
       const auto before = session.stats().installed_splits;

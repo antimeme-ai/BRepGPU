@@ -1,8 +1,16 @@
 #ifndef BREPGPU_MESHER_ADAPTIVE_GEOMETRY_HPP
 #define BREPGPU_MESHER_ADAPTIVE_GEOMETRY_HPP
 #include "exact.hpp"
+#include "geometry.hpp"
 #include "source_cache.hpp"
 namespace bgmesh::adaptive {
+namespace surface_detail {
+[[nodiscard]] BezierSurface original_net_exact(const SourceCache &, OriginalRootSlot,
+                                                bgfd::Budget &);
+}
+enum class RootBoxKind { original, prepared };
+[[nodiscard]] uint32_t find_carrier_root_slot(std::span<const RootDescriptor>, Slot<CarrierTag>,
+                                             std::span<const Rational, 2>, RootBoxKind);
 struct PreciseBoundResult {
   NodeBounds bounds;
   bool certified;
@@ -16,6 +24,7 @@ struct PreciseFacetResult {
 [[nodiscard]] std::pmr::vector<Interval>
 enclose_source_root_precise(const SourceStore &, const RootDescriptor &, bgfd::Budget &);
 void admit_numeric_environment();
+[[nodiscard]] bool actual_facet_nonzero(std::span<const double, 9>, bgfd::Budget &);
 [[nodiscard]] SampleResult evaluate_sample_precise(const SourceCache &, OriginalRootSlot,
                                                    std::span<const Rational, 2>, ArithmeticStage,
                                                    bgfd::Budget &);

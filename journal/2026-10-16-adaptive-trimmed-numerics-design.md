@@ -76,3 +76,62 @@ floor or a reason to promote an actual point. Far geometric failures still
 request construction refinement. Runtime and device owners agreed the shared
 field/helper. One affected coherent rerun follows integration, without expanding
 the source corpus.
+
+Complete-face integration exposed a real failure, not a kernel-oracle success:
+weighted and saddle refinement exhausted exact work. Initial stack samples were
+in normal Fraction add/GCD work. Removing the redundant area accumulator did
+NOT resolve the weighted operation; that performance hypothesis was insufficient.
+The removal remains justified structurally: admit all prepared carrier panels,
+SAME FaceDomainClassifier lease, original rectangular envelope and captured
+construction/view. Directed positive construction plus conservative outside
+pruning makes exact clipping a partition. The SAME external chain oracle remains
+the direct coverage mechanism; no replacement runtime checker was added.
+
+A bounded ignored diagnostic copy captured five seconds of the actual weighted
+operation: requested-facet/selected-leaf horizons were20/44,60/88,90/161,128/270,
+198/443,372/729. No captured parent UV or clip-lerp operand exceeded256bits.
+Separate direct boundary output had26sites, UV denominators at most57bits; the
+subnormal-coordinate hypothesis was falsified for this source. No integer
+arithmetic defect or huge-denominator cause was established.
+
+The diagnostic retained100 failing ORIGINAL source-triangle tasks. Independent
+exact interval evaluation of the authored original weighted source at each SAME
+virtual triangle centroid proved positional error greater than tau in59cases;
+reported upper/tau ranged1.046..3.317 and witnessed centroid error reached about
+3.173tau. Remaining cases were not proved successful by a centroid probe. Thus
+intrinsic emitted-facet failures are real, not merely interval width. Construction
+selected the FIRST tiny overlap-piece centroid, allowing anchors to cluster near
+one corner. Reviewed replacement rounds the ACTUAL parent centroid to a dyadic
+with all barycentric coordinates>=1/6, finds one containing retained source leaf
+and retains the central anchor through local CDT. Direct-star area<=2/3 follows;
+no global CDT contraction theorem is claimed. Construction owner implements it.
+
+Also closed the real per-operation work cap: prepare now holds scoped_work on
+the SAME Budget, so internal GCD/multiply charges stop at the work allowance;
+no second arithmetic owner or cap increase. The numerical/source unit remains
+under integration qualification until that actual progress case settles.
+
+Final affected numerical qualifications: the coherent interval-width diagnostic
+extension passed the SAME27 CPU/both-P100 source-reader cases. One existing p3q3
+operation under P100 memcheck reported0errors, and its output again passed the
+independent original-source reader. Direct p3 source math passed host
+ASan/UBSan/leaks. The existing interior-bubble SurfaceCacheSession fixture passed
+ASan/UBSan/leaks for arbitrary-word point ownership, promotion, stale requests,
+outside masks and cancellation. Named geometry/test clang-tidy and format pass.
+No expanded source campaign was added.
+
+Parent reports actual central-anchor complete-face correction now passes the
+SAME weighted and saddle CPU1 caller+original-output oracle in4.29s and1.83s
+respectively under unchanged caps, replacing prior>100s exact-work exhaustion.
+Those are the parent's whole-operation observations; numerical qualification is
+not being substituted for that result. Final augmented real-work sanitizer run
+covers the same37-piece source construction plus actual executor/outer lifecycle
+fault paths, then this lane stops qualification as planned.
+
+Final augmented real-work target passed ASan/UBSan/leaks with current classifier
+provenance, complete-root closure, scoped work cap, central-anchor dependencies
+and outer lifecycle checks. SAME independent original-source reader accepted all
+37virtual pieces from10actual facets; stale captured-view, executor subset/order,
+exact threshold, cancellation and no-partial-result checks are in that same real
+producer fixture. Numerical lane qualification stops here. No full watch,
+additional geometry corpus, dependency adoption or separate checker was added.

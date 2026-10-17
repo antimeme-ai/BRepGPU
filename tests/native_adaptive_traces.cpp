@@ -262,7 +262,8 @@ int main(int argc, char **argv) {
             "original authoritative C0 boundary did not settle");
     Fixture auth_outside(variants / "authoutside.bgsource");
     refuses([&] { static_cast<void>(run(auth_outside, 10.)); }, ErrorCode::unsupported,
-            "one-dimensional authoritative support outside natural domain accepted by zero area");
+            "one-dimensional authoritative support outside natural domain "
+            "accepted by zero area");
     Fixture auth(variants / "authjoint.bgsource");
     refuses([&] { static_cast<void>(run(auth)); }, ErrorCode::invalid_source,
             "unequal original authoritative joint accepted");
@@ -278,6 +279,16 @@ int main(int argc, char **argv) {
     for (const auto &interval : trace_intervals(straight))
       image |= interval.image_map.has_value();
     require(image, "nonlinear straight trace omitted actual image map");
+    Fixture authspeed(variants / "authspeed.bgsource", true);
+    const auto exact_image = run(authspeed);
+    require(trace_requests(exact_image).empty(),
+            "whole authoritative line image refined only for parameter speed");
+    for (const auto &use_row : trace_uses(exact_image))
+      require(use_row.whole_line_image.has_value(),
+              "exact authoritative whole-use image record absent");
+    for (const auto &interval : trace_intervals(exact_image))
+      require(!interval.authoritative_domain_upper,
+              "whole-use identity was misreported as per-interval flatten zero");
     for (const auto name : {"seam", "lift"}) {
       Fixture seam(variants / (std::string(name) + ".bgsource"));
       auto result = run(seam, 10.);

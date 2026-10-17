@@ -2,6 +2,7 @@
 #define BREPGPU_TEST_ADAPTIVE_DEVICE_HPP
 #include "../native/mesher/adaptive_geometry.hpp"
 #include "../native/mesher/cuda/adaptive_api.h"
+#include "../native/mesher/cuda/adaptive_trim_api.h"
 #include "../native/mesher/reservations.hpp"
 #include <chrono>
 #include <dlfcn.h>
@@ -173,6 +174,22 @@ public:
     DeviceError error{};
     checked(api_->facets(session_, &input, 1, &ticket, &error), error);
     ActualFacetBounds result;
+    poll(ticket, &result, 1);
+    return result;
+  }
+  SourceTriangleBounds source_triangle(const SourceTriangleInput &input) {
+    auto factory = reinterpret_cast<const TrimCudaAPI *(*)()>(
+        ::dlsym(module_, "brepgpu_adaptive_trim_cuda_v1"));
+    if (!factory)
+      throw std::runtime_error("adaptive trim CUDA factory missing");
+    const auto *trim = factory();
+    if (!trim || trim->abi != adaptive_trim_cuda_abi || trim->size != sizeof(TrimCudaAPI) ||
+        !trim->source_triangles)
+      throw std::runtime_error("adaptive trim CUDA ABI mismatch");
+    uint64_t ticket = 0;
+    DeviceError error{};
+    checked(trim->source_triangles(session_, &input, 1, &ticket, &error), error);
+    SourceTriangleBounds result;
     poll(ticket, &result, 1);
     return result;
   }
