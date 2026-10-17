@@ -1,0 +1,12 @@
+stage	seconds	scope
+admit_complete_scene_and_prepare	9.967405866016634	additional replay/export wall; nested, not additive
+additional_4k_display_process_both_views	3.612285324023105	additional replay/export wall; nested, not additive
+assembled-hero.png_encode	0.4416729850927368	additional replay/export wall; nested, not additive
+assembled-hero.callout_layout	1.152046024799347e-06	additional replay/export wall; nested, not additive
+assembled-hero.svg_compose	0.0038153929635882378	additional replay/export wall; nested, not additive
+assembled-hero.svg_rasterize	1.1421662939246744	additional replay/export wall; nested, not additive
+exploded-poster.png_encode	0.46759390993975103	additional replay/export wall; nested, not additive
+exploded-poster.callout_layout	1.5449628949863836	additional replay/export wall; nested, not additive
+exploded-poster.svg_compose	0.007379379007034004	additional replay/export wall; nested, not additive
+exploded-poster.svg_rasterize	7.576899704989046	additional replay/export wall; nested, not additive
+complete_gallery_replay_and_export	25.65795199200511	additional replay/export wall; nested, not additive

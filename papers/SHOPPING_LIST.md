@@ -64,3 +64,44 @@ their design relevance. They do not block the positive-weight hierarchy study.
 These gaps do not block reading the acquired Chew, Shewchuk–Brown, BRIO,
 predicate and2026 GPU CDT originals. They remain explicit acquisition work,
 not algorithms claimed read or implemented.
+
+## Whole-mesher geometry-based methods, 2026-10-16
+
+- **Aubry, Dey, Mestreau, Karamete, Gayman2015**, *A robust conforming NURBS
+  tessellation for industrial applications based on a mesh generation approach*,
+  CAD63:26–38, DOI10.1016/j.cad.2014.12.009. Publisher abstract/introduction
+  inspected; full text remains unavailable after publisher, title/author and
+  open-access-location searches. Needed for its complete three-dimensional
+  anisotropic/tiered algorithm and singularity treatment; no detailed theorem
+  or implementation is attributed to the preview.
+- **Piegl–Tiller1998**, *Geometry-based triangulation of trimmed NURBS surfaces*,
+  CAD30(1):11–18, DOI10.1016/S0010-4485(97)00047-X. Bibliography/preview only.
+  Needed to compare its geometry-based subdivision with parameter-bound
+  refinement. Piegl–Richard1995 is acquired in full and is a different paper.
+
+These remain comparison gaps; the acquired full primary subdivision,
+anisotropic refinement, feature-protection and trimming papers support the
+current whole-mesher design study. See `whole-mesher/RESTORATION.md` and the
+algorithm/geometry-contract bibliographies for exact acquisition/read scopes.
+
+## Adaptive subdivision follow-up, 2026-10-16
+
+- **Kumar–Manocha1995**, *Efficient Rendering of Trimmed NURBS Surfaces*,
+  CAD27(7):509–521, DOI10.1016/0010-4485(94)00003-V. The primary author abstract
+  at `https://www.cse.iitd.ernet.in/~subodh/research/abs.trim.html` was read.
+  Its linked `https://www.cs.jhu.edu/~subodh/papers/trim.cad.ps.gz` returns404;
+  the analogous current author-host path also returns404. Full source remains
+  requested for its cell-tracing/coherence/intersection details. No theorem or
+  detailed algorithm is claimed from the abstract. Ma/Hewitt2002's separate
+  full publisher paper was acquired/read and is not a substitute for this one.
+
+## Lutterkort–Peters shared-curve follow-up, 2026-10-16
+
+- David Lutterkort and Jörg Peters, *Tight Linear Envelopes for Splines*,
+  Purdue CSD-TR99-004 (1999). Institutional metadata at
+  https://docs.lib.purdue.edu/cstech/1435/ was read. The primary download
+  https://docs.lib.purdue.edu/cgi/viewcontent.cgi?article=2434&context=cstech
+  returned HTTP403 both through browser and a bounded fleet curl request with
+  browser User-Agent. No PDF was acquired and no full-text theorem is claimed.
+  Needed for a precise control-polygon envelope comparison, not a blocker for
+  the selected original-coefficient actual-chord and checked-image algorithms.
