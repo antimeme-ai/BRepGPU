@@ -1,4 +1,5 @@
 #include "presentation.hpp"
+#include "../om10/validation.hpp"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -44,7 +45,9 @@ struct Box final {
   }
 };
 using Color = std::array<uint8_t, 3>;
-struct Rectangle final { int x,y,width,height; };
+struct Rectangle final {
+  int x, y, width, height;
+};
 class Canvas final {
   std::span<uint8_t> pixels;
   int width, height;
@@ -183,26 +186,38 @@ public:
 } // namespace
 NativePresentation make_presentation(bgfd::Budget &budget, const NativeScene &scene, uint32_t width,
                                      uint32_t height, double strength) {
-  if (!scene || !width || !height || width > 8192 || height > 8192 || !std::isfinite(strength) ||
+  if (!scene)
+    invalid("native presentation scene is absent");
+  return make_presentation(budget, scene->view(), width, height, strength);
+}
+NativePresentation make_presentation(bgfd::Budget &budget, const bgom10::SceneView &view,
+                                     uint32_t width, uint32_t height, double strength) {
+  if (!width || !height || width > 8192 || height > 8192 || !std::isfinite(strength) ||
       strength < 0 || strength > 100)
     invalid("invalid native presentation dimensions/explosion");
   NativePresentation out(&budget);
-  if (scene->definitions.empty() || scene->instances.empty())
+  bgom10::validate_scene_view(&view, true, {&budget, &budget, [](void *state, uint64_t count) {
+                                              static_cast<bgfd::Budget *>(state)->charge(count);
+                                            }});
+  const auto definitions_view = bgom10::records(view.definitions, view.ndefinitions);
+  const auto instances_view = bgom10::records(view.instances, view.ninstances);
+  const auto vertices_view = bgom10::records(view.vertices, view.nvertices);
+  if (definitions_view.size() == 0 || instances_view.size() == 0)
     invalid("presentation needs a placed assembly");
   std::pmr::vector<Box> definitions(&budget), placed(&budget);
-  definitions.resize(scene->definitions.size());
+  definitions.resize(definitions_view.size());
   for (std::size_t i = 0; i < definitions.size(); ++i) {
-    const auto &d = scene->definitions[i];
+    const auto &d = definitions_view[i];
     if (d.vertex_count == 0)
       invalid("presentation definition has no stored vertices");
     for (uint64_t j = 0; j < d.vertex_count; ++j) {
       budget.charge(1);
-      const auto &v = scene->vertices[static_cast<std::size_t>(d.first_vertex + j)];
+      const auto &v = vertices_view[static_cast<std::size_t>(d.first_vertex + j)];
       definitions[i].include({v.xyz[0], v.xyz[1], v.xyz[2]});
     }
   }
   Box assembled;
-  for (const auto &i : scene->instances) {
+  for (const auto &i : instances_view) {
     Box b;
     for (unsigned k = 0; k < 8; ++k) {
       budget.charge(1);

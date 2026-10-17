@@ -563,6 +563,11 @@ add_library(brepgpu_mesher_adaptive_component STATIC adaptive_component.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_component PUBLIC
   brepgpu_mesher_adaptive_trimmed brepgpu_mesher_contact_epoch)
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_component)
+add_library(brepgpu_mesher_adaptive_scene STATIC adaptive_scene.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_scene PUBLIC
+  brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_geometry
+  brepgpu_mesher_scene brepgpu_mesher_presentation)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_scene)
 add_executable(brepgpu-adaptive-component adaptive_component_main.cpp adaptive_trimmed_io.cpp)
 target_link_libraries(brepgpu-adaptive-component PRIVATE
   brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_assembly
@@ -594,6 +599,19 @@ if(BUILD_TESTING)
     brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_assembly
     brepgpu_mesher_adaptive_caller_io)
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_component)
+  add_executable(brepgpu_native_adaptive_scene ../../tests/native_adaptive_scene.cpp
+    adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_scene PRIVATE
+    brepgpu_mesher_adaptive_scene brepgpu_mesher_adaptive_assembly
+    brepgpu_mesher_adaptive_caller_io brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_scene)
+  foreach(family box cylinder weighted c0 styled)
+    add_test(NAME native_adaptive_scene_${family} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_scene.py"
+      --executable "$<TARGET_FILE:brepgpu_native_adaptive_scene>" --family "${family}")
+    set_tests_properties(native_adaptive_scene_${family} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  endforeach()
   foreach(family box cylinder needs_boundary)
     foreach(threads 1 4)
       add_test(NAME native_adaptive_component_${family}_cpu${threads}

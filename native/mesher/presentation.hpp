@@ -13,7 +13,12 @@ struct NativePresentation final {
 [[nodiscard]] NativePresentation make_presentation(bgfd::Budget &, const NativeScene &,
                                                    uint32_t width, uint32_t height,
                                                    double strength);
-struct FrameCaption final { std::string_view heading, timing; };
+[[nodiscard]] NativePresentation make_presentation(bgfd::Budget &, const bgom10::SceneView &,
+                                                   uint32_t width, uint32_t height,
+                                                   double strength);
+struct FrameCaption final {
+  std::string_view heading, timing;
+};
 void annotate_frame(bgfd::Budget &, std::span<uint8_t> rgba, const bgom10::Request &,
                     const NativePresentation &, bool exploded, FrameCaption caption);
 void write_png(const std::filesystem::path &, uint32_t width, uint32_t height,
