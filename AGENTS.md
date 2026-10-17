@@ -291,12 +291,23 @@ and both-P100 complete boundary snapshots,200 queries across10 authored families
 scoped source/geometry/lifecycle/sanitizer checks and actual source reviews.
 Read docs/ADAPTIVE_SHARED_CURVES.md and its report. CPU wins these tiny complete
 operations; no general curve or whole-mesher GPU advantage is established.
-Continue connected boundary regions/trimmed faces and complete source publication
-per ADAPTIVE_MESHER_PLAN.md. Boundary authoritative_domain_upper is only a boundary
-bound; next full facets require a real interior map or explicit identity
-admission, not max edge bound. Read the new read-only boundary-region and trimmed-
-facet studies before designing that unit. Do not turn
-this checkpoint into an extra certification/tuning campaign. Record opportunities
+The first complete selected trimmed-face operation is now delivered. Read
+docs/ADAPTIVE_TRIMMED_FACES.md and results/adaptive-trimmed-2026-10-17/REPORT.md.
+Seven authored families pass28 processes/56 queries with byte-identical CPU1/4/
+both-P100 boundaries/faces and separate original-source whole-output readers.
+Native ownership includes retained exact domain classification, conforming
+packets/local boundary CDT, common central anchors, actual-facet source bounds,
+whole-operation work caps and cancellation. GPU performs actual geometry work;
+CPU wins these small complete processes. Do not infer full-caller C0/hanging,
+periodic, multiple-outer or remaining failure ports from their direct/unit checks.
+Continue those ports and complete imported component/assembly publication per
+ADAPTIVE_MESHER_PLAN.md; the real OM10 render remains pending. General curved
+authoritative-domain maps and alternate charts are later capabilities.
+Boundary authoritative_domain_upper is only a boundary
+bound; full facets require a real interior map or explicit identity
+admission, not max edge bound. Read the boundary-region and trimmed-
+facet studies and current implementation plans before extending that unit.
+Do not turn this checkpoint into an extra certification/tuning campaign. Record opportunities
 in docs/ADAPTIVE_MESHER_RETURN_PASS.md. SourceStore spatial values are already mm;
 units_mm is original metadata and must not rescale tolerances or geometry again.
 Keep the NVIDIA reference/backfill and external alpha suite requirements live.

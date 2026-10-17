@@ -77,6 +77,10 @@ requires explicit original definition/face IDs, positional and node-source
 allowances, worker count and a new output directory. SourceStore spatial values
 are already millimetres; original units metadata does not rescale them again.
 
+The first [matched CPU1/CPU4/both-P100 observation](../results/adaptive-trimmed-2026-10-17/REPORT.md)
+retains all56 queries, complete process costs, stage/work/transfer counters and
+actual mesh views. It also lists the planned caller ports still outstanding.
+
 ## Output and timing scopes
 
 Every completed query writes paired `query-N.bgacrv` and `query-N.bgatrm` files,

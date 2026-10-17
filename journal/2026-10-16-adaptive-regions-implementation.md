@@ -105,3 +105,27 @@ routing, persistent packet identities/changed facets, complete source bindings,
 local component anchors/rebuilds, and central band/active-grid packet progress.
 The source hint regression uses the original admitted root envelope only; the
 numerical owner's existing source-work case exercises that fault directly.
+
+Parent observation after central amendment: SAME weighted/saddle CPU1 complete
+caller plus independent geometry reader passed unchanged caps in CTest4.29s and
+1.83s, versus the prior >100s budget exhaustion. This is an affected operation
+observation, not a general contraction or speedup claim.
+
+Publication subplan approved: one four-panel dependency-free SVG from existing
+.005 mm saved CPU1 BGATRM geometry (many-hole plane, bowl, weighted, saddle),
+existing reader only, packet/band colors and actual triangle counts. No carrier
+evaluation/native geometry/new oracle. Waited for parent benchmark DONE before
+reading/drawing; parent reports all28 processes/56 queries pass and full artifacts
+identical across the four CPU/CUDA modes. Caption identifies an external view,
+not the GPU renderer. Only scripts/visualize_native_trimmed.py and the one SVG
+are publication outputs.
+
+SVG generated after benchmark DONE from the four existing .005 CPU1 query-1
+artifacts. Actual triangles (packet/band): plane_many_holes98(0/98),
+bowl240(168/72), weighted184(0/184), saddle212(72/140). The fixed orthographic
+camera fits each view independently without height exaggeration. Source-edge
+outlines come from saved physical constraints. Inspected the one SVG using the
+fleet's already-installed ffmpeg librsvg decoder; no library/install/dependency
+was added. PNG preview stays ignored under context. SVG is approximately138kB;
+all polygon positions/connectivity are from the saved native facets. This is
+presentation only, not a new geometry check or GPU-rendering claim.

@@ -48,8 +48,9 @@ passes an independent whole-facet oracle with identical CPU/GPU cold/warm output
 These are single observations; CPU4 is the best observed CPU baseline and the
 complete-process difference is modest. Setup, output, transfers and close remain
 accounted for. The report retains earlier timeouts and distinguishes actual
-warm remeshing from returning a cached result. This is an untrimmed patch
-operation; connected trimmed faces, complete components and the OM10 render remain pending.
+warm remeshing from returning a cached result. These timings cover untrimmed
+patches; the first selected trimmed faces are delivered below. Complete imported
+components and the OM10 render remain pending.
 The NVIDIA CPU reference has not been run on this new scenario.
 
 The [shared-curve operation](docs/ADAPTIVE_SHARED_CURVES.md) is now delivered too:
@@ -58,7 +59,25 @@ chord and boundary-domain bounds. Its real C++/CUDA caller passes200 queries
 across10 original-source families on CPU1/CPU4/both P100s. GPU samples, paired
 subdivision and bounds are real; CPU wins these small complete operations after
 setup. [Results, sources and all measured costs](results/adaptive-curves-2026-10-16/REPORT.md).
-Next comes connected trimmed-face construction and its holes/domain maps.
+
+**First complete selected trimmed faces are now delivered in native C++/CUDA:**
+original-source bounds, shared physical boundaries, conforming cached packets
+and connected boundary bands with holes. The
+[matched observation](results/adaptive-trimmed-2026-10-17/REPORT.md) passes
+**56 queries across seven authored families**, with byte-identical CPU1/CPU4/
+both-P100 boundary and face outputs. Independent original-source readers check
+coverage and actual whole-facet error; equality alone is not the geometry oracle.
+
+[![Actual selected-face meshes: holes, bowl, weighted rational patch and saddle](assets/adaptive-trimmed/faces.svg)](results/adaptive-trimmed-2026-10-17/REPORT.md)
+
+These small complete operations favor CPU. The weighted rational two-quality
+process takes **3.331s CPU4 / 3.652s P1000**; its finer face alone takes
+**2.628s / 2.625s**. Each is one observation, including real GPU geometry work;
+the figure is an external view of saved meshes. These are meshing timings.
+NVIDIA USD/BRep CPU has not been run on these scenarios. Broader caller-family
+ports, general curved authoritative-domain maps, complete imported components
+and the real OM10 render remain pending.
+[API, admission and reproduction](docs/ADAPTIVE_TRIMMED_FACES.md).
 
 ```mermaid
 flowchart LR
