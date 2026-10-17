@@ -2,6 +2,7 @@
 #define BREPGPU_TEST_ADAPTIVE_DEVICE_HPP
 #include "../native/mesher/adaptive_geometry.hpp"
 #include "../native/mesher/cuda/adaptive_api.h"
+#include "../native/mesher/cuda/adaptive_cap_api.h"
 #include "../native/mesher/cuda/adaptive_trim_api.h"
 #include "../native/mesher/reservations.hpp"
 #include <chrono>
@@ -190,6 +191,24 @@ public:
     DeviceError error{};
     checked(trim->source_triangles(session_, &input, 1, &ticket, &error), error);
     SourceTriangleBounds result;
+    poll(ticket, &result, 1);
+    return result;
+  }
+  CapFacetBounds cap_facet(const CapSourceDescriptor &source,
+                           const CapFacetInput &input) {
+    auto factory = reinterpret_cast<const CapCudaAPI *(*)()>(
+        ::dlsym(module_, "brepgpu_adaptive_cap_cuda_v1"));
+    if (!factory)
+      throw std::runtime_error("adaptive cap CUDA factory missing");
+    const auto *cap = factory();
+    if (!cap || cap->abi != adaptive_cap_cuda_abi ||
+        cap->size != sizeof(CapCudaAPI) || !cap->facets)
+      throw std::runtime_error("adaptive cap CUDA ABI mismatch");
+    const DeviceCapFacet task{source, input};
+    uint64_t ticket = 0;
+    DeviceError error{};
+    checked(cap->facets(session_, &task, 1, &ticket, &error), error);
+    CapFacetBounds result;
     poll(ticket, &result, 1);
     return result;
   }

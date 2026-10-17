@@ -452,7 +452,22 @@ PreciseBoundResult bound_node_precise(const SourceCache &cache, RootSlot slot,
             .add(mv.multiply(hv.multiply(hv)))
             .divide(Rational(b, 8))
             .add(corner);
-    bounds.regularity_proved = 1;
+    const auto separated = [](const ExactEnclosure &value) {
+      return value.lower.sign() > 0 || value.upper.sign() < 0;
+    };
+    bool regular = true;
+    if (root.family == GeometryFamily::cone) {
+      const auto alpha = Rational::from_double(b, carrier.radii[1]);
+      const auto angle = geometry_detail::trig_range(context, alpha, alpha, 192);
+      const auto radius = geometry_detail::sum(
+          ExactEnclosure(Rational::from_double(b, carrier.radii[0])),
+          geometry_detail::product(ExactEnclosure(box[2], box[3]), angle.sine));
+      regular = separated(radius) && separated(angle.cosine);
+    } else if (root.family == GeometryFamily::sphere) {
+      const auto range = geometry_detail::trig_range(context, box[2], box[3], 192);
+      regular = separated(range.cosine);
+    }
+    bounds.regularity_proved = regular ? 1U : 0U;
   }
   const auto packet = e.add(twist_norm.divide(Rational(b, 4)));
   bounds.source_to_bilinear_upper = e.bounds().upper;

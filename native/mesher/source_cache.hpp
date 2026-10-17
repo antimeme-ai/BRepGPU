@@ -15,7 +15,11 @@ struct CarrierRequest {
 struct NumericProfile {
   uint32_t revision = 1;
 };
-enum class SourceCachePurpose : uint32_t { regular_patch, trace_geometry };
+enum class SourceCachePurpose : uint32_t {
+  regular_patch,
+  trace_geometry,
+  quotient_trim
+};
 struct SourceCacheLimits {
   uint32_t roots = 1000000, control_scalars = 64000000;
   uint64_t work = 1000000000;
@@ -52,6 +56,11 @@ class SourceCache final {
                             std::span<const CarrierRequest>,
                             const std::shared_ptr<RunResource> &,
                             NumericProfile, SourceCacheLimits, bgfd::Budget &);
+
+  friend SourceCache prepare_quotient_trim_source_cache(
+      const SourceStore &, std::span<const CarrierRequest>,
+      const std::shared_ptr<RunResource> &, NumericProfile, SourceCacheLimits,
+      bgfd::Budget &);
 
 public:
   [[nodiscard]] const SourceStore &source() const noexcept {
@@ -91,5 +100,11 @@ prepare_trace_source_cache(const SourceStore &, std::span<const CarrierRequest>,
 prepare_trim_source_cache(const SourceStore &, std::span<const CarrierRequest>,
                           const std::shared_ptr<RunResource> &, NumericProfile,
                           SourceCacheLimits, bgfd::Budget &);
+// Original singular analytic evaluation plus immutable panels. Ordinary mesh
+// operations require a matching typed quotient domain and LOCAL regularity.
+[[nodiscard]] SourceCache prepare_quotient_trim_source_cache(
+    const SourceStore &, std::span<const CarrierRequest>,
+    const std::shared_ptr<RunResource> &, NumericProfile, SourceCacheLimits,
+    bgfd::Budget &);
 } // namespace bgmesh::adaptive
 #endif

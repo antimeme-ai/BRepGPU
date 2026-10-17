@@ -1,8 +1,10 @@
+#include "../adaptive_cap_numeric.hpp"
 #include "../adaptive_curve_numeric.hpp"
 #include "../adaptive_numeric.hpp"
 #include "../adaptive_trimmed_numeric.hpp"
 #include "adaptive_api.h"
 #include "adaptive_assignment_api.h"
+#include "adaptive_cap_api.h"
 #include "adaptive_curve_api.h"
 #include "adaptive_trim_api.h"
 #include <algorithm>
@@ -74,7 +76,8 @@ enum class Operation {
   curve_restrictions,
   curve_nodes,
   curve_traces,
-  trim_source_triangles
+  trim_source_triangles,
+  cap_facets
 };
 template <class T> T *data(Buffer &buffer) { return static_cast<T *>(buffer.pointer); }
 unsigned blocks(uint32_t count, unsigned width = tile) {
@@ -841,6 +844,7 @@ int32_t destroy(DeviceSession *s, DeviceError *error) {
 }
 #include "adaptive_curve_ops.cuh"
 #include "adaptive_trim_ops.cuh"
+#include "adaptive_cap_ops.cuh"
 const AdaptiveCudaAPI api{adaptive_cuda_abi,
                           sizeof(AdaptiveCudaAPI),
                           create,
@@ -866,4 +870,7 @@ extern "C" const bgmesh::adaptive::TrimCudaAPI *brepgpu_adaptive_trim_cuda_v1() 
 }
 extern "C" const bgmesh::adaptive::AssignmentCudaAPI *brepgpu_adaptive_assignment_cuda_v1() {
   return &bgmesh::adaptive::assignment_api;
+}
+extern "C" const bgmesh::adaptive::CapCudaAPI *brepgpu_adaptive_cap_cuda_v1() {
+  return &bgmesh::adaptive::cap_api;
 }

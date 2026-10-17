@@ -31,3 +31,33 @@ oracle. Both scoped reviews are saved under papers. Scene normal refusal scope
 was clarified with its owner: existing required CPU/P100 consumers reject bad
 normals before complete display publication; adapter validation does not duplicate
 normal evaluation. No extra producer run or geometry implementation was added.
+
+Root accepted the literal unit and source-only amendment. Recorded the genuine
+source-backed missing-operation RED, then implemented quotient source capability,
+actual-box RN/precise ordinary regularity, privately prepared cap constants,
+whole-rho SAME-L bounds, source-only map roles and BOTH-endpoint symbolic-gap
+progress. Root's actual-source reviews accepted all of those scopes.
+
+Extended the existing independent original-geometry reader with the complete
+finite reference-square residual, using exact power/Taylor arithmetic and
+Bernstein restriction rather than production derivative constants. Six authored
+sources on CPU/bothP100s pass108 bound rows with byte-identical native output.
+The native fixture also attacks changing finite-side signs, original-root/profile
+mismatch, physical collapse, scoped work refusal and one-sided/uncertain cut
+progress. The initial coarse-midpoint uncertainty test was invalid after source
+precision refinement; corrected the input to the requested enclosure midpoint.
+
+One focused cone/large-frame ASan/UBSan/leak path, actual-source tidy and one
+north/large-frame P1000 memcheck pass. Memcheck reports0 errors/0 leaked bytes.
+Closed the selected cohort and saved
+papers/2026-10-17-adaptive-cap-geometry-closure.md. Commands and operational logs
+remain ignored. Shared files were formatted through temporary files/atomic
+replacement; unchanged common-source formatting was retained to keep the diff
+focused. No extra numerical run follows formatting alone.
+
+Reviewed the actual construction/runtime plans: finite source QUAD coverage,
+source-role/positive-chart separation, current physical master cuts, local
+domain transitions and total-once cap bounds are coherent. Sent ACCEPT; clarified
+canonical increasing-U piece binding separately from original occurrence order.
+Root selected a separate adaptive_cap_work library for the next qualified host
+adapter, avoiding a low-level geometry/session dependency cycle.

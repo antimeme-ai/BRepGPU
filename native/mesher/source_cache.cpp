@@ -213,8 +213,11 @@ double gram_upper(const Frame &frame, uint32_t columns) {
     throw Error(ErrorCode::unresolved, "original frame Gram enclosure");
   return value;
 }
+struct AnalyticAdmission {
+  bool enforce_angular_width, permit_singular_evaluation;
+};
 void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
-                    bgfd::Budget &budget, bool enforce_angular_width) {
+                    bgfd::Budget &budget, AnalyticAdmission admission) {
   std::array<Rational, 9> axes{
       Rational(budget), Rational(budget), Rational(budget),
       Rational(budget), Rational(budget), Rational(budget),
@@ -244,7 +247,7 @@ void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
   if (carrier.radii[0] == 0.)
     throw Error(ErrorCode::unsupported, "zero original analytic radius");
   const auto pi_lower = numeric::rn_mul(numeric::half_pi().lower, 2.);
-  if (enforce_angular_width &&
+  if (admission.enforce_angular_width &&
       numeric::sub(point(box[1]), point(box[0])).upper >=
           numeric::rn_mul(pi_lower, 2.))
     throw Error(ErrorCode::unsupported,
@@ -255,11 +258,12 @@ void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
       throw Error(ErrorCode::unresolved, "cone height direction not resolved");
     const auto radius = numeric::add(
         point(carrier.radii[0]), numeric::mul({box[2], box[3]}, angle.sine));
-    if (radius.lower <= 0. && radius.upper >= 0.)
+    if (!admission.permit_singular_evaluation && radius.lower <= 0. &&
+        radius.upper >= 0.)
       throw Error(ErrorCode::unsupported,
                   "cone apex lies in requested rectangle");
   }
-  if (carrier.kind == 4) {
+  if (carrier.kind == 4 && !admission.permit_singular_evaluation) {
     const auto left = numeric::sincos(point(box[2])),
                right = numeric::sincos(point(box[3]));
     const bool sign = left.ready && right.ready &&
@@ -275,7 +279,7 @@ void admit_analytic(const Carrier &carrier, const std::array<double, 4> &box,
       throw Error(ErrorCode::unsupported,
                   "initial torus profile requires nonzero minor and separated "
                   "radial factor");
-    if (enforce_angular_width &&
+    if (admission.enforce_angular_width &&
         numeric::sub(point(box[3]), point(box[2])).upper >=
             numeric::rn_mul(pi_lower, 2.))
       throw Error(ErrorCode::unsupported,
@@ -505,12 +509,13 @@ std::shared_ptr<const SourceCacheData> prepare_source_cache_data(
           "unknown original carrier family");
     base.family = static_cast<GeometryFamily>(carrier.kind - 1);
     if (carrier.kind < 6) {
-      admit_analytic(carrier, box, budget,
-                     purpose == SourceCachePurpose::regular_patch &&
-                         !tile_analytic);
+      admit_analytic(
+          carrier, box, budget,
+          {purpose == SourceCachePurpose::regular_patch && !tile_analytic,
+           purpose == SourceCachePurpose::quotient_trim});
       check_work();
       base.frame_a = point(gram_upper(carrier.frame, 2));
-      base.frame_f = (carrier.kind == 4 || carrier.kind == 5)
+      base.frame_f = (carrier.kind >= 3 && carrier.kind <= 5)
                          ? point(gram_upper(carrier.frame, 3))
                          : base.frame_a;
       if (carrier.kind == 3) {
@@ -673,5 +678,13 @@ SourceCache prepare_trim_source_cache(
   return SourceCache(prepare_source_cache_data(
       source, requests, resource, profile, limits, budget,
       SourceCachePurpose::regular_patch, true));
+}
+SourceCache prepare_quotient_trim_source_cache(
+    const SourceStore &source, std::span<const CarrierRequest> requests,
+    const std::shared_ptr<RunResource> &resource, NumericProfile profile,
+    SourceCacheLimits limits, bgfd::Budget &budget) {
+  return SourceCache(prepare_source_cache_data(
+      source, requests, resource, profile, limits, budget,
+      SourceCachePurpose::quotient_trim, true));
 }
 } // namespace bgmesh::adaptive
