@@ -43,6 +43,7 @@ double number(std::string_view text) {
 struct Options final {
   std::filesystem::path source, output, module, display_module;
   uint64_t memory_mib = 1024;
+  std::optional<uint64_t> scratch_mib;
   std::vector<uint64_t> definitions;
   uint32_t width = 1920, height = 1800;
   double explosion = 2.;
@@ -83,6 +84,8 @@ Options options(int argc, char **argv) {
       out.explosion = number(value);
     else if (key == "--memory-mib")
       out.memory_mib = integer(value);
+    else if (key == "--scratch-mib")
+      out.scratch_mib = integer(value);
     else if (key == "--construction-work")
       out.construction_work = integer(value);
     else if (key == "--positional-mm")
@@ -129,6 +132,15 @@ Options options(int argc, char **argv) {
   if (!out.memory_mib || out.memory_mib > (UINT64_MAX >> 20) || !out.construction_work ||
       !out.max_nodes || out.max_nodes > UINT32_MAX / 264 || !out.max_depth || out.max_depth > 64)
     invalid("invalid memory, work, node capacity or depth64 limit");
+  if (out.scratch_mib) {
+    const auto scratch = out.scratch_mib.value();
+    if (!scratch || scratch > (UINT64_MAX >> 20) || scratch > out.memory_mib)
+      invalid("scratch allowance must be positive, representable and no greater than memory");
+    // Both schedulers prepay workers; nested face scratch also remains globally metered.
+    const uint64_t workers = uint64_t{out.threads} * (out.threads > 1 ? 2 : 1);
+    if (workers > out.memory_mib / scratch)
+      invalid("mandatory worker scratch reservations exceed memory allowance");
+  }
   if (out.p100 != !out.module.empty())
     invalid("p100 requires explicit --cuda-module; CPU does not load device modules");
   if ((!out.p100 && !out.display_module.empty()) ||
@@ -192,6 +204,8 @@ void labels(const std::filesystem::path &path, const AdaptiveScene &scene, bgfd:
 void run(const Options &o, std::string_view &stage) {
   const auto full = Clock::now();
   const uint64_t bytes = o.memory_mib << 20;
+  const uint64_t scratch_mib = o.scratch_mib.value_or(std::min(o.memory_mib, uint64_t{64}));
+  const uint64_t scratch_bytes = scratch_mib << 20;
   const auto resource = std::make_shared<RunResource>(bytes);
   JobContext context({bytes, uint64_t{1} << 44}, resource.get(), {});
   auto &budget = context.budget;
@@ -295,7 +309,7 @@ void run(const Options &o, std::string_view &stage) {
   surface.max_axis_depth = o.max_depth;
   surface.cpu_threads = 1;
   surface.host_bytes = surface.device_bytes = bytes;
-  surface.child_bytes = std::min(bytes, uint64_t{1} << 26);
+  surface.child_bytes = scratch_bytes;
   limits.face.construction_work = o.construction_work;
   auto &physical = limits.curves;
   physical.nodes = physical.frontier = physical.requests = o.max_nodes;
@@ -323,12 +337,14 @@ void run(const Options &o, std::string_view &stage) {
            << "\nsource_digest\t";
   caller::digest(metadata, original.source_digest);
   metadata << std::setprecision(17) << "\nsource_units_mm\t" << original.units_mm << "\nbackend\t"
-           << (o.p100 ? "p100" : "cpu") << "\nthreads\t" << o.threads << "\nface_owner_limit\t"
-           << limits.face_owners << "\nnumeric_profile\t" << cache.profile().revision
-           << "\nselected_definitions\t" << definitions.size() << "\nsource_definitions\t"
-           << original.definitions.size() << "\nsource_faces\t" << original.faces.size()
-           << "\nsource_placements\t" << prepared->assembly.view().instances.size()
-           << "\ncurve_service\tcold_per_component\n";
+           << (o.p100 ? "p100" : "cpu") << "\nmemory_mib\t" << o.memory_mib << "\nscratch_mib\t"
+           << scratch_mib << "\nscratch_bytes\t" << scratch_bytes << "\nscratch_policy\t"
+           << (o.scratch_mib ? "explicit" : "default_min_memory_64") << "\nthreads\t" << o.threads
+           << "\nface_owner_limit\t" << limits.face_owners << "\nnumeric_profile\t"
+           << cache.profile().revision << "\nselected_definitions\t" << definitions.size()
+           << "\nsource_definitions\t" << original.definitions.size() << "\nsource_faces\t"
+           << original.faces.size() << "\nsource_placements\t"
+           << prepared->assembly.view().instances.size() << "\ncurve_service\tcold_per_component\n";
   faces << "query\tdefinition\tface\tmesh\tboundary\tboundary_epoch\tface_boundary_generation\n";
   queries << std::setprecision(17)
           << "query\tdefinition\trequested_positional_mm\trequested_node_mm\tlocal_positional_"
@@ -537,7 +553,8 @@ int main(int argc, char **argv) {
       std::cout
           << "brepgpu-adaptive-model --source FILE --output NEW_DIRECTORY --positional-mm VALUE "
              "[--positional-mm VALUE ...] --node-source-mm VALUE --threads N [--definition ID ...] "
-             "[--face-owners N --memory-mib N --max-nodes N --max-depth N --construction-work N] "
+             "[--face-owners N --memory-mib N --scratch-mib N --max-nodes N --max-depth N "
+             "--construction-work N] "
              "[--backend p100 --cuda-module LIBRARY --display-module LIBRARY --device N] "
              "[--width N --height N --explosion VALUE --mesh-only]\n";
       return 0;

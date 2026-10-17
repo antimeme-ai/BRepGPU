@@ -255,6 +255,47 @@ def run(options,root):
     print('PASS\tmodel original definitions/chains/facets/scene/placements/materials/PNG\t3 queries')
 
 
+def scratch_policy(options,root):
+    assert options.threads == 1 and not options.module, 'scratch policy ports run once on CPU1'
+    src = model_source(); source = root/'original.bgsource'; write_source(src,source)
+    outputs = []
+    for name,extra,effective,policy in (
+            ('implicit',[],64,'default_min_memory_64'),
+            ('explicit',['--scratch-mib','256'],256,'explicit')):
+        target = root/name
+        completed = invoke(command(options,source,target,(.01,))+['--mesh-only']+extra,root,name)
+        assert completed.returncode == 0,completed.stderr
+        outputs.append(target)
+        check_output(src,target,(.01,),mesh_only=True)
+        metadata = {row['key']:row['value'] for row in read_tsv(target/'model.tsv')}
+        assert (metadata['scratch_mib'],metadata['scratch_bytes'],metadata['scratch_policy']) == (
+            str(effective),str(effective << 20),policy)
+        assert metadata['memory_mib'] == '1024'
+    left,right = outputs
+    for a,b in zip(read_tsv(left/'faces.tsv'),read_tsv(right/'faces.tsv')):
+        for field in ('mesh','boundary'):
+            assert (left/a[field]).read_bytes() == (right/b[field]).read_bytes(),field
+    for name,extra,diagnostic in (
+            ('zero',['--scratch-mib','0'],'scratch allowance must be positive'),
+            ('above-global',['--scratch-mib','1025'],'scratch allowance must be positive'),
+            ('overflow',['--scratch-mib',str(1 << 44)],'scratch allowance must be positive'),
+            ('reservation-width',['--threads','2','--memory-mib','512','--scratch-mib','256'],
+             'mandatory worker scratch reservations exceed memory allowance')):
+        target = root/name
+        failed = invoke(command(options,source,target,(.01,))+['--mesh-only']+extra,root,name)
+        assert failed.returncode == 1 and 'error\toptions\t0\t' in failed.stderr,failed.stderr
+        assert diagnostic in failed.stderr,failed.stderr
+        assert not target.exists() and not list(root.glob(f'{target.name}.tmp-*'))
+    # Valid options can still exhaust the SAME backing resource after source setup.
+    name = 'actual-resource'; target = root/name
+    failed = invoke(command(options,source,target,(.01,))+[
+        '--mesh-only','--memory-mib','1','--scratch-mib','1'],root,name)
+    assert failed.returncode == 1 and 'run memory reservation exhausted' in failed.stderr,failed.stderr
+    assert 'error\toptions\t' not in failed.stderr,failed.stderr
+    assert not target.exists() and not list(root.glob(f'{target.name}.tmp-*'))
+    print('PASS\tmodel scratch policy\timplicit/explicit same original outputs; parser/backing refusals')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable',type=Path)
@@ -264,6 +305,7 @@ def main():
     parser.add_argument('--threads',type=int,default=1)
     parser.add_argument('--device',type=int,choices=(0,1),default=0)
     parser.add_argument('--ports',action='store_true')
+    parser.add_argument('--scratch-policy-only',action='store_true')
     parser.add_argument('--resume',action='store_true',help='read completed native model output; run remaining ports only')
     parser.add_argument('--saved-output',type=Path)
     parser.add_argument('--compare-output',type=Path,help='compare saved output to already original-checked reference')
@@ -278,10 +320,10 @@ def main():
         assert options.executable
         if options.workspace:
             options.workspace.mkdir(parents=True,exist_ok=options.resume)
-            run(options,options.workspace.resolve())
+            (scratch_policy if options.scratch_policy_only else run)(options,options.workspace.resolve())
         else:
             with tempfile.TemporaryDirectory(prefix='native-adaptive-model-') as temporary:
-                run(options,Path(temporary))
+                (scratch_policy if options.scratch_policy_only else run)(options,Path(temporary))
 
 
 if __name__ == '__main__':
