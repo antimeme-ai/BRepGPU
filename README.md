@@ -74,8 +74,11 @@ These small complete operations favor CPU. The weighted rational two-quality
 process takes **3.331s CPU4 / 3.652s P1000**; its finer face alone takes
 **2.628s / 2.625s**. Each is one observation, including real GPU geometry work;
 the figure is an external view of saved meshes. These are meshing timings.
-NVIDIA USD/BRep CPU has not been run on these scenarios. Broader caller-family
-ports, general curved authoritative-domain maps, complete imported components
+The [extended caller checks](results/adaptive-trimmed-ports-2026-10-17/REPORT.md)
+also pass60 queries covering C0/hanging spans, nested islands, periodic seams and
+cache history, plus11 process refusal/publication cases.
+NVIDIA USD/BRep CPU has not been run on these scenarios. General curved
+authoritative-domain maps, complete imported components
 and the real OM10 render remain pending.
 [API, admission and reproduction](docs/ADAPTIVE_TRIMMED_FACES.md).
 

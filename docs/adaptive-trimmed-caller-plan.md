@@ -177,11 +177,14 @@ bowl, weighted rational, saddle) passes28 processes/56 queries on CPU1/CPU4/
 both P100s, with original-source readers and byte-identical matched artifacts.
 See [the retained observation](../results/adaptive-trimmed-2026-10-17/REPORT.md).
 
-This is a completed subset of the plan above. Full-caller C0/hanging spans,
-periodic seams, multiple outer regions, remaining failure ports and the full
-fresh/warm sequence above remain pending. Existing direct/unit coverage does not
-complete those caller ports. Complete imported component/assembly publication
-also remains a later dependency; no watch render was attempted in this unit.
+The subsequent [caller-port closure](../results/adaptive-trimmed-ports-2026-10-17/REPORT.md)
+adds C0/hanging spans, nested multiple outers and periodic seams with60 passing
+queries across CPU1/CPU4/both P100s, including fine/coarse/fine/repeat and fresh
+coarse. A fixed C0 source naturally exercises real forced packet refinement and
+an actual band facet across the original knot. Eleven actual process refusals
+check precise failure/no-publication paths; existing direct service checks retain
+cancelled/stale ownership. Complete imported component/assembly publication
+remains a later dependency; no watch render was attempted in these units.
 
 ## Complete-operation performance
 

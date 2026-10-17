@@ -298,9 +298,13 @@ both-P100 boundaries/faces and separate original-source whole-output readers.
 Native ownership includes retained exact domain classification, conforming
 packets/local boundary CDT, common central anchors, actual-facet source bounds,
 whole-operation work caps and cancellation. GPU performs actual geometry work;
-CPU wins these small complete processes. Do not infer full-caller C0/hanging,
-periodic, multiple-outer or remaining failure ports from their direct/unit checks.
-Continue those ports and complete imported component/assembly publication per
+CPU wins these small complete processes. The subsequent full-caller closure is
+in results/adaptive-trimmed-ports-2026-10-17/REPORT.md:60 original-checked queries
+over C0/hanging, nested island and periodic seam sources on all four placements,
+fine/coarse/fine/repeat plus fresh coarse; real forced packet targets and actual
+cross-original-knot band facets occur. Eleven process refusal/publication checks
+also pass. A real query ancestry defect was fixed without weakening the reader.
+Continue complete imported component/assembly publication per
 ADAPTIVE_MESHER_PLAN.md; the real OM10 render remains pending. General curved
 authoritative-domain maps and alternate charts are later capabilities.
 Boundary authoritative_domain_upper is only a boundary

@@ -17,3 +17,8 @@ Runtime owner made the narrow correction; construction owner independently read
 the actual body and accepted it. Strict isolated CLI rebuild passes. The affected
 nested-island history will run in a new retained path before the stopped cohort
 continues. The old failed four-query prefix and its binary pin remain retained.
+
+Affected nested CPU1 history and fresh coarse are now GREEN with unchanged
+normalization; the remaining nested/cylinder placements also pass. The final
+finite caller closure totals24 successful processes/60 original-checked queries,
+with explicit old/fixed per-family binary pins and the old failure retained.
