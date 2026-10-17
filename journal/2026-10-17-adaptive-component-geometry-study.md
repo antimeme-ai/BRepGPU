@@ -27,3 +27,17 @@ domain support. Original envelopes/assembly transport is the next separate whole
 geometry unit. Parent requested its written subplan and independent authored
 oracle before implementation. Curved authoritative B/T and source-vertex wedge
 capability remain explicit dependencies, not hidden identity substitutions.
+
+Saved the next finite subplan in docs/adaptive-assembly-unit.md and sent it to
+parent, runtime and construction peers. It retains source-derived finite carrier
+profiles as exact refs plus outward cache endpoints, original definition boxes
+and the existing exact AssemblyStore. All bounds come from positive original
+homogeneous control ratios or explicit finite analytic formulas. Proposed no
+eager geometry cache or GPU source-preparation campaign. Flagged remote ideal
+cone apex inflation as a source-profile choice for review before product code.
+
+Read the construction owner's added C0/cylinder source oracle in
+tests/native_adaptive_trimmed_caller.py. Scoped ACCEPT: exact original-span clip
+retains SAME L; C0 rows agree; exact Taylor cylinder tail is decreasing from the
+first omitted term on the stated interval; range(U)^2/8 plus actual nodal max
+bounds the whole affine facet. No test execution was added by this review.

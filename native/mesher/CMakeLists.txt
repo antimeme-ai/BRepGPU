@@ -20,6 +20,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assembly.cpp")
   add_library(brepgpu_mesher_assembly STATIC assembly.cpp)
   target_link_libraries(brepgpu_mesher_assembly PUBLIC brepgpu_mesher_source brepgpu_mesher_exact)
   brepgpu_native_cpu_rigor(brepgpu_mesher_assembly)
+  add_library(brepgpu_mesher_adaptive_assembly STATIC adaptive_assembly.cpp)
+  target_link_libraries(brepgpu_mesher_adaptive_assembly PUBLIC brepgpu_mesher_assembly)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_assembly)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cpp")
@@ -176,6 +179,14 @@ if(BREPGPU_MESHER_BUILD_BENCHMARKS)
 endif()
 
 if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_assembly ../../tests/native_adaptive_assembly.cpp)
+  target_link_libraries(brepgpu_native_adaptive_assembly PRIVATE brepgpu_mesher_adaptive_assembly)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_assembly)
+  add_test(NAME native_adaptive_assembly COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_assembly.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_assembly>")
+  set_tests_properties(native_adaptive_assembly PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   add_executable(brepgpu_native_mesher_presentation ../../tests/native_mesher_presentation.cpp)
   target_link_libraries(brepgpu_native_mesher_presentation PRIVATE brepgpu_mesher_presentation)
