@@ -385,6 +385,9 @@ void run(const Options &o, std::string_view &stage) {
       if (found == allowances.definitions.end())
         throw Error(ErrorCode::internal_error, "model definition allowance missing");
       stage = "query.complete_component";
+      std::cout << "component\tbegin\tquery\t" << q << "\tdefinition\t" << id << "\tordinal\t"
+                << d + 1 << "\tof\t" << definitions.size() << '\n'
+                << std::flush;
       tick = Clock::now();
       const auto result = mesher.mesh({generation, def, curve_banks[d], allowances.values,
                                        found->positional, found->node_source},
