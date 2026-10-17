@@ -304,6 +304,12 @@ over C0/hanging, nested island and periodic seam sources on all four placements,
 fine/coarse/fine/repeat plus fresh coarse; real forced packet targets and actual
 cross-original-knot band facets occur. Eleven process refusal/publication checks
 also pass. A real query ancestry defect was fixed without weakening the reader.
+The bounded complete-definition coordinator now passes twelve authored native
+queries and thirty-six original-checked face outputs on CPU1/CPU4/both P100s.
+Read docs/ADAPTIVE_COMPONENTS.md and its coordinator/oracle subplans. It retains
+unaffected exact boundary leases and uses the existing final contact horizon;
+coincident source identities refuse, and new failure/drain ownership has scoped
+CPU4 sanitizer checks. Singular quotients, imported assembly and real watch remain.
 Continue complete imported component/assembly publication per
 ADAPTIVE_MESHER_PLAN.md; the real OM10 render remains pending. General curved
 authoritative-domain maps and alternate charts are later capabilities.

@@ -377,13 +377,16 @@ def prove_cylinder(uv,xyz,upper,depth):
         prove_cylinder([p[i] for i in ids],[q[i] for i in ids],upper,depth+1)
 
 
-def original_boundary(src, boundary, bindings, chart):
+def original_boundary(src, boundary, bindings, chart, face=None):
     """Expected directed source edges by ORIGINAL face loop/use order."""
-    face = src.faces[0]
+    face = src.faces[0] if face is None else face
     source_uses = {use.id: use for use in src.coedges}
     source_loops = {loop.id: loop for loop in src.loops}
     actual_uses = {use['ids'][0]: use for use in boundary['uses']}
-    assert set(actual_uses) == set(source_uses), 'incomplete original use inventory'
+    definition_faces = {f.id for f in src.faces if f.definition_id == face.definition_id}
+    definition_loops = {loop.id for loop in src.loops if loop.face_id in definition_faces}
+    definition_uses = {u.id for u in src.coedges if u.loop_id in definition_loops}
+    assert set(actual_uses) == definition_uses, 'incomplete original definition use inventory'
     expected, required = [], set()
     for loop_id in face.loop_ids:
         loop = source_loops[loop_id]
@@ -516,9 +519,9 @@ def read_face(path):
         components=components, facets=facets, uses=uses, packets=packets)
 
 
-def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane'):
+def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=None):
     assert mesh['digest'] == bytes.fromhex(src.source_sha256) == boundary['digest']
-    face = src.faces[0]
+    face = src.faces[0] if face is None else face
     assert mesh['key'][6:] == (face.definition_id, face.id, face.carrier_id)
     assert mesh['orientation'] == face.orientation and mesh['profile'] == 1
     assert mesh['upper'] == F(positional) and mesh['node_source'] == F(node_cap)
@@ -543,7 +546,7 @@ def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane'):
             root = mesh['roots'][site['source'][0]]
             assert root['carrier'] == face.carrier_id
             assert all(root['box'][2*a] <= site['uv'][a] <= root['box'][2*a+1] for a in (0,1))
-    cycles, required = original_boundary(src, boundary, bindings, [s['uv'] for s in sites])
+    cycles, required = original_boundary(src, boundary, bindings, [s['uv'] for s in sites], face)
     case = SimpleNamespace(points={i:s['uv'] for i,s in enumerate(sites)}, loops=cycles)
     triangles = [facet['sites'] for facet in mesh['facets']]
     positive = sum(loop.outer for loop in src.loops if loop.id in face.loop_ids)
