@@ -34,30 +34,62 @@ struct SourceCacheData final {
 };
 class SourceCache final {
   std::shared_ptr<const SourceCacheData> data_;
-  explicit SourceCache(std::shared_ptr<const SourceCacheData> data) : data_(std::move(data)) {}
-  friend SourceCache prepare_source_cache(const SourceStore &, std::span<const CarrierRequest>,
-                                          const std::shared_ptr<RunResource> &, NumericProfile,
-                                          SourceCacheLimits, bgfd::Budget &);
-  friend SourceCache prepare_trace_source_cache(const SourceStore &,std::span<const CarrierRequest>,
-      const std::shared_ptr<RunResource>&,NumericProfile,SourceCacheLimits,bgfd::Budget&);
+  explicit SourceCache(std::shared_ptr<const SourceCacheData> data)
+      : data_(std::move(data)) {}
+  friend SourceCache prepare_source_cache(const SourceStore &,
+                                          std::span<const CarrierRequest>,
+                                          const std::shared_ptr<RunResource> &,
+                                          NumericProfile, SourceCacheLimits,
+                                          bgfd::Budget &);
+  friend SourceCache
+  prepare_trace_source_cache(const SourceStore &,
+                             std::span<const CarrierRequest>,
+                             const std::shared_ptr<RunResource> &,
+                             NumericProfile, SourceCacheLimits, bgfd::Budget &);
+
+  friend SourceCache
+  prepare_trim_source_cache(const SourceStore &,
+                            std::span<const CarrierRequest>,
+                            const std::shared_ptr<RunResource> &,
+                            NumericProfile, SourceCacheLimits, bgfd::Budget &);
 
 public:
-  [[nodiscard]] const SourceStore &source() const noexcept { return data_->source; }
-  [[nodiscard]] uint64_t generation() const noexcept { return data_->generation; }
-  [[nodiscard]] NumericProfile profile() const noexcept { return data_->profile; }
-  [[nodiscard]] SourceCachePurpose purpose() const noexcept { return data_->purpose; }
-  [[nodiscard]] std::span<const RootDescriptor> roots() const noexcept { return data_->roots; }
-  [[nodiscard]] std::span<const RootDescriptor> original_roots() const noexcept {
+  [[nodiscard]] const SourceStore &source() const noexcept {
+    return data_->source;
+  }
+  [[nodiscard]] uint64_t generation() const noexcept {
+    return data_->generation;
+  }
+  [[nodiscard]] NumericProfile profile() const noexcept {
+    return data_->profile;
+  }
+  [[nodiscard]] SourceCachePurpose purpose() const noexcept {
+    return data_->purpose;
+  }
+  [[nodiscard]] std::span<const RootDescriptor> roots() const noexcept {
+    return data_->roots;
+  }
+  [[nodiscard]] std::span<const RootDescriptor>
+  original_roots() const noexcept {
     return data_->original_roots;
   }
   [[nodiscard]] std::span<const Interval>
   controls(ArithmeticStage stage = ArithmeticStage::rn64) const;
   [[nodiscard]] const SourceCacheData &view() const noexcept { return *data_; }
 };
-[[nodiscard]] SourceCache prepare_source_cache(const SourceStore &, std::span<const CarrierRequest>,
-                                               const std::shared_ptr<RunResource> &, NumericProfile,
-                                               SourceCacheLimits, bgfd::Budget &);
-[[nodiscard]] SourceCache prepare_trace_source_cache(const SourceStore&,std::span<const CarrierRequest>,
-    const std::shared_ptr<RunResource>&,NumericProfile,SourceCacheLimits,bgfd::Budget&);
+[[nodiscard]] SourceCache
+prepare_source_cache(const SourceStore &, std::span<const CarrierRequest>,
+                     const std::shared_ptr<RunResource> &, NumericProfile,
+                     SourceCacheLimits, bgfd::Budget &);
+[[nodiscard]] SourceCache
+prepare_trace_source_cache(const SourceStore &, std::span<const CarrierRequest>,
+                           const std::shared_ptr<RunResource> &, NumericProfile,
+                           SourceCacheLimits, bgfd::Budget &);
+// One original analytic evaluator retains the whole supplied finite envelope;
+// regular prepared angular panels tile it. Singular source charts still refuse.
+[[nodiscard]] SourceCache
+prepare_trim_source_cache(const SourceStore &, std::span<const CarrierRequest>,
+                          const std::shared_ptr<RunResource> &, NumericProfile,
+                          SourceCacheLimits, bgfd::Budget &);
 } // namespace bgmesh::adaptive
 #endif
