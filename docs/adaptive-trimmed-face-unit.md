@@ -83,9 +83,22 @@ activation path within the axis-depth64 cap is typed unresolved. BAND anchors
 retain arbitrary-word exact coordinates under their separate arithmetic cap.
 Exact overlap centroids and dyadic interior search provide finite locators;
 neither path assumes binary64 interior representability.
+At a closed split-line tie the target follows one canonical containing child;
+retained companions and common atomic side events propagate hanging incidence.
+Activating a target does not require balancing every touching leaf.
 Numerical floors request authority promotion, source/domain failures request their
 real authority, and budget/depth exhaustion stays unresolved. No termination or
 triangle-quality theorem is inferred merely from this progress rule.
+
+First identity/selected-domain profile also admits boundary QUALITY explicitly:
+each chosen protected trace-to-actual-chord upper must fit the exact requested
+face tolerance, and each source-node upper its requested separate cap. A coarser
+boundary cannot silently serve a stricter face query. Cache/B-corner promotions
+remain under the cache owner. A proved unchanged physical-boundary point floor
+returns named source/precision unresolved; it never triggers futile edge splits
+or a private Q replacement. The existing boundary operation already settles its
+own point precision at that same quality. Explicit cross-authority physical-point
+promotion demands for future nonidentity domain budgets remain later machinery.
 
 ## Complete native caller and external oracle
 
