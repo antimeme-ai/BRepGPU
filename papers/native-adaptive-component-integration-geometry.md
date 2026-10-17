@@ -181,8 +181,11 @@ carrier domains. Positive rational homogeneous controls give a conservative XYZ
 convex hull only after division by each actual positive weight. Analytic bounds
 use literal original frame columns/radii and finite nonperiodic coordinates;
 global angular bounds are often stronger operationally than exact trig extrema
-for this compile-once purpose. Nonorthogonal frames remain legal. Include original
-pre-cap source and any admitted ideal-cap/output extent needed by transport.
+for this compile-once purpose. Nonorthogonal frames remain legal. Include the
+complete original pre-cap source. Intermediate ideal-map extents do not enlarge
+the placement box:
+`prepare_assembly` already expands B0 by requested positional epsilon; every
+accepted actual output is within local tau<=epsilon of that original source.
 Display uv_bounds hints are not rational natural-domain authority. Finite analytic
 domains must include the original occurrence/guide envelope used by preparation;
 expanding that envelope after assembly transport requires recomputing allowances.
