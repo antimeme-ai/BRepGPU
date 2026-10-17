@@ -1,0 +1,3 @@
+config	prepare_exit	admission_exit	complete_nonvisual_reference_outcome	admission_status	elapsed_seconds
+heal0	1		False	NOT_COMPLETED	21.969469861011021
+heal1	1		False	NOT_COMPLETED	87.466837252955884

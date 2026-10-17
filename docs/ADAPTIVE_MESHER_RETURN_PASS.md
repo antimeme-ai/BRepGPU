@@ -99,3 +99,26 @@ reviewed ExactTable-owned canonical clone could avoid redundant normalization
 while preserving validation for raw views. This is a source-derived avoided-work
 contender, not a measured hotspot or selected change; do not replace generic
 GCD or weaken raw-word admission on its account.
+
+
+## Complete original-watch observation
+
+The [full OM10 operation](../results/om10-watch-2026-10-17/REPORT.md) now finishes:
+CPU12/P1001 with CPU12 take875.16/872.50s from cold extracted source to both
+1920x1800 images. Complete meshing takes847.712/845.785s; source preparation is
+11.327/10.905s and scene construction12.089/11.836s. P100 display is faster, but
+this observation does not establish a complete-operation gain. Use the published
+per-component/per-stage files to choose the next coherent performance unit;
+do not infer a global arithmetic rewrite or GPU scheduling design from one part.
+
+The crossing-witness local recovery eliminates whole-face boundary invalidation
+at the diagnosed tangent-adjacent chosen chords. Its curvature proposal remains
+finite and heuristic; preserve exact acceptance and the old nesting fallback.
+General domain/nesting recovery needs its own studied design if revisited.
+
+Presentation follow-up: the first complete exploded view includes all166parts
+and IDs, but dense callouts and center-based hidden anchors limit readability.
+Large scene replays and separate full-name legends improve shareability without
+altering geometric claims. An authored explosion is not a checked collision-free
+disassembly plan. Record high-resolution replay, PNG encoding and composition
+costs separately from the completed cold meshing operations.

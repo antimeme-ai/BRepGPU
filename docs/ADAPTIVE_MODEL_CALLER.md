@@ -4,8 +4,9 @@
 cached-adaptive mesher and writes assembled/exploded labeled images from their
 actual stored mesh positions. It retains the original source bytes and paired
 per-face boundary artifacts. The regular authored assembly and
-[three-use analytic cap](ADAPTIVE_CAPS.md) paths are connected; the complete
-imported watch remains in progress.
+[three-use analytic cap](ADAPTIVE_CAPS.md) paths are connected. The complete original OM10 now finishes on CPU and P100,
+with all107 definitions,9162 faces and166 placements: [actual images and full
+timings](../results/om10-watch-2026-10-17/REPORT.md).
 
 ```sh
 brepgpu-adaptive-model --source original.bgsource --output new-result \

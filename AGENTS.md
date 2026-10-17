@@ -5,6 +5,17 @@ On this workspace the target is `../BLACKBIRD.md`. A standalone checkout needs
 the operator's current doctrine placed beside the checkout. Do not substitute
 archived reference instructions for it.
 
+Latest watch checkpoint: the complete original OM10 now renders through the
+owned cached-adaptive C++/CUDA mesher on CPU12 and P1001/CPU12. All107 definitions,
+9162 original faces and166 placements finish with273978 unique triangles and
+both annotated images. Read results/om10-watch-2026-10-17/REPORT.md for actual
+scopes/times and the fresh NVIDIA reference outcome. Older pending-watch
+statements below describe historical stages. Whole-watch independent geometric
+qualification and required external alpha suites remain incomplete. The operator
+now requests large, attractive share images with all times recorded: high-resolution
+scene replays must be labeled separately from cold source-to-image operations.
+Do not restart a certification campaign or imply an overall GPU speedup.
+
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
 Current phase: implemented owned rational-patch CPU/CUDA evaluator and resident
 seeded box-stationary projection, with independently qualified output on CPU
