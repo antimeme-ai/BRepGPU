@@ -60,8 +60,10 @@ The first complete selected-face unit adds these concrete opportunities:
   Passing facets then avoid virtual Fraction geometry entirely. A crossing of
   original spans needs a source partition; a crossing of numerical cache leaves
   does not inherently require one for an original-source bound. Retain cached
-  bilinear clipping as a tightening route for nonaccepts. This is a scheduling
-  contender using the same evaluator/kernel, not a selected implementation yet.
+  bilinear clipping as a tightening route for nonaccepts. Delivered in
+  [the lazy-work unit](adaptive-trimmed-lazy-work-plan.md): known-leaf packets,
+  original-span Band prepass and canonical fallback. The real watch now passes
+  its first complete438-face component; whole-watch completion is still pending.
 - Numerical refinement must not weaken actual construction progress. The first
   BAND rule placed points in the first clipped sliver and exhausted work on
   weighted/saddle inputs. Central points in the actual failing triangle repair
@@ -78,3 +80,12 @@ The first complete selected-face unit adds these concrete opportunities:
   source uploads and retained host/device peaks rather than treating selected
   face timings as a complete component/render result. Complete publication and
   the remaining caller-family ports still precede a tuning campaign.
+
+The subsequent watch sample reaches repeated binary64-to-rational normalization
+in candidate preparation. The [dyadic constructor unit](native-binary64-dyadic-unit.md)
+removes general GCD/division from that known power-of-two conversion, without
+changing geometry or generic arithmetic. This is not a general GCD diagnosis.
+If preparation still dominates afterward, measure actual allocation/operand
+counts before considering broader small/dyadic arithmetic or parallel input
+packing. Those remain follow-up contenders; no generic arithmetic rewrite or
+new mesher architecture is selected by a sampled stack.
