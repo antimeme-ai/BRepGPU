@@ -77,3 +77,44 @@ profile. After the complete render, study ordinary interval normalization and
 owned canonical-table reads as one coherent numerical-packing policy. Raw
 ExactView imports must keep validation. No unchecked import, generic arithmetic
 rewrite or new numerical-pack implementation is selected by that sample.
+
+## Region lifetime integration
+
+The bridge now destroys completed admission and encoding storage before CDT,
+and decoded predicates before adjacency. The unchanged16MiB authored operation
+was resource-exhausted before the change and now returns16,388 original sites /
+32,770 triangles at16,647,712 charged peak bytes; the SAME independent exact
+chain reader passes. Normal return and tiny-cap refusal both release scratch.
+The existing source-backed region check, strict build, product clang-tidy and
+root/peer actual-source reviews pass. Production child scratch remains64MiB.
+
+Root relinked v8, SHA256
+d32040320485b390286ae5603bc1349c5a63491086b5b05e61144ace849e5d3a.
+The selected original remaining component is running on P1000 / CPU12 on one
+socket at unchanged0.005/0.001mm. To reduce serial waiting, root also started the
+whole CPU12 assembled/exploded operation on the other socket; it first traverses
+the already completed prefix. This changes only the run schedule from the
+selected-component-first plan. If the selected operation fails, stop the whole
+duplicate. These concurrent single observations are development outcomes,
+not isolated performance comparisons. No final image exists at run start.
+
+The actual v8 remaining-component operation FAILED after932.83s wall /1205.33s
+user /5.57s system, peak4,380,916KiB. It was concurrent development work with a
+failure-only debugger attached late, not an isolated timing. The allocation is
+again3,670,016 bytes in DivideConquer::edge, against live64,918,076 /
+peak65,770,300 /limit67,108,864; work367,355,660, max_limbs28. The scoped lifetime
+change did not establish that the original component fits64MiB. Root stopped the
+duplicate full CPU operation (42 completed definitions) rather than repeat that
+known resource outcome. No watch image resulted.
+
+A single two-second49Hz live sample before failure contained108 samples and
+reached region triangulation/admission and exact arithmetic; it was not a GPU
+wait. No broad arithmetic rewrite is selected. The next unit is caller resource
+configuration: explicit per-job scratch under the SAME32GiB RunResource, default
+retaining the old min(run,64MiB). Scheduler reservations and direct nested
+JobContext allocations remain globally charged. There are two prepaid worker
+pools during physical curves when threads>1, not just one:12×256MiB×2 is6GiB,
+before retained source/cache and direct nested scratch. The global limit still
+may refuse a workload;256MiB is a deliberate run configuration, not a universal
+working-set bound or a geometry/performance fix. Source/core/quality/work limits
+remain unchanged.
