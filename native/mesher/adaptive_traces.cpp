@@ -881,9 +881,14 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
     b.charge(1);
     const auto &use = request.source.view().coedges[site.use.value];
     auto point = guide_point(carrier, use, samples[site.guide], admitted_box, b);
-    if (use.reconstructed && carrier.kind == 1)
-      point = locator.plane(target_point(request, site, source->values(), samples, b));
-    else if (use.reconstructed && carrier.kind >= 2 && carrier.kind <= 5) {
+    if (use.reconstructed && carrier.kind == 1) {
+      auto inverse = locator.plane(target_point(request, site, source->values(), samples, b));
+      // The exact plane foot is a proposal. Keep the original lifted guide if
+      // that foot leaves the fixed bank; unchanged source guards decide whether
+      // the guide is acceptable. Neither candidate is clamped or expands R.
+      if (FaceLocator::in_box({inverse[0].to_double(), inverse[1].to_double()}, admitted_box))
+        point = std::move(inverse);
+    } else if (use.reconstructed && carrier.kind >= 2 && carrier.kind <= 5) {
       const auto target = target_point(request, site, source->values(), samples, b);
       std::array<Interval, 3> target_box{};
       for (uint32_t a = 0; a < 3; ++a) {
