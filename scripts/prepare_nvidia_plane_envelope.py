@@ -4,7 +4,7 @@ Only Plane face:range entries widen. Source support geometry, topology and the
 original USD remain unchanged. Requires the existing NVIDIA package usdpy and
 its native plane-envelope helper; no meshing or distance certification occurs.
 """
-import argparse,csv,itertools,math,pathlib,subprocess,time,hashlib
+import argparse,csv,itertools,math,pathlib,subprocess,time,hashlib,shutil
 from fractions import Fraction as F
 from pxr import Usd,Vt,Gf
 
@@ -53,9 +53,23 @@ def prepare(original,prefix,driver):
  stage=Usd.Stage.Open(str(original));require(bool(stage),'USD unavailable');require(not stage.GetRootLayer().subLayerPaths,'sublayers unsupported')
  prims=list(stage.TraverseAll());require(all(not p.HasAuthoredReferences() and not p.HasAuthoredPayloads() and not p.GetVariantSets().GetNames() for p in prims),'composed USD unsupported')
  breps=[p for p in prims if p.GetTypeName()=='BrepArray'];require(len(breps)==1,'one complete BrepArray required');p=breps[0]
- types=list(p.GetAttribute('face:surfaceType').Get());ranges=p.GetAttribute('face:range').Get();require(len(ranges)==2*len(types),'incomplete face range inventory')
+ types=list(p.GetAttribute('face:surfaceType').Get());ranges=p.GetAttribute('face:range').Get();require(types and len(ranges)==2*len(types),'incomplete face range inventory')
+ planes=[i for i,t in enumerate(types) if str(t)=='BrepSurfacePlaneAPI']
+ if not planes:
+  # No Plane support domain exists to repair. Preserve the original bytes and
+  # leave geometry admission of other surface families to the strict SDK.
+  inventory(stage)
+  corrected=prefix.parent/'corrected.usdc';require(not corrected.exists(),'corrected output exists')
+  shutil.copyfile(original,corrected)
+  require(original.read_bytes()==corrected.read_bytes(),'no-Plane layer bytes changed')
+  elapsed=time.monotonic()-begin
+  with (prefix.parent/'stages.tsv').open('w') as f:
+   w=csv.writer(f,delimiter='\t',lineterminator='\n');w.writerow(['stage','seconds']);w.writerow(['no_plane_passthrough',elapsed])
+  with (prefix.parent/'preparation.tsv').open('w') as f:
+   w=csv.writer(f,delimiter='\t',lineterminator='\n');w.writerow(['field','value']);w.writerows([('policy','no_plane_passthrough_v1'),('input_sha256',hashlib.sha256(original.read_bytes()).hexdigest()),('output_sha256',hashlib.sha256(corrected.read_bytes()).hexdigest()),('source_faces',len(types)),('plane_ranges',0),('changed_attribute','none'),('support_geometry_modified',0),('finite_plane_domain_modified',0),('curves_topology_modified',0),('distance_qualification','not_performed')])
+  return corrected
  names=['brep:surface:plane:'+s for s in ['origin','axis','refDirection']];data=[p.GetAttribute(n).Get() for n in names]
- planes=[i for i,t in enumerate(types) if str(t)=='BrepSurfacePlaneAPI'];require(planes and all(len(a)==len(planes) for a in data),'plane frame inventory mismatch')
+ require(all(a is not None and len(a)==len(planes) for a in data),'plane frame inventory mismatch')
  frame_path=pathlib.Path(str(prefix)+'.frames.tsv')
  with frame_path.open('w') as f:
   w=csv.writer(f,delimiter='\t',lineterminator='\n');w.writerow(['plane','ox','oy','oz','zx','zy','zz','ux','uy','uz'])
