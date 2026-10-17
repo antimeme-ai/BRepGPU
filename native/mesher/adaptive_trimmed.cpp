@@ -30,8 +30,10 @@ struct FaceTrimSession::Impl final {
     start,
     select,
     anchors,
+    cuts,
     construct,
     bound,
+    cap_bound,
     promotions,
     boundary,
     complete,
@@ -64,13 +66,19 @@ struct FaceTrimSession::Impl final {
   PacketFootprint footprint;
   FaceConstructionResult construction;
   SurfaceFacetResult bounds;
+  SurfaceCapFacetResult cap_bounds;
+  CapCutControlLease cap_control;
+  std::optional<FaceConstructionKey> replacement_key;
+  FaceContinuation resume_output;
   ConstructionRefinement refinement;
   FaceTrimResult output;
   std::optional<ExactTable> anchor_values, promotion_values;
   std::pmr::vector<SurfacePointInput> anchors, promotions;
   std::pmr::vector<uint64_t> births, anchor_components;
   std::pmr::vector<BoundaryKey> boundary_wanted;
-  std::pmr::vector<uint32_t> pending_facets;
+  std::pmr::vector<uint32_t> pending_facets, ordinary_facets, cap_facets, cut_plan_indices;
+  SurfacePointResult sampled_cuts;
+  bool refresh_cuts_after_anchors = false;
   SurfacePointResult sampled_anchors;
   bool surface_started = false;
   bool recheck_failed = false;
@@ -83,7 +91,9 @@ struct FaceTrimSession::Impl final {
         stop(cancel_source.get_token()), surface(resource, source, limits.surface, stop),
         session(next_face_session.fetch_add(1, std::memory_order_relaxed)), anchors(resource.get()),
         promotions(resource.get()), births(resource.get()), anchor_components(resource.get()),
-        boundary_wanted(resource.get()), pending_facets(resource.get()) {
+        boundary_wanted(resource.get()), pending_facets(resource.get()),
+        ordinary_facets(resource.get()), cap_facets(resource.get()),
+        cut_plan_indices(resource.get()) {
     require(session && source.source().view().resource == resource && limits.regions &&
                 limits.anchors && limits.exact_bits && limits.construction_work,
             "invalid trimmed-face source owner or limits");
@@ -93,6 +103,11 @@ struct FaceTrimSession::Impl final {
     surface_started = false;
     output.reset();
     bounds.reset();
+    cap_bounds.reset();
+    cap_control = {};
+    replacement_key.reset();
+    resume_output.reset();
+    sampled_cuts.reset();
     refinement.reset();
     construction.reset();
     recheck_failed = false;
@@ -110,6 +125,9 @@ struct FaceTrimSession::Impl final {
     promotions.clear();
     boundary_wanted.clear();
     pending_facets.clear();
+    ordinary_facets.clear();
+    cap_facets.clear();
+    cut_plan_indices.clear();
     phase = Phase::idle;
   }
   void stopped() const {
@@ -216,6 +234,7 @@ struct FaceTrimSession::Impl final {
     admitted.definition = candidate.definition;
     admitted.face = candidate.face;
     admitted.assignment_epoch = candidate.assignment;
+    admitted.face_generation = boundary_generation;
     return admitted;
   }
   uint64_t remaining_work(bgfd::Budget &budget) const {
@@ -249,6 +268,195 @@ struct FaceTrimSession::Impl final {
       labels = apply_footprint(footprint, std::move(labels), budget);
     surface.classify(std::move(labels));
     counts.classification_seconds += elapsed(tick);
+  }
+  static CapDomainKey cap_key(const FaceConstructionKey &key) {
+    return {key.source_generation,   key.query,           key.definition,     key.face,
+            key.boundary_generation, key.face_generation, key.chart_revision, key.domain_revision,
+            key.assignment_epoch,    key.profile_revision};
+  }
+  static SurfaceFaceIdentity surface_key(const FaceConstructionKey &key) {
+    return {key.definition,      key.face,           key.source_generation, key.boundary_generation,
+            key.face_generation, key.chart_revision, key.assignment_epoch,  key.domain_revision};
+  }
+  static uint64_t next_revision(uint64_t current) {
+    if (current == UINT64_MAX)
+      throw Error(ErrorCode::resource_exhausted, "face/domain revision exhausted");
+    return current + 1;
+  }
+  std::pmr::vector<RootAllowance> root_allowances() const {
+    if (!query)
+      throw Error(ErrorCode::internal_error, "surface allowances lack face query");
+    std::pmr::vector<RootAllowance> rows(resource.get());
+    const auto &s = source.source().view();
+    const auto carrier = s.carrier_index.find(s.faces[query->face.value].carrier_id);
+    for (uint32_t i = 0; i < source.roots().size(); ++i)
+      if (source.roots()[i].source_slot == carrier.value)
+        rows.push_back({{i}, query->positional});
+    return rows;
+  }
+  void retain_control(JobContext &context) {
+    if (!domain || !domain->caps || domain->caps.caps().empty() ||
+        (cap_control && cap_control.fixed_metric_factor()))
+      return;
+    const auto metric_values = construction ? std::optional(construction->values) : std::nullopt;
+    const auto metric_factor =
+        construction ? std::optional(construction->fixed_metric_factor) : std::nullopt;
+    cap_control = continue_cap_domain(
+        {domain->caps, CapCutDirection::retain, next_table(), metric_values, metric_factor},
+        context);
+  }
+  void submit_cuts(bool after_anchors = false) {
+    refresh_cuts_after_anchors = after_anchors;
+    cut_plan_indices.clear();
+    sampled_cuts.reset();
+    if (!domain->caps || domain->caps.points().empty()) {
+      submit_anchors();
+      return;
+    }
+    std::pmr::vector<SurfacePointInput> points(resource.get());
+    for (uint32_t i = 0; i < domain->caps.points().size(); ++i) {
+      const auto &point = domain->caps.points()[i];
+      if (std::holds_alternative<SurfaceCapPoint>(point.authority)) {
+        cut_plan_indices.push_back(i);
+        points.push_back({point.uv, ArithmeticStage::rn64});
+      }
+    }
+    if (points.empty()) {
+      submit_anchors();
+      return;
+    }
+    operation_started = Clock::now();
+    surface.sample({view, domain->caps.values(), next_operation(), points});
+    phase = Phase::cuts;
+  }
+  void submit_bounds() {
+    if (!query)
+      throw Error(ErrorCode::internal_error, "surface bound lacks face query");
+    ordinary_facets.clear();
+    cap_facets.clear();
+    for (auto index : pending_facets) {
+      require(index < construction->facets.size(),
+              "whole facet horizon index outside construction");
+      if (construction->facets[index].mapped)
+        cap_facets.push_back(index);
+      else
+        ordinary_facets.push_back(index);
+    }
+    operation_started = Clock::now();
+    if (!ordinary_facets.empty()) {
+      surface.bound({view,
+                     construction,
+                     domain,
+                     {query->values, query->positional},
+                     ordinary_facets,
+                     next_operation(),
+                     limits.facets});
+      phase = Phase::bound;
+    } else {
+      bounds.reset();
+      surface.bound_caps({view,
+                          construction,
+                          domain,
+                          {query->values, query->positional},
+                          cap_facets,
+                          next_operation(),
+                          limits.facets});
+      phase = Phase::cap_bound;
+    }
+    ++counts.facet_horizons;
+  }
+  TrimFaceProgress finish_horizon(JobContext &context) {
+    const auto tau = import_exact(context.budget, query->values.view(query->positional));
+    bool all = true, cap_failed = false;
+    if (!ordinary_facets.empty()) {
+      require(bounds && bounds->work.key().construction == construction->key &&
+                  bounds->work.key().surface == view.key() &&
+                  bounds->facets.size() == ordinary_facets.size(),
+              "stale or partial ordinary-facet horizon");
+      for (uint32_t i = 0; i < ordinary_facets.size(); ++i) {
+        const auto &answer = bounds->facets[i];
+        require(answer.facet == ordinary_facets[i], "ordinary facet horizon order differs");
+        if (answer.accepted)
+          require(answer.positional_upper &&
+                      import_exact(context.budget, bounds->values.view(*answer.positional_upper))
+                              .compare(tau) <= 0,
+                  "accepted ordinary upper exceeds original exact allowance");
+        else
+          all = false;
+      }
+    }
+    auto angular = Rational(context.budget), radial = Rational(context.budget);
+    if (!cap_facets.empty()) {
+      require(cap_bounds && cap_bounds->work.key().construction == construction->key &&
+                  cap_bounds->work.key().surface == view.key() &&
+                  cap_bounds->facets.size() == cap_facets.size(),
+              "stale or partial mapped-cap horizon");
+      for (uint32_t i = 0; i < cap_facets.size(); ++i) {
+        const auto &answer = cap_bounds->facets[i];
+        require(answer.facet == cap_facets[i], "mapped facet horizon order differs");
+        if (answer.accepted) {
+          require(answer.bounds &&
+                      import_exact(context.budget, cap_bounds->values.view(answer.bounds->total))
+                              .compare(tau) <= 0,
+                  "accepted cap total exceeds original exact allowance");
+        } else {
+          all = false;
+          cap_failed = true;
+          if (!answer.bounds)
+            throw Error(ErrorCode::unresolved, "mapped cap numerical bound unresolved");
+          angular = angular.add(
+              import_exact(context.budget, cap_bounds->values.view(answer.bounds->angular)));
+          radial =
+              radial
+                  .add(import_exact(context.budget, cap_bounds->values.view(answer.bounds->radial)))
+                  .add(import_exact(context.budget, cap_bounds->values.view(answer.bounds->band)));
+        }
+      }
+    }
+    if (all) {
+      require(!bounds || ordinary_facets.empty() || bounds->point_floors.empty(),
+              "accepted horizon has unresolved point floors");
+      output = std::allocate_shared<FaceTrimResultData>(
+          RunAllocator<FaceTrimResultData>(resource), resource, construction, view, query.value());
+      phase = Phase::complete;
+      return TrimFaceProgress::complete;
+    }
+    if (cap_failed) {
+      const auto direction =
+          angular.compare(radial) >= 0 ? CapCutDirection::angular : CapCutDirection::radial;
+      cap_control = continue_cap_domain({domain->caps, direction, next_table(),
+                                         construction->values, construction->fixed_metric_factor},
+                                        context);
+      auto next = key;
+      next.face_generation = next_revision(key.face_generation);
+      next.domain_revision = next_revision(key.domain_revision);
+      next.construction_revision = 0;
+      replacement_key = next;
+      resume_output.reset();
+      phase = Phase::domain;
+      return TrimFaceProgress::progressed;
+    }
+    require(bounds && !ordinary_facets.empty(), "failed horizon has no actual facet authority");
+    if (!bounds->point_floors.empty()) {
+      submit_floors(context);
+      return TrimFaceProgress::progressed;
+    }
+    if (horizon == UINT64_MAX)
+      throw Error(ErrorCode::resource_exhausted, "trimmed construction horizon exhausted");
+    refinement = plan_construction_refinement(
+        {construction, bounds, next_table(), ++horizon, limits.exact_bits}, context);
+    if (!refinement->boundary_requests.empty()) {
+      boundary_wanted = refinement->boundary_requests;
+      counts.boundary_requests += boundary_wanted.size();
+      phase = Phase::boundary;
+      return TrimFaceProgress::needs_boundary;
+    }
+    counts.band_anchors += refinement->band_anchors.size();
+    counts.packet_targets += refinement->packet_targets.size();
+    append_anchors(context);
+    surface.refine({view, refinement->splits, refinement->packet_targets, {}, construction});
+    phase = Phase::select;
+    return TrimFaceProgress::progressed;
   }
   void submit_anchors() {
     if (anchors.empty()) {
@@ -400,7 +608,26 @@ void FaceTrimSession::begin(const TrimFaceQuery &query) {
           "stale trimmed quality/assignment or legacy/pooled mode mismatch");
   bgfd::Budget budget({p.limits.surface.child_bytes, p.limits.construction_work}, resource_.get(),
                       p.stop);
-  const auto key = p.admit_boundary(query, query.boundary, budget);
+  auto key = p.admit_boundary(query, query.boundary, budget);
+  if (query.continuation) {
+    const auto &resume = *query.continuation;
+    const auto &origin = resume.origin;
+    require(resume.resource == resource_ && &resume.source.view() == &p.source.view() &&
+                origin.source_generation == p.source.generation() &&
+                origin.query == query.generation && origin.definition == query.definition &&
+                origin.face == query.face &&
+                origin.profile_revision == p.source.profile().revision &&
+                origin.chart_revision == key.chart_revision &&
+                origin.boundary_generation <= key.boundary_generation && resume.control &&
+                import_exact(budget, resume.values.view(resume.positional))
+                        .compare(import_exact(budget, query.values.view(query.positional))) == 0 &&
+                import_exact(budget, resume.values.view(resume.node_source))
+                        .compare(import_exact(budget, query.values.view(query.node_source))) == 0,
+            "foreign or incompatible face continuation");
+    key.face_generation =
+        std::max(key.boundary_generation, Impl::next_revision(origin.face_generation));
+    key.domain_revision = Impl::next_revision(origin.domain_revision);
+  }
   p.query = query;
   p.horizon = 0; // semantic anchor births restart only on a fresh query/assignment
   if (query.generation > p.last_query)
@@ -409,6 +636,7 @@ void FaceTrimSession::begin(const TrimFaceQuery &query) {
   if (pooled)
     p.last_assignment = query.assignment;
   p.key = key;
+  p.cap_control = query.continuation ? query.continuation->control : CapCutControlLease{};
   p.construction_work_used = budget.work();
   p.last_query = query.generation;
   p.phase = Impl::Phase::domain;
@@ -431,13 +659,48 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
     if (p.phase == Phase::complete)
       return TrimFaceProgress::complete;
     if (p.phase == Phase::domain) {
-      const auto prepared =
-          prepare_face_domain({p.query->boundary, p.key, p.next_table()}, context);
+      const auto candidate_key = p.replacement_key.value_or(p.key);
+      ProducedCapDomainLease cap_plan;
+      if (p.source.purpose() == SourceCachePurpose::quotient_trim) {
+        auto prepared =
+            prepare_cap_domain({p.source, p.query->boundary, Impl::cap_key(candidate_key),
+                                p.next_table(), p.cap_control},
+                               context);
+        p.cap_control = prepared.continuation;
+        if (!prepared.boundary_requests.empty()) {
+          p.boundary_wanted = std::move(prepared.boundary_requests);
+          p.counts.boundary_requests += p.boundary_wanted.size();
+          p.replacement_key.reset();
+          p.phase = Phase::boundary;
+          return TrimFaceProgress::needs_boundary;
+        }
+        cap_plan = std::move(prepared.plan);
+      }
+      const auto prepared = prepare_face_domain(
+          {p.query->boundary, candidate_key, p.next_table(), cap_plan}, context);
       if (!prepared.requests.empty()) {
         p.boundary_wanted = prepared.requests;
         p.counts.boundary_requests += p.boundary_wanted.size();
+        p.replacement_key.reset();
         p.phase = Phase::boundary;
         return TrimFaceProgress::needs_boundary;
+      }
+      const bool local = p.replacement_key.has_value();
+      if (local) {
+        const auto allowances = p.root_allowances();
+        p.surface.replace_domain({p.view, prepared.domain, Impl::surface_key(candidate_key),
+                                  p.query->values, allowances});
+        p.key = candidate_key;
+        p.replacement_key.reset();
+        p.footprint.reset();
+        p.construction.reset();
+        p.bounds.reset();
+        p.cap_bounds.reset();
+        p.refinement.reset();
+        p.sampled_cuts.reset();
+        p.sampled_anchors.reset();
+        p.output.reset();
+        p.view = {};
       }
       p.domain = prepared.domain;
       p.classifier = std::allocate_shared<FaceDomainClassifier>(
@@ -459,29 +722,19 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
             keep[i] = 0; // new global CDT assigns actual component IDs
         p.compact_anchors(keep);
       }
-      p.phase = Phase::start;
+      p.phase = local ? Phase::select : Phase::start;
       return TrimFaceProgress::progressed;
     }
     if (p.phase == Phase::start) {
-      std::pmr::vector<RootAllowance> allowances(resource_.get());
-      const auto &s = p.source.source().view();
-      const auto carrier = s.carrier_index.find(s.faces[p.query->face.value].carrier_id);
-      for (uint32_t i = 0; i < p.source.roots().size(); ++i)
-        if (p.source.roots()[i].source_slot == carrier.value)
-          allowances.push_back({{i}, p.query->positional});
-      p.surface.begin(
-          {p.query->generation,
-           {p.key.definition, p.key.face, p.key.source_generation, p.key.boundary_generation,
-            p.key.boundary_generation, p.key.chart_revision, p.key.assignment_epoch},
-           p.source,
-           p.query->values,
-           allowances});
+      const auto allowances = p.root_allowances();
+      p.surface.begin({p.query->generation, Impl::surface_key(p.key), p.source, p.query->values,
+                       allowances, p.domain});
       p.surface_started = true;
       p.phase = Phase::select;
       return TrimFaceProgress::progressed;
     }
     if (p.phase == Phase::select || p.phase == Phase::anchors || p.phase == Phase::promotions ||
-        p.phase == Phase::bound) {
+        p.phase == Phase::cuts || p.phase == Phase::bound || p.phase == Phase::cap_bound) {
       const auto state = p.surface.step(context);
       if (state == SurfaceProgress::needs_classification) {
         p.classify(context.budget);
@@ -493,7 +746,23 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
         return TrimFaceProgress::progressed;
       if (p.phase == Phase::select && state == SurfaceProgress::selected) {
         p.view = p.surface.selection();
-        p.submit_anchors();
+        p.submit_cuts();
+        return TrimFaceProgress::progressed;
+      }
+      if (p.phase == Phase::cuts && state == SurfaceProgress::points_complete) {
+        p.sampled_cuts = p.surface.point_result();
+        p.view = p.surface.selection();
+        require(p.sampled_cuts->points.size() == p.cut_plan_indices.size(),
+                "incomplete cut point horizon");
+        p.surface.release_operation();
+        if (p.refresh_cuts_after_anchors && p.sampled_anchors &&
+            p.sampled_anchors->view.key() == p.view.key() &&
+            p.sampled_anchors->view.selection() == p.view.selection()) {
+          p.phase = Phase::construct;
+          p.refresh_cuts_after_anchors = false;
+        } else {
+          p.submit_anchors();
+        }
         return TrimFaceProgress::progressed;
       }
       if ((p.phase == Phase::anchors || p.phase == Phase::promotions) &&
@@ -505,13 +774,19 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
           p.sampled_anchors = points;
           for (uint32_t i = 0; i < p.anchors.size(); ++i)
             p.anchors[i].demanded = points->points[i].key.stage;
+          if (p.sampled_cuts && (p.sampled_cuts->view.key() != p.view.key() ||
+                                 p.sampled_cuts->view.selection() != p.view.selection())) {
+            p.surface.release_operation();
+            p.submit_cuts(true);
+            return TrimFaceProgress::progressed;
+          }
           p.phase = Phase::construct;
         } else {
           p.counts.anchor_seconds += elapsed(p.operation_started);
           p.promotions.clear();
           p.promotion_values.reset();
           p.surface.release_operation();
-          p.submit_anchors();
+          p.submit_cuts();
           return TrimFaceProgress::progressed;
         }
         p.surface.release_operation();
@@ -520,58 +795,27 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
       }
       if (p.phase == Phase::bound && state == SurfaceProgress::facets_complete) {
         p.bounds = p.surface.facet_result();
-        require(p.bounds->work.key().construction == p.construction->key &&
-                    p.bounds->work.key().surface == p.view.key() &&
-                    p.bounds->facets.size() == p.pending_facets.size(),
-                "stale or partial whole-facet horizon");
-        const auto tau = import_exact(context.budget, p.query->values.view(p.query->positional));
-        bool all = true;
-        for (uint32_t i = 0; i < p.pending_facets.size(); ++i) {
-          const auto &answer = p.bounds->facets[i];
-          require(answer.facet == p.pending_facets[i], "facet horizon order/inventory differs");
-          if (answer.accepted) {
-            require(
-                answer.positional_upper.has_value() &&
-                    import_exact(context.budget, p.bounds->values.view(*answer.positional_upper))
-                            .compare(tau) <= 0,
-                "accepted facet upper exceeds original exact allowance");
-          } else {
-            all = false;
-          }
-        }
         p.counts.bound_pieces += p.bounds->work.pieces().size();
         p.surface.release_operation();
-        p.counts.bound_seconds += elapsed(p.operation_started);
-        if (all) {
-          require(p.bounds->point_floors.empty(),
-                  "accepted facet horizon has unresolved point floors");
-          p.output = std::allocate_shared<FaceTrimResultData>(
-              RunAllocator<FaceTrimResultData>(resource_), resource_, p.construction, p.view,
-              p.query.value());
-          p.phase = Phase::complete;
-          return TrimFaceProgress::complete;
-        }
-        if (!p.bounds->point_floors.empty()) {
-          p.submit_floors(context);
+        if (!p.cap_facets.empty()) {
+          p.surface.bound_caps({p.view,
+                                p.construction,
+                                p.domain,
+                                {p.query->values, p.query->positional},
+                                p.cap_facets,
+                                p.next_operation(),
+                                p.limits.facets});
+          p.phase = Phase::cap_bound;
           return TrimFaceProgress::progressed;
         }
-        if (p.horizon == UINT64_MAX)
-          throw Error(ErrorCode::resource_exhausted, "trimmed construction horizon exhausted");
-        p.refinement = plan_construction_refinement(
-            {p.construction, p.bounds, p.next_table(), ++p.horizon, p.limits.exact_bits}, context);
-        if (!p.refinement->boundary_requests.empty()) {
-          p.boundary_wanted = p.refinement->boundary_requests;
-          p.counts.boundary_requests += p.boundary_wanted.size();
-          p.phase = Phase::boundary;
-          return TrimFaceProgress::needs_boundary;
-        }
-        p.counts.band_anchors += p.refinement->band_anchors.size();
-        p.counts.packet_targets += p.refinement->packet_targets.size();
-        p.append_anchors(context);
-        p.surface.refine(
-            {p.view, p.refinement->splits, p.refinement->packet_targets, {}, p.construction});
-        p.phase = Phase::select;
-        return TrimFaceProgress::progressed;
+        p.counts.bound_seconds += elapsed(p.operation_started);
+        return p.finish_horizon(context);
+      }
+      if (p.phase == Phase::cap_bound && state == SurfaceProgress::caps_complete) {
+        p.cap_bounds = p.surface.cap_result();
+        p.surface.release_operation();
+        p.counts.bound_seconds += elapsed(p.operation_started);
+        return p.finish_horizon(context);
       }
       throw Error(ErrorCode::internal_error,
                   "surface operation completed in wrong whole-face phase");
@@ -603,7 +847,9 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
                               previous,
                               p.refinement
                                   ? std::span<const uint64_t>(p.refinement->changed_components)
-                                  : std::span<const uint64_t>{}};
+                                  : std::span<const uint64_t>{},
+                              p.sampled_cuts,
+                              p.cut_plan_indices};
       p.construction =
           previous ? rebuild_face_regions(input, context) : build_face_regions(input, context);
       require(p.construction->components.size() <= p.limits.regions,
@@ -642,16 +888,7 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
                              p.pending_facets.end());
       p.recheck_failed = false;
       require(!p.pending_facets.empty(), "construction changed no undecided actual facets");
-      p.operation_started = Clock::now();
-      p.surface.bound({p.view,
-                       p.construction,
-                       p.domain,
-                       {p.query->values, p.query->positional},
-                       p.pending_facets,
-                       p.next_operation(),
-                       p.limits.facets});
-      ++p.counts.facet_horizons;
-      p.phase = Phase::bound;
+      p.submit_bounds();
       return TrimFaceProgress::progressed;
     }
     throw Error(ErrorCode::invalid_source, "trimmed-face session is not active");
@@ -691,9 +928,13 @@ void FaceTrimSession::replace_boundary(SharedCurveSnapshot snapshot) {
   bgfd::Budget budget(
       {p.limits.surface.child_bytes, p.limits.construction_work - p.construction_work_used},
       resource_.get(), p.stop);
-  const auto candidate = p.admit_boundary(current_query, snapshot, budget);
+  auto candidate = p.admit_boundary(current_query, snapshot, budget);
   require(candidate.boundary_generation > prior,
           "face boundary replacement did not advance generation");
+  candidate.face_generation =
+      std::max(candidate.boundary_generation, Impl::next_revision(p.key.face_generation));
+  if (p.source.purpose() == SourceCachePurpose::quotient_trim)
+    candidate.domain_revision = Impl::next_revision(p.key.domain_revision);
   if (p.surface_started)
     p.surface.release_query();
   p.surface_started = false;
@@ -706,12 +947,114 @@ void FaceTrimSession::replace_boundary(SharedCurveSnapshot snapshot) {
   p.footprint.reset();
   p.construction.reset();
   p.bounds.reset();
+  p.cap_bounds.reset();
+  p.replacement_key.reset();
+  p.resume_output.reset();
   p.refinement.reset();
+  p.sampled_cuts.reset();
   p.sampled_anchors.reset();
   p.view = {};
   p.boundary_wanted.clear();
   p.pending_facets.clear();
   p.phase = Impl::Phase::domain;
+}
+FaceContinuation FaceTrimSession::continuation() const {
+  auto &p = *impl_;
+  p.stopped();
+  if (!p.query)
+    throw Error(ErrorCode::invalid_source, "face continuation has no query");
+  require(p.phase == Impl::Phase::complete || p.phase == Impl::Phase::boundary,
+          "face continuation requires complete or needs-boundary state");
+  if (p.resume_output)
+    return p.resume_output;
+  if (!p.cap_control)
+    return {};
+  JobContext context(
+      {p.limits.surface.child_bytes, p.limits.construction_work - p.construction_work_used},
+      resource_.get(), p.stop);
+  p.retain_control(context);
+  auto output = std::allocate_shared<FaceContinuationData>(
+      RunAllocator<FaceContinuationData>(resource_), resource_, p.source, Impl::cap_key(p.key),
+      FacetAllowances{p.query->values, p.query->positional}, p.query->node_source, p.cap_control);
+  p.construction_work_used += context.budget.work();
+  p.resume_output = std::move(output);
+  return p.resume_output;
+}
+void FaceTrimSession::replace_domain(const TrimDomainReplacement &request) {
+  auto &p = *impl_;
+  p.stopped();
+  if (!p.query)
+    throw Error(ErrorCode::invalid_source, "local domain replacement has no query");
+  require(p.phase == Impl::Phase::complete && p.view && request.expected &&
+              request.expected.selection() == p.view.selection() &&
+              request.expected.key() == p.view.key() && request.domain &&
+              p.source.purpose() == SourceCachePurpose::quotient_trim && request.domain->caps &&
+              request.values.resource() == resource_,
+          "stale or busy local face domain replacement");
+  JobContext context(
+      {p.limits.surface.child_bytes, p.limits.construction_work - p.construction_work_used},
+      resource_.get(), p.stop);
+  require(import_exact(context.budget, request.values.view(request.positional))
+                      .compare(import_exact(context.budget,
+                                            p.query->values.view(p.query->positional))) == 0 &&
+              import_exact(context.budget, request.values.view(request.node_source))
+                      .compare(import_exact(context.budget,
+                                            p.query->values.view(p.query->node_source))) == 0,
+          "local domain replacement changes exact face quality");
+  require(static_cast<bool>(request.domain->caps.control()),
+          "local domain replacement loses cap control");
+  const auto &control = request.domain->caps.control();
+  const auto &factor = control.fixed_metric_factor();
+  if (!factor)
+    throw Error(ErrorCode::invalid_source, "local domain replacement loses fixed face metric");
+  for (uint32_t i = 0; i < 4; ++i)
+    require(import_exact(context.budget, control.values().view((*factor)[i]))
+                    .compare(import_exact(
+                        context.budget,
+                        p.construction->values.view(p.construction->fixed_metric_factor[i]))) == 0,
+            "local domain replacement changes fixed face metric");
+  const auto classifier = std::allocate_shared<FaceDomainClassifier>(
+      RunAllocator<FaceDomainClassifier>(resource_), resource_, request.domain,
+      DomainClassifierLimits{std::min(p.limits.surface.host_bytes, uint64_t{1} << 28),
+                             p.remaining_work(context.budget)},
+      p.stop);
+  context.budget.charge(classifier->stats().work);
+  std::pmr::vector<uint64_t> keep(p.anchors.size(), UINT64_MAX, resource_.get());
+  if (!p.anchors.empty()) {
+    if (!p.anchor_values)
+      throw Error(ErrorCode::internal_error, "local domain anchors have no exact table");
+    std::pmr::vector<std::array<ExactRef, 2>> uv(resource_.get());
+    for (const auto &anchor : p.anchors)
+      uv.push_back(anchor.original_uv);
+    const auto before = classifier->stats().work;
+    const auto labels =
+        classifier->classify_points(*p.anchor_values, uv, p.remaining_work(context.budget));
+    context.budget.charge(classifier->stats().work - before);
+    for (uint32_t i = 0; i < labels.size(); ++i)
+      if (labels[i] == SurfaceClass::interior)
+        keep[i] = 0;
+  }
+  const auto allowances = p.root_allowances();
+  p.surface.replace_domain({p.view, request.domain, Impl::surface_key(request.domain->key),
+                            p.query->values, allowances});
+  p.domain = request.domain;
+  p.key = request.domain->key;
+  p.classifier = classifier;
+  p.cap_control = control;
+  p.compact_anchors(keep);
+  p.view = {};
+  p.footprint.reset();
+  p.output.reset();
+  p.resume_output.reset();
+  p.construction.reset();
+  p.bounds.reset();
+  p.cap_bounds.reset();
+  p.refinement.reset();
+  p.sampled_cuts.reset();
+  p.sampled_anchors.reset();
+  p.pending_facets.clear();
+  p.construction_work_used += context.budget.work();
+  p.phase = Impl::Phase::select;
 }
 FaceTrimResult FaceTrimSession::result() const {
   require(impl_->phase == Impl::Phase::complete && impl_->output, "trimmed face not complete");

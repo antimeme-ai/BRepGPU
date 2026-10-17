@@ -98,6 +98,7 @@ struct TraceBoundTask final {
 [[nodiscard]] std::span<const UseCurveSite> trace_sites(const UseTraceResult &);
 [[nodiscard]] std::span<const UseCurveInterval> trace_intervals(const UseTraceResult &);
 [[nodiscard]] std::span<const BoundaryKey> trace_requests(const UseTraceResult &);
+[[nodiscard]] std::span<const SeamWedge> trace_wedges(const UseTraceResult &);
 [[nodiscard]] uint64_t trace_exact_fallbacks(const UseTraceResult &);
 } // namespace bgmesh::adaptive
 #endif

@@ -3,6 +3,7 @@
 #include "adaptive_component.hpp"
 #include "assembly.hpp"
 #include "scene_buffers.hpp"
+#include <optional>
 
 namespace bgmesh::adaptive {
 enum class SceneScope { complete_assembly, selected_components };
@@ -16,6 +17,8 @@ struct AdaptiveSceneVertexSource final {
   uint32_t component, face, site;
   OriginalRootSlot original{invalid_slot};
   std::array<ExactRef, 2> original_uv;
+  // Cosmetic pole-normal sector; geometry and original_uv stay unchanged.
+  std::optional<uint32_t> mapped_normal_piece{};
 };
 struct AdaptiveSceneFacetSource final {
   uint32_t component, face, facet;

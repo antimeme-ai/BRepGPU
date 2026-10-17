@@ -25,6 +25,19 @@ def main():
                      coedges=(use, *base.coedges[1:]), curves=curves)
     save('maps', mapped)
     save('map3', replace(mapped, coedges=(replace(use, parameter_map_kind=3), *mapped.coedges[1:])))
+    reconstructed = replace(base,coedges=tuple(replace(u,reconstructed=True) for u in base.coedges))
+    tiny = 2.**-40
+    proposed = tuple(replace(c,controls=(1.+tiny,0.,1.,1.+tiny,1.,1.))
+                     if c.id == 3001 else c for c in reconstructed.curves)
+    save('natural-proposal',replace(reconstructed,curves=proposed))
+    def shifted_controls(curve):
+        values = list(curve.controls)
+        stride = curve.dimension+1
+        for i in range(0,len(values),stride): values[i] += .125*values[i+stride-1]
+        return replace(curve,controls=tuple(values))
+    save('natural-sourceguard',replace(reconstructed,
+        vertices=tuple(replace(v,xyz=(v.xyz[0]+.125,*v.xyz[1:])) for v in reconstructed.vertices),
+        curves=tuple(shifted_controls(c) for c in reconstructed.curves)))
     auth = tuple(replace(u, reconstructed=False) for u in base.coedges)
     save('auth',replace(base,coedges=auth))
     outside=tuple(replace(c,kind=4,degree=3,knots=(),multiplicities=(),
@@ -102,7 +115,7 @@ def main():
                      replace(c,degree=2,controls=(0.,0.,1.,.5,1.,1.,1.,0.,1.)) if c.id==3000 else c
                      for c in speed.curves)
     save('runtime-equality',replace(speed,curves=equality))
-    print('trace_source_variants=13')
+    print('trace_source_variants=15')
 
 
 if __name__ == '__main__':

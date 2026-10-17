@@ -117,3 +117,34 @@ ASan/UBSan/leak instrumentation after the common convex curve interpolation
 correction. Runtime and numerical geometry peers accepted actual scoped source.
 See journal/2026-10-16-adaptive-traces-implementation.md for failures corrected,
 logs, supported cases and finite remaining refusals.
+
+## 2026-10-17 finite reconstructed natural-domain recovery
+
+The original watch exposes a reconstructed rational pcurve whose literal guide
+endpoint lies outside the carrier's natural knot domain. The frozen collector
+correctly retained the original natural domain; this is not an RN error or
+permission to enlarge R. The selected trace contract above treats reconstructed
+guides as proposals, while original V/Ce/S node guards and whole actual-chord
+bounds establish acceptance. The pinned OCCT TesselIate2d/owned recovery study
+already separates source pcurve proposals from checked original surface values;
+componentwise rectangle projection below is our own finite candidate rule, not
+an inverse theorem claimed by that reference.
+
+For reconstructed uses on original rational carriers only, decode natural
+[knot[p],knot[ncontrol]] on each axis from the complete ORIGINAL knot/multiplicity
+rows. Project each chosen guide proposal component exactly to that closed
+rectangle. Keep raw guide, mapped parameter, periodic metadata and original
+SourceStore unchanged. Run all existing original V/Ce/S nodal caps, joint policy,
+selected affine trace-to-SAME-Q chord bounds and exact domain admission without
+changed allowances. An out-of-domain proposal receives no acceptance merely by
+projection. Authoritative uses retain their existing raw support obligations.
+Never project to the requested cache rectangle: the downstream fixed supplied
+profile guard must still refuse a candidate inside natural R but outside an
+explicit narrower prepared bank.
+
+Before body, direct actual-source RED: existing C0 rational face with tiny literal
+right-edge guide overshoot must recover; same source face translated physically
+outside the original carrier must fail unchanged source guard. Reuse direct
+fixture and source generator; add one actual supplied-narrow-bank boundary
+negative. Strict affected target only, then parent retries the unchanged failed
+whole-watch CPU operation. No new quality/cohort or tolerance tuning.

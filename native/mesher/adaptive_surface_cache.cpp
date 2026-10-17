@@ -1,7 +1,9 @@
 #include "adaptive_surface_cache.hpp"
 #include "adaptive_cache_detail.hpp"
+#include "adaptive_cap_numeric.hpp"
 #include "adaptive_regions.hpp"
 #include "cuda/adaptive_assignment_api.h"
+#include "cuda/adaptive_cap_api.h"
 #include "cuda/adaptive_trim_api.h"
 
 namespace bgmesh::adaptive {
@@ -23,9 +25,13 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
   bool classified = false;
   bool provenance_set = false;
   std::shared_ptr<const FaceDomainData> classified_domain;
+  FaceDomainLease query_domain;
+  const CapCudaAPI *cap_api = nullptr;
   bool controls_pending = false;
   std::pmr::vector<uint32_t> control_nodes;
   std::pmr::vector<SurfaceClass> node_classes;
+  std::pmr::vector<SurfaceCellCoverage> node_cap_coverage;
+  std::pmr::vector<uint32_t> mapped_nodes;
   std::pmr::vector<ActiveTarget> required_targets;
   std::pmr::vector<RootSlot> query_roots;
   enum class PointPhase { none, waiting, install, reselect, complete };
@@ -177,7 +183,7 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
   }
   bool accepted_upper(double upper, const Rational &tau) {
     return std::isfinite(upper) && upper >= 0. &&
-           Rational::from_double(budget, upper).compare(tau) <= 0;
+           Rational::from_double(tau.budget(), upper).compare(tau) <= 0;
   }
   bool precise_candidate(const SourceTriangleBounds &answer, double down) {
     if (answer.status != NumericStatus::ready)
@@ -338,19 +344,194 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
       auto floors = trim_point_floor_requests(context, facet_work.value(), failed);
       result->point_floors.assign(floors.requests.begin(), floors.requests.end());
     }
+    const auto completed = finish(SurfaceProgress::facets_complete);
     facet_output = std::move(result);
     facet_phase = FacetPhase::complete;
-    return finish(SurfaceProgress::facets_complete);
+    return completed;
+  }
+  enum class CapPhase { none, prepare, execute, complete };
+  CapPhase cap_phase = CapPhase::none;
+  std::optional<SurfaceCapFacetRequest> cap_request;
+  std::optional<CapFacetWork> cap_work;
+  std::optional<ExactBuilder> cap_values;
+  SurfaceCapFacetResult cap_output;
+  std::pmr::vector<uint32_t> selected_caps, cap_indices;
+  std::pmr::vector<SurfaceCapFacetAnswer> cap_rows;
+  std::pmr::vector<DeviceCapFacet> cap_inputs;
+  std::pmr::vector<CapFacetBounds> cap_answers;
+  uint32_t cap_at = 0, cap_count = 0, cap_precise = 0;
+  uint64_t cap_work_spent = 0;
+  bool cap_pending = false;
+  struct CapJob final : NativeTask {
+    Impl *owner;
+    uint32_t first, end;
+    CapJob(NativeTaskKey key, Impl *p, Range<uint32_t> slice)
+        : NativeTask(key), owner(p), first(static_cast<uint32_t>(slice.first)),
+          end(static_cast<uint32_t>(slice.first + slice.count)) {}
+    StepState step(JobContext &context) override {
+      for (uint32_t i = first; i < end; ++i) {
+        context.budget.charge(4096);
+        if (owner->cancelled.load(std::memory_order_relaxed) || owner->stop.stop_requested())
+          throw Error(ErrorCode::cancelled, "surface cap batch cancelled");
+        const auto &task = owner->cap_inputs[i];
+        owner->cap_answers[i] = numeric::bound_cap_facet_rn64(
+            owner->source.original_roots()[task.input.original.value], task.source, task.input);
+      }
+      return StepState::done;
+    }
+  };
+  void submit_caps() {
+    const auto count = narrow(cap_inputs.size());
+    cap_answers.resize(count);
+    budget.charge(uint64_t{count} * 4096u);
+    if (device) {
+      check(cap_api, ErrorCode::unsupported, "CUDA quotient/cap extension unavailable");
+      DeviceError error{};
+      device_check(cap_api->facets(device->session, cap_inputs.data(), count, &ticket, &error),
+                   error);
+      counts.device_cap_facets += count;
+    } else if (workers) {
+      ++batch_serial;
+      const auto number = std::min(count, limits.cpu_threads * 4);
+      for (uint32_t i = 0; i < number; ++i) {
+        const auto first = static_cast<uint32_t>(uint64_t{count} * i / number);
+        const auto end = static_cast<uint32_t>(uint64_t{count} * (i + 1) / number);
+        NativeTaskKey key{{OwnerKind::run, UINT32_MAX - 1, uint64_t{i} + 1}, batch_serial, serial};
+        workers->submit(std::allocate_shared<CapJob>(RunAllocator<CapJob>(resource), key, this,
+                                                     Range<uint32_t>{first, end - first}));
+      }
+      jobs = number;
+    } else {
+      JobContext context({limits.child_bytes, limits.child_work}, resource.get(), stop);
+      NativeTaskKey key{{OwnerKind::run, UINT32_MAX - 1, 1}, ++batch_serial, serial};
+      CapJob job(key, this, Range<uint32_t>{0, count});
+      (void)job.step(context);
+    }
+  }
+  SurfaceProgress step_caps() {
+    if (!cap_request)
+      throw Error(ErrorCode::internal_error, "missing cap request");
+    auto &request = cap_request.value();
+    check(cap_work_spent < request.limits.work, ErrorCode::resource_exhausted,
+          "surface cap cumulative work cap");
+    JobContext context(
+        {limits.child_bytes, std::min(limits.child_work, request.limits.work - cap_work_spent)},
+        resource.get(), stop);
+    const auto finish = [&](SurfaceProgress state) {
+      cap_work_spent += context.budget.work();
+      budget.charge(context.budget.work());
+      return state;
+    };
+    const auto tau = import_exact(context.budget,
+                                  request.allowances.values.view(request.allowances.face_position));
+    if (cap_phase == CapPhase::prepare) {
+      check(table_ordinal < UINT32_MAX - 1, ErrorCode::resource_exhausted,
+            "surface cap table ordinal exhausted");
+      cap_work = prepare_cap_facet_work(
+          context, request.view, request.construction, request.domain, request.allowances,
+          selected_caps, {{OwnerKind::run, UINT32_MAX - 2, serial}, query, ++table_ordinal},
+          request.limits);
+      cap_values.emplace(
+          resource,
+          ExactTableKey{{OwnerKind::run, UINT32_MAX - 2, serial}, query, ++table_ordinal});
+      cap_rows.resize(cap_work.value().facets().size());
+      cap_phase = CapPhase::execute;
+    }
+    if (cap_pending) {
+      if (!ready(cap_answers.data(), cap_count))
+        return finish(SurfaceProgress::pending);
+      for (uint32_t i = 0; i < cap_count; ++i) {
+        const auto index = cap_indices[i];
+        const auto &row = cap_work.value().facets()[index];
+        const auto &answer = cap_answers[i];
+        auto &output = cap_rows[index];
+        output.facet = row.construction_facet;
+        output.accepted = row.physical_nonzero && answer.status == NumericStatus::ready &&
+                          accepted_upper(answer.total_upper, tau);
+        const auto down = tau.bounds().lower;
+        const bool wider =
+            answer.status != NumericStatus::ready || !std::isfinite(answer.total_upper) ||
+            !std::isfinite(answer.uncertainty_upper) || answer.uncertainty_upper >= down * .25 ||
+            answer.total_upper - down <= 4. * answer.uncertainty_upper ||
+            answer.total_upper <= down * (1. + 0x1p-40);
+        if (!output.accepted && row.physical_nonzero && wider) {
+          check(cap_precise < request.limits.precise_tasks, ErrorCode::resource_exhausted,
+                "surface cap precise horizon cap");
+          ++cap_precise;
+          ++counts.exact_fallbacks;
+          auto precise = compare_cap_work_facet_precise(context, cap_work.value(), index);
+          auto &values = cap_values.value();
+          const auto total = precise.bounds.position_upper.add(precise.bounds.band_upper);
+          output.bounds = SurfaceCapComponents{values.append(precise.bounds.position_upper),
+                                               values.append(precise.bounds.band_upper),
+                                               values.append(precise.certified ? tau : total),
+                                               values.append(precise.bounds.angular_upper),
+                                               values.append(precise.bounds.radial_upper),
+                                               values.append(precise.bounds.corner_upper),
+                                               values.append(precise.bounds.pole_departure_upper),
+                                               {}};
+          output.accepted = precise.certified;
+        } else if (answer.status == NumericStatus::ready) {
+          const auto append = [&](double upper) {
+            check(std::isfinite(upper) && upper >= 0., ErrorCode::unresolved,
+                  "cap component is not a finite upper bound");
+            return cap_values->append(Rational::from_double(context.budget, upper));
+          };
+          output.bounds = SurfaceCapComponents{
+              append(answer.position_upper),       append(answer.band_upper),
+              append(answer.total_upper),          append(answer.angular_upper),
+              append(answer.radial_upper),         append(answer.corner_upper),
+              append(answer.pole_departure_upper), append(answer.uncertainty_upper)};
+        }
+        if (!output.accepted)
+          ++counts.actual_facet_failures;
+      }
+      cap_pending = false;
+      cap_at += cap_count;
+    }
+    if (cap_at < cap_rows.size()) {
+      cap_count = static_cast<uint32_t>(
+          std::min<uint64_t>(request.limits.batch_records, cap_rows.size() - cap_at));
+      cap_indices.clear();
+      for (uint32_t i = 0; i < cap_count; ++i)
+        cap_indices.push_back(cap_at + i);
+      auto batch = pack_cap_facets(context, cap_work.value(), cap_indices);
+      check(batch.indices == cap_indices && batch.inputs.size() == cap_count,
+            ErrorCode::internal_error, "cap packer changed subset order");
+      cap_inputs.clear();
+      cap_inputs.reserve(cap_count);
+      for (const auto &task : batch.inputs)
+        cap_inputs.push_back({task.source, task.input});
+      submit_caps();
+      counts.cap_facet_tests += cap_count;
+      cap_pending = true;
+      return finish(SurfaceProgress::pending);
+    }
+    auto result = std::allocate_shared<SurfaceCapFacetResultData>(
+        RunAllocator<SurfaceCapFacetResultData>(resource), resource, cap_work.value(),
+        cap_values->seal(), request.ordinal);
+    std::pmr::unordered_map<uint32_t, SurfaceCapFacetAnswer> answers(&budget);
+    answers.reserve(cap_rows.size());
+    for (const auto &row : cap_rows)
+      answers.emplace(row.facet, row);
+    for (auto index : selected_caps)
+      result->facets.push_back(answers.at(index));
+    const auto completed = finish(SurfaceProgress::caps_complete);
+    cap_output = std::move(result);
+    cap_phase = CapPhase::complete;
+    return completed;
   }
   Impl(std::shared_ptr<RunResource> owner, SourceCache source_roots, CacheLimits requested_limits,
        const std::stop_token &external_stop_token)
       : SurfaceCacheCore(std::move(owner), std::move(source_roots), requested_limits,
-                         external_stop_token),
-        control_nodes(&budget), node_classes(&budget), required_targets(&budget),
-        query_roots(&budget), requested_points(&budget), absolute_index(&budget),
-        selected_facets(&budget), piece_queue(&budget), plane_queue(&budget),
-        batch_indices(&budget), piece_accepted(&budget), plane_accepted(&budget),
-        source_inputs(&budget), source_answers(&budget) {
+                         external_stop_token, true),
+        control_nodes(&budget), node_classes(&budget), node_cap_coverage(&budget),
+        mapped_nodes(&budget), required_targets(&budget), query_roots(&budget),
+        requested_points(&budget), absolute_index(&budget), selected_facets(&budget),
+        piece_queue(&budget), plane_queue(&budget), batch_indices(&budget), piece_accepted(&budget),
+        plane_accepted(&budget), source_inputs(&budget), source_answers(&budget),
+        selected_caps(&budget), cap_indices(&budget), cap_rows(&budget), cap_inputs(&budget),
+        cap_answers(&budget) {
     selection_only = true;
   }
   CandidateBoxes make_candidates() {
@@ -358,6 +539,7 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
           "surface candidate ordinal exhausted");
     std::sort(frontier.begin(), frontier.end(), [&](auto a, auto b) { return less_node(a, b); });
     node_classes.resize(nodes.size(), SurfaceClass::outside);
+    node_cap_coverage.resize(nodes.size());
     ExactBuilder exact(resource,
                        {{OwnerKind::run, UINT32_MAX - 6, serial}, query, ++candidate_ordinal});
     std::pmr::vector<CandidateBox> rows(&budget);
@@ -416,7 +598,60 @@ SurfaceCacheSession::~SurfaceCacheSession() {
   impl_->~Impl();
   resource_->deallocate(impl_, sizeof(Impl), alignof(Impl));
 }
-void SurfaceCacheSession::open_device(const CacheDevice &device) { open_core(*impl_, device); }
+void SurfaceCacheSession::open_device(const CacheDevice &device) {
+  open_core(*impl_, device);
+  auto &p = *impl_;
+  if (p.source.purpose() == SourceCachePurpose::quotient_trim) {
+    using Getter = const CapCudaAPI *(*)();
+    const auto getter =
+        reinterpret_cast<Getter>(dlsym(p.device->module, "brepgpu_adaptive_cap_cuda_v1"));
+    check(getter, ErrorCode::unsupported, "CUDA quotient/cap extension unavailable");
+    p.cap_api = getter();
+    check(p.cap_api && p.cap_api->abi == adaptive_cap_cuda_abi &&
+              p.cap_api->size == sizeof(CapCudaAPI) && p.cap_api->facets,
+          ErrorCode::unsupported, "invalid CUDA quotient/cap extension");
+  }
+}
+namespace {
+void admit_surface_domain(const SurfaceCacheCore &p, const FaceDomainLease &domain,
+                          const SurfaceFaceIdentity &face, uint64_t query) {
+  const bool quotient = p.source.purpose() == SourceCachePurpose::quotient_trim;
+  check(!quotient || static_cast<bool>(domain), ErrorCode::invalid_source,
+        "quotient surface requires a produced face domain");
+  if (!domain)
+    return;
+  const auto &key = domain->key;
+  const auto generation = (!key.domain_revision && !key.face_generation) ? key.boundary_generation
+                                                                         : key.face_generation;
+  check(domain->resource == p.resource && &domain->source.view() == &p.source.source().view() &&
+            key.definition == face.definition && key.face == face.face &&
+            key.source_generation == face.source_generation && key.query == query &&
+            key.boundary_generation == face.boundary_generation &&
+            generation == face.face_generation && key.domain_revision == face.domain_revision &&
+            key.chart_revision == face.chart_revision &&
+            key.assignment_epoch == face.assignment_epoch &&
+            key.profile_revision == p.source.profile().revision,
+        ErrorCode::invalid_source, "foreign or stale surface face domain");
+  if (!quotient) {
+    check(!domain->caps, ErrorCode::invalid_source, "cap domain requires quotient source bank");
+    return;
+  }
+  check(static_cast<bool>(domain->caps), ErrorCode::invalid_source,
+        "quotient surface lacks produced cap inventory");
+  const auto &caps = domain->caps;
+  const auto &cap = caps.key();
+  check(&caps.source().view() == &p.source.view() && caps.resource() == p.resource &&
+            caps.curves() == domain->curves && cap.source_generation == face.source_generation &&
+            cap.query == query && cap.definition == face.definition && cap.face == face.face &&
+            cap.boundary_generation == face.boundary_generation &&
+            cap.face_generation == face.face_generation &&
+            cap.domain_revision == face.domain_revision &&
+            cap.chart_revision == face.chart_revision &&
+            cap.assignment_epoch == face.assignment_epoch &&
+            cap.profile_revision == p.source.profile().revision,
+        ErrorCode::invalid_source, "cap inventory does not match surface authority");
+}
+} // namespace
 void SurfaceCacheSession::begin(const SurfaceQuery &query) {
   auto &p = *impl_;
   const auto &source = p.source.source().view();
@@ -431,6 +666,7 @@ void SurfaceCacheSession::begin(const SurfaceQuery &query) {
     check(allowance.root.value < p.source.roots().size() &&
               p.source.roots()[allowance.root.value].source_slot == carrier.value,
           ErrorCode::invalid_source, "surface root does not belong to face carrier");
+  admit_surface_domain(p, query.domain, query.face, query.generation);
   const bool pooled = query.face.assignment_epoch != 0;
   check(pooled ? p.assignment_mode != Impl::AssignmentMode::legacy
                : p.assignment_mode != Impl::AssignmentMode::pooled,
@@ -483,15 +719,75 @@ void SurfaceCacheSession::begin(const SurfaceQuery &query) {
   std::sort(p.query_roots.begin(), p.query_roots.end(),
             [](auto a, auto b) { return a.value < b.value; });
   p.face = query.face;
+  p.query_domain = query.domain;
+  p.node_cap_coverage.clear();
+  p.mapped_nodes.clear();
   p.provenance_set = false;
   p.classified_domain.reset();
   p.classified = false;
   p.cover = {};
 }
+void SurfaceCacheSession::replace_domain(const SurfaceDomainReplacement &request) {
+  auto &p = *impl_;
+  p.stopped();
+  check(p.phase == Impl::Phase::done && p.cover && request.expected &&
+            request.expected.selection() == p.frozen && request.expected.key() == p.cover.key() &&
+            !p.jobs && !p.ticket && p.point_phase == Impl::PointPhase::none &&
+            p.facet_phase == Impl::FacetPhase::none && p.cap_phase == Impl::CapPhase::none,
+        ErrorCode::invalid_source, "surface domain replacement is stale or not drained");
+  check(p.source.purpose() == SourceCachePurpose::quotient_trim && p.query_domain &&
+            request.domain && p.query_domain->curves == request.domain->curves &&
+            request.face.definition == p.face.definition && request.face.face == p.face.face &&
+            request.face.source_generation == p.face.source_generation &&
+            request.face.boundary_generation == p.face.boundary_generation &&
+            request.face.assignment_epoch == p.face.assignment_epoch &&
+            request.face.chart_revision == p.face.chart_revision &&
+            request.face.face_generation > p.face.face_generation &&
+            request.face.domain_revision > p.face.domain_revision &&
+            request.values.resource() == p.resource &&
+            request.allowances.size() == p.query_roots.size(),
+        ErrorCode::invalid_source, "incompatible local surface domain replacement");
+  admit_surface_domain(p, request.domain, request.face, p.query);
+  std::pmr::vector<RootSlot> roots(&p.budget);
+  roots.reserve(request.allowances.size());
+  for (const auto &entry : request.allowances) {
+    check(entry.root.value < p.allowances.size() && p.query_values &&
+              std::binary_search(p.query_roots.begin(), p.query_roots.end(), entry.root,
+                                 [](auto a, auto b) { return a.value < b.value; }),
+          ErrorCode::invalid_source, "domain replacement changed prepared root closure");
+    const auto next = import_exact(p.budget, request.values.view(entry.positional));
+    check(next.compare(p.allowance(entry.root.value)) == 0, ErrorCode::invalid_source,
+          "domain replacement changed exact positional quality");
+    roots.push_back(entry.root);
+  }
+  std::sort(roots.begin(), roots.end(), [](auto a, auto b) { return a.value < b.value; });
+  check(std::equal(roots.begin(), roots.end(), p.query_roots.begin(),
+                   [](auto a, auto b) { return a.value == b.value; }),
+        ErrorCode::invalid_source, "domain replacement duplicated or dropped prepared roots");
+  auto staged = prepare_begin_core(p, {p.query, p.source, request.values, request.allowances}, true,
+                                   true, true);
+  commit_begin_core(p, std::move(staged));
+  p.face = request.face;
+  p.query_domain = request.domain;
+  p.provenance_set = false;
+  p.classified_domain.reset();
+  p.classified = false;
+  p.candidate.reset();
+  p.cover = {};
+  p.frozen.reset();
+  p.node_cap_coverage.clear();
+  p.mapped_nodes.clear();
+  ++p.counts.domain_replacements;
+}
 SurfaceProgress SurfaceCacheSession::step(JobContext &context) {
   auto &p = *impl_;
   p.stopped();
   context.budget.charge(0);
+  if (p.cap_phase != Impl::CapPhase::none) {
+    if (p.cap_phase == Impl::CapPhase::complete)
+      return SurfaceProgress::caps_complete;
+    return p.step_caps();
+  }
   if (p.facet_phase != Impl::FacetPhase::none) {
     if (p.facet_phase == Impl::FacetPhase::complete)
       return SurfaceProgress::facets_complete;
@@ -603,8 +899,14 @@ SurfaceProgress SurfaceCacheSession::step(JobContext &context) {
     data->classified_domain = p.classified_domain;
     data->key = {p.frozen->key, p.face};
     data->prepared_roots.assign(p.query_roots.begin(), p.query_roots.end());
-    for (auto slot : p.selected)
+    for (auto slot : p.selected) {
       data->classes.push_back(p.node_classes[slot]);
+      data->cap_coverage.push_back(p.node_cap_coverage[slot]);
+    }
+    std::sort(p.mapped_nodes.begin(), p.mapped_nodes.end(),
+              [&](auto a, auto b) { return p.less_node(a, b); });
+    for (auto slot : p.mapped_nodes)
+      data->mapped_cells.push_back(p.node_cap_coverage[slot]);
     p.cover = SurfaceBoundView(std::move(data));
   }
   if (p.point_phase == Impl::PointPhase::reselect) {
@@ -644,30 +946,59 @@ void SurfaceCacheSession::classify(CandidateClassification input) {
   p.stopped();
   check(p.candidate && input.candidates == p.candidate && input.labels.size() == p.frontier.size(),
         ErrorCode::invalid_source, "stale or partial surface classification");
-  for (auto label : input.labels)
-    check(label == SurfaceClass::outside || label == SurfaceClass::interior ||
-              label == SurfaceClass::band,
-          ErrorCode::invalid_source, "unknown surface classification");
+  const bool quotient = p.source.purpose() == SourceCachePurpose::quotient_trim;
+  check(!p.query_domain || input.domain == p.query_domain, ErrorCode::invalid_source,
+        "classification does not use admitted face domain");
   check(!p.provenance_set || input.domain == p.classified_domain, ErrorCode::invalid_source,
         "surface classification domain changed within query");
-  if (input.domain) {
-    const auto &key = input.domain->key;
-    check(input.domain->resource == p.resource &&
-              &input.domain->source.view() == &p.source.source().view() &&
-              key.definition == p.face.definition && key.face == p.face.face &&
-              key.source_generation == p.face.source_generation && key.query == p.query &&
-              key.boundary_generation == p.face.boundary_generation &&
-              key.chart_revision == p.face.chart_revision &&
-              key.profile_revision == p.source.profile().revision,
-          ErrorCode::invalid_source, "foreign surface classification domain");
+  admit_surface_domain(p, input.domain, p.face, p.query);
+  check(!quotient || static_cast<bool>(input.cap_classification), ErrorCode::invalid_source,
+        "quotient classification lacks produced coverage");
+  const CapClassificationData *coverage = nullptr;
+  if (input.cap_classification) {
+    check(quotient, ErrorCode::invalid_source, "cap coverage on ordinary surface cache");
+    coverage = &input.cap_classification.data();
+    check(coverage->candidates == p.candidate && coverage->domain == input.domain &&
+              coverage->rows.size() == input.labels.size(),
+          ErrorCode::invalid_source, "stale or partial produced cap coverage");
   }
+  uint32_t mapped = 0;
+  for (uint32_t i = 0; i < input.labels.size(); ++i) {
+    const auto label = input.labels[i];
+    check(label == SurfaceClass::outside || label == SurfaceClass::interior ||
+              label == SurfaceClass::band || (quotient && label == SurfaceClass::mapped_cap),
+          ErrorCode::invalid_source, "unknown surface classification");
+    if (coverage) {
+      const auto &row = coverage->rows[i];
+      check(row.pieces.first <= coverage->pieces.size() &&
+                row.pieces.count <= coverage->pieces.size() - row.pieces.first,
+            ErrorCode::invalid_source, "invalid cap coverage range");
+      const bool ordinary =
+          row.material == SurfaceClass::interior || row.material == SurfaceClass::band;
+      check(ordinary ? label == SurfaceClass::interior || label == SurfaceClass::band
+                     : label == row.material,
+            ErrorCode::invalid_source, "footprint changed mapped material coverage");
+      check(row.material != SurfaceClass::mapped_cap || row.pieces.count, ErrorCode::invalid_source,
+            "mapped material has no cap piece");
+      for (uint64_t j = 0; j < row.pieces.count; ++j)
+        check(coverage->pieces[row.pieces.first + j] < input.domain->caps.pieces().size(),
+              ErrorCode::invalid_source, "classification names unknown cap piece");
+    }
+    mapped += label == SurfaceClass::mapped_cap;
+  }
+  p.budget.charge(input.labels.size());
+  p.mapped_nodes.reserve(p.mapped_nodes.size() + mapped);
   p.provenance_set = true;
   p.classified_domain = input.domain;
   uint32_t retained = 0;
   for (uint32_t i = 0; i < p.frontier.size(); ++i) {
-    p.node_classes[p.frontier[i]] = input.labels[i];
-    if (input.labels[i] != SurfaceClass::outside)
-      p.frontier[retained++] = p.frontier[i];
+    const auto slot = p.frontier[i];
+    p.node_classes[slot] = input.labels[i];
+    p.node_cap_coverage[slot] = {input.cap_classification, i};
+    if (input.labels[i] == SurfaceClass::mapped_cap)
+      p.mapped_nodes.push_back(slot);
+    else if (input.labels[i] != SurfaceClass::outside)
+      p.frontier[retained++] = slot;
   }
   p.frontier.resize(retained);
   p.candidate.reset();
@@ -683,7 +1014,8 @@ void SurfaceCacheSession::refine(const SurfaceRefineRequest &input) {
   p.stopped();
   check(p.phase == Impl::Phase::done && p.cover && input.view &&
             input.view.selection() == p.frozen && input.view.key() == p.cover.key() && !p.jobs &&
-            !p.ticket,
+            !p.ticket && p.point_phase == Impl::PointPhase::none &&
+            p.facet_phase == Impl::FacetPhase::none && p.cap_phase == Impl::CapPhase::none,
         ErrorCode::invalid_source, "stale or pending surface refinement horizon");
   const auto selection = p.frozen;
   check(p.selected.size() == selection->leaves.size(), ErrorCode::internal_error,
@@ -945,7 +1277,8 @@ void SurfaceCacheSession::sample(const SurfacePointRequest &request) {
             request.view.key() == p.cover.key() &&
             request.view.selection() == p.cover.selection() &&
             p.point_phase == Impl::PointPhase::none && p.facet_phase == Impl::FacetPhase::none &&
-            !p.jobs && !p.ticket && request.values.resource() == p.resource && request.ordinal,
+            p.cap_phase == Impl::CapPhase::none && !p.jobs && !p.ticket &&
+            request.values.resource() == p.resource && request.ordinal,
         ErrorCode::invalid_source, "stale surface point request");
   check(request.points.size() <= p.limits.frontier * uint64_t{4}, ErrorCode::resource_exhausted,
         "surface point request cap");
@@ -1090,12 +1423,19 @@ SurfacePointResult SurfaceCacheSession::point_result() const {
 }
 void SurfaceCacheSession::release_operation() {
   auto &p = *impl_;
-  check(
-      p.phase == Impl::Phase::done && !p.ticket && !p.jobs &&
-          (p.point_phase == Impl::PointPhase::none ||
-           p.point_phase == Impl::PointPhase::complete) &&
-          (p.facet_phase == Impl::FacetPhase::none || p.facet_phase == Impl::FacetPhase::complete),
-      ErrorCode::invalid_source, "surface operation incomplete");
+  check(p.phase == Impl::Phase::done && !p.ticket && !p.jobs &&
+            (p.point_phase == Impl::PointPhase::none ||
+             p.point_phase == Impl::PointPhase::complete) &&
+            (p.facet_phase == Impl::FacetPhase::none ||
+             p.facet_phase == Impl::FacetPhase::complete) &&
+            (p.cap_phase == Impl::CapPhase::none || p.cap_phase == Impl::CapPhase::complete),
+        ErrorCode::invalid_source, "surface operation incomplete");
+  p.cap_output.reset();
+  p.cap_work.reset();
+  p.cap_values.reset();
+  p.cap_request.reset();
+  p.cap_phase = Impl::CapPhase::none;
+  p.cap_rows.clear();
   p.facet_output.reset();
   p.facet_work.reset();
   p.facet_request.reset();
@@ -1111,8 +1451,9 @@ void SurfaceCacheSession::bound(const SurfaceFacetRequest &request) {
             request.view.key() == p.cover.key() &&
             request.view.selection() == p.cover.selection() &&
             p.point_phase == Impl::PointPhase::none && p.facet_phase == Impl::FacetPhase::none &&
-            !p.jobs && !p.ticket && request.ordinal && request.construction && request.domain &&
-            request.construction->surface && request.construction->surface.key() == p.cover.key() &&
+            p.cap_phase == Impl::CapPhase::none && !p.jobs && !p.ticket && request.ordinal &&
+            request.construction && request.domain && request.construction->surface &&
+            request.construction->surface.key() == p.cover.key() &&
             request.construction->surface.selection() == p.cover.selection() &&
             request.construction->domain == request.domain &&
             request.allowances.values.resource() == p.resource,
@@ -1145,6 +1486,50 @@ SurfaceFacetResult SurfaceCacheSession::facet_result() const {
         ErrorCode::invalid_source, "surface facet operation incomplete");
   return impl_->facet_output;
 }
+void SurfaceCacheSession::bound_caps(const SurfaceCapFacetRequest &request) {
+  auto &p = *impl_;
+  p.stopped();
+  check(p.phase == Impl::Phase::done && p.cover && request.view &&
+            request.view.key() == p.cover.key() &&
+            request.view.selection() == p.cover.selection() &&
+            p.point_phase == Impl::PointPhase::none && p.facet_phase == Impl::FacetPhase::none &&
+            p.cap_phase == Impl::CapPhase::none && !p.jobs && !p.ticket && request.ordinal &&
+            request.construction && request.domain && request.construction->surface &&
+            request.construction->surface.key() == p.cover.key() &&
+            request.construction->surface.selection() == p.cover.selection() &&
+            request.construction->domain == request.domain && request.domain == p.query_domain &&
+            request.allowances.values.resource() == p.resource,
+        ErrorCode::invalid_source, "stale surface cap request");
+  check(p.source.purpose() == SourceCachePurpose::quotient_trim && request.domain->caps &&
+            request.limits.batch_records && request.limits.batch_records <= p.limits.frontier &&
+            request.limits.precise_tasks && request.limits.work && request.limits.pieces &&
+            request.limits.exact_entries && request.limits.candidate_visits &&
+            request.selected_facets.size() <= request.limits.pieces,
+        ErrorCode::invalid_source, "invalid surface cap limits or source capability");
+  const auto tau =
+      import_exact(p.budget, request.allowances.values.view(request.allowances.face_position));
+  check(tau.sign() > 0, ErrorCode::invalid_source, "nonpositive surface cap allowance");
+  std::pmr::vector<uint32_t> unique(request.selected_facets.begin(), request.selected_facets.end(),
+                                    &p.budget);
+  for (auto index : unique)
+    check(index < request.construction->facets.size(), ErrorCode::invalid_source,
+          "cap subset index outside captured construction");
+  std::sort(unique.begin(), unique.end());
+  check(std::adjacent_find(unique.begin(), unique.end()) == unique.end(), ErrorCode::invalid_source,
+        "duplicate surface cap subset index");
+  p.selected_caps.assign(request.selected_facets.begin(), request.selected_facets.end());
+  p.cap_request = request;
+  p.cap_request->selected_facets = p.selected_caps;
+  p.cap_at = p.cap_count = p.cap_precise = 0;
+  p.cap_work_spent = 0;
+  p.cap_pending = false;
+  p.cap_phase = Impl::CapPhase::prepare;
+}
+SurfaceCapFacetResult SurfaceCacheSession::cap_result() const {
+  check(impl_->cap_phase == Impl::CapPhase::complete && impl_->cap_output,
+        ErrorCode::invalid_source, "surface cap operation incomplete");
+  return impl_->cap_output;
+}
 CacheStats SurfaceCacheSession::stats() const noexcept { return stats_core(*impl_); }
 void SurfaceCacheSession::release_query() {
   auto &p = *impl_;
@@ -1164,7 +1549,8 @@ void SurfaceCacheSession::retire_assignment() {
   if (p.phase == Impl::Phase::done)
     release_query();
   else
-    check(p.point_phase == Impl::PointPhase::none && p.facet_phase == Impl::FacetPhase::none,
+    check(p.point_phase == Impl::PointPhase::none && p.facet_phase == Impl::FacetPhase::none &&
+              p.cap_phase == Impl::CapPhase::none,
           ErrorCode::invalid_source, "idle surface owner retains an auxiliary operation");
   retire_core_pages(p);
   p.cover = {};
@@ -1175,6 +1561,9 @@ void SurfaceCacheSession::retire_assignment() {
   p.controls_pending = false;
   p.control_nodes.clear();
   p.node_classes.clear();
+  p.node_cap_coverage.clear();
+  p.mapped_nodes.clear();
+  p.query_domain.reset();
   p.required_targets.clear();
   p.query_roots.clear();
   p.absolute_index.clear();
@@ -1187,6 +1576,11 @@ void SurfaceCacheSession::retire_assignment() {
   p.plane_accepted.clear();
   p.source_inputs.clear();
   p.source_answers.clear();
+  p.selected_caps.clear();
+  p.cap_indices.clear();
+  p.cap_rows.clear();
+  p.cap_inputs.clear();
+  p.cap_answers.clear();
   p.pages_retired = true;
 }
 void SurfaceCacheSession::cancel() noexcept {

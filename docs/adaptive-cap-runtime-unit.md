@@ -48,10 +48,16 @@ to the construction plan):
     CapDomainKey {source_generation,query,definition,face,boundary_generation,
                   face_generation,chart_revision,domain_revision,
                   assignment_epoch,profile_revision}
-    CapDomainLease                         // producer-minted immutable handle
+    ProducedCapDomainLease                 // producer-minted immutable handle
     CapCutControlLease                     // immutable, source-locator history
     CapDomainPiece {original_root,kind,finite_connector_uv,cut_uv,
                     physical_endpoint_locators,source_sheet_sign,cut_control}
+
+Actual schema is native/mesher/adaptive_cap_domain.hpp; SurfaceCellCoverage
+retains a produced classification lease and candidate row, so exact boxes/full
+paths/cap-piece ranges address that immutable classifier operation. Ordinary
+cap_coverage rows align selected leaves; mapped_cells retains material omitted
+from ordinary sampling/bounds.
 
 The handle retains the SAME SourceCache bank, SourceStore, SharedCurveSnapshot,
 RunResource and sealed exact table. Its producer checks actual original wedge/
@@ -61,7 +67,7 @@ that explicit empty inventory is still produced and bound to that face. It may
 contain original UV/cut/map and source-only orientation facts before actual cut Q
 exists. It contains NO claim of completed actual-facet bounds and no private Q.
 
-FaceDomainData gains trailing CapDomainLease caps. A domain must match its full
+FaceDomainData gains trailing ProducedCapDomainLease caps. A domain must match its full
 CapDomainKey, source bank identity (not merely source ID/generation), resource,
 physical snapshot, profile and full enclosing face key, including assignment.
 Original loops/uses/sites remain retained even where the working UV connector
@@ -152,7 +158,13 @@ FaceTrim internally consumes construction's produced local cut replacement after
 ONE complete failed-facet horizon. No new needs_domain/coordinator controller is
 introduced. It stages all chosen angular/radial cut changes, applies one checked
 replacement, reclassifies once, reselects, samples/rebuilds once, and rebinds all
-changed source maps/actual Q. It does not reset semantic anchor birth horizons
+changed source maps/actual Q. Packet footprint freezing is now within one
+(boundary_generation,domain_revision), not physical boundary alone. Source-only
+control/point/bound tiers may remain cached, but all old domain-classification
+flags must be invalidated. Keep the existing fixed FACE secant metric through a
+local replacement when the chart is unchanged: the initial metric still comes
+from the canonical first admitted ordinary leaf (regular remainder required),
+not a new source-jet bootstrap. It does not reset semantic anchor birth horizons
 or contraction history on a local cut. A source boundary replacement keeps its
 existing separate transition and invalidates/reproduces the domain under that
 new physical snapshot.
@@ -182,20 +194,26 @@ refine forever or report witnessed infeasibility from an upper bound.
 
 ## Resume across pooled boundary assignments
 
-Component currently captures BoundaryKeys, retires the owner and freshly assigns
-pending faces after forest convergence. Therefore BOTH-side CapCutControl cannot
+Component captures continuation on BOTH complete and needs_boundary before
+retiring an owner. A completed face may later be invalidated by an incident
+physical split, so it retains that continuation for the entire query and supplies
+it when freshly assigning the pending face after forest convergence. Therefore BOTH-side CapCutControl cannot
 live only in FaceTrim's mutable Impl or be reset on each physical epoch.
 
     FaceContinuationKey {source_bank,source_generation,query,definition,face,
         originating_boundary_generation,profile_revision}
     FaceContinuationData {resource,source,origin_key,values,positional,node_source,
-                           CapCutControlLease cap_control}
+                           CapCutControlLease cap_control,optional<MetricFactorLease> metric}
     using FaceContinuation = shared_ptr<const FaceContinuationData>;
     TrimFaceQuery::continuation             // trailing empty by default
-    FaceTrimSession::continuation() const;  // needs_boundary only, immutable capture
+    FaceTrimSession::continuation() const;  // complete OR needs_boundary, immutable capture
 
 The continuation retains only necessary immutable cut/contraction/source-locator
-history and exact quality. It must not retain mutable cache pages, an unfinished
+history, exact quality and (once initially chosen) the sealed exact metric factor4
+with its source/chart provenance. This small metric policy survives local cuts
+and radial boundary retirement; it is not a retained mesh/cache. Fresh quality
+still starts with the canonical initial metric. Other source/chart changes must
+follow the constructive metric policy explicitly. It must not retain mutable cache pages, an unfinished
 mesh, old global row offsets or old sampled Q. SourceEdgeID +exact ORIGINAL t,
 original use/sector/junction and logical physical keys identify cut endpoints.
 On resume validate same bank/source/query/face/profile/exact quality and a newer
@@ -204,10 +222,18 @@ The old cut samples must still exist in the monotone within-query forest, or
 resume fails. New assignment epoch is deliberately new; originating epoch is
 provenance, not current resident authority. Construction reproduces a new domain
 with current keys and carries forward BOTH-endpoint contraction history, checking
-new selected UV/source gaps rather than pretending old Q/UV is current.
+new selected UV/source gaps rather than pretending old Q/UV is current. After a
+one-sided candidate improvement, yield needs_boundary with continuation only;
+do not emit an old-cut cap that skips newly inserted meridian master nodes.
+Commit a radial cut only after BOTH gaps prove the selected3/4 contraction and
+each chosen cut is pole-adjacent in the CURRENT master chain. Each fan radial
+boundary must be one actual current master interval. This is checked even when
+both seam sectors share one original spatial edge/t.
 
-Root Component stores one continuation per pending OriginalFaceID before retiring
-its owner and passes it on the next assignment. Fresh QUALITY/query never reuses
+Root Component stores one continuation per OriginalFaceID before retiring its
+owner on complete OR needs_boundary, and passes it on any later assignment.
+Construction CapCutDirection::retain seals initial history/fixed metric without
+advancing angular/radial policy when a completed face is captured. Fresh QUALITY/query never reuses
 that history: it follows the canonical BASE/cut policy from immutable source.
 Coarse-after-fine must not inherit tighter cuts. Local domain replacement remains
 within the same assignment and preserves its history directly.

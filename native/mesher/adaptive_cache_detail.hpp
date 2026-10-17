@@ -223,7 +223,7 @@ struct SurfaceCacheCore {
   uint64_t batch_serial = 0;
 
   SurfaceCacheCore(std::shared_ptr<RunResource> r, SourceCache cache, CacheLimits cap,
-                   const std::stop_token &token)
+                   const std::stop_token &token, bool quotient_owner = false)
       : resource(std::move(r)), source(std::move(cache)), limits(cap),
         stop(cancellation.get_token()),
         budget({cap.host_bytes, cap.total_work}, resource.get(), stop), nodes(&budget),
@@ -236,8 +236,9 @@ struct SurfaceCacheCore {
     external_stop.emplace(token, ForwardStop{&cancellation});
     check(resource && source.source().view().resource == resource, ErrorCode::internal_error,
           "adaptive source resource mismatch");
-    check(source.purpose() == SourceCachePurpose::regular_patch, ErrorCode::invalid_source,
-          "trace-only source cache cannot form a regular patch");
+    check(source.purpose() == SourceCachePurpose::regular_patch ||
+              (quotient_owner && source.purpose() == SourceCachePurpose::quotient_trim),
+          ErrorCode::invalid_source, "source cache purpose cannot form this surface operation");
     check(cap.nodes && cap.points && cap.frontier && cap.control_scalars && cap.ambiguities &&
               cap.max_axis_depth && cap.max_axis_depth <= 64 && cap.cpu_threads &&
               cap.cpu_threads <= 1024 && cap.child_bytes && cap.child_work && cap.total_work &&
@@ -1140,9 +1141,12 @@ struct BeginPreparation final {
         tolerance_down(p.source.roots().size(), 0., &p.budget), roots(&p.budget) {}
 };
 inline BeginPreparation prepare_begin_core(SurfaceCacheCore &p, const PatchQuery &request,
-                                           bool subset, bool replacement = false) {
+                                           bool subset, bool replacement = false,
+                                           bool selected_replacement = false) {
   p.stopped();
-  check(p.phase == SurfaceCacheCore::Phase::idle && !p.mesh && !p.jobs && !p.ticket,
+  check((p.phase == SurfaceCacheCore::Phase::idle ||
+         (selected_replacement && p.phase == SurfaceCacheCore::Phase::done)) &&
+            !p.mesh && !p.jobs && !p.ticket,
         ErrorCode::invalid_source, "adaptive query already active");
   check(&request.source.view() == &p.source.view(), ErrorCode::invalid_source,
         "foreign adaptive source cache");

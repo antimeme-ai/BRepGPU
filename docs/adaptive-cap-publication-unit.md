@@ -63,13 +63,19 @@ records keep their previous layout, allowing generator3 for mapped facets):
   cap rows, planned points, pieces and mapped facets.
 - Each cap row: u32 wedge index, pole boundary node, two angular-to-sector
   indices; original LoopID u64; point and piece ranges as four u64; two u32
-  precision fields. Wedge index addresses the paired BGACRV03 pool.
+  precision fields; two original pole-adjacent BoundaryKeys, each owner/interval
+  u64 and kind u32, in original wedge-sector order. Wedge index addresses the
+  paired BGACRV03 pool. These SAME intervals also survive as protected actual
+  pole-to-cut edges in construction.edges outside the ordinary loop ranges.
 - Each planned point: two exact UV rationals, u32 authority tag (1 physical,
   2 surface). Physical payload is original EdgeID/CoedgeID u64, exact original
   t, physical key generator u32 and source/generation/ordinal u64. Surface
   payload is remapped original root u32. Both then carry construction-site and
-  sampler-row u32; physical sampler-row is UINT32_MAX. Site records already
-  retain actual Q, stage and revision.
+  originating sampler-request row u32; physical sampler-row is UINT32_MAX. The
+  sampler row is diagnostic, not an index into a serialized PointPool. Actual
+  external authority resolves through construction-site, original root, exact
+  UV, arithmetic stage and revision. Site records already retain those values
+  and actual Q.
 - Each piece: u32 cap, remapped original root, two planned-point indices;
   four exact cut UV and two exact finite V rationals; three positive chart-role
   u32, sheet sign i32; cut BoundaryKey owner/interval u64 and kind u32.

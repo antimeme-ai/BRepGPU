@@ -275,7 +275,7 @@ void run(const Options &o, std::string_view &stage) {
   source_limits.control_scalars = o.max_nodes * 264;
   // Singular banks remain refused until the produced cap-domain runtime is connected.
   const auto cache =
-      prepare_trim_source_cache(source, carriers, resource, {}, source_limits, budget);
+      prepare_quotient_trim_source_cache(source, carriers, resource, {}, source_limits, budget);
   CurveCacheLimits curve_limits;
   curve_limits.control_scalars = o.max_nodes * 264;
   std::pmr::vector<CurveSourceCache> curve_banks(resource.get());
@@ -339,7 +339,9 @@ void run(const Options &o, std::string_view &stage) {
              "query\tcurve_downloaded_bytes_query"
              "\tsurface_device_points_cumulative\tsurface_device_bounds_cumulative\tsurface_"
              "uploaded_bytes_cumulative"
-             "\tsurface_downloaded_bytes_cumulative\trun_peak_including_reservations_bytes\n";
+             "\tsurface_downloaded_bytes_cumulative\tsurface_cap_facet_tests_cumulative"
+             "\tsurface_device_cap_facets_cumulative\tsurface_domain_replacements_cumulative"
+             "\trun_peak_including_reservations_bytes\n";
   std::pmr::vector<Box> boxes(&budget);
   std::pmr::vector<DefinitionEnvelopeView> views(&budget);
   for (std::size_t q = 0; q < o.positional.size(); ++q) {
@@ -384,9 +386,9 @@ void run(const Options &o, std::string_view &stage) {
         throw Error(ErrorCode::internal_error, "model definition allowance missing");
       stage = "query.complete_component";
       tick = Clock::now();
-      const auto result = mesher.mesh(
-          {generation, def, curve_banks[d], allowances.values, found->positional, found->node_source},
-          scheduler, context);
+      const auto result = mesher.mesh({generation, def, curve_banks[d], allowances.values,
+                                       found->positional, found->node_source},
+                                      scheduler, context);
       const auto component_seconds = elapsed(tick);
       mesh_seconds += component_seconds;
       record(component_prefix + "complete_component", tick);
@@ -408,7 +410,8 @@ void run(const Options &o, std::string_view &stage) {
             stats.contacts.retained_forbidden_pairs, stats.curves.device_points,
             stats.curves.device_bounds, stats.curves.uploaded_bytes, stats.curves.downloaded_bytes,
             totals.device_points, totals.device_bounds, totals.uploaded_bytes,
-            totals.downloaded_bytes, resource->peak()})
+            totals.downloaded_bytes, totals.cap_facet_tests, totals.device_cap_facets,
+            totals.domain_replacements, resource->peak()})
         queries << '\t' << count;
       queries << '\n';
       stage = "output.component";

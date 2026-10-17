@@ -1,6 +1,7 @@
 #ifndef BREPGPU_MESHER_ADAPTIVE_CURVES_TYPES_HPP
 #define BREPGPU_MESHER_ADAPTIVE_CURVES_TYPES_HPP
 #include "adaptive_curve_types.h"
+#include "adaptive_cap_types.h"
 #include "boundary.hpp"
 #include <array>
 #include <memory>
@@ -87,6 +88,16 @@ struct UseCurveTrace final {
   };
   std::optional<WholeLineImage> whole_line_image{};
 };
+// Original incoming/outgoing occurrence order, NOT canonical angular order.
+// This is a coverage connector, never an invented source coedge.
+struct SeamWedge final {
+  Slot<VertexTag> vertex;
+  Slot<LoopTag> loop;
+  std::array<Slot<CoedgeTag>, 2> meridian_uses;
+  std::array<uint32_t, 2> shared_endpoint_sites;
+  AnalyticCapKind kind;
+  std::array<ExactRef, 4> finite_connector_uv;
+};
 struct SharedCurveSnapshotData final {
   std::shared_ptr<RunResource> resource;
   SourceStore source;
@@ -100,13 +111,14 @@ struct SharedCurveSnapshotData final {
   std::pmr::vector<UseCurveInterval> intervals;
   std::shared_ptr<const CurveSourceCache> curve_source;
   std::shared_ptr<const SourceCache> carrier_source;
+  std::pmr::vector<SeamWedge> seam_wedges;
   SharedCurveSnapshotData(std::shared_ptr<RunResource> owner, SourceStore original,
                           Slot<DefinitionTag> part, uint64_t generation, ExactTable exact,
                           DefinitionBoundarySnapshot physical)
       : resource(std::move(owner)), source(std::move(original)), definition(part),
         query_generation(generation), values(std::move(exact)), boundary(std::move(physical)),
         physical_intervals(resource.get()), uses(resource.get()), sites(resource.get()),
-        intervals(resource.get()) {
+        intervals(resource.get()), seam_wedges(resource.get()) {
     if (!resource || source.view().resource != resource || values.resource() != resource ||
         !boundary || boundary->resource != resource || &boundary->source.view() != &source.view() ||
         boundary->definition != definition)

@@ -170,7 +170,7 @@ void run(const Options &o, std::string_view &stage) {
   source_limits.roots = o.max_nodes;
   source_limits.control_scalars = o.max_nodes * 264;
   const auto cache =
-      prepare_trim_source_cache(source, carriers, resource, {}, source_limits, budget);
+      prepare_quotient_trim_source_cache(source, carriers, resource, {}, source_limits, budget);
   const auto curve_requests = caller::definition_curve_requests(source, definition, resource);
   CurveCacheLimits curve_limits;
   curve_limits.control_scalars = o.max_nodes * 264;
@@ -227,6 +227,8 @@ void run(const Options &o, std::string_view &stage) {
          "\tsurface_uploaded_bytes_cumulative\tsurface_downloaded_bytes_cumulative"
          "\tsurface_host_reserved_bytes\tsurface_host_peak_sum_upper_bytes\tsurface_device_"
          "reserved_bytes\tsurface_device_peak_sum_upper_bytes"
+         "\tsurface_cap_facet_tests_cumulative\tsurface_device_cap_facets_cumulative"
+         "\tsurface_domain_replacements_cumulative"
          "\trun_peak_including_reservations_bytes\n";
   std::pmr::vector<Box> boxes(&budget);
   std::pmr::vector<DefinitionEnvelopeView> views(&budget);
@@ -310,6 +312,9 @@ void run(const Options &o, std::string_view &stage) {
                            totals.host_peak_bytes,
                            totals.device_reserved_bytes,
                            totals.device_peak_bytes,
+                           totals.cap_facet_tests,
+                           totals.device_cap_facets,
+                           totals.domain_replacements,
                            resource->peak()})
       queries << '\t' << count;
     queries << '\n';

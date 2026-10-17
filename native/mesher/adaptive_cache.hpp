@@ -40,6 +40,7 @@ struct CacheStats final {
   uint64_t device_reserved_bytes = 0, device_peak_bytes = 0;
   uint64_t packet_rounds = 0, actual_facet_tests = 0, actual_facet_failures = 0;
   uint64_t source_triangle_tests = 0;
+  uint64_t cap_facet_tests = 0, device_cap_facets = 0, domain_replacements = 0;
 };
 class PatchSession final {
   struct Impl;
