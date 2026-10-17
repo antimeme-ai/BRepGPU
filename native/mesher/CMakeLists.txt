@@ -516,6 +516,9 @@ add_library(brepgpu_mesher_adaptive_geometry STATIC source_cache.cpp adaptive_ge
 target_link_libraries(brepgpu_mesher_adaptive_geometry PUBLIC
   brepgpu_mesher_source brepgpu_mesher_geometry brepgpu_mesher_exact)
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_geometry)
+add_library(brepgpu_mesher_adaptive_cap_geometry STATIC adaptive_cap_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cap_geometry PUBLIC brepgpu_mesher_adaptive_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cap_geometry)
 add_library(brepgpu_mesher_adaptive_packets STATIC adaptive_packets.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_packets PUBLIC brepgpu_mesher_adaptive_geometry)
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_packets)
@@ -605,6 +608,38 @@ if(BUILD_TESTING)
     brepgpu_mesher_adaptive_scene brepgpu_mesher_adaptive_assembly
     brepgpu_mesher_adaptive_caller_io brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_scene)
+  add_executable(brepgpu_native_adaptive_cap_geometry ../../tests/native_adaptive_cap_geometry.cpp)
+  target_link_libraries(brepgpu_native_adaptive_cap_geometry PRIVATE
+    brepgpu_mesher_adaptive_cap_geometry ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_geometry)
+  add_test(NAME native_adaptive_cap_sources COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_cap_fixture.py"
+    "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture")
+  set_tests_properties(native_adaptive_cap_sources PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+    FIXTURES_SETUP adaptive_cap_sources TIMEOUT 30)
+  foreach(family north south cone north-warped south-warped cone-warped)
+    add_test(NAME native_adaptive_cap_${family}_cpu COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py"
+      --cap-fixture "$<TARGET_FILE:brepgpu_native_adaptive_cap_geometry>"
+      --source "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture/${family}.bgsource")
+    set_tests_properties(native_adaptive_cap_${family}_cpu PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+      FIXTURES_REQUIRED adaptive_cap_sources TIMEOUT 130)
+    if(TARGET brepgpu_mesher_adaptive_cuda)
+      foreach(device 0 1)
+        add_test(NAME native_adaptive_cap_${family}_p100_${device}
+          COMMAND "${Python3_EXECUTABLE}" -B
+          "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py"
+          --cap-fixture "$<TARGET_FILE:brepgpu_native_adaptive_cap_geometry>"
+          --source "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture/${family}.bgsource"
+          --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+        set_tests_properties(native_adaptive_cap_${family}_p100_${device} PROPERTIES
+          ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+          FIXTURES_REQUIRED adaptive_cap_sources TIMEOUT 130)
+      endforeach()
+    endif()
+  endforeach()
   foreach(family box cylinder weighted c0 styled)
     add_test(NAME native_adaptive_scene_${family} COMMAND "${Python3_EXECUTABLE}" -B
       "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_scene.py"

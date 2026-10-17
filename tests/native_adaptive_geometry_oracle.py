@@ -194,6 +194,198 @@ from native_mesher_point_trig_vectors import original_oracle,plus,times
 original_oracle=lru_cache(maxsize=None)(original_oracle)
 
 
+def cap_check(source_path, output):
+    """Bound ORIGINAL Fsrc-SAME L by independent Taylor/power coefficients.
+
+    The production operation uses directional derivatives. Here exact power
+    arithmetic, Taylor remainder and tensor Bernstein subdivision bound the
+    complete (xi,rho) square, including the collapsed physical lower edge.
+    """
+    import sys
+    from math import factorial
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'python'))
+    from brepgpu.imported_source import load_source
+    original=load_source(source_path)
+    carrier=original.carriers[0]
+    frame=tuple(map(F,carrier.frame));radius=F(carrier.radii[0])
+    assert len(original.coedges)==3 and len(original.edges)==2
+    assert not any(e.degenerate for e in original.edges)
+
+    def field(x):
+        if x.startswith('r:'):
+            n,d=x[2:].split('/');return F(int(n,16),int(d,16))
+        return F(float.fromhex(x))
+    def add(a,b):
+        p=dict(a[0])
+        for k,v in b[0].items():p[k]=p.get(k,F(0))+v
+        return {k:v for k,v in p.items() if v},a[1]+b[1]
+    def scale(a,s):return {k:v*s for k,v in a[0].items() if v*s},a[1]*abs(s)
+    def mul(a,b):
+        p=defaultdict(F)
+        for (i,j),v in a[0].items():
+            for (k,l),w in b[0].items():p[i+k,j+l]+=v*w
+        error=a[1]*sum(map(abs,b[0].values()))+b[1]*sum(map(abs,a[0].values()))+a[1]*b[1]
+        return dict(p),error
+    def constant(x):return ({(0,0):x} if x else {}),F(0)
+    def small_interval(lo,hi):
+        # Keep the exact oracle's thousands-bit transcendental denominator out
+        # of polynomial arithmetic. The rounded dyadic coefficient error stays.
+        bits=160;mid=(lo+hi)/2;n=(mid.numerator<<bits)//mid.denominator
+        chosen=F(n,1<<bits)
+        return chosen,max(abs(lo-chosen),abs(hi-chosen))
+    def trig_poly(argument,lo,hi,sine):
+        center=(lo+hi)/2;delta=add(argument,constant(-center));width=(hi-lo)/2
+        slo,shi,clo,chi=original_oracle(center)
+        derivatives=((slo,shi),(clo,chi),(-shi,-slo),(-chi,-clo))
+        if not sine:derivatives=derivatives[1:]+derivatives[:1]
+        answer=constant(F(0));power=constant(F(1));error=F(0);order=8
+        for k in range(order+1):
+            value,uncertainty=small_interval(*derivatives[k%4])
+            answer=add(answer,scale(power,value/F(factorial(k))))
+            error+=uncertainty*width**k/F(factorial(k))
+            power=mul(power,delta)
+        return answer[0],answer[1]+error+width**(order+1)/F(factorial(order+1))
+    def scalar_trig(x,sine):
+        slo,shi,clo,chi=original_oracle(x)
+        midpoint,error=small_interval(*((slo,shi) if sine else (clo,chi)))
+        return constant(midpoint)[0],error
+    def split(net,axis):
+        n=len(net);m=len(net[0]);left=[[F(0)]*m for _ in range(n)];right=[[F(0)]*m for _ in range(n)]
+        for line in range(m if axis==0 else n):
+            work=[net[i][line] for i in range(n)] if axis==0 else list(net[line])
+            degree=len(work)-1
+            for level in range(degree+1):
+                if axis==0:left[level][line],right[degree-level][line]=work[0],work[-1]
+                else:left[line][level],right[line][degree-level]=work[0],work[-1]
+                work=[(a+b)/2 for a,b in zip(work,work[1:])]
+        return left,right
+    def prove(residuals,upper):
+        p=max(i for polynomial,_ in residuals for i,j in polynomial)
+        q=max(j for polynomial,_ in residuals for i,j in polynomial)
+        nets=[]
+        for polynomial,error in residuals:
+            net=[[sum(v*F(comb(I,i),comb(p,i))*F(comb(J,j),comb(q,j))
+                      for (i,j),v in polynomial.items() if i<=I and j<=J)
+                  for J in range(q+1)] for I in range(p+1)]
+            nets.append((net,error))
+        pending=[(nets,0)];pieces=0
+        while pending:
+            rows,depth=pending.pop();pieces+=1
+            assert pieces<=1023,'bounded cap oracle subdivision exhausted'
+            maximum=max(sum((abs(net[I][J])+error)**2 for net,error in rows)
+                        for I in range(p+1) for J in range(q+1))
+            if maximum<=upper*upper:continue
+            assert depth<9,('original whole-rho cap residual exceeds emitted upper',maximum,upper*upper)
+            children=[[],[]]
+            for net,error in rows:
+                a,b=split(net,depth%2);children[0].append((a,error));children[1].append((b,error))
+            pending.extend((child,depth+1) for child in children)
+
+    source_record=None;counts=Counter();band_witness=False
+    for line in output.splitlines():
+        fields=line.split('\t');kind=fields[0];counts[kind]+=1
+        if kind in ('cap-native','cap-progress-uncertain'):
+            assert fields[1]=='PASS';continue
+        if kind=='cap-source':
+            capkind,panels,stage=map(int,fields[1:4]);values=list(map(field,fields[4:]))
+            assert panels>=4 and stage in (0,1,2,3,4)
+            if capkind<2:
+                # Obtain pi/2 independently through atan-free Taylor oracle:
+                # the point generator records a binary64 pole V; its cosine
+                # enclosure alone does not certify exact pole identity. The
+                # independent trig oracle exports a rigorous pi enclosure.
+                from native_mesher_point_trig_vectors import pi_interval
+                pi=pi_interval(256)
+                pole=(pi[0]/2,pi[1]/2) if capkind==0 else (-pi[1]/2,-pi[0]/2)
+                ideal=[(frame[a]+(radius if capkind==0 else -radius)*frame[9+a],)*2 for a in range(3)]
+            else:
+                s0,s1,c0,c1=original_oracle(F(carrier.radii[1]))
+                pole=tuple(sorted((-radius/s0,-radius/s1)))
+                axial=times(pole,(c0,c1));ideal=[plus((frame[a],)*2,times(axial,(frame[9+a],)*2)) for a in range(3)]
+            assert values[0]<=pole[0]<=pole[1]<=values[1]
+            assert all(values[2+2*a]<=ideal[a][0]<=ideal[a][1]<=values[3+2*a] for a in range(3))
+            source_record=capkind,pole,ideal;continue
+        assert source_record is not None
+        capkind,pole,ideal=source_record
+        if kind=='cap-regularity':
+            rn,precise=map(int,fields[1:3]);u0,u1,v0,v1=map(field,fields[3:])
+            if carrier.kind==4:
+                _,_,a,b=original_oracle(v0);_,_,c,d=original_oracle(v1)
+                regular=(a>0 and c>0) or (b<0 and d<0)
+                regular=regular and not (v0<=pole[0] and pole[1]<=v1)
+            else:
+                s0,s1,_,_=original_oracle(F(carrier.radii[1]))
+                r0=plus((radius,)*2,times((v0,)*2,(s0,s1)))
+                r1=plus((radius,)*2,times((v1,)*2,(s0,s1)))
+                regular=(r0[0]>0 and r1[0]>0) or (r0[1]<0 and r1[1]<0)
+            assert rn==precise==int(regular);continue
+        if kind=='cap-progress':
+            states=list(map(int,fields[1:3]));values=list(map(field,fields[3:]));old,new=values[:4],values[4:]
+            assert states==[0,0]
+            for i in (1,3):
+                side=1 if old[i]>pole[1] else -1
+                residual=tuple(sorted(side*(4*new[i]-3*old[i]-p) for p in pole))
+                assert residual[1]<=0
+            continue
+        assert kind in ('cap-bound','cap-precise'),kind
+        scenario=int(fields[1]);values=list(map(field,fields[2:18]))
+        upper=values[0];u0,g0,u1,g1,vf0,vf1=values[1:7]
+        actual=[values[7+3*i:10+3*i] for i in range(3)]
+        components=list(map(field,fields[18:24]));sheet=int(fields[24]);roles=list(map(int,fields[25:]))
+        assert tuple(actual[0])==tuple(map(F,original.vertices[0].xyz))
+        assert (g0-vf0)*(g1-vf1)>0 and roles==([0,2,1] if g0>vf0 else [0,1,2])
+        side=1 if g0>pole[1] else -1
+        expected=(-side if capkind==0 else side) if capkind<2 else side
+        assert sheet==expected
+        U=({(0,0):u0,(1,0):u1-u0},F(0))
+        V=({(0,0):vf0,(1,0):vf1-vf0,(0,1):g0-vf0,(1,1):g1-g0-vf1+vf0},F(0))
+        su=trig_poly(U,u0,u1,True);cu=trig_poly(U,u0,u1,False)
+        if carrier.kind==4:
+            lo,hi=min(vf0,vf1,g0,g1),max(vf0,vf1,g0,g1)
+            radial=scale(trig_poly(V,lo,hi,False),radius)
+            axial=scale(trig_poly(V,lo,hi,True),radius)
+        else:
+            radial=add(constant(radius),mul(V,scalar_trig(F(carrier.radii[1]),True)))
+            axial=mul(V,scalar_trig(F(carrier.radii[1]),False))
+        residuals=[]
+        for a in range(3):
+            harmonic=add(scale(cu,frame[3+a]),scale(su,frame[6+a]))
+            result=add(mul(radial,harmonic),scale(axial,frame[9+a]))
+            # Subtract constant origin and Q algebraically before enclosures.
+            linear={(0,0):frame[a]-actual[0][a],(0,1):actual[0][a]-actual[1][a],
+                    (1,1):actual[1][a]-actual[2][a]}
+            residuals.append(add(result,(linear,F(0))))
+        prove(residuals,upper)
+        if kind=='cap-bound':
+            position,band,angular,radial_bound,corner,pole_departure=components
+            assert upper>=position+band and position>=angular+radial_bound+corner
+            assert pole_departure<=corner
+            # The finite-v -> ideal-v connector must be bounded over WHOLE rho.
+            # A large nonorthogonal Z makes its interior departure visible.
+            if scenario==1 and carrier.kind==4 and abs(frame[11])>100:
+                rho=F(1,2);u=u1;finite_v=vf1
+                v=finite_v*(1-rho)+g1*rho
+                vp=tuple(p*(1-rho)+g1*rho for p in pole)
+                su0,su1,cu0,cu1=original_oracle(u)
+                sv0,sv1,cv0,cv1=original_oracle(v)
+                p0=original_oracle(vp[0]);p1=original_oracle(vp[1])
+                ds=(sv0-max(p0[1],p1[1]),sv1-min(p0[0],p1[0]))
+                dc=(cv0-max(p0[3],p1[3]),cv1-min(p0[2],p1[2]))
+                difference=[]
+                for a in range(3):
+                    h=plus(times((cu0,cu1),(frame[3+a],)*2),times((su0,su1),(frame[6+a],)*2))
+                    difference.append(times((radius,)*2,plus(times(dc,h),times(ds,(frame[9+a],)*2))))
+                lower=sum((min(abs(a),abs(b)) if a*b>0 else F(0))**2 for a,b in difference)
+                # Old near-pole-strip Sv omits the large Z contribution.
+                gap=max(abs(finite_v-p) for p in pole)
+                old_sv=sum(abs(z) for z in frame[3:9])+gap*sum(abs(z) for z in frame[9:12])
+                band_witness=band_witness or lower>(gap*old_sv)**2
+    assert counts['cap-bound']==4 and counts['cap-precise']==2 and counts['cap-regularity']==2
+    assert counts['cap-progress']==counts['cap-native']==counts['cap-source']==1
+    if carrier.kind==4 and abs(frame[11])>100:assert band_witness,'whole-rho band attack not exercised'
+    return counts['cap-bound']+counts['cap-precise']
+
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--fixture',type=Path)
@@ -202,10 +394,15 @@ def main():
     p.add_argument('--cuda-module',type=Path)
     p.add_argument('--device',type=int,default=0)
     p.add_argument('--trimmed-fixture',type=Path)
+    p.add_argument('--cap-fixture',type=Path)
     a=p.parse_args()
-    if not a.fixture and not a.trimmed_fixture:
-        p.error('--fixture or --trimmed-fixture is required')
+    if not a.fixture and not a.trimmed_fixture and not a.cap_fixture:
+        p.error('--fixture, --trimmed-fixture or --cap-fixture is required')
     backend=[] if a.cuda_module is None else ["--cuda",str(a.cuda_module),str(a.device)]
+    if a.cap_fixture:
+        cap=subprocess.run([str(a.cap_fixture),str(a.source),*backend],check=True,capture_output=True,text=True)
+        n=cap_check(a.source,cap.stdout)
+        print('original-cap-geometry-reader\tPASS\t'+str(n))
     if a.trimmed_fixture:
         trimmed=subprocess.run([str(a.trimmed_fixture),str(a.source),*backend],check=True,capture_output=True,text=True)
         n=trimmed_check(a.source,trimmed.stdout)

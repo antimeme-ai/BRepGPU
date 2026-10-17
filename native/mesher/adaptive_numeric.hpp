@@ -237,6 +237,33 @@ BGAD_HD inline SinCos sincos(Interval x) {
   co = {maximum(-1., co.lower), minimum(1., co.upper)};
   return {so, co, valid(so) && valid(co)};
 }
+// Source compilation admits the frame/radius; immersion belongs to THIS box.
+// In particular quotient-capable source banks never imply regular analytic
+// nodes.
+BGAD_HD inline bool analytic_node_regularity_rn64(const RootDescriptor &root, const Interval *box) {
+  if (!box)
+    return false;
+  for (uint32_t i = 0; i < 4; ++i)
+    if (!valid(box[i]))
+      return false;
+  const auto nonzero = [](Interval value) {
+    return valid(value) && (value.lower > 0. || value.upper < 0.);
+  };
+  if (root.family == GeometryFamily::cone) {
+    const auto radial = add(point(root.radii[0]), mul({box[2].lower, box[3].upper}, root.cone_sin));
+    return nonzero(radial) && nonzero(root.cone_cos);
+  }
+  if (root.family == GeometryFamily::sphere) {
+    const auto left = sincos(point(box[2].lower)), right = sincos(point(box[3].upper));
+    const auto width = sub(point(box[3].upper), point(box[2].lower));
+    return left.ready && right.ready &&
+           ((left.cosine.lower > 0. && right.cosine.lower > 0.) ||
+            (left.cosine.upper < 0. && right.cosine.upper < 0.)) &&
+           width.upper < rn_mul(half_pi().lower, 2.);
+  }
+  return root.family == GeometryFamily::plane || root.family == GeometryFamily::cylinder ||
+         root.family == GeometryFamily::torus;
+}
 BGAD_HD inline uint32_t binomial(uint32_t n, uint32_t k) {
   if (k > n)
     return 0;
@@ -561,7 +588,7 @@ BGAD_HD inline NodeBounds bound_node_rn64(const RootDescriptor &root, const Inte
     eu = rational_axis_score(root, net, anchor, wmin, SplitAxis::u);
     ev = rational_axis_score(root, net, anchor, wmin, SplitAxis::v);
   } else {
-    result.regularity_proved = 1;
+    result.regularity_proved = analytic_node_regularity_rn64(root, input.box) ? 1U : 0U;
     Interval mu{}, mv{};
     const auto a = root.frame_a, f = root.frame_f, r = point(absolute(root.radii[0]));
     if (root.family == GeometryFamily::cylinder)

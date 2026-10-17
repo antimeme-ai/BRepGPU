@@ -139,6 +139,20 @@ PreparedCapSource prepare_cap_source(
 CapFacetBounds bound_cap_facet(const PreparedCapSource &, const CapFacetInput &,
                                bgfd::Budget &);
 
+// Source-only construction admission: no fake actual XYZ and no Q sampler.
+struct CapMapPlan {
+  ExactEnclosure pole_parameter;
+  int32_t regular_sheet_sign;
+  std::array<uint32_t,3> positive_chart_roles;
+};
+CapMapPlan admit_cap_map(const PreparedCapSource &,
+  std::span<const Rational,4> cut_uv, std::span<const Rational,2> finite_v,
+  GeometryBoundPrecision, bgfd::Budget &);
+enum class CapProgressState { proved, not_contracted, unresolved };
+std::array<CapProgressState,2> cap_cut_progress(const PreparedCapSource &,
+  std::span<const Rational,4> old_cut, std::span<const Rational,4> new_cut,
+  GeometryBoundPrecision, bgfd::Budget &);
+
 // Owner-local exact output: Rational fields belong to the caller's Budget.
 struct PreciseCapResult { PoleFanPlan bounds; bool certified; };
 PreciseCapResult compare_cap_facet_precise(
@@ -197,6 +211,16 @@ cut evaluations against the SAME three actual XYZ roles. Cut evaluations use the
 common bounded source formula, not a new sampler or old preparation controller.
 The ideal pole departure is retained separately from the changing cut departures.
 The unused source square corner repeats the same fixed pole Q.
+
+Source-only admission precedes actual cut-point sampling. It checks finite
+`g-vf` fixed sign separately from ideal cuts on one regular sheet. For du>0 the
+source Jacobian is `du*(g-vf)`, while emitted barycentrics
+`(rho*(1-xi),rho*xi)` have Jacobian `-rho`: positive chart roles are [0,2,1]
+when g>vf and [0,1,2] otherwise. Never derive roles from proxy UV or assume the
+finite and ideal side signs agree. Cut progress compares BOTH symbolic-pole
+endpoint gaps by `4*newgap<=3*oldgap`. Pole interval ambiguity is an explicit
+unresolved state, not a false contraction or Q-distance heuristic. These helpers
+reuse produced source intervals and use precise source trig only on uncertainty.
 
 Return the directional terms for geometry-owned angular/radial cut selection.
 The exact fallback calls the reviewed store-free original pole primitive with
