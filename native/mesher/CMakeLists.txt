@@ -753,6 +753,11 @@ if(BUILD_TESTING)
     endforeach()
   endif()
   set(ADAPTIVE_CALLER_DEVICE_ARGS)
+  add_test(NAME native_adaptive_trimmed_failures COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_failures.py"
+    --executable "$<TARGET_FILE:brepgpu-adaptive-trimmed>")
+  set_tests_properties(native_adaptive_trimmed_failures PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
   foreach(family plane plane_many_holes plane_reversed plane_authoritative bowl weighted saddle)
     foreach(threads 1 4)
       add_test(NAME native_adaptive_trimmed_${family}_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
