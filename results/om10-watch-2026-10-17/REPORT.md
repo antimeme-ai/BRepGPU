@@ -197,6 +197,62 @@ the outcomes, not that either reference pipeline passed.
 These new attempts supersede neither earlier failed observations nor the need
 to improve reference coverage. They supply no whole-render speedup ratio.
 
+### Focused NVIDIA pipeline recovery
+
+The subsequent investigation corrects the two polygon cases through explicit
+reference preparation. Their converted finite Plane patches omit original
+boundary points by about2.4mm. The official converter estimates those ranges
+from24 intervals per whole spatial curve; subsequent lazy UV generation on
+the undersized patches produces comparable spatial disagreement. Changing
+angular settings alone to the documented25/25 defaults does not fix it.
+
+The new [plane-envelope preparation tool](../../docs/NVIDIA_REFERENCE_PREPARATION.md)
+widens only Plane `face:range` entries using positive rational control hulls,
+exact projection and outward rounding. Original support geometry, spatial
+curves, topology and other typed USD values remain equal. The SDK, requested
+.005mm chord and strict raw exporter are unchanged. No replacement triangles
+or wider crossed-polygon admission are used.
+
+| Definition, heal0 | Full preparation process | Full SDK producer process | Genuine triangles |
+|---|---:|---:|---:|
+|1756|.415431s|.662115s|9,004|
+|1797|.416043s|.816550s|7,060|
+
+These are separate serial single-definition processes starting from retained
+converter-produced USD, with25/25 angular controls. Preparation is pinned to
+one physical core; the producer has affinity to12 physical cores on one socket,
+with OpenUSD/OMP thread limits1. These are not CPU1 performance comparisons.
+STEP transfer and OCCT-to-USD conversion are excluded from these focused times.
+Preparation process wall includes Python/package
+startup; measured preparation bodies take.123385/.135537s. Producer process
+wall includes plugin setup, input copying, import, tessellation, strict export,
+writing and teardown. All stage rows and executable/source pins are retained:
+[actual recovery times](nvidia-plane-recovery-times.tsv),
+[runtime pins](nvidia-plane-recovery-pins.tsv). Nested stages and enclosing
+process walls overlap and must not be summed.
+
+Both definitions also pass the bounded heal1 controls with9,004/7,060 triangles.
+All four outputs pass the existing closed physical-shell/source-Euler2 reader
+and complete imported-face/normal/identity export gates. The same finite UV
+trace drops the old millimetre discrepancy to1.3946e-5mm and3.8522e-14mm.
+An independent translated rational-cylinder regression passes literal support,
+source-attribute, shell and cylinder-equation checks. These checks do not
+establish a whole-watch5µm distance certificate.
+
+The two conversion refusals have a separate, diagnosed cause: missing source
+pcurves and tolerant nominally full-period seams produce sampled angular spans
+above the converter's fixed1e-5-radian excess cutoff, before SDK healing.
+Guarded RAW preparation plus documented OCCT closed-face splitting gets a
+named1811 derivative through the unchanged producer:117 original faces retained
+through122 descendants,2,096 genuine triangles. The offending1716 cylinder
+remains unsplit and unresolved. This derivative result is separate from the
+original-input outcome; see the [periodic source/API diagnosis](../../papers/2026-10-17-nvidia-periodic-input-usage-diagnosis.md).
+
+The historical103/107 preparations above remain unchanged. No complete107-case
+run, complete NVIDIA image or new whole-render time is claimed by this focused
+repair. The follow-up establishes a usable repair for both polygon cases and
+the specific remaining import work, rather than a general NVIDIA kernel verdict.
+
 The separate OCCT reference experiment completed 101/107 definitions in 15.22s;
 the remaining six still failed after the reviewed source-UV preparation variant.
 No complete OCCT image exists. See the
