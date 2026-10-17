@@ -49,8 +49,8 @@ These are single observations; CPU4 is the best observed CPU baseline and the
 complete-process difference is modest. Setup, output, transfers and close remain
 accounted for. The report retains earlier timeouts and distinguishes actual
 warm remeshing from returning a cached result. These timings cover untrimmed
-patches; the first selected trimmed faces are delivered below. Complete imported
-components and the OM10 render remain pending.
+patches; selected trimmed faces and a first imported component are delivered below.
+The complete OM10 assembly render remains pending.
 The NVIDIA CPU reference has not been run on this new scenario.
 
 The [shared-curve operation](docs/ADAPTIVE_SHARED_CURVES.md) is now delivered too:
@@ -83,9 +83,21 @@ periodic seam and a definition requiring real shared-boundary refinement.
 Bounded workers reuse their source bank; unaffected faces retain their exact
 boundary snapshots, and final facets pass the existing physical contact check.
 NVIDIA USD/BRep CPU has not been run on these scenarios. General curved
-authoritative-domain maps, complete imported components
-and the real OM10 render remain pending.
+authoritative-domain maps and the real OM10 assembly render remain pending.
 [API, admission and reproduction](docs/ADAPTIVE_TRIMMED_FACES.md).
+
+The [first original imported watch component](results/adaptive-imported-component-2026-10-17/REPORT.md)
+now passes the independent source reader on CPU4/P1000: four faces,32 facets,
+with byte-identical paired geometry artifacts. Its complete native component
+takes **0.090/0.336s**; cold process wall time is **14.33/14.84s**, dominated by
+full-source envelopes and assembly allowances. CPU wins this small operation.
+The native scene adapter also passes original positions, normals and placement
+checks on CPU/both P100s. A [native complete-assembly caller](docs/ADAPTIVE_MODEL_CALLER.md)
+now passes twelve small authored assembly queries across CPU1/CPU4/both P100s,
+with assembled/exploded labels and atomic semantic/image publication.
+Singular cap construction and the complete watch
+assembled/exploded delivery are still in progress; no new NVIDIA baseline or
+whole-watch GPU advantage is established.
 
 ```mermaid
 flowchart LR

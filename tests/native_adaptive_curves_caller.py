@@ -285,12 +285,16 @@ def check_line(record,curve,ts,trace_points,traversal,source_value=None):
         assert selected==sum(covector[j]*p[j] for j in range(3))
 
 
-def check(result, original, positional, node_cap, kind, carrier_value=None):
+def check(result, original, positional, node_cap, kind, carrier_value=None, definition=None):
     if carrier_value is None:
         carrier_value=lambda use,uv: uv+(F(0),)
-    assert result['definition']==200 and result['digest']==bytes.fromhex(original.source_sha256)
-    assert [e['id'] for e in result['edges']]==[e.id for e in original.edges]
-    assert {u['ids'][0] for u in result['uses']}=={u.id for u in original.coedges}
+    expected_definition=200 if definition is None else definition.id
+    edge_ids={e.id for e in original.edges} if definition is None else set(definition.edge_ids)
+    face_ids=None if definition is None else set(definition.face_ids)
+    loop_ids={l.id for l in original.loops if face_ids is None or l.face_id in face_ids}
+    assert result['definition']==expected_definition and result['digest']==bytes.fromhex(original.source_sha256)
+    assert [e['id'] for e in result['edges']]==sorted(edge_ids)
+    assert {u['ids'][0] for u in result['uses']}=={u.id for u in original.coedges if u.loop_id in loop_ids}
     curves={c.id:c for c in original.curves}
     vertices={v.id:tuple(map(F,v.xyz)) for v in original.vertices}
     physical=result['physical']
