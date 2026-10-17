@@ -332,3 +332,30 @@ than calling it a literal sum of rounded component scope rows. No timing values
 changed. The public report also distinguishes component-local physical contacts
 from an assembly collision test. No new numerical test jobs were necessary for
 these wording corrections.
+
+
+## Large share images delivered
+
+The presentation unit completes serial CPU12 then P1001 replays of the immutable
+finished scenes. Native3840x3600 images use2x supersampling, with unchanged
+camera basis/center, placements and explosion; canvas3840x4200 puts all panels
+outside the rendered pixels. Actual4K raster+download assembled1.813797081sCPU /
+.211462193sP100; exploded.712075446/.187035602s. Both-view native display
+process5.163352/3.612285s; additional entire inventory-admission/render/PNG/SVG/
+raster export27.416544/25.657952s. These do not replace or combine into a new
+cold source-to-4K-mesh result. Full original/replay/export phases are public.
+
+Root reviewed the utility and requested geometry-clear panels plus explicit
+THIS-view raster timing. The unit owner incorporated both before actual smoke
+replay. Root visually inspected allfour final large PNGs: legible source-linked
+name rails, original geometry and timing panels. Each poster retains166IDs:
+117sampled visible anchors,49explicitly marked stored-mesh-center fallbacks.
+No omitted part, remesh, source edit, bitmap enlargement or geometric
+qualification campaign. Original scene/view/labels and tool pins stay unchanged.
+
+Published allfour high-resolution PNGs, original1920 images, every889 original
+phase rows perbackend, all4K native/export phases, source-linked166part legend,
+reference failures and pins. README now leads with the actual large watch after
+NCSX; earlier schematic watch remains explicitly separate. Added download links
+and an optional X caption; no social post was sent. Local issue index reflects
+completed images and remaining independent geometry/alpha gaps.

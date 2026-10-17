@@ -3,25 +3,38 @@
 The original Association openmovement **OM10 MAN VA01.3** now completes through
 the owned C++/CUDA cached-adaptive mesher and both native display backends:
 **107 unique solid definitions, 9,162 original faces, 166 placed parts and
-273,978 unique mesh triangles**. Both operations finish successfully and publish
+273,978 unique mesh triangles** (339,652 after placement). Both operations finish successfully and publish
 the assembled image, exploded image and complete source-linked label legend.
 
-| Assembled | Exploded, all 166 part callouts |
+| 4K assembled hero | 4K exploded poster, all 166 callouts |
 |---|---|
-| [![CPU assembled](../../assets/om10/cpu12-assembled-1920.png)](../../assets/om10/cpu12-assembled-1920.png) | [![P100 exploded](../../assets/om10/p1001-exploded-1920.png)](../../assets/om10/p1001-exploded-1920.png) |
+| [![CPU assembled](../../assets/om10/cpu12-assembled-hero-4k.png)](../../assets/om10/cpu12-assembled-hero-4k.png) | [![P100 exploded](../../assets/om10/p1001-exploded-poster-4k.png)](../../assets/om10/p1001-exploded-poster-4k.png) |
 
-[CPU assembled](../../assets/om10/cpu12-assembled-1920.png) ·
-[CPU exploded](../../assets/om10/cpu12-exploded-1920.png) ·
-[P100 assembled](../../assets/om10/p1001-assembled-1920.png) ·
-[P100 exploded](../../assets/om10/p1001-exploded-1920.png) ·
-[Complete part legend](labels.tsv).
+Download **3840×4200 PNGs**, each containing an actual 3840×3600 native render
+with 2× supersampling, typography and timing panels outside the image:
+
+| Backend | Assembled | Exploded, with labels |
+|---|---|---|
+| CPU12 | [Full-size hero](../../assets/om10/cpu12-assembled-hero-4k.png) | [Full-size poster](../../assets/om10/cpu12-exploded-poster-4k.png) |
+| Tesla P100, CPU12 host | [Full-size hero](../../assets/om10/p1001-assembled-hero-4k.png) | [Full-size poster](../../assets/om10/p1001-exploded-poster-4k.png) |
+
+[Complete original-name part legend](labels.tsv) · [Share notes and suggested caption](SHARE.md).
+The original measured 1920×1800 outputs remain available:
+[CPU assembled](../../assets/om10/cpu12-assembled-1920.png),
+[CPU exploded](../../assets/om10/cpu12-exploded-1920.png),
+[P100 assembled](../../assets/om10/p1001-assembled-1920.png),
+[P100 exploded](../../assets/om10/p1001-exploded-1920.png).
 
 Source design: [Association openmovement](https://openmovement.org/project/om10/).
 Images and source-derived legend: [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 BRepGPU supplies tessellation, illustrative materials, lighting, camera,
 explosion and labels; see [attribution](../../assets/om10/LICENSE.md).
 The explosion illustrates component positions; it is not a validated disassembly
-sequence. Hidden parts remain in the scene and receive center-based callouts.
+sequence. The 4K poster uses an actual visible instance-ID sample when available;
+otherwise an asterisk/dashed connector marks a projected stored-mesh center.
+Each poster uses 117 sampled visible anchors and 49 marked center anchors.
+Every source part remains in the scene and legend. Long displayed names are
+shortened, with complete names in the legend. Original 1920 callouts use centers.
 
 ## Measured complete operations
 
@@ -66,6 +79,51 @@ startup must not be charged again when totaling both frames. PNG recompression
 for publication preserves the exact decoded pixels and is outside the measured
 native caller. Transfer counters describe host/device traffic, not network
 transport to the rendering machine.
+
+## Separately timed 4K renders and share-image export
+
+The large images reuse each backend's completed, immutable scene. Saved camera
+basis, center, source placements and explosion remain unchanged; image dimensions,
+pixel centers and pixels-per-unit scale exactly by two. Native output is
+3840×3600 at 2× supersampling (7680×7200 internal samples). The owned C++ display
+renders actual stored XYZ and original source normals. This is a fresh render,
+not an enlarged bitmap or another meshing run. Python performs external inventory
+admission, PNG encoding and SVG composition; the existing isolated SVG rasterizer
+produces the final 3840×4200 share canvas, without covering geometry.
+
+| Additional operation, seconds | CPU12 | P100, CPU12 host |
+|---|---:|---:|
+| Assembled 4K raster, including result download | **1.813797** | **0.211462** |
+| Exploded 4K raster, including result download | **0.712075** | **0.187036** |
+| Both-view native display process, including raw file output | 5.163352 | 3.612285 |
+| Additional inventory admission and preparation | 9.999840 | 9.967406 |
+| Assembled PNG encoding | 0.459009 | 0.441673 |
+| Exploded PNG encoding | 0.466583 | 0.467594 |
+| Exploded callout layout | 1.533971 | 1.544963 |
+| Assembled SVG composition / rasterization | 0.003494 / 1.541135 | 0.003815 / 1.142166 |
+| Exploded SVG composition / rasterization | 0.007066 / 7.371677 | 0.007379 / 7.576900 |
+| Complete additional admission, replay and share export | **27.416544** | **25.657952** |
+
+The two 4K exports run serially on the same 12 physical CPU cores, CPU then P100,
+with one observation each. Per-view raster time sums the five disjoint native
+projection/setup/binning/shading/download stages. It excludes shared startup,
+raw file output, PNG encoding and typography. Native process time includes file
+output for both views and explicit close; its stages are nested. No fresh
+source-to-both-4K-images meshing time was measured. The original cold 1920
+process times printed on each poster remain explicitly separate.
+
+All additional times, metadata, pins and original-to-poster label anchors:
+
+| Backend | Native phases (milliseconds) | Export phases (seconds) | Process | Metadata | Pins | Images | Labels |
+|---|---|---|---|---|---|---|---|
+| CPU | [Stages](gallery-cpu12-native-timings.tsv) | [Stages](gallery-cpu12-export-timings.tsv) | [Process](gallery-cpu12-display-process.tsv) | [Export](gallery-cpu12-metadata.tsv), [native](gallery-cpu12-native-metadata.tsv) | [Pins](gallery-cpu12-pins.tsv) | [Hashes](gallery-cpu12-images.tsv) | [Anchors](gallery-cpu12-callouts.tsv) |
+| P100 | [Stages](gallery-p1001-native-timings.tsv) | [Stages](gallery-p1001-export-timings.tsv) | [Process](gallery-p1001-display-process.tsv) | [Export](gallery-p1001-metadata.tsv), [native](gallery-p1001-native-metadata.tsv) | [Pins](gallery-p1001-pins.tsv) | [Hashes](gallery-p1001-images.tsv) | [Anchors](gallery-p1001-callouts.tsv) |
+
+The [export utility](../../examples/render_adaptive_gallery.py) and
+[reviewed plan](../../docs/adaptive-gallery-export-unit.md) reproduce this
+presentation from completed native outputs. Original scene/view/label and tool
+hashes are checked before and after; these are presentation/inventory checks,
+not new geometric qualification.
 
 ## Source, implementation and checks
 

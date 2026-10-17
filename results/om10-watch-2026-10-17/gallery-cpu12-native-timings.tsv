@@ -1,0 +1,23 @@
+scope	frame	stage	milliseconds	count	notes
+session	-1	file_read_decode_validate	76.100917999999993	0	completed host wall; nested stages are not additive
+session	-1	session_create	21.952871999999999	0	completed host wall; nested stages are not additive
+session	-1	scene_allocate_upload	0	0	completed host wall; nested stages are not additive
+session	-1	source_evaluate	3.4823	0	completed host wall; nested stages are not additive
+frame	0	instance_transform_project	21.600906999999999	0	completed host wall; nested stages are not additive
+frame	0	triangle_setup	29.702698999999999	0	completed host wall; nested stages are not additive
+frame	0	tile_count_scan_allocate_fill	41.674785	0	completed host wall; nested stages are not additive
+frame	0	visibility_shading_resolve	1720.8186900000001	0	completed host wall; nested stages are not additive
+frame	0	result_download	0	0	completed host wall; nested stages are not additive
+frame	0	host_output_allocate	236.113767	0	completed host wall; nested stages are not additive
+frame	0	output_write	975.32510300000001	0	completed host wall; nested stages are not additive
+frame	0	reused_frame_wall	3046.9616599999999	0	completed host wall; nested stages are not additive
+frame	1	instance_transform_project	5.8019970000000001	0	completed host wall; nested stages are not additive
+frame	1	triangle_setup	5.6247579999999999	0	completed host wall; nested stages are not additive
+frame	1	tile_count_scan_allocate_fill	23.372824000000001	0	completed host wall; nested stages are not additive
+frame	1	visibility_shading_resolve	677.27586699999995	0	completed host wall; nested stages are not additive
+frame	1	result_download	0	0	completed host wall; nested stages are not additive
+frame	1	host_output_allocate	253.042056	0	completed host wall; nested stages are not additive
+frame	1	output_write	943.94052099999999	0	completed host wall; nested stages are not additive
+frame	1	reused_frame_wall	1930.161417	0	completed host wall; nested stages are not additive
+session	-1	session_close	75.474654000000001	0	completed host wall; nested stages are not additive
+session	-1	complete_native_wall	5154.3786829999999	0	completed host wall; nested stages are not additive

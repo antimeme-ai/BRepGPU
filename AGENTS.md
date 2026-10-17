@@ -14,6 +14,11 @@ statements below describe historical stages. Whole-watch independent geometric
 qualification and required external alpha suites remain incomplete. The operator
 now requests large, attractive share images with all times recorded: high-resolution
 scene replays must be labeled separately from cold source-to-image operations.
+The large3840x4200 share posters are now delivered, containing unchanged native
+3840x3600 images at2x supersampling. CPU/P1004K assembled raster+download is
+1.813797/.211462s; exploded.712075/.187036s. Export admission/PNG/SVG costs
+are separately recorded. Fresh NVIDIA heal0/heal1 preparations each complete
+103/107 and fail; their21.969/87.467s are not complete-render times.
 Do not restart a certification campaign or imply an overall GPU speedup.
 
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
