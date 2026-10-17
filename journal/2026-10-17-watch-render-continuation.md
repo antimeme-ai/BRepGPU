@@ -41,3 +41,39 @@ read allocation size and scratch/operand counters without trapping ordinary
 allocations. The next actual operation targets that failing component before
 another complete render attempt. Complete images and the fresh matched NVIDIA
 reference remain outstanding; external alpha qualification remains non-green.
+
+## Actual deferred-XYZ integration and remaining component
+
+The selected v6 component still failed, native exit1, after621.74s diagnostic
+process wall (GDB plus concurrent development work; not a clean speed comparison).
+The failure-only breakpoint captured a3,670,016-byte request against64,301,215
+live bytes under the67,108,864-byte child limit; peak65,202,847 and max_limbs28.
+The stack is DivideConquer::edge growing the quad-edge vector during region CDT
+rebuild. Exact work was221,274,596. This establishes a structural allocation
+failure with ordinary-sized operands, rather than hypothetical runaway precision.
+
+The request is131,072 current28-byte Quad records, while the old65,536-record
+buffer remains allocated during vector growth. Deleted slots already recycle.
+The replacement's steady footprint would fit that observed instant, but that
+says nothing about all subsequent allocations. Source review instead identified
+unneeded lifetime overlap in the region bridge: admission indices, transformed
+Rational coordinates and serialized coordinate arrays remain alive after the
+predicate object owns decoded copies. The selected next unit releases completed
+phases on the SAME Budget before CDT, and releases predicates before adjacency.
+No capacity, point, precision, constraint or core algorithm changes are selected.
+See docs/adaptive-region-cdt-lifetime-plan.md and its scoped storage review.
+
+A separate P1001/CPU12 selected run completed ALL64 later definitions, including
+scene/BOM admission, in472.25916787s process wall. Alongside the42 earlier completed
+prefix definitions,106 original definitions have now completed in native runs;
+the failing component remains the one uncompleted definition. These separate
+runs are not a completed whole-watch operation, full independent qualification,
+image or clean CPU/GPU benchmark.
+
+One four-second49Hz perf sample from v6's ordinary packing stage contained215
+cycle samples. It reached normalized_interval, sealed-table import and allocation
+work; GCD had19.78% self samples. This is a finite diagnostic, not a general
+profile. After the complete render, study ordinary interval normalization and
+owned canonical-table reads as one coherent numerical-packing policy. Raw
+ExactView imports must keep validation. No unchecked import, generic arithmetic
+rewrite or new numerical-pack implementation is selected by that sample.
