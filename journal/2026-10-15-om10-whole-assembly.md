@@ -35,3 +35,141 @@ open after this documentation delivery. Recorded source geometry gaps and a
 concrete dependency tradeoff for operator discussion, without silently adopting
 OCCT. Static source/report/API review and doc links/whitespace are sufficient for
 this scope assessment; no new product tests or performance campaign are started.
+
+Later implementation checkpoint: the reviewed pilot recipe now requires an
+explicit completed whole-source nonvisual PASS without naming a stopped run
+revision. Both earlier whole runs remain stopped, with no raster output. The
+private pilot utility has the same prerequisite; native lane changed only its
+description and did not execute it. This documentation correction needs no
+product rebuild or repeated native campaign.
+
+Root reviewed the finite spline endpoint choice and measured original-world
+endpoint chord correction against the written design and both genuine reds.
+Accepted after aligning the selected carrier-to-vertex gate with the design.
+Original source curves, vertices, full intervals and fixed quality remain.
+35 direct mesher methods pass1.487s; seven direct/affected independent methods
+pass0.665s. Actual source face169982 passes62 vertices/60 cells at unchanged
+defaults. Both adversarial reviews ACCEPT and product hashes match the fleet.
+The old diagnostic inventory was stopped with two old-code tasks still active;
+it is partial, not whole-source qualification. Fresh complete integration now
+has priority and must cover every original face before actual target imaging.
+
+Started fresh complete nonvisual V3 after comparing every pinned source/helper
+hash between workspaces; all match. The runner performs fresh original STEP
+translation and retains one complete owned mesh for source/domain/physical and
+CPU24/P1000/P1001 checks. Product/helper/binary code stays unchanged throughout
+the operation. No image output is enabled. Updated draft PR62/issue60 with the
+completed bounded corrections and the still-pending full qualification.
+
+The operator clarified that CPU-only must include the external NVIDIA USD/BRep
+baseline. The owned CPU/P100 comparison alone does not answer that request.
+Continued the independent reference owner on the complete original OM10 source,
+its actual import/tessellation APIs, source/quality correspondence and explicit
+display scopes. Current owned qualification continues unchanged. Reference study
+found an existing isolated usd-brep1.0.0 runtime, native SMLib/USD I/O, and a
+pinned NVIDIA OCCT-to-USD bridge; direct STEP import is not exposed by that
+runtime. The concrete reference path needs source-grounded design/review before
+new adapter code. No foreign triangles have been substituted for product output,
+and no target raster has occurred.
+
+The operator further requires NVIDIA USD/BRep CPU reference times for every
+scenario presented in the README AFTER the watch pass concludes. Recorded this
+as the next required tranche in AGENTS, RETURN_PASS and issue63, with the same
+obligation for future README scenarios. The inventory must cover every advertised
+scenario, keep scopes/source/quality comparable, and expose failures/unsupported
+inputs rather than quietly omitting them. Added the README coverage pointer.
+This does not start the broad backfill while the watch is active or alter the
+external community alpha gate.
+
+The standalone reference-display caller genuinely failed on its absent entry
+before implementation. Root review caught two authored-fixture mistakes before
+the first build: the hypotenuse excludes sample centers on that non-top-left
+edge, so only pixel0 is covered; distinct XYZ points need distinct physical
+keys. Corrected literal geometry and source-key expectations were rerun red.
+The consumer uses genuine raw XYZ/normals and unchanged shared raster math,
+with no carrier/evaluator disguise. Tests cover explicit source pixels/depth/IDs,
+normal-corner identity, placement/poses and direct malformed-input ownership.
+Implementation and final focused greens have been reported; root source review
+precedes the implementation checkpoint.
+
+Root accepted and checkpointed the revised explicit UV source/query design
+after independent oracle and native reviews. The corrected authored no-PC
+fixture fails at original coedge400 before implementation; the original fixture
+contained explicit pcurves and was unsuitable for that red. Source ownership
+remains one shared native unit. NVIDIA continues to import raw no-processing
+neutrals; its finite qualifier now requires the prepared query files bound to
+the owned snapshot through existing input hashes. Three focused fleet methods
+pass, and root/source-owner reviews accept that bounded consumer change.
+PR62 and issue60 now describe the actual importer/source gap and pending whole
+qualification. The issue index no longer calls the whole pipeline complete.
+No actual whole-watch NVIDIA geometry, target raster or full timing observation
+has been produced; stopped V3 remains a non-pass.
+
+Updated the X draft around the actual107-definition/166-occurrence movement,
+CPU import/meshing and measured CPU/P100/NVIDIA comparison. The old launch
+wording is labeled historical. The watch draft remains explicitly blocked on
+whole qualification, real inspected images and actual outcomes; no invented
+timing, completed-watch claim or X publication was added.
+
+Corrected the current rendering guide's stale complete-pipeline/reference-study
+wording and added the actual processing-policy correction above the historical
+source-capability journal. The operational guide now names the current original
+ellipse/spline-boundary source gap and keeps all complete qualification/render
+claims pending. No tests are needed for this factual documentation correction.
+
+The operator reiterated the post-watch requirement for actual NVIDIA USD/BRep
+CPU reference times for every README scenario. Verified that issue63, AGENTS,
+README and RETURN_PASS already retain that requirement, including future
+scenarios and explicit unsupported/failed outcomes. The watch remains first.
+
+Checkpointed the reviewed missing-conic source-chart design and genuine literal
+bulge RED before its helper implementation. Root and both peer reviews found
+the same admission-order issue: test escape on the copied guide segmented to
+the original active interval, rather than inactive controls outside it. The
+owner corrected that scope and is running the focused geometry checks. Full
+source conversion, whole nonvisual qualification and target images remain
+pending; no watch timing is inferred from authored fixtures.
+
+After the server restart, checked fleet process state before resuming: no source
+conversion or whole qualification was still running. The final focused log
+survived and reports12 methods GREEN in0.368s. Both independent reviewers
+accepted the corrected implementation. The small-conic budget negative uses
+tolerance1e-7; the initial1e-6 legitimately admitted its measured1.18048e-7mm
+guide charge. The large-conic case separately rejects the unchanged source
+residual limit. Resumed the source owner for the bounded sanitizer method and
+one fresh complete source/query conversion; no target images or mesh run yet.
+
+The conic source method passes ASan/UBSan0.145s. Actual source-only attemptv4
+passes170920 and stops at170932: native evaluation returns a constant V one ULP
+below its original bound despite an exactly in-domain coefficient hull. A
+read-only635-spline diagnostic finds630 passes and5 finite-domain failures;
+it publishes no source and does not cover whole-solid ownership/alias checks.
+Studied the pinned OCCT weighted interpolation and reviewed a bounded finite
+probe recovery with an independent reviewer. Preserve stored coefficients and
+original t; require the active positive hull inside the original domain before
+using the unchanged128ULP numerical recovery. Owned mesh error obligations stay.
+
+A literal four-control quadratic pcurve with interior knot.37 and Greville U
+coefficients genuinely reproduces the strict production query-domain failure
+in0.012s on the fleet. Its spatial oracle is the literal original LINE
+C(t)=(t,-1.7889624832941899,0). Earlier single-span fixtures did not reproduce
+roundoff and are not counted as red. The shared finite-probe implementation
+follows that reviewed design and genuine red. Updated current rendering notes
+and the reference requirement wording; all complete-watch outcomes remain pending.
+
+The shared finite-probe helper passes13 focused source-UV/source-reader methods
+in0.335s. Root native review and independent adversarial code review accept the
+detached active-hull checks, fixed numerical grade and unchanged retained curves.
+Conic selected probes and final query correspondence use the same helper; raw
+guide extension diagnostics remain separate. The new literal method's bounded
+sanitizer build is still running before the next fresh complete source attempt.
+
+The new method passes ASan/UBSan0.042s. Root read the freshv5 completion,
+original geometry/assembly metrics and complete old/new table delta: source
+conversion is closed. Launched a durable fresh whole nonvisualv4 run retaining
+one mesh for CPU24/P1000/P1001 qualification. Production and selected binaries
+stay unchanged during it; no complete mesh/backend pass or watch raster yet.
+Updated PR62 and issue60 to remove the closed source-conversion blocker while
+retaining the unfinished whole qualification, reference runs and publication.
+A read-only frumentarius studies existing mesh costs for deferred notes; it
+starts no second mesh, product change or new test campaign during this run.

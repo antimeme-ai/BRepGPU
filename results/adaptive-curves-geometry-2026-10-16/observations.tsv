@@ -1,0 +1,9 @@
+operation	backend	status	actual_records	reader
+original_source_numerics	cpu	PASS	81	Fraction_Cox_residual_Decimal_analytic
+original_source_numerics	P100_0	PASS	81	Fraction_Cox_residual_Decimal_analytic
+original_source_numerics	P100_1	PASS	81	Fraction_Cox_residual_Decimal_analytic
+strict_host_build	clang18	PASS	0	actual_source
+address_undefined_leak	cpu	PASS	81	same_original_source_reader
+source_review	geometry_peers	ACCEPT	0	actual_source_scoped_reviews
+actual_source_tidy	clang18	PASS	0	named_profile_no_new_suppression
+precise_endpoint_floor	cpu	PASS	2	line_equality_0.125_and_2pow_minus600

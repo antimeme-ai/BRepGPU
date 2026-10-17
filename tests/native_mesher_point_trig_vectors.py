@@ -1,0 +1,206 @@
+"""Exact table construction and independent original-argument point oracle.
+
+Usage: ... tables OUTPUT.hpp | vectors OUTPUT.bin
+No floating-point arithmetic, downloaded constants, or third-party packages.
+The vector oracle uses original-argument Taylor plus repeated-angle identities;
+it does not use the production quadrant reduction, anchors, or polynomials.
+"""
+from fractions import Fraction as Q
+from math import comb, factorial
+from pathlib import Path
+import random
+import struct
+import sys
+
+
+def grid(x, bits, up=False):
+    n = (x.numerator << bits) // x.denominator
+    if up and Q(n, 1 << bits) != x:
+        n += 1
+    return Q(n, 1 << bits)
+
+
+def series(x, cosine, bits):
+    term = Q(1) if cosine else x
+    total = term
+    k = 0
+    while True:
+        k += 1
+        twice = 2 * k
+        term *= -x*x / ((twice-1)*twice if cosine else twice*(twice+1))
+        # Lagrange derivative bound is valid at the ORIGINAL real argument,
+        # including where the initial alternating terms are not decreasing.
+        order = twice if cosine else twice+1
+        remainder = abs(x)**order / factorial(order)
+        if remainder < Q(1, 1 << bits):
+            return total-remainder, total+remainder
+        total += term
+
+
+def plus(a, b):
+    return a[0]+b[0], a[1]+b[1]
+
+
+def times(a, b):
+    p = [x*y for x in a for y in b]
+    return min(p), max(p)
+
+
+def clipped(a, bits):
+    return grid(a[0], bits), grid(a[1], bits, True)
+
+
+def original_oracle(x):
+    k = 0
+    small = x
+    while abs(small) > Q(1, 32):
+        small /= 2
+        k += 1
+    s, c = series(small, False, 1280), series(small, True, 1280)
+    s, c = clipped(s, 1200), clipped(c, 1200)
+    for _ in range(k):
+        sn = times((2*s[0], 2*s[1]), c)
+        cc, ss = times(c, c), times(s, s)
+        cn = cc[0]-ss[1], cc[1]-ss[0]
+        s, c = clipped(sn, 1200), clipped(cn, 1200)
+    # A rigorous oracle may overhang an extremum by its final grid unit. The
+    # independent universal range removes that overhang before containment.
+    return max(Q(-1),s[0]),min(Q(1),s[1]),max(Q(-1),c[0]),min(Q(1),c[1])
+
+
+def pi_interval(bits):
+    def atan(d):
+        total, power, k = Q(), Q(1, d), 0
+        while True:
+            total += power/(2*k+1) * (-1 if k % 2 else 1)
+            k += 1
+            power /= d*d
+            next_term = power/(2*k+1)
+            if next_term < Q(1, 1 << (bits+8)):
+                return (total-next_term, total) if k % 2 else (total, total+next_term)
+    a, b = atan(5), atan(239)
+    return 16*a[0]-4*b[1], 16*a[1]-4*b[0]
+
+
+def power_polynomial(degree):
+    if degree == 0:
+        return [1]
+    a, b = [1], [0, 1]
+    for _ in range(2, degree+1):
+        c = [0]*(len(b)+1)
+        for i, v in enumerate(b):
+            c[i+1] += 2*v
+        for i, v in enumerate(a):
+            c[i] -= v
+        a, b = b, c
+    return b
+
+
+def polynomial(bits, cosine, chebyshev):
+    parity = 0 if cosine else 1
+    target = Q(1, 1 << (bits+16))
+    degree = parity
+    def remainder(d):
+        return Q(1, 32**(d+2)*factorial(d+2))
+    while remainder(degree) > (target/16 if chebyshev else target):
+        degree += 2
+    parent = [Q() for _ in range(degree+1)]
+    for d in range(parity, degree+1, 2):
+        parent[d] = Q((-1)**((d-parity)//2), 32**d*factorial(d))
+    if not chebyshev:
+        return [parent[d]*32**d for d in range(parity, degree+1, 2)], remainder(degree)
+    coeff = [Q() for _ in parent]
+    for n, a in enumerate(parent):
+        if not a:
+            continue
+        if n == 0:
+            coeff[0] += a
+            continue
+        for k in range(n//2+1):
+            d = n-2*k
+            coeff[d] += a*Q(comb(n,k), 1 << (n if d == 0 else n-1))
+    chosen = degree
+    for d in range(parity, degree+1, 2):
+        if sum(abs(c) for c in coeff[d+1:])+remainder(degree) <= target:
+            chosen = d
+            break
+    error = sum(abs(c) for c in coeff[chosen+1:])+remainder(degree)
+    power = [Q() for _ in range(chosen+1)]
+    for d in range(parity, chosen+1, 2):
+        for i, c in enumerate(power_polynomial(d)):
+            power[i] += coeff[d]*c
+    return [power[d]*32**d for d in range(parity, chosen+1, 2)], error
+
+
+def tables(destination):
+    def literal(value, bits, up=False):
+        scaled = grid(value, bits, up)*(1 << bits)
+        assert scaled.denominator == 1
+        n = int(scaled)
+        sign = (n > 0)-(n < 0)
+        words = [(abs(n) >> (32*i)) & 0xffffffff for i in range(10)]
+        assert abs(n) < 1 << (bits+32) <= 1 << 320
+        return '{'+str(sign)+', {'+', '.join(str(w)+'U' for w in words)+'}}'
+    def interval(value, bits):
+        lo, hi = value if isinstance(value, tuple) else (value, value)
+        return '{'+literal(lo,bits)+', '+literal(hi,bits,True)+'}'
+    pi = pi_interval(576)
+    floor_pi = int(grid(pi[0],512)*(1 << 512))
+    assert pi[1] < Q(floor_pi+1,1 << 512)
+    lines = ['// Generated by tests/native_mesher_point_trig_vectors.py tables; integer/Fraction only.',
+             '// Machin pi bracket; exact Taylor/Chebyshev transforms; explicit uniform remainders.',
+             '#ifndef BREPGPU_MESHER_POINT_TRIG_TABLES_HPP',
+             '#define BREPGPU_MESHER_POINT_TRIG_TABLES_HPP',
+             '#include "point_fixed.hpp"', 'namespace bgmesh::point_detail {',
+             'struct PolynomialTable { uint32_t count; std::array<FixedIntervalLiteral,20> coefficients; FixedLiteral error; };',
+             'struct TrigTable { uint32_t bits; std::array<PolynomialTable,4> polynomials; std::array<FixedIntervalLiteral,33> sine,cosine; };',
+             '// clang-format off',
+             'inline constexpr std::array<uint32_t,17> pi_floor512{'+', '.join(str((floor_pi >> (32*i)) & 0xffffffff)+'U' for i in range(17))+'};']
+    for bits in (128,192,256):
+        width = bits+32
+        polys=[]
+        degrees=[]
+        for cheb in (False,True):
+            for cosine in (False,True):
+                p, err = polynomial(bits,cosine,cheb)
+                degrees.append(2*(len(p)-1)+(0 if cosine else 1))
+                vals=[interval(c,width) for c in p]+[interval(Q(),width)]*(20-len(p))
+                polys.append('{'+str(len(p))+'U, {{'+', '.join(vals)+'}}, '+literal(err,width,True)+'}')
+        anchors = [[interval(series(Q(j,32),cosine,width+32),width) for j in range(33)] for cosine in (False,True)]
+        lines += ['// Taylor sin/cos degrees, Chebyshev sin/cos degrees: '+str(degrees),
+                  'inline constexpr TrigTable table'+str(bits)+'{'+str(bits)+'U, {{'+', '.join(polys)+'}}, {{'+', '.join(anchors[0])+'}}, {{'+', '.join(anchors[1])+'}}};']
+    lines += ['// clang-format on','} // namespace bgmesh::point_detail','#endif']
+    Path(destination).write_text('\n'.join(lines)+'\n')
+
+
+def vectors(destination):
+    rng=random.Random(0xB4E9)
+    angles=[Q(),Q(1),Q(-1),Q(17),Q(-17),Q(1,3),Q(-7,11),Q(1,1 << 1074)]
+    angles += [Q(j,32) for j in (-32,-31,-1,1,17,31,32)]
+    for bits in (8,52,127):
+        angles += [Q(sign*((1 << bits)+delta),3) for sign in (-1,1) for delta in (-1,0,1)]
+    pi=pi_interval(384)
+    mid=grid((pi[0]+pi[1])/2,384)
+    angles += [mid*k/2+Q(offset,1 << 300) for k in (-129,-2,-1,1,2,129) for offset in (-1,0,1)]
+    angles += [Q(rng.randrange(-(1 << 120),1 << 120),rng.randrange(1,1 << 64)) for _ in range(32)]
+    records=[]
+    for x in angles:
+        expected=original_oracle(x)
+        for p in (128,192,256):
+            records.append((p,x,*expected))
+    out=bytearray(b'BGPTV001')+struct.pack('<I',len(records))
+    def word_value(x):
+        n,d=abs(x.numerator),x.denominator
+        ns=[(n >> i) & 0xffffffff for i in range(0,n.bit_length(),32)]
+        ds=[(d >> i) & 0xffffffff for i in range(0,d.bit_length(),32)]
+        return struct.pack('<iII',(x > 0)-(x < 0),len(ns),len(ds))+struct.pack('<'+'I'*(len(ns)+len(ds)),*(ns+ds))
+    for p,*values in records:
+        out += struct.pack('<I',p)
+        for x in values:
+            out += word_value(x)
+    Path(destination).write_bytes(out)
+    print(f'point_vectors={len(records)} bytes={len(out)}')
+
+
+if __name__ == '__main__':
+    {'tables':tables,'vectors':vectors}[sys.argv[1]](sys.argv[2])

@@ -1,0 +1,22 @@
+b66d20e23f72befdea133633e8eb3a97d9aac33242b553d27b4a2d4baac3c68b  native/mesher/point_fixed.hpp
+1c042dc302d0524348e5c300cff5243dbc51ca360245db39b24a3cf0e0d4b747  native/mesher/point_trig.hpp
+cedc023ea7f3180dea58ad8054723f59ab74a2187414ec7d2915a24c20a9858e  native/mesher/point_trig.cpp
+09bb4e695249fa3952c5a79e2a2dc98a4afc8e79d95340131944d8c6b34bbea0  native/mesher/point_trig_tables.hpp
+48eb88444a0c9a97d94a8541e51bbbb3decee67a4cd691ffc21d0c01413236f9  native/mesher/geometry_analytic.cpp
+6b500739759d344fde59e64ba4ec58509af641484b71e4f39ade6bb522c1cf5c  tests/native_mesher_point_trig.cpp
+71dddecd74abf2a206b65efc4763bcb73abcb2f988d3ddb624493d251bc1006c  tests/native_mesher_point_trig_vectors.py
+cf7436181ab6f7544d2074589ede52dd6c3fac8bc222755808984885dd5fda40  benchmarks/native_mesher/point_filters.cpp
+ed21bb8c6b5762ee7102e8920c0ac383fdefd3d4c738c057f65261d40a9a4ea4  build/point-trig-unit-release/brepgpu_mesher_bench_point_filters
+Ubuntu clang version 18.1.3 (1ubuntu1)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Architecture:                            x86_64
+CPU(s):                                  48
+On-line CPU(s) list:                     0-47
+Model name:                              Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz
+Thread(s) per core:                      2
+Socket(s):                               2
+CPU(s) scaling MHz:                      72%
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47

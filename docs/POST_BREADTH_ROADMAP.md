@@ -1,5 +1,9 @@
 # Stocktake and proposed second breadth pass
 
+The [post-watch roadmap proposal](POST_WATCH_ROADMAP.md) updates the next
+sequence using the delivered composition chain, active OM10 work and required
+README-wide NVIDIA CPU comparisons. This earlier stocktake retains its history.
+
 2026-10-15, after the matched NCSX rerun. This is a repository-grounded roadmap
 proposal, not an accepted implementation design, a shipping-language decision,
 an alpha scope change or a promise of speedup. Individual units still require

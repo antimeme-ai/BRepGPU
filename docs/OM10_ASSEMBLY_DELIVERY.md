@@ -1,5 +1,12 @@
 # Whole OM10 assembly, exploded labels and CPU/P100 comparison
 
+Historical requirements and gap assessment, written before implementation.
+The [accepted design and implementation plan](OM10_IMPLEMENTATION_PLAN.md)
+now govern delivery; [the source-to-image guide](OM10_RENDERING.md) describes
+the implemented pipeline and its remaining whole-source qualification/render work.
+The dependency proposal and missing-machinery table below record the starting
+point, rather than the current implementation status.
+
 Operator goal,2026-10-15: model the complete supplied OM10 assembly, then produce
 an exploded/labeled version. Both tasks need CPU-only and GPU-accelerated paths,
 with actual timings in graphics suitable for a key public X post. This replaces

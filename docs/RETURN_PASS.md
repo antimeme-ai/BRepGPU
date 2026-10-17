@@ -6,6 +6,31 @@ selection. Read the [stocktake and proposed tranche](POST_BREADTH_ROADMAP.md)
 before selecting a unit. Earlier dated notes below preserve the original
 deferral and measured opportunities; they do not reopen completed themes or
 select every recorded optimization.
+The [post-watch roadmap proposal](POST_WATCH_ROADMAP.md) orders the next broad
+cycle around actual modeling, CPU references and reusable ownership; it selects
+no implementation while the watch delivery remains active.
+
+## Required after the watch: NVIDIA CPU references throughout the README
+
+The operator requires NVIDIA USD/BRep CPU reference times for **every scenario
+presented in the README**, after the complete OM10 watch pass concludes. The
+watch itself requires that external baseline alongside owned CPU/P100.
+This follow-on tranche takes priority as an explicit obligation; it does not
+start while the watch delivery is active. Tracked in
+[issue63](https://github.com/antimeme-ai/BRepGPU/issues/63).
+
+Enumerate all advertised scenarios against the README revision and run their
+actual NVIDIA counterparts with comparable original sources, units, placements,
+quality, queries/operations and output scopes. Record version/hardware, input
+translation, complete caller and meaningful stage times, repeats and ranges.
+Identify shared display machinery. Keep missing adapters, unsupported operations,
+source/quality disagreement, failures and timeouts visible; they do not supply
+successful reference ratios. Do not quietly shrink the inventory to supported
+examples. Deliver a scenario-to-reference-results map and scoped timings beside
+the corresponding README claims. New README scenarios retain this obligation.
+This benchmark work is separate from the community-suite alpha gate.
+
+## Earlier sequencing notes
 
 2026-10-14. The operator explicitly placed setup/teardown, residency reuse and
 making the application pleasant **after the big rocks of the breadth-first
@@ -24,6 +49,11 @@ may remain useful for research and independent qualification even if it does not
 belong in the shipping execution path. Select a role and a concrete migration
 sequence only after that study; current beachheads keep their existing APIs.
 See the [investigation brief](../papers/2026-10-14-python-role-return-pass.md).
+After the watch exposed expensive serial CPU construction, the operator asked
+for an actual sibling C++ rigor-stack inspection. The [resulting transition
+proposal](../papers/2026-10-15-native-cpp-transition-proposal.md) recommends
+native production geometry with independent Python oracles; it is a study,
+and implementation remains held for the operator's next direction.
 
 Tracked in [issue19](https://github.com/antimeme-ai/BRepGPU/issues/19).
 Complete analytic intersection and spatial/bothUV representation, plus the
@@ -362,3 +392,102 @@ functional tooth forms, clearances, springs and kinematics need their own actual
 contracts.17 direct methods,58 affected CPU compatibility methods and all158
 actual mesh qualifiers passed, followed by source/output/image review. Stop
 without an additional campaign; external alpha qualification remains incomplete.
+
+## Whole OM10 implementation observations
+
+The supplied real movement is now exercising owned imported-solid meshing.
+Complete source conversion and original geometry/assembly checks pass; whole
+mesh/backend qualification and trophy rendering are still pending. Early
+single-face diagnostics produce80k–399k UV cells on several large carriers.
+The first complete attempt spent about42s sampling original shared edges and
+reached100 of9,162 faces at253s. These are development observations under
+concurrent diagnostics, not quiet benchmark results or an end-to-end estimate.
+
+After complete coverage and actual images, study refinement that uses local
+curvature and triangle shape to reduce unnecessary cells while preserving shared
+boundaries, holes, original UV ownership and the same approximation components.
+Compare it on the actual expensive faces; do not judge by a lower triangle count
+alone. Record the exact-UV versus rounded-native-UV distinction in any rewrite.
+
+CPU STEP translation and owned trim meshing remain common preparation for both
+display backends. A retained owned mesh could remove this work from subsequent
+view/explosion updates, while a fresh source-to-image caller must still report
+it. Native view batches already retain actual geometry symmetrically on CPU and
+GPU. Further mesh persistence, preparation acceleration and language changes
+remain deferred decisions supported by the completed target's measurements.
+
+Later complete-face diagnostics made initial connectivity a correctness blocker:
+ordinary rings and extruded spirals exhausted the finite construction budget.
+The implementation therefore adds constrained metric Lawson flips before
+refinement, preserving all initial samples and unchanged error acceptance.
+Face170999 now produces2,048 cells instead of exhausting the million-interior-
+vertex allowance. This is a development geometry result, not a benchmark.
+Further density/shape tuning still belongs to the return pass.
+
+Investigate tighter original-curve/inverse angular derivative bounds after
+delivery. A circular source edge on a cylinder can have nearly affine angular
+parameters, while separate norm bounds lose cancellations in atan2 derivatives
+and create many shared boundary samples. Derive bounds from the actual retained
+coefficients and dual frame; do not assume exact orthogonality, snap angles or
+skip source knots. Compare complete preparation/render cost and unchanged
+source residual/mesh quality, rather than triangle count alone.
+
+The [connectivity reading](../papers/2026-10-15-om10-return-pass-connectivity-reading.md)
+records direct constrained triangulation and compact triangle/neighbor storage
+as measured candidates after delivery. Current fixed-vertex Lawson correction
+is required for completion; this subsequent preparation work remains deferred.
+
+The [read-only mesher cost study](../papers/2026-10-15-om10-mesher-cost-study.md)
+records the heavy-tailed source boundaries (one face has965 uses across55 loops),
+repeated interval work, pair generation, hole/ear scans and span lookup. These
+are inferred opportunities, not measured dominant hotspots. Add useful stage
+walls and work counts before selecting an optimization; retain the existing
+exact predicates, source ownership and approximation obligations.
+
+## Native direct connectivity follow-up
+
+The operator subsequently selected direct CDT and native ownership before watch
+delivery, superseding the earlier deferral above. Read DIRECT_CDT_STRATEGY.md and
+the direct constructor design/results. The current explicit direct branch uses
+alternating-cut initial Delaunay construction and special-cavity recovery,
+filtered exact metric predicates and indexed topology; Python Lawson remains an
+explicit old-path comparison.
+
+The first independent 904-site/225-hole pilot exposes input validation rather
+than direct construction: about .317s validating versus .010s constructing,
+.366s complete call (one shared-host observation). The reused exact reader
+checks holes pairwise. A general planar point-location/sweep with winding sums
+is a serious next contender, preserving closed touching and original hole
+owners; dispatching only specially arranged benchmark holes is not the answer.
+Compare complete exact admission plus construction on arbitrary simple holes,
+not an internal triangulation-only speedup. Source-oracle pair enumeration also
+blocked actual large-model qualification. The independent
+[ranked closed-box sweep](IMPORTED_DOMAIN_ORACLE_SWEEP_PLAN.md) now replaces that
+enumeration while retaining original-value crossing/containment tests. Its
+[captured-domain results](../results/domain-oracle-2026-10-16/REPORT.md) measure
+admission separately from construction and whole-mesh qualification. Dense
+projection overlap can still produce quadratic active work; do not claim a
+general segment-intersection bound or add another validation layer around it.
+
+The complete438-face main-plate trial makes the remaining production split
+concrete:146.189s validation/sampling versus63.391s connectivity/refinement
+inside a209.608s construction wall. A second unchanged construction took208.258s.
+These shared-host single-CPU observations do not profile every geometry family
+or establish whole-watch performance. Source preparation, tighter general curve
+bounds and native batching/ownership are candidates to study with the existing
+original-value and physical/source checks. Preserve exact shared samples and
+source uncertainty; reducing work by silently coarsening the watch is not an
+admitted optimization. Qualifier time stays separate from product time.
+
+Further numerical work includes per-point homogeneous rational coordinates
+instead of a face-wide denominator LCM on hard rational families, and checked
+fixed-width predicates when actual intermediate bit bounds permit them. Keep
+lossless source values and exact zero behavior; rounding a family to fit a fast
+path would answer a different problem. GPU CDT still needs exact-source fallback,
+P100 support, conflict ownership and complete packing/transfer/cleanup timings.
+
+# Cached adaptive mesher follow-up
+
+Construction-specific notes now live in
+[ADAPTIVE_MESHER_RETURN_PASS.md](ADAPTIVE_MESHER_RETURN_PASS.md). Complete the
+shared-curve/trim/component pass before its tuning opportunities.

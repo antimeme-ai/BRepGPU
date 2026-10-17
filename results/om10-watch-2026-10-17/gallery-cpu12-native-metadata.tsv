@@ -1,0 +1,17 @@
+key	value
+backend	cpu
+device	-1
+threads	12
+definitions	107
+instances	166
+source_vertices	258489
+unique_triangles	273978
+placed_vertices	312584
+placed_triangles	339652
+view_count	2
+source_jet_dump	0
+raster	orthographic; 1/256 sample pixel; integer top-left; maxZ; lowest primitive exact ties
+normal	source first jet; face-local interpolation; normalized after rigid placement
+lighting	linear Lambert .20ambient+.70key+.16fill; .55Blinn; roughness exponent16/32/64/128
+resolve	linear average then sRGB; depth/ID upper-left subpixel
+complete_native_wall_scope	input decode through explicit session/plugin close; excludes retained host source/request destruction, final metadata/timing file writes and process shutdown

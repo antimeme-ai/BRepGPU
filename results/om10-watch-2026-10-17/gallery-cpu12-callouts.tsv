@@ -1,0 +1,167 @@
+label	original_occurrence	definition	original_product_name	anchor_kind	anchor_x	anchor_y	side	label_y
+37	37	1722	Goupille 050-100	visible ID sample	1893	723	0	345
+38	38	1723	Clé de cadran	visible ID sample	1824	753	0	379
+33	33	1721	Clé de cadran	visible ID sample	1746	798	0	413
+101	101	1768	Pont de rouage brut	visible ID sample	1587	840	0	447
+102	102	1779	Pierre glace 010-100-025	visible ID sample	2100	915	0	481
+98	98	1765	Planche de seconde	visible ID sample	1881	924	0	515
+104	104	1769	Pierre glace 020-110-030	visible ID sample	1830	957	0	549
+96	96	1763	Planche de moyenne	visible ID sample	1533	1023	0	583
+106	106	1771	Pierre glace 030-110-030	visible ID sample	1458	1026	0	617
+107	107	1819	Vis	visible ID sample	1026	1086	0	651
+95	95	1762	Pignon de moyenne	visible ID sample	1560	1104	0	685
+97	97	1764	Pignon de seconde	projected stored-mesh center (no sampled visible anchor)	1969.086595523057	1135.8936903274362	0	719
+5	5	1720	Pied vis	visible ID sample	1095	1161	0	753
+25	25	1771	Pierre glace 030-110-030	projected stored-mesh center (no sampled visible anchor)	2033.5684290836807	1210.4498116717436	0	787
+24	24	1771	Pierre glace 030-110-030	visible ID sample	1686	1254	0	821
+103	103	1769	Pierre glace 020-110-030	projected stored-mesh center (no sampled visible anchor)	1697.1896130288417	1262.4755610823863	0	855
+92	92	1819	Vis	visible ID sample	912	1269	0	889
+94	94	1761	Planche de grande moyenne	visible ID sample	1266	1293	0	923
+105	105	1770	Pierre glace 055-120-030	visible ID sample	1257	1323	0	957
+3	3	1720	Pied vis	visible ID sample	981	1347	0	991
+20	20	1801	Pied vis	visible ID sample	1524	1374	0	1025
+158	158	1816	Vis	visible ID sample	1539	1395	0	1059
+110	110	1773	Planche intermédiaire de chaussée	visible ID sample	1776	1404	0	1093
+109	109	1772	Pignon intermédiaire de chaussée	visible ID sample	1764	1407	0	1127
+93	93	1760	Pignon de grande moyenne	projected stored-mesh center (no sampled visible anchor)	1386.0454644870829	1456.1337051313521	0	1161
+150	150	1808	Disque de quantième brut	visible ID sample	1710	1482	0	1195
+26	26	1719	Pierre glace 018-080-030	visible ID sample	1947	1551	0	1229
+1	1	1713	Platine brute	visible ID sample	1893	1557	0	1263
+23	23	1770	Pierre glace 055-120-030	projected stored-mesh center (no sampled visible anchor)	1494.9697694410002	1582.4102061004708	0	1297
+162	162	1818	Bride de fixation	visible ID sample	825	1629	0	1331
+166	166	1819	Vis	visible ID sample	909	1638	0	1365
+88	88	1758	Entretoise de cliquet	visible ID sample	747	1650	0	1399
+142	142	1800	Pont de barillet brut	visible ID sample	1098	1659	0	1433
+31	31	1801	Pied vis	visible ID sample	933	1680	0	1467
+81	81	1816	Vis	visible ID sample	768	1698	0	1501
+141	141	1799	Planche de chaussée	visible ID sample	1983	1698	0	1535
+156	156	1814	Plaque de quantième brute	visible ID sample	2037	1713	0	1569
+143	143	1801	Pied vis	visible ID sample	813	1725	0	1603
+90	90	1813	Goupille 060-070	visible ID sample	861	1749	0	1637
+89	89	1759	Cliquet B	visible ID sample	798	1755	0	1671
+39	39	1724	Goupille 070-250	projected stored-mesh center (no sampled visible anchor)	2025.698175835566	1791.3062907634137	0	1705
+86	86	1757	Rochet	visible ID sample	1095	1809	0	1739
+147	147	1805	Roue des heures	visible ID sample	2094	1869	0	1773
+153	153	1811	Renvoi de quantième	visible ID sample	1617	1908	0	1807
+155	155	1813	Goupille 060-070	visible ID sample	1311	1908	0	1841
+154	154	1812	Planche entraineuse de quantième	visible ID sample	1305	1938	0	1875
+148	148	1806	Doigt entraineur de quantième	visible ID sample	1473	1941	0	1909
+144	144	1802	Pierre glace 140-240-030	projected stored-mesh center (no sampled visible anchor)	1332.7194348453636	1947.113548407073	0	1943
+87	87	1816	Vis	projected stored-mesh center (no sampled visible anchor)	1338.0712070540872	1953.3178851598968	0	1977
+151	151	1809	Pignon de renvoi de quantième	visible ID sample	1701	2046	0	2011
+84	84	1755	Arbre de barillet 2.7	projected stored-mesh center (no sampled visible anchor)	1415.6772178220544	2049.172213891135	0	2045
+152	152	1810	Planche de renvoi de quantième	visible ID sample	1704	2079	0	2079
+82	82	1753	Tambour de barillet manuel	visible ID sample	1089	2082	0	2113
+85	85	1756	Ressort de barillet manuel	visible ID sample	1122	2097	0	2147
+22	22	1802	Pierre glace 140-240-030	visible ID sample	1554	2157	0	2181
+18	18	1718	Tenon	visible ID sample	1002	2178	0	2215
+76	76	1749	Roue couronne	projected stored-mesh center (no sampled visible anchor)	1812.7741565105387	2253.810985299121	0	2249
+75	75	1748	Vis de roue de couronne	projected stored-mesh center (no sampled visible anchor)	1824.8412408890463	2267.5459877632366	0	2283
+83	83	1754	Couvercle de barillet	visible ID sample	1236	2301	0	2317
+56	56	1747	Vis	projected stored-mesh center (no sampled visible anchor)	2095.537592351151	2318.217322057659	0	2351
+160	160	1817	Ressort de sautoir de quantième	visible ID sample	1743	2340	0	2385
+149	149	1807	Ressort de sautoir de quantème	visible ID sample	1746	2352	0	2419
+63	63	1739	Baladeur de mise à l'heure	visible ID sample	2088	2361	0	2453
+80	80	1752	Ressort de cliquet	visible ID sample	1152	2364	0	2487
+68	68	1744	Renvoi de correcteur 1	visible ID sample	1956	2397	0	2521
+157	157	1815	Sautoir de quantième	visible ID sample	1479	2397	0	2555
+67	67	1743	Tenon de correcteur	visible ID sample	1998	2409	0	2589
+55	55	1747	Vis	projected stored-mesh center (no sampled visible anchor)	1757.4153687028877	2458.85809902422	0	2623
+47	47	1726	Pied vis	projected stored-mesh center (no sampled visible anchor)	1773.4706853290409	2477.471109282681	0	2657
+52	52	1730	Pignon coulant	projected stored-mesh center (no sampled visible anchor)	1943.8475420551663	2505.997357279993	0	2691
+41	41	1819	Vis	visible ID sample	1512	2541	0	2725
+79	79	1819	Vis	visible ID sample	1338	2574	0	2759
+78	78	1751	Couvre mécanisme de tige (manuel)	visible ID sample	1761	2592	0	2793
+50	50	1728	Support de pignon de remontoir	visible ID sample	1887	2595	0	2827
+15	15	1720	Pied vis	visible ID sample	1590	2607	0	2861
+42	42	1725	Platine de mécanisme de tige brute	visible ID sample	2037	2619	0	2895
+51	51	1729	Pignon de remontoir	visible ID sample	1995	2628	0	2929
+2	2	1720	Pied vis	visible ID sample	1398	2643	0	2963
+62	62	1738	Ressort de baladeur de mise à l'heure	visible ID sample	1842	2715	0	2997
+44	44	1726	Pied vis	visible ID sample	1785	2775	0	3031
+72	72	1747	Vis	visible ID sample	1839	2832	0	3065
+16	16	1718	Tenon	visible ID sample	1767	2868	0	3099
+53	53	1731	Tige de remontoir	visible ID sample	1944	3066	0	3133
+108	108	1819	Vis	visible ID sample	2127	561	1	345
+161	161	1818	Bride de fixation	visible ID sample	2430	612	1	379
+7	7	1720	Pied vis	visible ID sample	2196	639	1	413
+163	163	1819	Vis	visible ID sample	2403	693	1	447
+32	32	1801	Pied vis	visible ID sample	2439	726	1	481
+19	19	1718	Tenon	visible ID sample	2160	783	1	515
+129	129	1789	Piton	visible ID sample	2607	1002	1	549
+126	126	1786	Raquette	visible ID sample	2334	1035	1	583
+127	127	1787	Clé de raquette	projected stored-mesh center (no sampled visible anchor)	2380.5056016291896	1040.2636221602343	1	617
+100	100	1767	Planche d'échappement 20.5	visible ID sample	2214	1041	1	651
+99	99	1766	Pignon d'échappement	projected stored-mesh center (no sampled visible anchor)	2208.902268731676	1045.62362650019	1	685
+128	128	1788	Porte piton	visible ID sample	2571	1050	1	719
+135	135	1793	Serge de balancier	visible ID sample	2742	1095	1	753
+116	116	1777	Palette	projected stored-mesh center (no sampled visible anchor)	2492.5360004133167	1128.4624804822547	1	787
+119	119	1816	Vis	visible ID sample	2727	1134	1	821
+117	117	1778	Pont d'ancre brut	visible ID sample	2691	1161	1	855
+9	9	1801	Pied vis	visible ID sample	2763	1167	1	889
+27	27	1779	Pierre glace 010-100-025	projected stored-mesh center (no sampled visible anchor)	2316.252523035969	1170.0753225420108	1	923
+125	125	1785	Lyre	projected stored-mesh center (no sampled visible anchor)	2428.525122704709	1174.4642963012407	1	957
+124	124	1784	Contre pivot	projected stored-mesh center (no sampled visible anchor)	2432.468165531093	1180.4532114577564	1	991
+121	121	1781	Bloc d'amortisseur de choc sus	projected stored-mesh center (no sampled visible anchor)	2445.3752933565784	1195.4165104207655	1	1025
+123	123	1783	Pierre bombée 009-090-018	projected stored-mesh center (no sampled visible anchor)	2446.3197237463523	1196.511393377145	1	1059
+122	122	1782	Chaton	projected stored-mesh center (no sampled visible anchor)	2448.8382047857494	1199.4310812608242	1	1093
+118	118	1779	Pierre glace 010-100-025	projected stored-mesh center (no sampled visible anchor)	2411.680985617438	1218.4869586868758	1	1127
+114	114	1776	Tige d'ancre	projected stored-mesh center (no sampled visible anchor)	2449.7531230995046	1262.6674990999077	1	1161
+138	138	1796	Virole Greiner	projected stored-mesh center (no sampled visible anchor)	2507.7039484565203	1271.3849256329727	1	1195
+130	130	1790	Réglage fin	projected stored-mesh center (no sampled visible anchor)	2505.4394784961223	1303.7433055982071	1	1229
+28	28	1779	Pierre glace 010-100-025	projected stored-mesh center (no sampled visible anchor)	2485.960491591087	1304.6428856249886	1	1263
+134	134	1792	Axe de balancier	projected stored-mesh center (no sampled visible anchor)	2546.7071501862292	1312.8910476470344	1	1297
+139	139	1797	Spiral	visible ID sample	2376	1314	1	1331
+115	115	1777	Palette	projected stored-mesh center (no sampled visible anchor)	2329.1858537293806	1319.1511914870455	1	1365
+112	112	1774	Corps d'ancre	visible ID sample	2376	1323	1	1399
+137	137	1795	Cheville de plateau	projected stored-mesh center (no sampled visible anchor)	2557.8121060516064	1338.7517882215034	1	1433
+113	113	1775	Drad	projected stored-mesh center (no sampled visible anchor)	2563.8804268402005	1349.4823626772204	1	1467
+136	136	1794	Double plateau	projected stored-mesh center (no sampled visible anchor)	2600.866408139378	1375.6781509689317	1	1501
+131	131	1791	Clé de réglage fin	projected stored-mesh center (no sampled visible anchor)	2614.5962779290685	1427.720968469384	1	1535
+12	12	1716	Pierre bombée 009-090-014	projected stored-mesh center (no sampled visible anchor)	2646.55634404611	1428.6195559203927	1	1569
+10	10	1714	Bloc amortisseur de choc sous	projected stored-mesh center (no sampled visible anchor)	2647.191822361582	1429.3525640361909	1	1603
+11	11	1715	Chaton	projected stored-mesh center (no sampled visible anchor)	2648.4278271579387	1430.8163460423893	1	1637
+13	13	1717	Contre pivot	projected stored-mesh center (no sampled visible anchor)	2657.268109829664	1440.967958806632	1	1671
+132	132	1819	Vis	visible ID sample	2931	1485	1	1705
+111	111	1816	Vis	visible ID sample	2481	1542	1	1739
+6	6	1720	Pied vis	visible ID sample	2976	1569	1	1773
+4	4	1801	Pied vis	projected stored-mesh center (no sampled visible anchor)	2523.803928923706	1583.8842790884253	1	1807
+120	120	1780	Coq brut	visible ID sample	2883	1602	1	1841
+91	91	1819	Vis	projected stored-mesh center (no sampled visible anchor)	2401.492678364811	1897.5137143616084	1	1875
+140	140	1798	Pignon de chaussée	visible ID sample	2133	1914	1	1909
+133	133	1819	Vis	projected stored-mesh center (no sampled visible anchor)	2661.289526871727	1925.2049795106955	1	1943
+17	17	1718	Tenon	visible ID sample	3093	1932	1	1977
+21	21	1801	Pied vis	projected stored-mesh center (no sampled visible anchor)	2584.408471201606	1934.2797568763835	1	2011
+8	8	1720	Pied vis	projected stored-mesh center (no sampled visible anchor)	2443.992045904634	1946.7834473986914	1	2045
+29	29	1720	Pied vis	projected stored-mesh center (no sampled visible anchor)	2694.3445905138124	1963.5258829839827	1	2079
+159	159	1816	Vis	visible ID sample	2607	1965	1	2113
+145	145	1803	Pignon de minuterie	visible ID sample	2232	2001	1	2147
+164	164	1818	Bride de fixation	visible ID sample	2979	2010	1	2181
+165	165	1819	Vis	visible ID sample	2910	2010	1	2215
+30	30	1801	Pied vis	visible ID sample	2940	2046	1	2249
+146	146	1804	Planche de minuterie	visible ID sample	2214	2145	1	2283
+40	40	1819	Vis	projected stored-mesh center (no sampled visible anchor)	2462.969446300858	2154.7521779402214	1	2317
+14	14	1720	Pied vis	projected stored-mesh center (no sampled visible anchor)	2505.468813840682	2204.021910977305	1	2351
+45	45	1726	Pied vis	visible ID sample	2319	2223	1	2385
+54	54	1732	Plaque de roue couronne manuelle brute	visible ID sample	2136	2226	1	2419
+70	70	1745	Entretoise	visible ID sample	2346	2265	1	2453
+74	74	1747	Vis	visible ID sample	2352	2274	1	2487
+49	49	1727	Goupille 060-150	projected stored-mesh center (no sampled visible anchor)	2422.415766805062	2316.9377640719126	1	2521
+64	64	1740	Renvoi de correcteur 2	visible ID sample	2175	2346	1	2555
+65	65	1741	Correcteur de quantième	visible ID sample	2214	2352	1	2589
+66	66	1742	Correcteur d'heure	visible ID sample	2193	2361	1	2623
+46	46	1726	Pied vis	visible ID sample	2133	2373	1	2657
+34	34	1721	Clé de cadran	visible ID sample	2748	2388	1	2691
+35	35	1723	Clé de cadran	visible ID sample	2655	2430	1	2725
+57	57	1733	Sautoir de tirette	visible ID sample	2409	2430	1	2759
+48	48	1727	Goupille 060-150	visible ID sample	2412	2442	1	2793
+60	60	1736	Ressort de bascule de pignon coulant	visible ID sample	2433	2499	1	2827
+36	36	1722	Goupille 050-100	visible ID sample	2631	2511	1	2861
+61	61	1737	Bascule de baladeur	visible ID sample	2358	2517	1	2895
+59	59	1735	Bascule de pignon coulant	projected stored-mesh center (no sampled visible anchor)	2211.5904218613464	2524.459266091898	1	2929
+43	43	1726	Pied vis	visible ID sample	2364	2619	1	2963
+69	69	1745	Entretoise	visible ID sample	2379	2622	1	2997
+73	73	1747	Vis	visible ID sample	2430	2640	1	3031
+77	77	1750	Vis de tirette	visible ID sample	2112	2655	1	3065
+71	71	1746	Pont de mécanisme de tige	visible ID sample	2124	2664	1	3099
+58	58	1734	Tirette	visible ID sample	2181	2676	1	3133

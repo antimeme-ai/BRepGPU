@@ -5,6 +5,22 @@ On this workspace the target is `../BLACKBIRD.md`. A standalone checkout needs
 the operator's current doctrine placed beside the checkout. Do not substitute
 archived reference instructions for it.
 
+Latest watch checkpoint: the complete original OM10 now renders through the
+owned cached-adaptive C++/CUDA mesher on CPU12 and P1001/CPU12. All107 definitions,
+9162 original faces and166 placements finish with273978 unique triangles and
+both annotated images. Read results/om10-watch-2026-10-17/REPORT.md for actual
+scopes/times and the fresh NVIDIA reference outcome. Older pending-watch
+statements below describe historical stages. Whole-watch independent geometric
+qualification and required external alpha suites remain incomplete. The operator
+now requests large, attractive share images with all times recorded: high-resolution
+scene replays must be labeled separately from cold source-to-image operations.
+The large3840x4200 share posters are now delivered, containing unchanged native
+3840x3600 images at2x supersampling. CPU/P1004K assembled raster+download is
+1.813797/.211462s; exploded.712075/.187036s. Export admission/PNG/SVG costs
+are separately recorded. Fresh NVIDIA heal0/heal1 preparations each complete
+103/107 and fail; their21.969/87.467s are not complete-render times.
+Do not restart a certification campaign or imply an overall GPU speedup.
+
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
 Current phase: implemented owned rational-patch CPU/CUDA evaluator and resident
 seeded box-stationary projection, with independently qualified output on CPU
@@ -158,9 +174,21 @@ and private; papers/2026-10-15-om10-step-source-study.md records the static sour
 inventory. The operator now requests the whole assembly, followed by exploded
 labels, both CPU-only and GPU-accelerated, with timings in graphics for X. Read
 docs/OM10_ASSEMBLY_DELIVERY.md and the whole-source geometry gap study. The
-clamp is a possible development fixture, not the delivery target. OCCT as an
-isolated source/reference bridge is proposed for discussion; no importer,
-dependency or implementation design is selected yet.
+clamp is a possible development fixture, not the delivery target. The operator
+subsequently authorized full implementation under Blackbird before actual watch
+rendering. Read docs/OM10_IMPLEMENTATION_DESIGN.md and OM10_IMPLEMENTATION_PLAN.md.
+Pinned OCCT8.0.1 is the discussed isolated STEP/XDE source/reference bridge;
+owned code implements trimming/meshing, assembly and native CPU/CUDA display.
+Research, design/plan review, initial red, green and adversarial code review
+precede trophy rendering. Keep complete107/9162/166 source inventories and
+private source bytes; no product OCCT triangles or unmentioned dependency.
+The operator clarified that this watch comparison requires NVIDIA USD/BRep CPU
+reference runs in addition to owned CPU/P100. After the watch pass concludes,
+run NVIDIA USD/BRep CPU reference timings for EVERY scenario presented in the
+README, with matched source/quality/operation scopes and explicit unsupported
+or failed outcomes. This is the next required tranche, tracked in issue63 and
+docs/RETURN_PASS.md; do not start that broad backfill before finishing the watch.
+An owned CPU/GPU comparison alone does not replace the external baseline.
 The operator selected NCSX as the continuing trophy subject; read
 docs/NCSX_GOAL_OBJECT.md. Study00 uses separately acquired, pinned Fourier coil
 centerlines and a plasma boundary; the original documentary pack has no native
@@ -205,7 +233,133 @@ cannot independently certify geometry. Report transfer, setup, validation,
 fallback and Python overhead explicitly. No tests-for-tests or perpetual
 performance certification gates. Mutants run on the fleet, never the laptop.
 
+The operator explicitly requires avoiding overfitting to the OM10 watch.
+Use it to expose costs and retain regressions, while deriving algorithms and
+admission from general geometry contracts. Do not key admission, dispatch,
+tolerances or capacities to watch source IDs, names, dimensions or observed
+sample counts. General size-dependent algorithm choices are allowed when
+justified across workloads and bounded by actual inputs. Specializations require
+explicit geometric preconditions checked on the actual input and a general
+admitted path. Select independent authored/reference workload families
+before tuning; retain separate correctness, time, work and memory outcomes for
+each family, including regressions and censored cases. Transformations of a
+watch case supplement independent geometry; they do not replace it. Keep this
+discipline in subsequent native/CUDA migration designs and performance claims.
+
+Performance ambition starts with the strongest applicable algorithms, numerical
+methods and data layouts in the literature, before metrics exist. Study those
+contenders and their actual assumptions before choosing an implementation;
+familiarity or an easy port of current code does not select the design. Use
+complexity, avoided work, locality and parallelism to form concrete hypotheses,
+then compare qualified complete operations across independent workloads.
+Wall-clock budgets bound experiments; they are not the meaning of this mandate.
+Read docs/DIRECT_CDT_STRATEGY.md and DIRECT_CDT_ORACLE_DESIGN.md before selecting
+the next connectivity implementation. The prior native-Lawson proposal is an
+option/control, superseded as the default next-constructor choice. The current
+study now has an owned native direct CDT constructor and independent oracle.
+Read docs/DIRECT_CDT.md and results/direct-cdt-2026-10-16/REPORT.md. Explicit
+`domain_backend='direct'` uses the actual carrier metric and retains source
+sampling/refinement; old native ears remain the default. Keep whole sampled-domain,
+complete-part and whole-watch/render claims separate. The shared signed-cap
+helper has actual semantic/sanitizer evidence; public marked-fan execution is
+not observed in the current workload cohort. Many-hole admission remains a
+measured quadratic cost. No new alpha or GPU CDT claim follows from these CPU
+results.
+
+The operator subsequently rejects continued piecemeal mesher changes and selects
+a coherent whole native mesher: literature/reference study, holistic design,
+adversarial design/plan review, then integrated delivery. Read
+journal/2026-10-16-whole-mesher-redesign.md and the whole-mesher research papers.
+The existing direct CDT is a candidate component, not a constraint on the new
+architecture. Native ownership covers source decoding, geometry/bounds, shared
+boundaries, face construction/refinement and full output. Python may remain an
+optional boundary/research oracle; no production geometry callbacks. Original
+source authority, error semantics, shared topology, parallel CPU/P100 placement
+and independent actual-output/performance families belong to one design. Do not
+resume isolated hotspot patches or unchanged watch trials while it is reviewed.
+
+The operator subsequently selects cached adaptive subdivision as the primary
+construction architecture, to make BRepGPU a useful GPU-accelerated counterpart
+to USD/BRep. Read docs/ADAPTIVE_MESHER_DESIGN.md and its current review/plan.
+The previous direct-refinement design/plan retain historical source contracts
+and a measured control; they no longer select the primary constructor. Thoroughly
+study the reference and wider literature for additional advantage: do not
+doggedly inherit NVIDIA's cache layout, numerical representation, split rules,
+trim algorithm or other implementation tradeoffs. Preserve original source
+authority and actual-output accuracy, shared topology and deterministic
+CPU/P100 semantics; revisit self-imposed choices such as correctly-nearest
+transcendental point construction explicitly when a bounded construction is
+sufficient. GPU placement must include actual adaptive geometry work. Compare
+cold and declared warm-cache operations with source, quality, transfers, memory,
+failures and unsupported outcomes accounted for. GPU advantage is a hypothesis
+to test, not an outcome to manufacture. Source IDs/names never select dispatch.
+
+The first cached-adaptive regular-surface operation is delivered. Read
+results/adaptive-patch-2026-10-16/REPORT.md and the preserved general2D observations.
+Actual original-source CPU1/CPU4/both-P100 mesh outputs, source/numerical oracles,
+host concurrency/sanitizer checks and CUDA protocol/memory checks pass within
+the stated finite patch scope. Current coupled-quadratic 131,072-triangle cold
+query is 5.591s CPU4 versus 4.777s P1000; complete two-query processes are 9.681s
+versus 9.116s in one observation, not a general speedup. Older fine 120s censors
+remain published separately. Whole trimmed faces/components/watch are not done.
+The shared-curve/chosen-trace operation is also delivered: original-source CPU1/4
+and both-P100 complete boundary snapshots,200 queries across10 authored families,
+scoped source/geometry/lifecycle/sanitizer checks and actual source reviews.
+Read docs/ADAPTIVE_SHARED_CURVES.md and its report. CPU wins these tiny complete
+operations; no general curve or whole-mesher GPU advantage is established.
+The first complete selected trimmed-face operation is now delivered. Read
+docs/ADAPTIVE_TRIMMED_FACES.md and results/adaptive-trimmed-2026-10-17/REPORT.md.
+Seven authored families pass28 processes/56 queries with byte-identical CPU1/4/
+both-P100 boundaries/faces and separate original-source whole-output readers.
+Native ownership includes retained exact domain classification, conforming
+packets/local boundary CDT, common central anchors, actual-facet source bounds,
+whole-operation work caps and cancellation. GPU performs actual geometry work;
+CPU wins these small complete processes. The subsequent full-caller closure is
+in results/adaptive-trimmed-ports-2026-10-17/REPORT.md:60 original-checked queries
+over C0/hanging, nested island and periodic seam sources on all four placements,
+fine/coarse/fine/repeat plus fresh coarse; real forced packet targets and actual
+cross-original-knot band facets occur. Eleven process refusal/publication checks
+also pass. A real query ancestry defect was fixed without weakening the reader.
+The bounded complete-definition coordinator now passes twelve authored native
+queries and thirty-six original-checked face outputs on CPU1/CPU4/both P100s.
+Read docs/ADAPTIVE_COMPONENTS.md and its coordinator/oracle subplans. It retains
+unaffected exact boundary leases and uses the existing final contact horizon;
+coincident source identities refuse, and new failure/drain ownership has scoped
+CPU4 sanitizer checks. Singular quotients, imported assembly and real watch remain.
+Continue complete imported component/assembly publication per
+ADAPTIVE_MESHER_PLAN.md; the real OM10 render remains pending. General curved
+authoritative-domain maps and alternate charts are later capabilities.
+Boundary authoritative_domain_upper is only a boundary
+bound; full facets require a real interior map or explicit identity
+admission, not max edge bound. Read the boundary-region and trimmed-
+facet studies and current implementation plans before extending that unit.
+Do not turn this checkpoint into an extra certification/tuning campaign. Record opportunities
+in docs/ADAPTIVE_MESHER_RETURN_PASS.md. SourceStore spatial values are already mm;
+units_mm is original metadata and must not rescale tolerances or geometry again.
+Keep the NVIDIA reference/backfill and external alpha suite requirements live.
+
+The operator explicitly requires every subsequent implementation step to be
+grounded in literature and reference implementations. Record the concrete
+source revision/function or paper section, the actual mathematical assumptions,
+our selected mechanism/improvement and the direct oracle in the unit plan.
+Reference tradeoffs are evaluated, not inherited by default; distinguish owned
+derivations from claims actually established by a source. For the next shared
+curve/occurrence stage read docs/adaptive-shared-curves-unit.md and the focused
+curve studies before product code.
+
 ## Development workflow
+
+The native mapped analytic-cap connection is delivered through construction,
+resident CPU/P100 bounds, pooled continuation, original source edge contacts,
+versioned artifacts and assembled/exploded display. Read docs/ADAPTIVE_CAPS.md
+and its linked plans/journals for the finite three-use seam-wedge profile.
+Whole original-source quad/facet/chain readers, actual normal consumers,
+CPU4/P1000 lifecycle and optimized CPU4 ASan/UBSan/leaks pass; the separate
+unoptimized Debug120s censor remains recorded. Reconstructed rational guide
+proposals may project into the ORIGINAL natural knot rectangle before unchanged
+original node/whole-trace guards; explicit narrower cache banks still refuse.
+This does not establish a complete watch render or whole-watch GPU advantage.
+Keep the complete source scope and fresh NVIDIA reference requirements above.
 
 Use a feature branch for each substantial delivery. Make frequent, coherent
 commits as design, implementation, qualification and documentation milestones
