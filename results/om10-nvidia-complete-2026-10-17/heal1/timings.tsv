@@ -1,0 +1,9 @@
+stage	seconds	scope
+fresh_step_source_export_process_wall	4.162916456931271	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+nvidia_batch_through_all_worker_exits_wall	7.635501105920412	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+all_definition_physical_shell_source_euler_admission	16.35485504299868	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+genuine_mesh_decode_scene_pack_write	18.837787667056546	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+shared_owned_cpu_display_process_wall	1.5245230689179152	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+assembled_png_svg_labels_write	0.7645440959604457	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+exploded_png_svg_labels_write	0.48149141296744347	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+caller_through_outputs_before_timing_write_and_interpreter_exit	44.63231281598564	actual nested wall; not additive; outer driver includes metadata/timing writes and exit

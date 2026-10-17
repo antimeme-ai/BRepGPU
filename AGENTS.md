@@ -17,9 +17,32 @@ scene replays must be labeled separately from cold source-to-image operations.
 The large3840x4200 share posters are now delivered, containing unchanged native
 3840x3600 images at2x supersampling. CPU/P1004K assembled raster+download is
 1.813797/.211462s; exploded.712075/.187036s. Export admission/PNG/SVG costs
-are separately recorded. Fresh NVIDIA heal0/heal1 preparations each complete
-103/107 and fail; their21.969/87.467s are not complete-render times.
+are separately recorded. Earlier NVIDIA heal0/heal1 preparations completed
+103/107 and failed; their21.969/87.467s remain failed-attempt times.
 Do not restart a certification campaign or imply an overall GPU speedup.
+
+The focused NVIDIA follow-up now repairs the two polygon cases through explicit
+conservative Plane face:range preparation, retaining original support geometry,
+curves/topology and the unchanged genuine SDK/raw exporter. Both healing policies
+pass9004/7060-triangle controls plus physical/source-Euler checks. Read
+docs/NVIDIA_REFERENCE_PREPARATION.md and the watch report's recovery section.
+The producer supports explicit --usd-definition inputs; original --definition
+and omitted angular0/0 settings remain unchanged. The benchmark driver has not
+silently switched policy. Both periodic conversion refusals are now resolved by
+the guarded angle-split tool with exact source history; read
+docs/nvidia-periodic-preparation-unit.md. The explicit periodic-plane reference
+policy at legacy0/0 angular constraints and.005mm chord now completes both
+heals:43.673684/45.001245s fresh STEP through both labeled historical views,
+all107/9162/166 retained,231416 unique triangles, all physical/source-Euler
+checks PASS. Read results/om10-nvidia-complete-2026-10-17/REPORT.md. These are
+COMPLETE_UNQUALIFIED; actual original-source distance query still refuses
+missing usable pcurves. Separate25/25 runs export107 but fail one physical
+shell;41.147823/43.241815s are failed-attempt times. The isolated supported AF
+control is censored at180s without a result; no production fallback is selected.
+The new diagram branch uses actual module/plate/train separation, alignment
+guides, labels and all166 occurrences. CPU/P100 and genuine NVIDIA replay the
+same translation/camera manifest. New large-image replay costs remain separate
+from cold meshing. Do not claim angle/quality equivalence or an alpha pass.
 
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
 Current phase: implemented owned rational-patch CPU/CUDA evaluator and resident
