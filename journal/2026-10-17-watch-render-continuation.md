@@ -359,3 +359,16 @@ reference failures and pins. README now leads with the actual large watch after
 NCSX; earlier schematic watch remains explicitly separate. Added download links
 and an optional X caption; no social post was sent. Local issue index reflects
 completed images and remaining independent geometry/alpha gaps.
+
+
+## Publication handoff
+
+Root accepted the completed4K presentation unit after actual images and scoped
+timings were inspected; commits preserve plan-before-execution and the separate
+actual-results note. The reviewed numerical/source implementation, complete
+watch observations and share pack are ready to land through PR69→PR68→PR62
+using merge commits, with allfeature branches retained. PR descriptions are
+rewritten around final behavior rather than superseded failed experiments.
+Issue60 records image delivery but stays open for unfinished independent whole-
+watch geometric qualification. Issue63 remains the required next reference
+backfill. Publication starts no new tests, performance repetitions or alpha tag.
