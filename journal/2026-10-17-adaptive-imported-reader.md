@@ -57,3 +57,26 @@ papers/2026-10-17-adaptive-imported-reader-runtime-review.md. No remaining
 findings. Fleet AST parsing and source diff checks are clean. Unit handed to
 parent for coherent test-only commit; full-watch saved qualification remains a
 separate requested operation and cannot delay image generation.
+
+## Actual imported selected-component observation
+
+After reader commit 84e30f8, parent supplied the completed original definition
+1714 output: 45 faces and 1952 facets, positional epsilon 0.005 mm and original
+node cap 0.001 mm. This is the previously failing reconstructed cone-guide
+case. Native completion and final contacts were already observed by the parent;
+the requested reader operation was LOCAL only because this output is mesh-only.
+
+Ran the SAME saved-model reader once on the fleet, query zero/definition 1714,
+with nice level 19, one CPU affinity, a cooperative 180-second cap and an
+external 180-second timeout. Concurrent CPU12 and P100 watch development runs
+were active. Result: CENSORED, exit 124, wall 180.02 s, user 179.58 s, system
+0.41 s, peak 293064 KiB. The reader emitted no completed-definition result and
+has no partial facet counters, so the independently checked face/facet count is
+unconfirmed. The 45/1952 figures name the requested native output inventory,
+not a completed qualification claim.
+
+No WORLD result, original-source PASS or source-error diagnosis follows from
+this censor. Timing is a concurrent-development observation, not an uncontended
+benchmark. No retry, native meshing, GPU work, code or source-cap change was
+made. The full operational command and log remain private in ignored context;
+display and native whole-watch attempts continue independently.

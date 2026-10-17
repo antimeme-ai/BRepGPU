@@ -199,3 +199,41 @@ guide/mapped-s/lift retention, not just process completion. No new geometry
 certifier, broad benchmark, sanitizer campaign or both-device numerical rerun.
 The numeric kernels are unchanged. Root's bounded watch retry is a subsequent
 whole-operation observation, not a substitute for these direct fault classes.
+
+## Plane proposal fallback amendment (2026-10-17, watch v4)
+
+Both actual full runs reached12 complete components, then a reconstructed plane
+inverse proposed U=-.80000000000000071 outside the fixed bank whose exact lower
+binary64 endpoint is -.80000000000000004. Source face165623/carrier161542 are
+diagnostic input identities only. No source cap or intrinsic source-gap failure
+is established by this profile refusal. Exact plane Gram projection is a
+candidate, just as OCCT ElSLib::PlaneParameters1538–1554 returns inverse
+coordinates without proving our finite bank/source correspondence contract.
+
+Keep the ORIGINAL lifted guide before exact plane inversion. For reconstructed
+plane uses, compute the exact existing foot and select it only if BOTH final
+chosen coordinates lie in captured fixed R. Otherwise keep the original guide;
+do not clamp the inverse, expand R, use a ULP threshold, or alter authoritative
+uses. If the guide is also outside R, the existing bank admission still refuses.
+If it is inside R but too far from original V/Ce, the unchanged source-only node
+guard refuses. All whole-trace/SAME-Q and domain operations remain unchanged.
+This is one extension of the candidate eligibility rule, not a new inverse or
+source-bound theorem. No public API or numerical kernel change is needed.
+
+Before body, the SAME direct trace fixture gets a plane with exact original
+spatial X shifted by -2^-45, unchanged valid raw UV guide on[0,1]^2, and matching
+original endpoint vertices. The current inverse must fail fixed-bank admission;
+the fallback must pass the unchanged1e-7 node cap and existing interval bounds.
+The corresponding -.125 original source departure must still fail the node cap,
+and an explicit narrower plane bank must still refuse. Existing rational and
+analytic negative cases remain. Then review the narrow body and rerun ONLY the
+SAME trace target; no cap/numerical campaign.
+
+After this direct closure, run ONCE the existing native adaptive-curves CLI on
+each of the107 ORIGINAL definitions at positional .005/node-source .001, CPU
+single thread per process with at most12 independent processes. The ignored
+external runner parses source INVENTORY only and invokes native source geometry;
+it records definition, exit, elapsed time and native diagnostic/log/output paths
+in TSV. No Python geometry evaluation, source adjustment or automatic retry.
+This boundary-stage fail-fast diagnostic does not claim face meshing, contacts,
+domain coverage, final rendering or qualification. Root owns later model builds.

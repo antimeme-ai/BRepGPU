@@ -121,6 +121,17 @@ def main():
     speed=replace(base, vertices=tuple(Vertex(300+i,(*p,0.),0.) for i,p in enumerate(uv)),
                   carriers=(plane,*base.carriers[1:]),curves=tuple(curves))
     save('speed',speed)
+    for name, offset in (('plane-foot-outside', -2.**-45), ('plane-foot-mismatch', -.125)):
+        def translated_spatial(curve):
+            if curve.dimension != 3:
+                return curve
+            values = list(curve.controls)
+            for i in range(0, len(values), 4):
+                values[i] += offset*values[i+3]
+            return replace(curve, controls=tuple(values))
+        save(name, replace(speed,
+            vertices=tuple(replace(v, xyz=(v.xyz[0]+offset,*v.xyz[1:])) for v in speed.vertices),
+            curves=tuple(translated_spatial(c) for c in speed.curves)))
     # Same complete UV line image, a quadratic raw clock and cubic spatial
     # clock. Whole-use image equality must avoid same-t flatten refinement.
     authspeed=tuple(replace(c,degree=2,controls=(0.,0.,1.,0.,0.,1.,1.,0.,1.))
@@ -174,7 +185,7 @@ def main():
                      replace(c,degree=2,controls=(0.,0.,1.,.5,1.,1.,1.,0.,1.)) if c.id==3000 else c
                      for c in speed.curves)
     save('runtime-equality',replace(speed,curves=equality))
-    print('trace_source_variants=21')
+    print('trace_source_variants=23')
 
 
 if __name__ == '__main__':

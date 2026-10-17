@@ -79,3 +79,35 @@ The direct fixture's prior complete static pass had no own finding. Named
 Clang18 100-column format applied to both owned C++ files before the final
 compiled hashes above. No builds/static processes remain in this lane; no
 source/quality change or full-watch success claim is inferred from direct GREEN.
+
+## Fixed-bank plane proposal fallback and actual boundary inventory
+
+Both whole-model v4 attempts completed twelve definitions, then refused a
+reconstructed plane inverse just outside the fixed original bank. The narrow
+amendment in docs/adaptive-analytic-locator-unit.md retains the original lifted
+guide if the chosen plane inverse leaves that bank. Root reviewed the actual
+body: no source cap, authoritative policy, R or whole-trace acceptance changes.
+The same direct trace fixture observed genuine inverse-outside-bank RED and
+fallback GREEN0.06s; its genuine source-gap and narrow-bank negatives remain.
+Final compiled traces source SHA4127a86cde2a48683b8189d3283c1179597e6d89015058276656f300ed71875b.
+
+The original failing component now completes through native meshing and final
+contacts:120 faces/7474 facets, CPU12,31.1313s component;41.247215041s complete
+process including full-original-source preparation. Epsilon.005mm and original
+source-node cap.001mm are unchanged. This mesh-only selected-component operation
+is not a whole-watch render or independent whole-output qualification.
+
+A one-time existing native boundary CLI sweep over all107 original definitions
+ran at most12 independent CPU1 processes, matching node/depth caps,2048MiB each
+and a120s perdefinition censor. Result98 complete/9 refused/0 censored,22.19s
+concurrent wall. Three refusals use the standalone CLI's regular trace profile
+at sphere/cone singularities; the complete model uses its quotient-trim bank.
+Six other refusals are original source-node guards on reconstructed cylinders,
+with reported uppers.00270–.00439mm versus.001mm. They require diagnosis before
+another unchanged full-watch attempt. No source/tolerance adjustment or automatic
+retry was made. Boundary completion alone does not establish whole-face bounds,
+contacts or rendering. Raw inputs, commands and outcomes remain ignored.
+
+While the cylinder obligation is diagnosed, root is meshing later selected
+components through the unchanged model/P100 caller. This is actual geometry
+work to discover independent remaining failures, not a complete-assembly claim.

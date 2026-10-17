@@ -271,6 +271,21 @@ int main(int argc, char **argv) {
   try {
     require(argc == 3, "usage: traces source variant-directory");
     const std::filesystem::path variants = argv[2];
+    Fixture plane_foot(variants / "plane-foot-outside.bgsource", true);
+    const auto plane_recovered = run(plane_foot);
+    require(trace_requests(plane_recovered).empty(),
+            "valid plane guide did not survive outside inverse candidate");
+    for (const auto &site : trace_sites(plane_recovered))
+      for (const auto ref : site.chosen_original_uv) {
+        const auto coordinate =
+            import_exact(plane_foot.budget, trace_values(plane_recovered).view(ref));
+        require(coordinate.sign() >= 0 && coordinate.compare(Rational(plane_foot.budget, 1)) <= 0,
+                "outside plane foot was emitted instead of valid original guide");
+      }
+    Fixture plane_mismatch(variants / "plane-foot-mismatch.bgsource", true);
+    refuses([&] { static_cast<void>(run(plane_mismatch)); }, ErrorCode::unresolved,
+            "plane guide fallback bypassed original source-node cap");
+    narrow_bank_refuses(plane_foot);
     for (const auto kind : {2, 3, 4, 5}) {
       Fixture analytic(variants / ("locator-" + std::to_string(kind) + ".bgsource"), false, false,
                        true);
