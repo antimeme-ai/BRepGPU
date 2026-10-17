@@ -22,3 +22,11 @@ an explicit direct acceptance; an empty piece range never proves acceptance.
 Fresh table namespaces, complete keys/leases, drained asynchronous work and
 cumulative work/precise/piece limits cover both phases. No source evaluator,
 source map, cap profile or topology algorithm changes are selected.
+
+Actual source reread also ACCEPT: prepare_work_data and the materializer keep
+all parent rows, materialize only failed Band payloads and remap piece parents
+under a fresh table key. Packet whole_parent reads the original captured actual
+UV/XYZ instead of copying cross-table scalar references. Original Band centroid
+lookup is followed by all three exact closed-span checks; original source and
+precise packs retain SAME actual XYZ and original normalization. No execution
+was added by this review; the owner completed the affected real-source checks.
