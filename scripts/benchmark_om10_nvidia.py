@@ -8,7 +8,8 @@ import time
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'examples')]
-from render_om10_nvidia import digest,read_tsv,require,tsv
+from render_om10_nvidia import digest,read_tsv,require,tsv,matched_view_path
+from brepgpu.nvidia_reference import load_native_model_match
 from qualify_om10_nvidia import qualified_owned_inputs
 
 
@@ -18,9 +19,18 @@ COLUMNS=('config','view','scope','n','status','complete_seconds','elapsed_second
 
 def main(args):
     require(sys.platform=='linux','reference benchmark executes on the fleet')
+    require(1<=args.workers<=24 and 1<=args.display_threads<=256,'invalid reference worker/display width')
     args.output.mkdir(parents=True,exist_ok=False)
-    source_hash=digest(args.step);views_hash=digest(args.matched/'views.bgview')
-    qualified_owned_inputs(args.owned_qualification,source_hash,.005)
+    source_hash=digest(args.step)
+    view_path=matched_view_path(args.matched,args.matched_query)
+    views_hash=digest(view_path)
+    if (args.matched/'model.tsv').is_file():
+        load_native_model_match(args.matched,args.matched_query,.005,source_sha256=source_hash)
+        owned_input=args.matched
+    else:
+        require(args.owned_qualification is not None,'legacy matched input requires owned qualification')
+        qualified_owned_inputs(args.owned_qualification,source_hash,.005)
+        owned_input=args.owned_qualification
     def execute(command,log):
         start=time.perf_counter()
         with log.open('wb') as stream:
@@ -29,11 +39,13 @@ def main(args):
     def caller(heal,dataset,mode):
         return (sys.executable,ROOT/'examples/render_om10_nvidia.py','--step',args.step,
             '--matched',args.matched,'--output',dataset,'--heal',str(heal),'--mode',mode,
-            '--workers','24','--chord-height','.005')
+            '--workers',str(args.workers),'--chord-height','.005','--matched-query',str(args.matched_query),
+            '--display-threads',str(args.display_threads),'--exporter',args.exporter,'--producer',args.producer,
+            '--display',args.display,'--package',args.package)
     def admission(dataset,output):
         return (sys.executable,ROOT/'scripts/qualify_om10_nvidia.py','--dataset',dataset,
-            '--owned-qualification',args.owned_qualification,'--output',output,
-            '--full','--workers','24','--query',args.query)
+            '--owned-qualification',owned_input,'--output',output,'--matched-query',str(args.matched_query),
+            '--full','--workers',str(args.workers),'--query',args.query)
     def geometry_pins(dataset):
         rows=read_tsv(dataset/'geometry-pins.tsv')
         return tuple((r['source_definition_id'],r['sha256']) for r in rows)
@@ -83,12 +95,12 @@ def main(args):
                     check_code,_=execute(admission(dataset,qout),args.output/f'{config}-changed-geometry-admission.log')
                     quality='PASS' if check_code==0 else 'FAIL'
                 if quality=='PASS':
-                    status,scope,detail='PASS','fresh_step_both_labeled_views','actual complete fresh source→both labeled views; NVIDIA CPU kernel + shared owned CPU24 display; finite geometry admission passed separately'
+                    status,scope,detail='PASS','fresh_step_both_labeled_views',f'actual complete fresh source→both labeled views; NVIDIA CPU kernel + shared owned CPU{args.display_threads} display; finite geometry admission passed separately'
                 else:
                     status,scope,detail='FAIL','failed_qualification','actual complete all-parts diagnostic render; finite geometry admission FAIL; no matched-quality timing claim'
                 value=format(complete,'.17g')
             elapsed=time.perf_counter()-begin
-        require(digest(args.step)==source_hash and digest(args.matched/'views.bgview')==views_hash,
+        require(digest(args.step)==source_hash and digest(view_path)==views_hash,
                 'original source or actual matched views changed during reference attempt')
         outcomes.append((config,'both',scope,1,status,value,format(elapsed,'.17g'),source_hash,views_hash,detail))
         # Retain the first actual outcome even if the second attempt is interrupted.
@@ -99,8 +111,14 @@ def main(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--step',type=Path,required=True);p.add_argument('--matched',type=Path,required=True)
-    p.add_argument('--owned-qualification',type=Path,required=True)
+    p.add_argument('--owned-qualification',type=Path)
+    p.add_argument('--matched-query',type=int,default=0)
     p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--workers',type=int,default=24);p.add_argument('--display-threads',type=int,default=24)
+    p.add_argument('--exporter',type=Path,default=ROOT/'build/om10-reference-source/brepgpu-reference-source')
+    p.add_argument('--producer',type=Path,default=ROOT/'build/om10-nvidia/brepgpu-om10-nvidia')
+    p.add_argument('--display',type=Path,default=ROOT/'build/om10-reference/brepgpu-om10-reference-display')
+    p.add_argument('--package',type=Path,default=ROOT/'quarantine/nvidia-usd-brep-1.0.0-linux')
     p.add_argument('--query',type=Path,default=ROOT/'build/om10-reference-geometry/brepgpu-om10-reference-geometry')
     try:main(p.parse_args())
     except Exception as error:print(f'NVIDIA benchmark failed: {error}',file=sys.stderr);sys.exit(1)

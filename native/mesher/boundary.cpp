@@ -38,6 +38,7 @@ struct DefinitionBoundaryForest::Impl final {
     PhysicalNodeKey key;
     Vec3 xyz{};
     bool ready = false;
+    uint64_t constructed_revision = 0;
   };
   struct Interval final {
     uint32_t edge;
@@ -76,17 +77,22 @@ struct DefinitionBoundaryForest::Impl final {
   std::pmr::vector<Interval> leaves;
   std::pmr::vector<BoundaryKey> requests;
   std::pmr::vector<Proposal> proposals;
+  std::pmr::vector<BoundaryPointRevision> promotions;
   std::pmr::vector<SourceVertexAlias> vertex_aliases;
   std::shared_ptr<const SourceVertexAliasData> vertex_alias_owner;
   std::optional<BoundaryEvaluationBatch> pending;
   Phase phase = Phase::initial;
   BoundaryEpoch epoch{};
   uint32_t table_ordinal = 0;
+  std::optional<OwnerKey> table_owner;
   std::size_t arrivals = 0;
   BoundaryStats counters;
-  Impl(bgfd::Budget &b, SourceStore original, Slot<DefinitionTag> d, std::shared_ptr<RunResource> r)
+  Impl(bgfd::Budget &b, SourceStore original, Slot<DefinitionTag> d, std::shared_ptr<RunResource> r,
+       std::optional<OwnerKey> owner)
       : budget(b), source(std::move(original)), definition(d), resource(std::move(r)), edges(&b),
-        faces(&b), samples(&b), leaves(&b), requests(&b), proposals(&b), vertex_aliases(&b) {
+        faces(&b), samples(&b), leaves(&b), requests(&b), proposals(&b), promotions(&b),
+        vertex_aliases(&b) {
+    table_owner = owner;
     if (!resource || definition.value >= data().definitions.size())
       invalid("invalid boundary definition");
     std::pmr::vector<uint32_t> edge_order(data().definition_edges.at(d.value).begin(),
@@ -329,9 +335,9 @@ struct DefinitionBoundaryForest::Impl final {
   ExactTableKey next_table() {
     if (table_ordinal == UINT32_MAX)
       throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "boundary table ordinal exhausted");
-    return {{OwnerKind::boundary, definition.value, data().definitions[definition.value].id.value},
-            epoch.value,
-            table_ordinal++};
+    return {table_owner.value_or(OwnerKey{OwnerKind::boundary, definition.value,
+                                          data().definitions[definition.value].id.value}),
+            epoch.value, table_ordinal++};
   }
   BoundaryEvaluationBatch make_batch(std::span<const uint64_t> existing) {
     ExactBuilder builder(resource, next_table());
@@ -385,12 +391,14 @@ struct DefinitionBoundaryForest::Impl final {
 
 DefinitionBoundaryForest::DefinitionBoundaryForest(bgfd::Budget &budget, SourceStore source,
                                                    Slot<DefinitionTag> definition,
-                                                   std::shared_ptr<RunResource> resource)
+                                                   std::shared_ptr<RunResource> resource,
+                                                   std::optional<OwnerKey> table_owner)
     : budget_(&budget), impl_(nullptr) {
   std::pmr::polymorphic_allocator<Impl> a(&budget);
   impl_ = a.allocate(1);
   try {
-    std::construct_at(impl_, budget, std::move(source), definition, std::move(resource));
+    std::construct_at(impl_, budget, std::move(source), definition, std::move(resource),
+                      table_owner);
   } catch (...) {
     a.deallocate(impl_, 1);
     throw;
@@ -414,6 +422,7 @@ BoundaryEpoch DefinitionBoundaryForest::begin_epoch() {
   ++impl_->counters.epochs;
   impl_->arrivals = 0;
   impl_->requests.clear();
+  impl_->promotions.clear();
   impl_->phase = Impl::Phase::open;
   return impl_->epoch;
 }
@@ -445,6 +454,56 @@ void DefinitionBoundaryForest::arrive(BoundaryEpoch epoch, Slot<FaceTag> face, u
   state.last_arrival = epoch.value;
   ++impl_->arrivals;
   impl_->counters.requests += requests.size();
+}
+void DefinitionBoundaryForest::request_owner_splits(BoundaryEpoch epoch,
+                                                    std::span<const BoundaryKey> requests) {
+  impl_->current(epoch);
+  if (impl_->phase != Impl::Phase::open)
+    invalid("boundary owner request horizon is not open");
+  for (const auto request : requests) {
+    impl_->budget.charge(1);
+    if (!impl_->get_interval(request).leaf)
+      invalid("owner request names a retired source interval");
+  }
+  reserve_more(impl_->requests, requests.size());
+  impl_->requests.insert(impl_->requests.end(), requests.begin(), requests.end());
+  impl_->counters.requests += requests.size();
+}
+void DefinitionBoundaryForest::stage_owner_promotions(
+    BoundaryEpoch epoch, std::span<const BoundaryPointRevision> revisions) {
+  impl_->current(epoch);
+  if (impl_->phase != Impl::Phase::open)
+    invalid("boundary promotion horizon is not open");
+  // Validate a complete submitted set before changing even the staged set.
+  std::pmr::vector<BoundaryPointRevision> combined(impl_->promotions, &impl_->budget);
+  reserve_more(combined, revisions.size());
+  for (const auto &revision : revisions) {
+    impl_->budget.charge(1);
+    if (revision.sample.value >= impl_->samples.size())
+      invalid("unknown promoted source sample");
+    const auto &node = impl_->samples[revision.sample.value];
+    if (!node.ready || node.key != revision.expected_key ||
+        node.constructed_revision != revision.expected_constructed_revision)
+      invalid("stale or foreign source point revision");
+    if (node.key.generator != NodeGenerator::original_edge)
+      invalid("original source vertex or quotient cannot promote");
+    if (node.constructed_revision == UINT64_MAX)
+      throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "source point revision exhausted");
+    for (const auto x : revision.xyz)
+      if (!std::isfinite(x))
+        invalid("nonfinite promoted source point");
+    combined.push_back(revision);
+  }
+  std::sort(combined.begin(), combined.end(), [&](const auto &a, const auto &b) {
+    impl_->budget.charge(1);
+    return a.sample < b.sample;
+  });
+  for (std::size_t i = 1; i < combined.size(); ++i) {
+    impl_->budget.charge(1);
+    if (combined[i - 1].sample == combined[i].sample)
+      invalid("duplicate promoted source sample");
+  }
+  impl_->promotions = std::move(combined);
 }
 bool DefinitionBoundaryForest::horizon_complete(BoundaryEpoch epoch) const {
   impl_->current(epoch);
@@ -546,6 +605,21 @@ DefinitionBoundaryForest::complete_evaluations(BoundaryEpoch epoch,
         affected.push_back(Slot<FaceTag>{face});
     }
   }
+  update.revised_samples.reserve(impl_->promotions.size());
+  for (const auto &revision : impl_->promotions) {
+    impl_->budget.charge(1);
+    const auto &node = impl_->samples[revision.sample.value];
+    if (node.key != revision.expected_key ||
+        node.constructed_revision != revision.expected_constructed_revision)
+      invalid("staged source revision is no longer current");
+    const auto edge = impl_->data().edge_index.find(EdgeId{node.key.source});
+    for (const auto face : impl_->data().edge_faces.at(edge.value)) {
+      impl_->budget.charge(1);
+      if (impl_->data().faces[face].definition_id ==
+          impl_->data().definitions[impl_->definition.value].id)
+        affected.push_back(Slot<FaceTag>{face});
+    }
+  }
   std::sort(affected.begin(), affected.end(), [&](auto a, auto b) {
     impl_->budget.charge(1);
     return a < b;
@@ -582,6 +656,13 @@ DefinitionBoundaryForest::complete_evaluations(BoundaryEpoch epoch,
       update.inserted_intervals.push_back(impl_->key(first));
       update.inserted_intervals.push_back(impl_->key(second));
     }
+    for (const auto &revision : impl_->promotions) {
+      impl_->budget.charge(1);
+      auto &node = impl_->samples[revision.sample.value];
+      node.xyz = revision.xyz;
+      ++node.constructed_revision;
+      update.revised_samples.push_back(revision.sample);
+    }
     for (const auto &change : update.changed_faces) {
       impl_->budget.charge(1);
       impl_->faces[impl_->face_index(change.face)].generation = change.generation;
@@ -591,6 +672,7 @@ DefinitionBoundaryForest::complete_evaluations(BoundaryEpoch epoch,
     impl_->counters.live_intervals += results.size();
     impl_->counters.invalidated_faces += affected.size();
     impl_->proposals.clear();
+    impl_->promotions.clear();
     impl_->pending.reset();
     impl_->phase = Impl::Phase::idle;
     return update;
@@ -638,7 +720,7 @@ BoundarySampleView DefinitionBoundaryForest::sample(BoundarySampleSlot slot) con
   const auto &row = impl_->samples[slot.value];
   if (!row.ready)
     invalid("boundary sample evaluation pending");
-  return {row.key, row.xyz};
+  return {row.key, row.xyz, row.constructed_revision};
 }
 const Rational &DefinitionBoundaryForest::parameter(BoundarySampleSlot slot) const {
   impl_->check();
@@ -754,6 +836,7 @@ DefinitionBoundaryForest::freeze_rows(std::span<const Slot<EdgeTag>> incident) c
   // still open. The published object receives only sealed values and copies.
   std::pmr::vector<SourceBoundaryEdge> edge_rows(&impl_->budget);
   std::pmr::vector<PhysicalNode> node_rows(&impl_->budget);
+  std::pmr::vector<uint64_t> revisions(&impl_->budget);
   std::pmr::vector<BoundaryKey> interval_rows(&impl_->budget);
   std::pmr::vector<Range<uint8_t>> paths(budget_);
   std::pmr::vector<uint8_t> bits(budget_);
@@ -767,6 +850,7 @@ DefinitionBoundaryForest::freeze_rows(std::span<const Slot<EdgeTag>> incident) c
       impl_->budget.charge(1);
       const auto value = sample(slot);
       node_rows.push_back({value.key, value.xyz, builder.append(parameter(slot))});
+      revisions.push_back(value.constructed_revision);
       const auto path = sample_path(edge, slot);
       paths.push_back({bits.size(), path.size()});
       bits.insert(bits.end(), path.begin(), path.end());
@@ -779,6 +863,7 @@ DefinitionBoundaryForest::freeze_rows(std::span<const Slot<EdgeTag>> incident) c
       impl_->definition, impl_->epoch, builder.seal());
   result->edges.assign(edge_rows.begin(), edge_rows.end());
   result->nodes.assign(node_rows.begin(), node_rows.end());
+  result->constructed_revisions.assign(revisions.begin(), revisions.end());
   result->intervals.assign(interval_rows.begin(), interval_rows.end());
   result->sample_paths.assign(paths.begin(), paths.end());
   result->path_bits.assign(bits.begin(), bits.end());

@@ -14,7 +14,7 @@ from brepgpu.imported_assembly import assemble
 from brepgpu.imported_source import load_source
 from brepgpu.reference_source import load_reference_source
 from brepgpu.nvidia_reference import (load_definition,qualify_physical_definition,
-                                      write_source_witnesses)
+                                      write_source_witnesses,load_native_model_match)
 from render_om10_nvidia import digest,read_tsv,require,tsv
 
 
@@ -98,8 +98,21 @@ def main(args):
     metadata={r['field']:r['value'] for r in read_tsv(args.dataset/'metadata.tsv')}
     tolerance=float(metadata['chord_height_mm'])
     require(math.isfinite(tolerance) and tolerance>0,'reference requested tolerance invalid')
-    original,owned_source,owned_scene,query_sources=qualified_owned_inputs(
-        args.owned_qualification,source.source_sha256,tolerance)
+    if (args.owned_qualification/'model.tsv').is_file():
+        match=load_native_model_match(args.owned_qualification,args.matched_query,tolerance,
+            source_sha256=source.source_sha256,reference_source=source)
+        original=match.source
+        owned_source=args.owned_qualification/'source.bgsource'
+        owned_scene=match.scene_path
+        query_sources={d.id:args.dataset/'source'/d.filename for d in source.definitions}
+        query_source_scope='fresh original reference BReps unchanged; no legacy reconstructed-query preparation claim'
+        owned_input_scope='complete native model inventory/transport; not legacy nonvisual qualification'
+    else:
+        original,owned_source,owned_scene,query_sources=qualified_owned_inputs(
+            args.owned_qualification,source.source_sha256,tolerance)
+        query_source_scope='prepared owned-qualification query-source; original unchanged 3D boundary with explicit reconstructed 2D trims'
+        owned_input_scope='legacy complete nonvisual qualification'
+
     query_hashes={id:digest(path) for id,path in query_sources.items()}
     require(source.source_sha256==original.source_sha256,'reference/qualified source bytes differ')
     require(source.units_mm==original.units_mm==1.,'reference/qualified millimetre units differ')
@@ -191,7 +204,7 @@ def main(args):
         ('source_occurrences',len(assemble(source).occurrences)),('requested_query_definitions',len(query_definitions)),
         ('queried_definitions',completed_queries),
         ('query_capability_status','COMPLETE' if completed_queries==len(query_definitions) else 'INCOMPLETE'),
-        ('query_source_scope','prepared owned-qualification query-source; original unchanged 3D boundary with explicit reconstructed 2D trims'),
+        ('query_source_scope',query_source_scope),('owned_input_scope',owned_input_scope),
         ('query_batch_wall_seconds',time.perf_counter()-query_begin),
         ('complete_qualification_wall_seconds',time.perf_counter()-begin),
         ('failed_definition_ids',','.join(map(str,sorted(set(failed))))),
@@ -205,6 +218,7 @@ if __name__=='__main__':
     p.add_argument('--dataset',type=Path,required=True);p.add_argument('--owned-qualification',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--query',type=Path,default=ROOT/'build/om10-reference-geometry/brepgpu-om10-reference-geometry')
+    p.add_argument('--matched-query',type=int,default=0)
     p.add_argument('--workers',type=int,default=24)
     group=p.add_mutually_exclusive_group(required=True)
     group.add_argument('--pilot-only',action='store_true');group.add_argument('--full',action='store_true')

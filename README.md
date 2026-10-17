@@ -17,6 +17,26 @@ reproduces the image exactly and records evaluation,setup,qualification and CPU
 display costs. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
 remain available.
 
+[![The complete original OM10 movement — P100 exploded view](assets/om10/p1001-exploded-poster-4k.png)](results/om10-watch-2026-10-17/REPORT.md)
+
+**The real OM10 watch is rendered.** Download [3840×4200 assembled and exploded
+posters](results/om10-watch-2026-10-17/REPORT.md), with 2× supersampled native 4K
+images, original part names, attribution and actual timings. All **107 solid definitions, 9,162 source
+faces and 166 placed parts** pass through our owned C++/CUDA cached-adaptive
+mesher into assembled and exploded labeled images. Both CPU and P100 finish
+with 273,978 unique triangles. Complete cold snapshot-to-both-images time:
+**875.16s CPU12 / 872.50s P100 with CPU12**. Display is faster on P100; CPU meshing
+dominates, so this does not establish an overall GPU advantage. Separately timed
+4K display takes **1.814/0.712s CPU versus 0.211/0.187s P100** for assembled/exploded
+rasterization including result download.
+[Full-size images, every recorded phase, source-linked part legend and limitations](results/om10-watch-2026-10-17/REPORT.md).
+The independent whole-watch geometry reader and external alpha qualification
+remain incomplete. Fresh NVIDIA USD/BRep CPU attempts complete103/107 components
+under each healing policy; both report an incomplete pipeline and no reference
+image or complete-render time. Source design: [Association openmovement](https://openmovement.org/project/om10/),
+[CC BY-SA 3.0](assets/om10/LICENSE.md); BRepGPU supplies mesh, materials,
+lighting, explosion and labels.
+
 [![Openwork study 01 — actual profile, extrusion, bore and mesh](assets/watch/openwork-study-01.png)](results/watch-2026-10-15/REPORT.md)
 
 **Openwork study 01:** an original watch-inspired assembly built from 158 actual
@@ -28,7 +48,90 @@ solids. Construction, meshing and these views run on CPU.
 [Images, source/history exports and scoped costs](results/watch-2026-10-15/REPORT.md) ·
 [Target and design notes](docs/WATCH_TARGET.md).
 
-The supplied real OM10 movement is driving an owned
+**Current mesher development:** an owned
+[cached adaptive subdivision design](docs/ADAPTIVE_MESHER_DESIGN.md), with
+[a concrete delivery plan](docs/ADAPTIVE_MESHER_PLAN.md), is now primary.
+We study NVIDIA USD/BRep and the wider literature for stronger numerical,
+cache, trim and GPU algorithms. The first integrated C++/CUDA operation now takes
+original untrimmed surface patches through cached refinement to conforming,
+source-bounded triangles on CPU and both P100s.
+
+The [131,072-triangle coupled-surface observation](results/adaptive-patch-2026-10-16/REPORT.md)
+passes an independent whole-facet oracle with identical CPU/GPU cold/warm output:
+
+| Backend | Cold query | Warm fresh mesh | Complete two-query process |
+|---|---:|---:|---:|
+| CPU1 | 8.423s | 4.284s | 12.833s |
+| CPU4 | 5.591s | 3.959s | 9.681s |
+| P1000, CPU4 host | 4.777s | 3.853s | 9.116s |
+
+These are single observations; CPU4 is the best observed CPU baseline and the
+complete-process difference is modest. Setup, output, transfers and close remain
+accounted for. The report retains earlier timeouts and distinguishes actual
+warm remeshing from returning a cached result. These timings cover untrimmed
+patches; selected trimmed faces and a first imported component are delivered below.
+The complete OM10 assembly is now [rendered on CPU and P100](results/om10-watch-2026-10-17/REPORT.md).
+The NVIDIA CPU reference has not been run on the untrimmed coupled-surface benchmark above.
+
+The [shared-curve operation](docs/ADAPTIVE_SHARED_CURVES.md) is now delivered too:
+one physical edge chain, every original occurrence/UV seam, and separate source,
+chord and boundary-domain bounds. Its real C++/CUDA caller passes200 queries
+across10 original-source families on CPU1/CPU4/both P100s. GPU samples, paired
+subdivision and bounds are real; CPU wins these small complete operations after
+setup. [Results, sources and all measured costs](results/adaptive-curves-2026-10-16/REPORT.md).
+
+**First complete selected trimmed faces are now delivered in native C++/CUDA:**
+original-source bounds, shared physical boundaries, conforming cached packets
+and connected boundary bands with holes. The
+[matched observation](results/adaptive-trimmed-2026-10-17/REPORT.md) passes
+**56 queries across seven authored families**, with byte-identical CPU1/CPU4/
+both-P100 boundary and face outputs. Independent original-source readers check
+coverage and actual whole-facet error; equality alone is not the geometry oracle.
+
+[![Actual selected-face meshes: holes, bowl, weighted rational patch and saddle](assets/adaptive-trimmed/faces.svg)](results/adaptive-trimmed-2026-10-17/REPORT.md)
+
+These small complete operations favor CPU. The weighted rational two-quality
+process takes **3.331s CPU4 / 3.652s P1000**; its finer face alone takes
+**2.628s / 2.625s**. Each is one observation, including real GPU geometry work;
+the figure is an external view of saved meshes. These are meshing timings.
+The [extended caller checks](results/adaptive-trimmed-ports-2026-10-17/REPORT.md)
+also pass60 queries covering C0/hanging spans, nested islands, periodic seams and
+cache history, plus11 process refusal/publication cases.
+The [complete-component connection](docs/ADAPTIVE_COMPONENTS.md) now also passes
+12 native queries / 36 face outputs across CPU1/CPU4/both P100s: a closed box,
+periodic seam and a definition requiring real shared-boundary refinement.
+Bounded workers reuse their source bank; unaffected faces retain their exact
+boundary snapshots, and final facets pass the existing physical contact check.
+NVIDIA USD/BRep CPU has not been run on these scenarios. General curved
+authoritative-domain maps remain future; the [real OM10 assembly render](results/om10-watch-2026-10-17/REPORT.md) is delivered.
+[API, admission and reproduction](docs/ADAPTIVE_TRIMMED_FACES.md).
+
+The [first original imported watch component](results/adaptive-imported-component-2026-10-17/REPORT.md)
+now passes the independent source reader on CPU4/P1000: four faces,32 facets,
+with byte-identical paired geometry artifacts. Its complete native component
+takes **0.090/0.336s**; cold process wall time is **14.33/14.84s**, dominated by
+full-source envelopes and assembly allowances. CPU wins this small operation.
+The native scene adapter also passes original positions, normals and placement
+checks on CPU/both P100s. A [native complete-assembly caller](docs/ADAPTIVE_MODEL_CALLER.md)
+now passes twelve small authored assembly queries across CPU1/CPU4/both P100s,
+with assembled/exploded labels and atomic semantic/image publication.
+The [native analytic-cap connection](docs/ADAPTIVE_CAPS.md) now also reaches
+actual CPU/P100 assembled/exploded display, retaining shared source edges,
+finite source maps and explicit pole normals. The complete watch now finishes
+on CPU and P100; its [report](results/om10-watch-2026-10-17/REPORT.md) separates
+complete meshing from display. No whole-watch GPU advantage is established.
+
+```mermaid
+flowchart LR
+  S[Original B-rep] --> C[Reusable curve and surface caches]
+  C --> A[Adaptive geometry on CPU or P100]
+  A --> I[Conforming interior packets]
+  A --> B[Shared trims and local boundary regions]
+  I --> M[Source-linked bounded mesh]
+  B --> M
+```
+
+Earlier work on the supplied real OM10 movement delivered an owned
 [C++20 direct constrained Delaunay constructor](docs/DIRECT_CDT.md):
 alternating-cut initial triangulation, randomized constraint recovery, compact
 indexed topology and filtered exact metric predicates. An **8,192-site forced
@@ -55,8 +158,8 @@ all **438 main-plate faces and191,688 triangles** at unchanged quality:
 The [complete-part report](results/main-plate-direct-2026-10-16/REPORT.md) retains
 the earlier qualifier timeout and the exact ranked-sweep replacement. The earlier
 [native ear results](results/native-face-domain-2026-10-16/REPORT.md) remain
-available, including the main-plate300s construction censor. The full OM10
-render remains pending.
+available, including the main-plate300s construction censor. The later
+[cached-adaptive constructor now renders the full OM10](results/om10-watch-2026-10-17/REPORT.md).
 
 We are taking an intentional **breadth-first pass**: deliver a narrow, usable,
 independently qualified beachhead in each major theme, then return to strengthen

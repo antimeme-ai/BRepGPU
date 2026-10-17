@@ -49,6 +49,24 @@ class Budget final : public std::pmr::memory_resource {
   }
 
 public:
+  // Owner-affine nested work cap; no new allocator or arithmetic ownership.
+  // Keep scopes in stack order and do not reset_work() inside a live scope.
+  class WorkScope final {
+    Budget &budget_;
+    uint64_t previous_;
+    friend class Budget;
+    WorkScope(Budget &owner, uint64_t amount) : budget_(owner), previous_(owner.work_limit_) {
+      owner.charge(0);
+      if (amount < owner.work_limit_ - owner.work_)
+        owner.work_limit_ = owner.work_ + amount;
+    }
+
+  public:
+    WorkScope(const WorkScope &) = delete;
+    WorkScope &operator=(const WorkScope &) = delete;
+    ~WorkScope() { budget_.work_limit_ = previous_; }
+  };
+  [[nodiscard]] WorkScope scoped_work(uint64_t amount) { return WorkScope(*this, amount); }
   explicit Budget(Limits limits,
                   std::pmr::memory_resource *upstream = std::pmr::new_delete_resource(),
                   std::stop_token stop = {})
@@ -69,6 +87,7 @@ public:
   void reset_work() noexcept { work_ = 0; }
   [[nodiscard]] uint64_t work() const noexcept { return work_; }
   [[nodiscard]] uint64_t peak() const noexcept { return peak_; }
+  [[nodiscard]] uint64_t live() const noexcept { return live_; }
   void observe(std::size_t count) noexcept {
     max_limbs_ = std::max(max_limbs_, static_cast<uint64_t>(count));
   }

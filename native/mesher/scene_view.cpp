@@ -9,19 +9,8 @@
 
 namespace bgmesh {
 NativeSceneData::NativeSceneData(NativeMesh original, GeometryStore store)
-    : mesh(std::move(original)), geometry(std::move(store)),
-      definitions(mesh.view().resource.get()), instances(mesh.view().resource.get()),
-      vertices(mesh.view().resource.get()), triangles(mesh.view().resource.get()),
-      carriers(mesh.view().resource.get()), materials(mesh.view().resource.get()),
-      controls(mesh.view().resource.get()), vertex_refs(mesh.view().resource.get()),
-      primitive_refs(mesh.view().resource.get()) {}
-bgom10::SceneView NativeSceneData::view() const {
-  return {definitions.data(),    definitions.size(),   instances.data(),   instances.size(),
-          vertices.data(),       vertices.size(),      triangles.data(),   triangles.size(),
-          carriers.data(),       carriers.size(),      materials.data(),   materials.size(),
-          controls.data(),       controls.size(),      vertex_refs.data(), vertex_refs.size(),
-          primitive_refs.data(), primitive_refs.size()};
-}
+    : SceneBuffers(original.view().resource), mesh(std::move(original)),
+      geometry(std::move(store)) {}
 namespace {
 [[noreturn]] void invalid(const char *message) { throw Error(ErrorCode::invalid_source, message); }
 uint32_t narrow(uint64_t count) {

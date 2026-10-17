@@ -19,7 +19,7 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'python'),str(ROOT/'examples'),str(ROOT/'scripts')]
 from brepgpu.imported_assembly import assemble
-from brepgpu.nvidia_reference import load_definition, write_assembly
+from brepgpu.nvidia_reference import load_definition, write_assembly, load_native_model_match
 from om10_scene import PALETTE, authored_material, labeled_svg, visible_anchors, write_png
 from render_om10 import callouts
 
@@ -45,14 +45,8 @@ def read_tsv(path):
         return tuple(csv.DictReader(f,delimiter='\t'))
 
 
-def matched_inputs(path,assembly,source_sha256,chord_height):
-    """Actual shared authored inputs; never recompute cameras from foreign bounds."""
-    metadata={row['field']:row['value'] for row in read_tsv(path/'metadata.tsv')}
-    require(metadata.get('source_sha256')==source_sha256,
-            'matched original source SHA differs from fresh reference source')
-    require(float(metadata['tolerance_mm'])==chord_height,
-            'requested reference chord height differs from owned mesh target')
-    data=(path/'views.bgview').read_bytes();row=struct.Struct('<4I19dII2d')
+def matched_views(path):
+    data=path.read_bytes();row=struct.Struct('<4I19dII2d')
     require(len(data)==16+2*row.size and data[:16]==struct.pack('<8sII',b'BGVIEW01',1,2),
             'matched source must contain exactly two actual views')
     from om10_scene import View
@@ -61,6 +55,28 @@ def matched_inputs(path,assembly,source_sha256,chord_height):
         r=row.unpack_from(data,16+i*row.size)
         require(r[4]==float(i) and r[23]==0,'matched views must render alpha0 thenalpha1')
         views.append(View(r[0],r[1],r[2],r[4],r[5:14],r[14:17],r[17:19],r[19],r[20:23],r[23]))
+    return data,tuple(views)
+
+
+def matched_view_path(path,query=0):
+    return path/f'query-{query}/views.bgview' if (path/'model.tsv').is_file() else path/'views.bgview'
+
+
+def matched_inputs(path,assembly,source_sha256,chord_height,query=0):
+    """Actual shared authored inputs; never recompute cameras from foreign bounds."""
+    if (path/'model.tsv').is_file():
+        match=load_native_model_match(path,query,chord_height,source_sha256=source_sha256)
+        require(tuple((o.id,o.path,o.product_id,o.definition_id) for o in match.assembly.occurrences)==
+                tuple((o.id,o.path,o.product_id,o.definition_id) for o in assembly.occurrences),
+                'fresh original occurrence identity differs from native model')
+        data,views=matched_views(match.views_path)
+        return data,views,match.offsets
+    metadata={row['field']:row['value'] for row in read_tsv(path/'metadata.tsv')}
+    require(metadata.get('source_sha256')==source_sha256,
+            'matched original source SHA differs from fresh reference source')
+    require(float(metadata['tolerance_mm'])==chord_height,
+            'requested reference chord height differs from owned mesh target')
+    data,views=matched_views(path/'views.bgview')
     expected=read_tsv(path/'bom.tsv')
     require(len(expected)==len(assembly.occurrences),'fresh reference occurrence count differs')
     for row,occurrence in zip(expected,assembly.occurrences):
@@ -99,6 +115,7 @@ def main(args):
     require(sys.platform=='linux','reference product execution belongs on the fleet')
     from brepgpu.reference_source import load_reference_source
     require(1<=args.workers<=24,'reference worker count must be1..24')
+    require(1<=args.display_threads<=256,'reference display thread count must be1..256')
     require(args.chord_height>0 and args.chord_height<float('inf'),'finite positive reference chord required')
     args.output.mkdir(parents=True,exist_ok=False)
     begin=time.perf_counter();times=[];source_hash=digest(args.step)
@@ -136,10 +153,32 @@ def main(args):
     if not args.allow_fixture:
         require((len(source.definitions),len(source.faces),len(assembly.occurrences))==(107,9162,166),
                 'reference must consume complete original107/9162/166 movement')
-    request,views,offsets=matched_inputs(args.matched,assembly,source_hash,args.chord_height)
+    native_match=None
+    if (args.matched/'model.tsv').is_file():
+        native_match=load_native_model_match(args.matched,args.matched_query,args.chord_height,
+            source_sha256=source_hash,reference_source=source)
+        assembly=native_match.assembly
+        request,views=matched_views(native_match.views_path)
+        offsets=native_match.offsets
+        shutil.copyfile(native_match.labels_path,args.output/'labels.tsv')
+        tsv(args.output/'bom.tsv',('occurrence_id','source_usage_path','product_id','solid_id',
+            *(f'matrix_{i}' for i in range(12))),
+            ((o.id,'/'.join(map(str,o.path)),o.product_id,o.definition_id,*o.transform)
+             for o in assembly.occurrences))
+        tsv(args.output/'explosion.tsv',('occurrence_id','world_offset_x_mm','world_offset_y_mm','world_offset_z_mm'),
+            ((o.id,*offset) for o,offset in zip(assembly.occurrences,offsets)))
+    else:
+        request,views,offsets=matched_inputs(args.matched,assembly,source_hash,args.chord_height)
+        for name in ('bom.tsv','explosion.tsv'):
+            shutil.copyfile(args.matched/name,args.output/name)
     (args.output/'views.bgview').write_bytes(request)
-    for name in ('bom.tsv','explosion.tsv'):
-        shutil.copyfile(args.matched/name,args.output/name)
+    # Retain fresh complete input identity even when an official worker refuses.
+    tsv(args.output/'metadata.tsv',('field','value'),
+        (('source_sha256',source_hash),('views_sha256',hashlib.sha256(request).hexdigest()),
+         ('chord_height_mm',args.chord_height),('source_definitions',len(source.definitions)),
+         ('source_faces',len(source.faces)),('occurrences',len(assembly.occurrences)),
+         ('input_admission','complete_native_model_inventory' if native_match else 'legacy_matched_inputs'),
+         ('scope','fresh reference preparation; producer completion not yet established')))
     groups=assignments(source.definitions,args.workers)
     tsv(args.output/'assignments.tsv',('worker','source_definition_id','source_face_count'),
         ((i,d.id,len(d.faces)) for i,group in enumerate(groups) for d in group))
@@ -187,8 +226,8 @@ def main(args):
     if args.mode=='render':
         start=time.perf_counter()
         result=run((args.display,'--mesh',args.output/'scene.bgrefmesh','--views',args.output/'views.bgview',
-                    '--threads','24','--output-directory',args.output/'native'),args.output/'display.log',base_env)
-        native_seconds=time.perf_counter()-start;times.append(('shared_owned_cpu24_display_process_wall',native_seconds))
+                    '--threads',str(args.display_threads),'--output-directory',args.output/'native'),args.output/'display.log',base_env)
+        native_seconds=time.perf_counter()-start;times.append(('shared_owned_cpu_display_process_wall',native_seconds))
         require(result.returncode==0,'shared owned CPU display failed; see display.log')
         for i,(name,view) in enumerate(zip(('assembled','exploded'),views)):
             start=time.perf_counter();prefix=args.output/'native'/f'frame-{i:06d}'
@@ -200,13 +239,14 @@ def main(args):
             tsv(args.output/f'{i:03d}-{name}-callouts.tsv',('label','visible_anchor_occurrence_id',
                 'source_group_occurrence_ids','anchor_x','anchor_y','label_x','label_y'),rows)
             labeled_svg(args.output/f'{i:03d}-{name}.svg',png,view,title='OM10 / '+name.upper(),
-                subtitle=f'NVIDIA USD/BRep CPU import+tessellation · heal={args.heal} · shared owned CPU24 display',
+                subtitle=f'NVIDIA USD/BRep CPU import+tessellation · heal={args.heal} · shared owned CPU{args.display_threads} display',
                 counts=(('source definitions',len(source.definitions)),('source faces',len(source.faces)),
                         ('placed parts',len(assembly.occurrences))),
                 timings=(('CPU display process, both views',f'{native_seconds:.3f} s'),
                          ('requested chord height',f'{args.chord_height:g} mm'),
                          ('actual geometry admission','reported separately')),
-                callouts=labels)
+                callouts=labels,
+                attribution='Association openmovement · OM10 MAN VA01.3 · CC BY-SA 3.0 · NVIDIA reference mesh; BRepGPU display and labels')
             reference_description(args.output/f'{i:03d}-{name}.svg')
             times.append((f'{name}_png_svg_labels_write',time.perf_counter()-start))
     require(digest(args.step)==source_hash,'original source changed during reference caller')
@@ -218,8 +258,9 @@ def main(args):
         ('scope','fresh STEP through '+('both labeled views' if args.mode=='render' else 'NVIDIA mesh only')),
         ('heal',args.heal),('chord_height_mm',args.chord_height),('curve_angle_degrees',0),
         ('surface_angle_degrees',0),('allow_partial',False),('workers',len(groups)),
-        ('display_threads',24),('source_definitions',len(source.definitions)),('source_faces',len(source.faces)),
+        ('display_threads',args.display_threads),('source_definitions',len(source.definitions)),('source_faces',len(source.faces)),
         ('occurrences',len(assembly.occurrences)),('requested_quality_is_measured_admission',False),
+        ('input_admission','complete_native_model_inventory' if native_match else 'legacy_matched_inputs'),
         ('available_cpu_affinity',','.join(map(str,sorted(os.sched_getaffinity(0))))),
         *((key,env[key]) for key in ('PXR_WORK_THREAD_LIMIT','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS')))
     tsv(args.output/'metadata.tsv',('field','value'),metadata)
@@ -234,7 +275,7 @@ def parser():
     p.add_argument('--step',type=Path,required=True);p.add_argument('--matched',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--heal',type=int,choices=(0,1),required=True)
     p.add_argument('--mode',choices=('prepare','render'),default='prepare')
-    p.add_argument('--workers',type=int,default=24);p.add_argument('--chord-height',type=float,default=.005)
+    p.add_argument('--matched-query',type=int,default=0);p.add_argument('--display-threads',type=int,default=24);p.add_argument('--workers',type=int,default=24);p.add_argument('--chord-height',type=float,default=.005)
     p.add_argument('--package',type=Path,default=ROOT/'quarantine/nvidia-usd-brep-1.0.0-linux')
     p.add_argument('--exporter',type=Path,default=ROOT/'build/om10-reference-source/brepgpu-reference-source')
     p.add_argument('--producer',type=Path,default=ROOT/'build/om10-nvidia/brepgpu-om10-nvidia')
