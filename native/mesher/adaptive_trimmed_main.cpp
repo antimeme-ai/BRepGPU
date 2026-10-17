@@ -27,24 +27,22 @@ double seconds(Clock::time_point begin) {
 }
 uint64_t integer(std::string_view text) {
   uint64_t value = 0;
-  const auto parsed =
-      std::from_chars(text.data(), text.data() + text.size(), value);
+  const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
   if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
     invalid("invalid unsigned integer option");
   return value;
 }
 double number(std::string_view text) {
   double value = 0;
-  const auto parsed =
-      std::from_chars(text.data(), text.data() + text.size(), value);
-  if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() ||
-      !std::isfinite(value))
+  const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+  if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || !std::isfinite(value))
     invalid("invalid finite numeric option");
   return value;
 }
 struct Options final {
   std::filesystem::path source, output, module;
   uint64_t definition = 0, face = 0, memory_mib = 1024;
+  uint64_t construction_work = TrimFaceLimits{}.construction_work;
   double node_source = 0;
   uint32_t threads = 0, max_nodes = 1u << 18, max_depth = 64;
   int32_t device = 0;
@@ -74,6 +72,8 @@ Options options(int argc, char **argv) {
       out.face = integer(value);
     else if (key == "--memory-mib")
       out.memory_mib = integer(value);
+    else if (key == "--construction-work")
+      out.construction_work = integer(value);
     else if (key == "--positional-mm")
       out.positional.push_back(number(value));
     else if (key == "--node-source-mm")
@@ -82,8 +82,8 @@ Options options(int argc, char **argv) {
       if (value != "cpu" && value != "p100")
         invalid("backend must be cpu or p100");
       out.p100 = value == "p100";
-    } else if (key == "--threads" || key == "--max-nodes" ||
-               key == "--max-depth" || key == "--device") {
+    } else if (key == "--threads" || key == "--max-nodes" || key == "--max-depth" ||
+               key == "--device") {
       const auto n = integer(value);
       if (n > INT32_MAX)
         invalid("option exceeds native index range");
@@ -100,9 +100,8 @@ Options options(int argc, char **argv) {
   }
   if (out.help)
     return out;
-  if (out.source.empty() || out.output.empty() || !out.definition ||
-      !out.face || !(out.node_source > 0) || out.positional.empty() ||
-      out.threads == 0 || out.threads > 256)
+  if (out.source.empty() || out.output.empty() || !out.definition || !out.face ||
+      !(out.node_source > 0) || out.positional.empty() || out.threads == 0 || out.threads > 256)
     invalid("required: --source --definition --face --output --positional-mm "
             "positive "
             "--node-source-mm positive "
@@ -110,9 +109,8 @@ Options options(int argc, char **argv) {
   for (double value : out.positional)
     if (value <= 0)
       invalid("positional allowance must be positive");
-  if (!out.memory_mib || out.memory_mib > (UINT64_MAX >> 20) ||
-      !out.max_nodes || out.max_nodes > UINT32_MAX / 264 || !out.max_depth ||
-      out.max_depth > 64)
+  if (!out.construction_work || !out.memory_mib || out.memory_mib > (UINT64_MAX >> 20) ||
+      !out.max_nodes || out.max_nodes > UINT32_MAX / 264 || !out.max_depth || out.max_depth > 64)
     invalid("invalid memory, node capacity or depth64 limit");
   if (out.p100 != !out.module.empty())
     invalid("p100 requires explicit --cuda-module; CPU does not load device "
@@ -125,8 +123,7 @@ void close(std::ofstream &out) {
   if (!out)
     throw Error(ErrorCode::io_failure, "output write/close failed");
 }
-std::array<double, 4> original_envelope(const SourceData &source,
-                                        const Carrier &carrier) {
+std::array<double, 4> original_envelope(const SourceData &source, const Carrier &carrier) {
   if (carrier.kind != 6)
     return carrier.uv_bounds; // explicit finite analytic admission profile
   std::array<double, 4> result{};
@@ -141,8 +138,7 @@ std::array<double, 4> original_envelope(const SourceData &source,
         result[2 * axis] = knots[i];
         first = true;
       }
-      if (expanded <= carrier.control_shape[axis] &&
-          carrier.control_shape[axis] < end) {
+      if (expanded <= carrier.control_shape[axis] && carrier.control_shape[axis] < end) {
         result[2 * axis + 1] = knots[i];
         last = true;
       }
@@ -159,8 +155,7 @@ void run(const Options &o, std::string_view &stage) {
   const auto resource = std::make_shared<RunResource>(bytes);
   bgfd::Budget budget({bytes, uint64_t{1} << 44}, resource.get());
   OutputDirectory output(o.output);
-  std::ofstream timings(output.path() / "timings.tsv"),
-      queries(output.path() / "queries.tsv");
+  std::ofstream timings(output.path() / "timings.tsv"), queries(output.path() / "queries.tsv");
   if (!timings || !queries)
     throw Error(ErrorCode::io_failure, "cannot open trimmed-face metadata");
   timings << std::setprecision(17) << "scope\tseconds\n";
@@ -174,32 +169,29 @@ void run(const Options &o, std::string_view &stage) {
   const auto &s = source.view();
   const auto definition = s.definition_index.find(DefinitionId{o.definition});
   const auto face = s.face_index.find(FaceId{o.face});
-  if (s.faces.at(face.value).definition_id !=
-      s.definitions.at(definition.value).id)
+  if (s.faces.at(face.value).definition_id != s.definitions.at(definition.value).id)
     invalid("selected original face does not belong to definition");
   const auto carrier = s.carrier_index.find(s.faces.at(face.value).carrier_id);
   stage = "source.compile_original_curves";
   tick = Clock::now();
-  const auto curve_requests =
-      caller::definition_curve_requests(source, definition, resource);
+  const auto curve_requests = caller::definition_curve_requests(source, definition, resource);
   CurveCacheLimits curve_cache_limits;
   curve_cache_limits.control_scalars = o.max_nodes * 264;
-  const auto curve_cache = prepare_curve_source_cache(
-      source, curve_requests, resource, {}, curve_cache_limits, budget);
+  const auto curve_cache =
+      prepare_curve_source_cache(source, curve_requests, resource, {}, curve_cache_limits, budget);
   timing(stage, tick);
   stage = "source.compile_regular_surface";
   tick = Clock::now();
   SourceCacheLimits source_limits;
   source_limits.roots = o.max_nodes;
   source_limits.control_scalars = o.max_nodes * 264;
-  const std::array surface_requests{CarrierRequest{
-      carrier, original_envelope(s, s.carriers.at(carrier.value))}};
-  const auto surface_cache = prepare_trim_source_cache(
-      source, surface_requests, resource, {}, source_limits, budget);
+  const std::array surface_requests{
+      CarrierRequest{carrier, original_envelope(s, s.carriers.at(carrier.value))}};
+  const auto surface_cache =
+      prepare_trim_source_cache(source, surface_requests, resource, {}, source_limits, budget);
   timing(stage, tick);
   CurveLimits curve_limits;
-  curve_limits.nodes = curve_limits.frontier = curve_limits.requests =
-      o.max_nodes;
+  curve_limits.nodes = curve_limits.frontier = curve_limits.requests = o.max_nodes;
   curve_limits.points = o.max_nodes * 4;
   curve_limits.control_scalars = o.max_nodes * 264;
   curve_limits.max_depth = o.max_depth;
@@ -207,6 +199,7 @@ void run(const Options &o, std::string_view &stage) {
   curve_limits.host_bytes = curve_limits.device_bytes = bytes;
   curve_limits.child_bytes = std::min(bytes, uint64_t{1} << 26);
   TrimFaceLimits face_limits;
+  face_limits.construction_work = o.construction_work;
   auto &limits = face_limits.surface;
   limits.nodes = limits.frontier = o.max_nodes;
   limits.points = o.max_nodes * 4;
@@ -215,12 +208,10 @@ void run(const Options &o, std::string_view &stage) {
   limits.cpu_threads = o.threads;
   limits.host_bytes = limits.device_bytes = bytes;
   limits.child_bytes = std::min(bytes, uint64_t{1} << 26);
-  JobContext context({limits.child_bytes, limits.total_work}, resource.get(),
-                     {});
+  JobContext context({limits.child_bytes, limits.total_work}, resource.get(), {});
   stage = "session.create";
   tick = Clock::now();
-  AdaptiveBoundarySession boundary(resource, source, definition, curve_cache,
-                                   curve_limits);
+  AdaptiveBoundarySession boundary(resource, source, definition, curve_cache, curve_limits);
   FaceTrimSession session(resource, surface_cache, face_limits);
   timing(stage, tick);
   stage = "device.open";
@@ -235,39 +226,35 @@ void run(const Options &o, std::string_view &stage) {
     while (boundary.step(context) != StepState::done)
       std::this_thread::yield();
   };
-  queries
-      << std::setprecision(17)
-      << "query\tpositional_mm\tnode_source_mm\tsource_digest\tnumeric_"
-         "profile\tbackend"
-         "\tthreads\tsource_units_mm\tdefinition\tface\tprepared_"
-         "roots\toriginal_roots"
-         "\tsites\tfacets\tband_components\tboundary_nodes\tboundary_intervals"
-         "\tclassifications_cumulative\tpacket_rounds_cumulative\tregion_"
-         "builds_cumulative"
-         "\tband_anchors_cumulative\tpacket_targets_cumulative\tfacet_horizons_"
-         "cumulative"
-         "\tbound_pieces_cumulative\tdirect_source_tests_cumulative"
-         "\tsurface_point_evaluations_cumulative\tsurface_point_hits_cumulative"
-         "\tsurface_restrictions_cumulative\tsurface_nodes_created_cumulative"
-         "\tsurface_nodes_reused_cumulative\tsurface_exact_fallbacks_cumulative"
-         "\tsurface_device_points_cumulative\tsurface_device_bounds_cumulative"
-         "\tsurface_device_restrictions_cumulative\tuploaded_bytes_cumulative"
-         "\tdownloaded_bytes_cumulative\tsurface_host_reserved_bytes"
-         "\tsurface_host_peak_bytes\tsurface_device_reserved_bytes\tsurface_"
-         "device_peak_bytes"
-         "\trun_peak_including_device_reservations_bytes"
-         "\tclassification_seconds_cumulative\tpacket_seconds_"
-         "cumulative\tregion_seconds_cumulative"
-         "\tbound_seconds_cumulative\tanchor_seconds_cumulative\n";
+  queries << std::setprecision(17)
+          << "query\tpositional_mm\tnode_source_mm\tsource_digest\tnumeric_"
+             "profile\tbackend"
+             "\tthreads\tsource_units_mm\tdefinition\tface\tprepared_"
+             "roots\toriginal_roots"
+             "\tsites\tfacets\tband_components\tboundary_nodes\tboundary_intervals"
+             "\tclassifications_cumulative\tpacket_rounds_cumulative\tregion_"
+             "builds_cumulative"
+             "\tband_anchors_cumulative\tpacket_targets_cumulative\tfacet_horizons_"
+             "cumulative"
+             "\tbound_pieces_cumulative\tdirect_source_tests_cumulative"
+             "\tsurface_point_evaluations_cumulative\tsurface_point_hits_cumulative"
+             "\tsurface_restrictions_cumulative\tsurface_nodes_created_cumulative"
+             "\tsurface_nodes_reused_cumulative\tsurface_exact_fallbacks_cumulative"
+             "\tsurface_device_points_cumulative\tsurface_device_bounds_cumulative"
+             "\tsurface_device_restrictions_cumulative\tuploaded_bytes_cumulative"
+             "\tdownloaded_bytes_cumulative\tsurface_host_reserved_bytes"
+             "\tsurface_host_peak_bytes\tsurface_device_reserved_bytes\tsurface_"
+             "device_peak_bytes"
+             "\trun_peak_including_device_reservations_bytes"
+             "\tclassification_seconds_cumulative\tpacket_seconds_"
+             "cumulative\tregion_seconds_cumulative"
+             "\tbound_seconds_cumulative\tanchor_seconds_cumulative\n";
   for (std::size_t query = 0; query < o.positional.size(); ++query) {
     stage = "query.prepare";
     tick = Clock::now();
-    ExactBuilder builder(resource,
-                         {{OwnerKind::run, definition.value, 1}, query + 1, 0});
-    const auto positional =
-        builder.append(Rational::from_double(budget, o.positional[query]));
-    const auto node_source =
-        builder.append(Rational::from_double(budget, o.node_source));
+    ExactBuilder builder(resource, {{OwnerKind::run, definition.value, 1}, query + 1, 0});
+    const auto positional = builder.append(Rational::from_double(budget, o.positional[query]));
+    const auto node_source = builder.append(Rational::from_double(budget, o.node_source));
     const auto values = builder.seal();
     timing(stage, tick);
     stage = "query.construct_shared_boundary";
@@ -277,8 +264,8 @@ void run(const Options &o, std::string_view &stage) {
     timing(stage, tick);
     stage = "query.construct_complete_face";
     tick = Clock::now();
-    session.begin({query + 1, definition, face, boundary.result(), values,
-                   positional, node_source});
+    session.begin(
+        {query + 1, definition, face, boundary.result(), values, positional, node_source});
     for (;;) {
       const auto progress = session.step(context);
       if (progress == TrimFaceProgress::complete)
@@ -296,62 +283,56 @@ void run(const Options &o, std::string_view &stage) {
       const auto result = session.result();
       stage = "output.shared_boundary";
       tick = Clock::now();
-      caller::write_curves(output.path() /
-                               ("query-" + std::to_string(query) + ".bgacrv"),
+      caller::write_curves(output.path() / ("query-" + std::to_string(query) + ".bgacrv"),
                            *result->boundary, budget);
       timing(stage, tick);
       stage = "output.trimmed_face";
       tick = Clock::now();
-      caller::write_trimmed_face(
-          output.path() / ("query-" + std::to_string(query) + ".bgatrm"),
-          result, budget);
+      caller::write_trimmed_face(output.path() / ("query-" + std::to_string(query) + ".bgatrm"),
+                                 result, budget);
       timing(stage, tick);
       const auto stats = session.stats();
       const auto curves = boundary.stats();
       const auto &cache = stats.surface;
       const auto &mesh = *result->construction;
-      queries << query << '\t' << o.positional[query] << '\t' << o.node_source
-              << '\t';
+      queries << query << '\t' << o.positional[query] << '\t' << o.node_source << '\t';
       caller::digest(queries, s.source_digest);
-      queries << '\t' << surface_cache.profile().revision << '\t'
-              << (o.p100 ? "p100" : "cpu") << '\t' << o.threads << '\t'
-              << s.units_mm << '\t' << o.definition << '\t' << o.face;
-      for (uint64_t value :
-           {uint64_t(surface_cache.roots().size()),
-            uint64_t(surface_cache.original_roots().size()),
-            uint64_t(mesh.sites.size()),
-            uint64_t(mesh.facets.size()),
-            uint64_t(mesh.components.size()),
-            uint64_t(result->boundary->boundary->nodes.size()),
-            uint64_t(result->boundary->physical_intervals.size()),
-            stats.classifications,
-            stats.packet_rounds,
-            stats.region_builds,
-            stats.band_anchors,
-            stats.packet_targets,
-            stats.facet_horizons,
-            stats.bound_pieces,
-            stats.direct_source_tests,
-            cache.point_evaluations,
-            cache.point_hits,
-            cache.control_restrictions,
-            cache.nodes_created,
-            cache.nodes_reused,
-            cache.exact_fallbacks,
-            cache.device_points,
-            cache.device_bounds,
-            cache.device_restrictions,
-            cache.uploaded_bytes + curves.uploaded_bytes,
-            cache.downloaded_bytes + curves.downloaded_bytes,
-            cache.host_reserved_bytes,
-            cache.host_peak_bytes,
-            cache.device_reserved_bytes,
-            cache.device_peak_bytes,
-            resource->peak()})
+      queries << '\t' << surface_cache.profile().revision << '\t' << (o.p100 ? "p100" : "cpu")
+              << '\t' << o.threads << '\t' << s.units_mm << '\t' << o.definition << '\t' << o.face;
+      for (uint64_t value : {uint64_t(surface_cache.roots().size()),
+                             uint64_t(surface_cache.original_roots().size()),
+                             uint64_t(mesh.sites.size()),
+                             uint64_t(mesh.facets.size()),
+                             uint64_t(mesh.components.size()),
+                             uint64_t(result->boundary->boundary->nodes.size()),
+                             uint64_t(result->boundary->physical_intervals.size()),
+                             stats.classifications,
+                             stats.packet_rounds,
+                             stats.region_builds,
+                             stats.band_anchors,
+                             stats.packet_targets,
+                             stats.facet_horizons,
+                             stats.bound_pieces,
+                             stats.direct_source_tests,
+                             cache.point_evaluations,
+                             cache.point_hits,
+                             cache.control_restrictions,
+                             cache.nodes_created,
+                             cache.nodes_reused,
+                             cache.exact_fallbacks,
+                             cache.device_points,
+                             cache.device_bounds,
+                             cache.device_restrictions,
+                             cache.uploaded_bytes + curves.uploaded_bytes,
+                             cache.downloaded_bytes + curves.downloaded_bytes,
+                             cache.host_reserved_bytes,
+                             cache.host_peak_bytes,
+                             cache.device_reserved_bytes,
+                             cache.device_peak_bytes,
+                             resource->peak()})
         queries << '\t' << value;
-      for (double value :
-           {stats.classification_seconds, stats.packet_seconds,
-            stats.region_seconds, stats.bound_seconds, stats.anchor_seconds})
+      for (double value : {stats.classification_seconds, stats.packet_seconds, stats.region_seconds,
+                           stats.bound_seconds, stats.anchor_seconds})
         queries << '\t' << value;
       queries << '\n';
     }
@@ -368,9 +349,8 @@ void run(const Options &o, std::string_view &stage) {
   close(timings);
   stage = "output.publish";
   output.publish();
-  std::cout << "adaptive_trimmed_face\tcomplete\tqueries\t"
-            << o.positional.size() << "\tthrough_publication_seconds\t"
-            << std::setprecision(17) << seconds(full) << '\n';
+  std::cout << "adaptive_trimmed_face\tcomplete\tqueries\t" << o.positional.size()
+            << "\tthrough_publication_seconds\t" << std::setprecision(17) << seconds(full) << '\n';
 }
 } // namespace
 int main(int argc, char **argv) {
@@ -378,19 +358,19 @@ int main(int argc, char **argv) {
   try {
     const auto o = options(argc, argv);
     if (o.help) {
-      std::cout
-          << "brepgpu-adaptive-trimmed --source FILE --definition ID --face ID "
-             "--output "
-             "NEW_DIRECTORY --positional-mm VALUE [--positional-mm VALUE ...] "
-             "--node-source-mm VALUE --threads N "
-             "[--backend p100 --cuda-module LIBRARY --device N]\n";
+      std::cout << "brepgpu-adaptive-trimmed --source FILE --definition ID --face ID "
+                   "--output "
+                   "NEW_DIRECTORY --positional-mm VALUE [--positional-mm VALUE ...] "
+                   "--node-source-mm VALUE --threads N "
+                   "[--construction-work POSITIVE_UINT64] "
+                   "[--backend p100 --cuda-module LIBRARY --device N]\n";
       return 0;
     }
     run(o, stage);
     return 0;
   } catch (const Error &error) {
-    std::cerr << "error\t" << stage << '\t' << static_cast<unsigned>(error.code)
-              << '\t' << error.what() << '\n';
+    std::cerr << "error\t" << stage << '\t' << static_cast<unsigned>(error.code) << '\t'
+              << error.what() << '\n';
   } catch (const bgfd::Failure &error) {
     std::cerr << "error\t" << stage << "\texact\t" << error.what() << '\n';
   } catch (const std::exception &error) {
