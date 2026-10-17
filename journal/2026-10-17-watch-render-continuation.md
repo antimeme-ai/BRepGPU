@@ -235,3 +235,39 @@ Status4 is IMeshData_Failure, not WireSelfIntersect. Root reviewed and accepted
 reuse of the existing deep-copy RAW source-UV preparation stage, with optional
 query edits disabled. Original geometry/flags and source face bindings remain
 guarded; finite projection probes do not become an accuracy certificate.
+
+## The complete arbor now finishes on CPU and P100
+
+Root and peer reviewed the local domain recovery implementation. Root's nesting
+regression finding was fixed by preserving the prior nesting fallback. The
+actual failing five-arc graph now resolves with one targeted physical subdivision
+at each of three initial sampling levels; the same exact polygon/triangle-chain
+oracle passes. Independent authored profiles remain initially simple controls,
+and the literal straight bow-tie still refuses. Strict build, existing region
+oracle and scoped static checks passed. See the local recovery unit journal.
+
+Root pinned v11 model SHA256
+9f7e9605f6fb7ef8c8bd99f48c7417449b556ad5d61402e5b277267303424cd2.
+Unchanged cap/display CUDA modules and original source were checked again.
+The complete original45-face arbor now FINISHES on both CPU12 and P1001/CPU12:
+3292 facets each; CPU component17.2279s and cold mesh-only process27.12s;
+P100 component16.9071s and cold process26.55s. Both exit0. CPU user36.25s,
+system.34s, peak206404KiB; P100 user34.97s, system.65s, peak303476KiB.
+Both traced operations ran concurrently on separate physical sockets. These
+are single development observations, not an established whole-operation GPU
+advantage. The formerly repeatedly rebuilt cylinder ends with70 boundary sites,
+not the16388-site round reached by the terminated old diagnostic.
+
+Root launched fresh complete CPU12 and P1001/CPU12 attempt8 operations from that
+same pinned binary: unchanged5micrometre positional/1micrometre node allowances,
+32GiB global/256MiB child scratch,1920x1800,explosion2, complete107 definitions
+and166 source placements. Each must finish all original faces and both annotated
+frames before publication. Source/artifact admission and resource caps remain
+unchanged. A1500s external wall cap records censoring, not successful completion.
+
+The independent OCCT RAW reference completed101/107 definitions in15.22s. The
+same six failures persisted under the reviewed existing QUERY-copy preparation:
+four actual zero-area pole/apex triangles and seven missing face triangulations.
+Root stopped that reference repair lane; no full third attempt or OCCT watch
+image exists. No triangles or faces were discarded. The explicit reference
+adapter and failed outcomes are committed separately as c6a0bd1.
