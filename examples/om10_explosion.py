@@ -117,6 +117,44 @@ def translated_scene(data, offsets):
     return bytes(result)
 
 
+def translated_reference_scene(data, offsets, expected):
+    """Keep external geometry intact; expected maps original ID to (definition, pose)."""
+    require(len(data) >= 64, 'reference scene header truncated')
+    h = struct.unpack_from('<8sII6Q', data)
+    require(h[:3] == (b'BGREFM01', 1, 0) and h[-1] == 0,
+            'reference scene header differs')
+    nd, ni, nv, nt, nm = h[3:8]
+    require(len(data) == 64+40*nd+136*ni+56*nv+24*nt+32*nm,
+            'reference scene section sizes differ')
+    definitions = tuple(struct.unpack_from('<5Q', data, 64+40*i)[0] for i in range(nd))
+    require(len(set(definitions)) == nd and set(definitions) == {v[0] for v in expected.values()},
+            'reference original definition inventory differs')
+    require(ni == len(expected) and set(offsets) == set(expected),
+            'reference occurrence inventory differs')
+    result = bytearray(data); seen = set(); previous = 0
+    for i in range(ni):
+        at = 64+40*nd+136*i
+        row = INSTANCE.unpack_from(data, at)
+        identifier, slot, reserved = row[:3]
+        require(identifier not in seen and identifier in expected and slot < nd and reserved == 0,
+                'reference occurrence ID/definition invalid')
+        seen.add(identifier)
+        definition, pose = expected[identifier]
+        require(definitions[slot] == definition and
+                data[at+16:at+112] == struct.pack('<12d', *pose),
+                'reference original definition/placement differs')
+        value = tuple(offsets[identifier])
+        require(len(value) == 3 and all(math.isfinite(x) for x in value),
+                'invalid reference presentation translation')
+        struct.pack_into('<3d', result, at+112, *value)
+        require(result[previous:at+112] == data[previous:at+112],
+                'non-explosion reference bytes changed')
+        previous = at+136
+    require(seen == set(expected) and result[previous:] == data[previous:],
+            'reference identity or geometry tail changed')
+    return bytes(result)
+
+
 def stored_geometry(data):
     nd, ni, nv, *_ = scene_header(data)
     start = 80+40*nd+136*ni

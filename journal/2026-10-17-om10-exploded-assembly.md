@@ -112,3 +112,33 @@ paths and its world-offset XYZ, and exact `views.bgview` frames. Display labels
 are separate166-row original label ordinals. External producer must retain its
 own genuine geometry/source inventory; this scene is not a substitute NVIDIA
 mesh. Illustration offsets are authored alignment, not validated removal paths.
+
+## Genuine NVIDIA external-mesh replay adapter
+
+Parent selected the same visual unit's external replay continuation. Read actual
+`native/om10_reference/raw.hpp`, `main.cpp`, existing NVIDIA assembly writer and
+current benchmark transport outcome. Reference display is CPU-only, takes raw
+BGREFM01 and existing BGVIEW, emits the same little-endian u64 instance buffers.
+Its disjoint frame stages differ from the native-source display: raw projection,
+triangle setup, bins, shading/resolve and diagnostic host copy. Never label this
+as CUDA display or as new NVIDIA tessellation.
+
+Plan amendment accepted by parent. Implemented separate
+`examples/render_om10_exploded_reference.py` and a BGREF translation helper.
+Admission requires complete original source/hash/107 definitions/9,162 faces/
+166 occurrences, all existing physical/source-Euler reports PASS, full original
+face inventory, original usage paths and bit-identical12-double poses. Copies
+final manifest/views/labels exactly; rewrites only instance explosion3d. Every
+geometry/normal/material/triangle/face byte remains unchanged. Actual independent
+numerical qualification remains separate; accepts/report labels the selected
+benchmark `COMPLETE_UNQUALIFIED` nominal .005mm request without a matched-quality
+claim. Original source→both-image outcome and new replay/export costs are separate.
+
+Existing direct fixture extended with a two-definition/three-occurrence raw
+reference scene, repeated prototype and rotated placement. Actual missing-helper
+RED then four methods GREEN in.001s on fleet; geometry/normal/face/material bytes,
+wrong ID/pose/definition and invalid offsets are checked. Logs are ignored
+`context/explosion/reference-transport-{red,green}.log`. Reference display's
+actual `--help` and new Python entry import/help succeeded. No native build,
+meshing, reference repair or complete-watch replay was performed. Waiting for
+parent's completed NVIDIA dataset and selected outcome before one replay.

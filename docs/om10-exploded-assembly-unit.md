@@ -183,3 +183,35 @@ major parts are actually visible in the final matched CPU/P100 ID buffers;
 manifest and full original-name legend. The final poster is3840×5871 around an
 unchanged3840×4000 native raster,2× supersampled. Actual scoped timings and
 limitations are recorded in the unit journal; no new meshing time is claimed.
+
+## NVIDIA external-mesh replay continuation
+
+Add a separate reference replay entry, without altering the final owned images.
+It reads the completed NVIDIA `scene.bgrefmesh`/metadata/BOM/definition reports,
+the original native model and the final CPU diagram bundle. Require the same
+original source hash and complete107/9162/166 inventory, unique complete source
+usage/definition word, exact original12-double placement matrices and copied
+166 labels. Reference qualification status remains a separate reported scope;
+this adapter cannot turn incomplete definitions into a full diagram.
+
+`BGREFM01` uses header64, definition40, instance136, vertex56, triangle24 and
+material32. Write a new reference scene changing only instance explosion3d at
+offset112, preserve all other bytes, and compare every disjoint unchanged slice.
+An authored two-definition/three-occurrence fixture checks exact preservation,
+rotated/repeated instance identity, and wrong placement/ID refusal. No native
+build or alternate NVIDIA triangulation is introduced.
+
+Copy the final `explosion.tsv`, `views.bgview` and labels exactly. Replay through
+the existing CPU12 raw-reference display, whose ID files are little-endian u64
+like the native-source display. Its real stages are `raw_instance_transform_project`,
+`triangle_setup`, `tile_count_scan_allocate_fill`, `visibility_shading_resolve`,
+`diagnostic_host_copy`; sum only these disjoint frame stages. Do not fabricate
+CUDA/RSS/stage values. Retain actual process wall and all native stages.
+
+Reuse actual-ID annotations/full legend and fixed diagram framing. Generalize
+poster provenance to explicitly say NVIDIA CPU reference mesh / BRepGPU CPU12
+display. Original source→both-image timing is read from the selected completed
+row of `reference-outcomes.tsv`, with scope/status shown; new replay/PNG/SVG costs
+remain separate. No full-watch replay before parent provides a completed dataset
+and selected outcome. This remains genuine NVIDIA geometry; byte preservation
+and source inventory admission are not a new whole-source geometry qualifier.
