@@ -111,3 +111,66 @@ contacts or rendering. Raw inputs, commands and outcomes remain ignored.
 While the cylinder obligation is diagnosed, root is meshing later selected
 components through the unchanged model/P100 caller. This is actual geometry
 work to discover independent remaining failures, not a complete-assembly claim.
+
+## Six-cylinder diagnosis: standalone CLI bank differs from model bank
+
+No further product change was selected. Private ordinary-arithmetic sampling
+of each original spatial cubic shows interior cylinder axial coordinates about
+.007–.010mm outside the linear guide/hint range, while corresponding inverse
+sample residuals are small (up to about3.6e-5mm on these samples). Endpoints
+agree near rounding. These samples diagnose proposals only; they establish no
+original whole-interval acceptance or global nearest-point theorem.
+
+The decisive source read is adaptive_assembly.cpp::Producer::expand_inverse
+216–250 and prepare_profiles315: BEFORE constructing the model bank, the exact
+original cylinder height dual projects each ORIGINAL edge_box, including the
+positive homogeneous spatial-curve hull and original vertices, into V. The
+bank therefore already covers the source axial bulge. In contrast,
+adaptive_curves.cpp::trace_carrier_requests1255–1383 constructs the standalone
+CLI bank from adapter hints plus raw guide envelopes and does not project the
+spatial curve hull. The private script initially printed carrier.uv_bounds,
+not the model's produced cache_domain. That distinction invalidates treating
+the six CLI refusals as model locator failures. No runtime bank expansion,
+clamp, source-ID rule, tolerance change or locator patch was made.
+
+Root then ran all six through the actual prepared-bank MODEL path, once each:
+all complete under unchanged epsilon.005mm/delta.001mm and final contacts.
+In original definition order, face/facet counts were116/2846,108/2418,
+81/1624,163/3288,117/2232 and233/4248; selected complete process68.085906689s
+CPU12 including full original-source preparation. These are mesh-only source
+regressions, not a full render or a GPU speed comparison.
+
+The107-definition sweep remains recorded98 standalone completions/9 refusals.
+All nine refusals have a concrete standalone bank/profile explanation. The
+six cylinder cases and two singular cases have completed in the MODEL bank;
+the third singular case is expected to use the same quotient profile but its
+actual model completion remains unobserved at this checkpoint.
+A future fail-fast model preflight should consume the actual prepared model
+banks. That workflow improvement is deferred; no standalone CLI adoption or
+second sweep was performed. Root started the next unchanged full-render attempt.
+
+## Read-only fallback cost sample
+
+Root's one sampled remaining-component stack was in prepare_work_data through
+materialize_trim_facet_fallback. Reading the live process ELF mapping and pinned
+v5 disassembly resolves callerPC0x55f6c084d6dc to ELFoffset0x1f26dc: the preceding
+sequence is from_double(actualQ), multiply(barycentric), add, move assignment.
+Thus this sample is the exact virtual SAME-L XYZ dot product, not direct proof
+of costly topology clipping or large denominators. No process pause, geometry
+run, product instrumentation or mutation was added by this read-only review.
+
+Each facet/leaf starts from the original triangle, performs four halfplane
+clips with at most7 polygon vertices, and emits at most5 positive fan triangles.
+There is no fractional history carried from another leaf/epoch. Each emitted
+piece nevertheless materializes9 XYZ coordinates with3 rational terms before
+numerical execution; many overlaps/horizons can cost substantial serial work.
+The stack captures neither operand bit lengths nor counts, so it cannot
+distinguish large operands from many ordinary operations. No new fix selected.
+
+Deferred contender discussed with root: extend SAME actual affine L over an
+intersecting complete leaf and try e_leaf+max4corner||B_i-L_i|| first, since B-L
+is bilinear on that leaf. Interval-enclosed SAME-L corner values may suffice;
+loose affine extrapolation or uncertainty keeps canonical clipping fallback.
+Another possible deferred reduction is exact barycentric retention with lazy
+virtual-XYZ materialization. Both require their own reviewed finite unit and
+actual cost/acceptance observations, not a rewrite based on a GCD stack alone.
