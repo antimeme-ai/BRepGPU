@@ -215,3 +215,23 @@ IsDone. No complete image was emitted. The first bounded original small-part
 diagnostic has3/4 faces triangulated and status flags4; the reference owner is
 studying the actual missing face and OCCT status/source behavior. Neither the
 authored box/cylinder check nor IsDone establishes actual watch coverage.
+
+Root stopped the selected native trace once the repeated boundary invalidation
+was established: signal15/shell143, wall542.58s, user692.84s, system2.84s,
+peak2414840KiB, at the16388-site boundary round. GNU time's exit=0 after a signal
+does not mean completion. No image or selected-component completion was emitted.
+The old full-run work-budget owner remains unidentified; the trace supplies a
+concrete preceding amplification mechanism rather than a guessed cap diagnosis.
+
+The saved boundary snapshot independently shows positive-area, closed planar
+loops with no zero edges, but proper crossings between chords near a shared
+source-arc tangency. This proves a selected-polyline crossing, not an intrinsic
+crossing of the original curves. Local graph-recovery planning now targets the
+crossing witness instead of uniformly splitting every curved boundary interval.
+
+The independent OCCT missing face is a cylinder with no incident pcurves on any
+of its four edges; three planes triangulate using implicit planar pcurves.
+Status4 is IMeshData_Failure, not WireSelfIntersect. Root reviewed and accepted
+reuse of the existing deep-copy RAW source-UV preparation stage, with optional
+query edits disabled. Original geometry/flags and source face bindings remain
+guarded; finite projection probes do not become an accuracy certificate.
