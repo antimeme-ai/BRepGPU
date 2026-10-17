@@ -97,3 +97,28 @@ facet against its original span before paying for artificial cache partitions;
 Packet facets can use their already known leaf directly. A finite source/work-
 scheduling plan is being reviewed before code. Original numerical kernels,
 geometry guards and quality remain unchanged. The complete watch is not rendered.
+
+The whole-facet scheduling body passed strict compilation and root source review.
+Started fresh unchanged-source CPU12/P1001 development attempts with a separately
+pinned model executable while the finite work/caller checks finish. This overlap
+does not declare qualification or publish a result. Both retain the600s bound,
+original107 definitions/9162 faces/166 placements,0.005mm positional target and
+0.001mm node-source target. Final independent saved-output qualification is a
+separate timed operation; no whole-watch PASS or image exists at launch.
+
+Both third attempts completed the first438-face original component with36,556
+facets (CPU215.099s/P100207.791s), then refused the next definition's original
+source-node guard: upper about0.001272mm versus0.001mm. Both exited1 and no final
+directory/image was published. These partial component observations are not
+complete-watch timings or a general speedup.
+
+Inspected the failed original use without changing the cap: its reconstructed
+guide is linear UV on an original cone, while its spatial curve is a cubic
+multi-span spline. Endpoints agree to ordinary diagnostic precision. A private
+binary64 diagnostic scan gives about0.001288mm maximum guide departure, while
+approximate distance to the original cone is below0.00000045mm. These samples
+cannot certify geometry, but distinguish a poor locator hypothesis from an
+intrinsic source gap. The declared original edge tolerance is metadata; it does
+not authorize raising the requested cap. Selected next unit is coherent
+reconstructed analytic locator proposals behind the existing source guard and
+whole-trace bound, with literal source frames and guide branch retained.
