@@ -245,7 +245,8 @@ def main(args):
                 timings=(('CPU display process, both views',f'{native_seconds:.3f} s'),
                          ('requested chord height',f'{args.chord_height:g} mm'),
                          ('actual geometry admission','reported separately')),
-                callouts=labels)
+                callouts=labels,
+                attribution='Association openmovement · OM10 MAN VA01.3 · CC BY-SA 3.0 · NVIDIA reference mesh; BRepGPU display and labels')
             reference_description(args.output/f'{i:03d}-{name}.svg')
             times.append((f'{name}_png_svg_labels_write',time.perf_counter()-start))
     require(digest(args.step)==source_hash,'original source changed during reference caller')
