@@ -115,7 +115,7 @@ def make_annotation(records,labels,boxes,view,id_path,counts):
     return modules,guides,parts,visible
 
 
-def poster(path,raw,mask,view,records,labels,annotations,backend,costs):
+def poster(path,raw,mask,view,records,labels,annotations,backend,costs,*,reference=False):
     esc=html.escape;modules,guides,parts,_=annotations
     w=view.width;factor=w/3840.;image_y=240*factor
     # Complete part names live outside the native raster. No panel covers CAD.
@@ -128,10 +128,14 @@ def poster(path,raw,mask,view,records,labels,annotations,backend,costs):
     lines_per_column=math.ceil(len(ordered)/4)
     height=int(legend_y+(lines_per_column*29+135)*factor)
     gray='#506773';ink='#102c3b';accent='#087d83'
+    credit='NVIDIA CPU reference mesh; BRepGPU display and authored layout' if reference else 'BRepGPU mesh, display and authored layout'
+    creator='NVIDIA (CPU reference mesh); BRepGPU (display and authored illustration)' if reference else 'BRepGPU (mesh and authored illustration)'
+    cost_caption=costs['reference_caption'] if reference else f'Mesh source: CPU12 completed mesh · Original CPU12 cold source → mesh → 1920 both views: {costs["cold"]:.2f}s · Meshing: {costs["mesh"]:.2f}s · no remeshing in this replay'
+    copy_label='host copy' if reference else 'download'
     a=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{height}" viewBox="0 0 {w} {height}">',
        '<title>OM10 — source-linked exploded assembly illustration</title>',
        '<desc>All166 original occurrences; source geometry, rotations and materials retained. Authored presentation translations and source-linked module grouping. Alignment guides are explanatory, not validated disassembly or fastening instructions. All original names retained in legend and labels.tsv.</desc>',
-       '<metadata xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"><rdf:RDF><cc:Work rdf:about=""><dc:source rdf:resource="https://openmovement.org/project/om10/"/><dc:creator>Association openmovement (CAD); BRepGPU (mesh and authored illustration)</dc:creator><cc:license rdf:resource="https://creativecommons.org/licenses/by-sa/3.0/"/></cc:Work></rdf:RDF></metadata>',
+       f'<metadata xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"><rdf:RDF><cc:Work rdf:about=""><dc:source rdf:resource="https://openmovement.org/project/om10/"/><dc:creator>Association openmovement (CAD); {creator}</dc:creator><cc:license rdf:resource="https://creativecommons.org/licenses/by-sa/3.0/"/></cc:Work></rdf:RDF></metadata>',
        f'<rect width="{w}" height="{height}" fill="#edf2f4"/>',
        f'<image y="{image_y}" width="{w}" height="{view.height}" href="{embedded(raw)}"/>',
        f'<defs><mask id="background" maskUnits="userSpaceOnUse" x="0" y="{image_y}" width="{w}" height="{view.height}"><image y="{image_y}" width="{w}" height="{view.height}" href="{embedded(mask)}"/></mask></defs>',
@@ -162,14 +166,14 @@ def poster(path,raw,mask,view,records,labels,annotations,backend,costs):
     panel_y=image_y+view.height
     a.extend((f'<rect x="0" y="{panel_y}" width="{w}" height="{185*factor}" fill="#dce7eb"/>',
        f'<text x="{85*factor}" y="{panel_y+46*factor}" font-size="{24*factor}" fill="{accent}" font-weight="700">AUTHORED MODULE EXPLOSION · SAME COMPLETED MESH</text>',
-       f'<text x="{85*factor}" y="{panel_y+88*factor}" font-size="{22*factor}">This exploded view raster + download: {costs["raster"]:.3f}s · Both-view replay process: {costs["display"]:.3f}s</text>',
-       f'<text x="{85*factor}" y="{panel_y+126*factor}" font-size="{21*factor}" fill="{gray}">Mesh source: CPU12 completed mesh · Original CPU12 cold source → mesh → 1920 both views: {costs["cold"]:.2f}s · Meshing: {costs["mesh"]:.2f}s · no remeshing in this replay</text>',
+       f'<text x="{85*factor}" y="{panel_y+88*factor}" font-size="{22*factor}">This exploded view raster + {copy_label}: {costs["raster"]:.3f}s · Both-view replay process: {costs["display"]:.3f}s</text>',
+       f'<text x="{85*factor}" y="{panel_y+126*factor}" font-size="{21*factor}" fill="{gray}">{esc(cost_caption)}</text>',
        f'<text x="{85*factor}" y="{panel_y+164*factor}" font-size="{19*factor}" fill="{gray}">Guides show authored source alignment; not validated removal paths. Full native stages and PNG/SVG/export costs accompany this image.</text>'))
     column=(w-160*factor)/4
     for i,(kind,text,record) in enumerate(ordered):
         col,line=divmod(i,lines_per_column);x=80*factor+col*column;y=legend_y+(line*29+32)*factor
         a.append(f'<text x="{x}" y="{y}" font-size="{19*factor if kind=="part" else 20*factor}" fill="{gray if kind=="part" else accent}" font-weight="{"400" if kind=="part" else "700"}">{esc(text)}</text>')
-    a.extend((f'<text x="{85*factor}" y="{height-52*factor}" font-size="{19*factor}" fill="{gray}">Association openmovement · OM10 MAN VA01.3 · CC BY-SA 3.0 · Original CAD / BRepGPU mesh, display and authored layout</text>',
+    a.extend((f'<text x="{85*factor}" y="{height-52*factor}" font-size="{19*factor}" fill="{gray}">Association openmovement · OM10 MAN VA01.3 · CC BY-SA 3.0 · Original CAD / {credit}</text>',
               f'<text x="{85*factor}" y="{height-22*factor}" font-size="{18*factor}" fill="{gray}">All166 occurrences retained; small attached source jewels/posts may remain occluded by their own parent. Full source usage identity in explosion.tsv.</text>',
               '</g></svg>'))
     Path(path).write_text('\n'.join(a)+'\n',encoding='utf-8')
