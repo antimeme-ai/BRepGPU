@@ -52,3 +52,29 @@ The default-angle hypothesis is therefore insufficient, not a delivered fix.
 The polygon owner is inspecting the actual new rings and earlier imported
 curve/domain meaning before selecting another capability. No crossed polygon
 was passed to an unjustified triangulator.
+
+The bounded imported-source trace found a concrete earlier divergence. Actual
+spatial curve images agree with original source geometry, but finite Plane
+patches omit boundary points by2.43/2.33mm. Lazy UV generation reports success
+while Ce minus S(UV) reaches2.44/2.33mm on those planes. Pinned converter source
+uses24 sampled intervals per whole3D boundary edge to choose each plane range.
+The SDK explicitly creates UV caches ad hoc; their initial absence is expected.
+
+Root reviewed the amended polygon unit and accepted its private support-domain
+correction control: positive rational homogeneous control hull, exact rational
+projection into the same represented canonical plane frame, outward-rounded
+range union, and complete typed-layer equality except Plane face:range entries.
+The support plane/3D curves/topology/source identities remain unchanged. This
+tests the first actual discrepancy rather than trying another triangulator on
+corrupted UV input. Two heal0 operations precede conditional heal1 controls;
+no public implementation or successful fix is claimed before their results.
+
+The periodic diagnosis completed separately in652f907. Both original full-period
+faces lack pcurves and their sampled spans exceed2pi by1.39e-5/2.95e-5 radians,
+crossing the official converter's fixed1e-5 threshold before SDK healing. A
+guarded RAW preparation plus documented OCCT closed-face split admits one
+derivative definition through the unchanged NVIDIA producer:122faces and2096
+genuine triangles. The other offending cylinder remains unsplit and unresolved.
+That derivative has explicit source correspondence and preparation costs; it
+does not replace the historical original-input outcome. Further split searches
+were stopped rather than relaxing source guards.
