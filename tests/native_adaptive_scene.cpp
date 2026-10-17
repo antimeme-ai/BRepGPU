@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
     for (const auto &carrier : assembly->carriers)
       carriers.push_back({carrier.source, carrier.cache_domain});
     const auto cache =
-        prepare_trim_source_cache(source, carriers, resource, {}, {}, context.budget);
+        prepare_quotient_trim_source_cache(source, carriers, resource, {}, {}, context.budget);
     ComponentLimits limits;
     limits.face_owners = 1;
     NativeScheduler scheduler(resource, {1, 4, uint64_t{1} << 27, uint64_t{1} << 42});
@@ -96,12 +96,34 @@ int main(int argc, char **argv) {
         require(std::bit_cast<uint64_t>(scene->vertices[i].xyz[axis]) ==
                     std::bit_cast<uint64_t>(actual.actual_xyz[axis]),
                 "stored actual XYZ words changed in display adapter");
+      std::array<double, 2> locator{};
       for (uint32_t axis = 0; axis < 2; ++axis)
-        require(
-            std::bit_cast<uint64_t>(scene->vertices[i].uv[axis]) ==
-                std::bit_cast<uint64_t>(
-                    import_exact(context.budget, mesh.values.view(actual.uv[axis])).to_double()),
-            "original exact UV normal locator changed");
+        locator[axis] =
+            import_exact(context.budget, mesh.values.view(actual.uv[axis]))
+                .to_double();
+      if (provenance.mapped_normal_piece) {
+        require(mesh.domain && mesh.domain->caps &&
+                    provenance.mapped_normal_piece.value() <
+                        mesh.domain->caps.pieces().size(),
+                "mapped normal provenance lost produced cap piece");
+        const auto &caps = mesh.domain->caps;
+        const auto &piece =
+            caps.pieces()[provenance.mapped_normal_piece.value()];
+        const auto midpoint = [&](ExactRef a, ExactRef b) {
+          return import_exact(context.budget, caps.values().view(a))
+              .add(import_exact(context.budget, caps.values().view(b)))
+              .divide(Rational(context.budget, 2))
+              .to_double();
+        };
+        locator = {midpoint(piece.cut_uv[0], piece.cut_uv[2]),
+                   midpoint(piece.finite_v[0], piece.finite_v[1])};
+        require(scene->vertices[i].flags & bgom10::ANALYTIC_NORMAL_LIMIT,
+                "mapped pole did not request original analytic limit normal");
+      }
+      for (uint32_t axis = 0; axis < 2; ++axis)
+        require(std::bit_cast<uint64_t>(scene->vertices[i].uv[axis]) ==
+                    std::bit_cast<uint64_t>(locator[axis]),
+                "exact original or mapped cosmetic normal locator changed");
     }
     const std::filesystem::path output(argv[2]);
     std::filesystem::create_directories(output);

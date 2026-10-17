@@ -95,9 +95,11 @@ The native scene adapter also passes original positions, normals and placement
 checks on CPU/both P100s. A [native complete-assembly caller](docs/ADAPTIVE_MODEL_CALLER.md)
 now passes twelve small authored assembly queries across CPU1/CPU4/both P100s,
 with assembled/exploded labels and atomic semantic/image publication.
-Singular cap construction and the complete watch
-assembled/exploded delivery are still in progress; no new NVIDIA baseline or
-whole-watch GPU advantage is established.
+The [native analytic-cap connection](docs/ADAPTIVE_CAPS.md) now also reaches
+actual CPU/P100 assembled/exploded display, retaining shared source edges,
+finite source maps and explicit pole normals. The complete watch delivery
+remains in progress; no new NVIDIA baseline or whole-watch GPU advantage is
+established.
 
 ```mermaid
 flowchart LR

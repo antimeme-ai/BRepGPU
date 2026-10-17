@@ -56,7 +56,7 @@ class Reader:
 def read(path):
     r = Reader(path.read_bytes())
     magic, wire, numeric, definition, nn, ne, na, np, nu, ns, ni, digest = r.unpack('<8sII8Q32s')
-    assert magic == b'BGACRV01' and wire in (1, 2) and numeric == 1
+    assert magic == b'BGACRV01' and wire in (1, 2, 3) and numeric == 1
     assert max(nn, ne, na, np, nu, ns, ni) <= len(r.raw)//4
     nodes, edges, aliases, physical, uses, sites, intervals = [], [], [], [], [], [], []
     for _ in range(nn):
@@ -86,7 +86,7 @@ def read(path):
     for _ in range(nu):
         ids, meta, ranges = r.unpack('<5Q'), r.unpack('<iIIiiI'), r.unpack('<6Q')
         image = None
-        if wire == 2:
+        if wire >= 2:
             present, = r.unpack('<I')
             assert present in (0, 1)
             if present:
@@ -108,9 +108,22 @@ def read(path):
         intervals.append(dict(key=key, sites=(a, b), authority=authority,
             correspondence=correspondence, trace=trace, source_trace=source_trace, uv=(du, dv),
             domain=r.optional(r.exact), line=r.optional(r.line), cylinder=r.optional(r.cylinder)))
+    wedges = []
+    if wire >= 3:
+        nw, = r.unpack('<Q')
+        assert nw <= len(r.raw)//4
+        for _ in range(nw):
+            vertex, loop, incoming, outgoing = r.unpack('<4Q')
+            a, b, kind = r.unpack('<3I')
+            assert max(a,b) < ns and kind in (0,1,2)
+            uv = r.exacts(4)
+            assert sites[a]['uv'] == uv[:2] and sites[b]['uv'] == uv[2:]
+            assert sites[a]['node'] == sites[b]['node'] and uv[:2] != uv[2:]
+            wedges.append(dict(vertex=vertex, loop=loop, uses=(incoming,outgoing),
+                               sites=(a,b), kind=kind, uv=uv))
     assert r.at == len(r.raw), 'trailing shared-boundary artifact bytes'
     return dict(definition=definition, digest=digest, nodes=nodes, edges=edges, aliases=aliases,
-                physical=physical, uses=uses, sites=sites, intervals=intervals)
+                physical=physical, uses=uses, sites=sites, intervals=intervals, wedges=wedges, wire=wire)
 
 
 def source(kind='quadratic'):

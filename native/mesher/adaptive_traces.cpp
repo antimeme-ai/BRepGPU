@@ -316,6 +316,34 @@ UV guide_point(const Carrier &carrier, const Coedge &use, const CurveSampleResul
   }
   return result;
 }
+std::array<double, 4> original_rational_rectangle(const SourceData &source,
+                                                   const Carrier &carrier, bgfd::Budget &budget) {
+  std::array<double, 4> box{};
+  for (uint32_t axis = 0; axis < 2; ++axis) {
+    const auto knots = source.view(axis == 0 ? carrier.knot_u : carrier.knot_v);
+    const auto mult = source.view(axis == 0 ? carrier.mult_u : carrier.mult_v);
+    uint64_t expanded = 0;
+    bool first = false, last = false;
+    require(knots.size() == mult.size(), "original rational knot shape differs");
+    for (size_t i = 0; i < knots.size(); ++i) {
+      budget.charge(1);
+      require(mult[i] <= UINT64_MAX - expanded, "original rational knot size overflow");
+      const auto end = expanded + mult[i];
+      if (expanded <= carrier.degrees[axis] && carrier.degrees[axis] < end) {
+        box[2 * axis] = knots[i];
+        first = true;
+      }
+      if (expanded <= carrier.control_shape[axis] && carrier.control_shape[axis] < end) {
+        box[2 * axis + 1] = knots[i];
+        last = true;
+      }
+      expanded = end;
+    }
+    require(first && last && box[2 * axis] < box[2 * axis + 1],
+            "original rational natural rectangle is empty");
+  }
+  return box;
+}
 void authoritative_joint(const TraceFaceRequest &request, const SourceSite &a, const SourceSite &c,
                          const ExactTable &values, bgfd::Budget &b) {
   const auto &source = request.source.view();
@@ -372,9 +400,11 @@ struct TraceSiteWorkData final {
   std::pmr::vector<SourceSite> sites;
   std::pmr::vector<TraceCarrierSampleTask> tasks;
   std::pmr::vector<CurveSampleResult> original_samples;
+  std::pmr::vector<SeamWedge> wedges;
   TraceSiteWorkData(TraceSourceWork original)
       : source(std::move(original)), sites(source->request.resource.get()),
-        tasks(source->request.resource.get()), original_samples(source->request.resource.get()) {}
+        tasks(source->request.resource.get()), original_samples(source->request.resource.get()),
+        wedges(source->request.resource.get()) {}
 };
 struct TraceSitesData final {
   TraceSiteWork work;
@@ -551,6 +581,12 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
         }
     }
   require(found_root, "trace carrier has no admitted original source root");
+  // The ORIGINAL natural rectangle is distinct from a requested cache window.
+  // Projection proposes a reconstructed locator; the later original source
+  // guard and complete selected trace bound still decide acceptance.
+  const auto natural_box = carrier.kind == 6
+      ? std::optional(original_rational_rectangle(request.source.view(), carrier, b))
+      : std::nullopt;
   std::pmr::vector<UV> uv(&b);
   uv.reserve(source->sites.size());
   for (const auto &site : source->sites) {
@@ -565,13 +601,62 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
       if (guide.kind == 1 && guide.frame[3] == 0.)
         point[1] = locator.height(target_point(request, site, source->values(), samples, b));
     }
+    if (use.reconstructed && natural_box)
+      for (uint32_t axis = 0; axis < 2; ++axis) {
+        const auto lower = Rational::from_double(b, (*natural_box)[2 * axis]);
+        const auto upper = Rational::from_double(b, (*natural_box)[2 * axis + 1]);
+        if (point[axis].compare(lower) < 0)
+          point[axis] = lower;
+        else if (point[axis].compare(upper) > 0)
+          point[axis] = upper;
+      }
     uv.push_back(std::move(point));
   }
   std::pmr::vector<uint32_t> representatives(&b);
   representatives.reserve(source->sites.size());
   for (uint32_t i = 0; i < source->sites.size(); ++i)
     representatives.push_back(i);
+  std::optional<SeamWedge> wedge;
+  if (request.carriers.purpose() == SourceCachePurpose::quotient_trim &&
+      (carrier.kind == 3 || carrier.kind == 4) && source->uses.size() == 3 &&
+      request.source.view().faces[request.face.value].loops.count == 1) {
+    const auto &original = request.source.view();
+    for (const auto &joint : source->joints) {
+      const auto out = joint.sites[0], in = joint.sites[1];
+      const auto &out_site = source->sites[out], &in_site = source->sites[in];
+      const auto &out_use = original.coedges[out_site.use.value];
+      const auto &in_use = original.coedges[in_site.use.value];
+      if (out_use.edge_id != in_use.edge_id || out_use.sense != -in_use.sense)
+        continue;
+      const auto &edge = original.edges[original.edge_index.find(out_use.edge_id).value];
+      if (edge.degenerate || edge.vertex_ids[0] == edge.vertex_ids[1])
+        continue;
+      if (!out_use.reconstructed || !in_use.reconstructed)
+        throw Error(ErrorCode::unsupported, "authoritative curved seam cap needs its original domain map");
+      require(out_site.endpoint < 2 && out_site.endpoint == in_site.endpoint,
+              "seam wedge endpoint incidence differs");
+      const auto loop_slot = out_site.row.loop;
+      require(loop_slot == in_site.row.loop && original.loops[loop_slot.value].outer,
+              "seam wedge is not one original outer loop");
+      AnalyticCapKind kind = AnalyticCapKind::cone_apex;
+      if (carrier.kind == 4) {
+        // This chooses an auxiliary comparison pole, not a claim that the pole
+        // lies in R or that either finite source endpoint equals that pole.
+        // Actual sheet/map admission and full finite-band error follow later.
+        const auto sign = uv[in][1].add(uv[out][1]).sign();
+        if (!sign)
+          throw Error(ErrorCode::unsupported, "sphere wedge comparison-pole branch is ambiguous");
+        kind = sign > 0 ? AnalyticCapKind::sphere_north : AnalyticCapKind::sphere_south;
+      }
+      require(!wedge, "multiple seam wedge joints are outside the finite profile");
+      wedge = SeamWedge{original.vertex_index.find(edge.vertex_ids[out_site.endpoint]), loop_slot,
+                         {in_site.use, out_site.use}, {in, out}, kind, {}};
+    }
+  }
   for (const auto &joint : source->joints) {
+    if (wedge && joint.sites[0] == wedge->shared_endpoint_sites[1] &&
+        joint.sites[1] == wedge->shared_endpoint_sites[0])
+      continue;
     authoritative_joint(request, source->sites[joint.sites[0]], source->sites[joint.sites[1]],
                         source->values(), b);
     const auto a = joint.sites[0], c = joint.sites[1];
@@ -581,6 +666,28 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
     uv[other] = uv[chosen_site];
     representatives[other] = chosen_site;
   }
+  if (wedge)
+    for (uint32_t sector = 0; sector < 2; ++sector) {
+      const auto use_slot = wedge->meridian_uses[sector];
+      const auto hit = std::find_if(source->uses.begin(), source->uses.end(),
+                                     [&](const auto &row) { return row.use == use_slot; });
+      require(hit != source->uses.end(), "wedge meridian trace is missing");
+      const auto first = static_cast<uint32_t>(hit->sites.first);
+      const auto last = static_cast<uint32_t>(hit->sites.first + hit->sites.count - 1);
+      const auto regular = wedge->shared_endpoint_sites[sector] == first ? last : first;
+      const auto branch = uv[regular][0];
+      int direction = 0;
+      for (uint64_t j = 0; j < hit->sites.count; ++j) {
+        const auto at = static_cast<uint32_t>(hit->sites.first + j);
+        uv[at][0] = branch;
+        if (j) {
+          const auto sign = uv[at][1].compare(uv[at - 1][1]);
+          if (!sign || (direction && direction != sign))
+            throw Error(ErrorCode::unresolved, "chosen seam meridian V is not strictly monotone");
+          direction = sign;
+        }
+      }
+    }
   auto work = retained<TraceSiteWorkData>(request.resource, source);
   ExactBuilder builder(request.resource, stage_key(request, 1));
   work->sites.reserve(source->sites.size());
@@ -593,6 +700,13 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
       site.row.chart_xy[axis] = site.row.chosen_original_uv[axis];
     }
     work->sites.push_back(site);
+  }
+  if (wedge) {
+    for (uint32_t sector = 0; sector < 2; ++sector)
+      for (uint32_t axis = 0; axis < 2; ++axis)
+        wedge->finite_connector_uv[2 * sector + axis] =
+            work->sites[wedge->shared_endpoint_sites[sector]].row.chosen_original_uv[axis];
+    work->wedges.push_back(*wedge);
   }
   for (uint32_t i = 0; i < source->sites.size(); ++i) {
     const auto representative = representatives[i];
@@ -1011,13 +1125,15 @@ struct UseTraceResultData final {
   std::pmr::vector<UseCurveSite> sites;
   std::pmr::vector<UseCurveInterval> intervals;
   std::pmr::vector<BoundaryKey> requests;
+  std::pmr::vector<SeamWedge> wedges;
   uint64_t exact_fallbacks = 0;
   UseTraceResultData(TraceIntervalWork previous, ExactTable table)
       : work(std::move(previous)), values(std::move(table)),
         uses(work->sites->work->source->request.resource.get()),
         sites(work->sites->work->source->request.resource.get()),
         intervals(work->sites->work->source->request.resource.get()),
-        requests(work->sites->work->source->request.resource.get()) {}
+        requests(work->sites->work->source->request.resource.get()),
+        wedges(work->sites->work->source->request.resource.get()) {}
 };
 TraceIntervalWork prepare_trace_intervals(const TraceSites &sites, JobContext &context) {
   require(static_cast<bool>(sites), "missing settled trace sites");
@@ -1408,6 +1524,13 @@ UseTraceResult complete_trace_intervals(const TraceIntervalWork &work,
   auto result = retained<UseTraceResultData>(request.resource, work, builder.seal());
   result->uses = std::move(use_rows);
   result->sites = std::move(rows);
+  for (auto wedge : work->sites->work->wedges) {
+    for (uint32_t sector = 0; sector < 2; ++sector)
+      for (uint32_t axis = 0; axis < 2; ++axis)
+        wedge.finite_connector_uv[2 * sector + axis] =
+            result->sites[wedge.shared_endpoint_sites[sector]].chosen_original_uv[axis];
+    result->wedges.push_back(wedge);
+  }
   result->intervals = std::move(intervals);
   result->requests = std::move(requests);
   result->exact_fallbacks = exact_fallbacks;
@@ -1425,5 +1548,6 @@ std::span<const UseCurveInterval> trace_intervals(const UseTraceResult &result) 
 std::span<const BoundaryKey> trace_requests(const UseTraceResult &result) {
   return result->requests;
 }
+std::span<const SeamWedge> trace_wedges(const UseTraceResult &result) { return result->wedges; }
 uint64_t trace_exact_fallbacks(const UseTraceResult &result) { return result->exact_fallbacks; }
 } // namespace bgmesh::adaptive

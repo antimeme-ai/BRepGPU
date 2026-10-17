@@ -8,6 +8,7 @@ struct DomainRequest final {
   SharedCurveSnapshot curves;
   FaceConstructionKey key;
   ExactTableKey table_key;
+  ProducedCapDomainLease caps{};
 };
 struct DomainPreparation final {
   FaceDomainLease domain;
@@ -25,6 +26,9 @@ struct RegionInput final {
   std::span<const uint64_t> anchor_components;
   FaceConstructionResult previous;
   std::span<const uint64_t> changed_components;
+  SurfacePointResult cut_points{};
+  // Aligned cut_points->points rows -> domain.caps.points() indices.
+  std::span<const uint32_t> cut_point_plan_indices{};
 };
 struct PacketGridTarget final {
   FacetKey old_facet;

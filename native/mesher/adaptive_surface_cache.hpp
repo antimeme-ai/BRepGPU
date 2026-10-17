@@ -1,6 +1,7 @@
 #ifndef BREPGPU_MESHER_ADAPTIVE_SURFACE_CACHE_HPP
 #define BREPGPU_MESHER_ADAPTIVE_SURFACE_CACHE_HPP
 #include "adaptive_cache.hpp"
+#include "adaptive_cap_work.hpp"
 #include "adaptive_surface_view.hpp"
 #include "adaptive_trimmed_geometry.hpp"
 
@@ -16,6 +17,14 @@ struct SurfaceQuery final {
   SourceCache source;
   ExactTable values;
   std::span<const RootAllowance> allowances; // copied by begin; nonempty root subset
+  FaceDomainLease domain{};                  // mandatory produced cap inventory for quotient_trim
+};
+struct SurfaceDomainReplacement final {
+  SurfaceBoundView expected;
+  FaceDomainLease domain;
+  SurfaceFaceIdentity face;
+  ExactTable values;
+  std::span<const RootAllowance> allowances;
 };
 struct SurfaceRefineRequest final {
   SurfaceBoundView view;
@@ -73,13 +82,44 @@ struct SurfaceFacetResultData final {
         ordinal(request), facets(resource.get()), point_floors(resource.get()) {}
 };
 using SurfaceFacetResult = std::shared_ptr<const SurfaceFacetResultData>;
+struct SurfaceCapFacetRequest final {
+  SurfaceBoundView view;
+  FaceConstructionResult construction;
+  FaceDomainLease domain;
+  FacetAllowances allowances;
+  std::span<const uint32_t> selected_facets;
+  uint64_t ordinal;
+  TrimFacetLimits limits;
+};
+struct SurfaceCapComponents final {
+  ExactRef position, band, total, angular, radial, corner, pole_departure;
+  std::optional<ExactRef> uncertainty;
+};
+struct SurfaceCapFacetAnswer final {
+  uint32_t facet;
+  std::optional<SurfaceCapComponents> bounds;
+  bool accepted = false;
+};
+struct SurfaceCapFacetResultData final {
+  std::shared_ptr<RunResource> resource;
+  CapFacetWork work;
+  ExactTable values;
+  uint64_t ordinal;
+  std::pmr::vector<SurfaceCapFacetAnswer> facets;
+  SurfaceCapFacetResultData(std::shared_ptr<RunResource> owner, CapFacetWork captured,
+                            ExactTable exact, uint64_t request)
+      : resource(std::move(owner)), work(std::move(captured)), values(std::move(exact)),
+        ordinal(request), facets(resource.get()) {}
+};
+using SurfaceCapFacetResult = std::shared_ptr<const SurfaceCapFacetResultData>;
 enum class SurfaceProgress : uint32_t {
   progressed,
   pending,
   needs_classification,
   selected,
   points_complete,
-  facets_complete
+  facets_complete,
+  caps_complete
 };
 class SurfaceCacheSession final {
   struct Impl;
@@ -94,6 +134,7 @@ public:
   SurfaceCacheSession &operator=(const SurfaceCacheSession &) = delete;
   void open_device(const CacheDevice &);
   void begin(const SurfaceQuery &);
+  void replace_domain(const SurfaceDomainReplacement &);
   SurfaceProgress step(JobContext &);
   [[nodiscard]] CandidateBoxes candidates() const;
   void classify(CandidateClassification);
@@ -103,6 +144,8 @@ public:
   [[nodiscard]] SurfacePointResult point_result() const;
   void bound(const SurfaceFacetRequest &);
   [[nodiscard]] SurfaceFacetResult facet_result() const;
+  void bound_caps(const SurfaceCapFacetRequest &);
+  [[nodiscard]] SurfaceCapFacetResult cap_result() const;
   [[nodiscard]] CacheStats stats() const noexcept;
   void release_operation();
   void release_query();

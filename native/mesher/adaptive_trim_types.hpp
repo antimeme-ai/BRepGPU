@@ -1,20 +1,27 @@
 #ifndef BREPGPU_MESHER_ADAPTIVE_TRIM_TYPES_HPP
 #define BREPGPU_MESHER_ADAPTIVE_TRIM_TYPES_HPP
 #include "adaptive_curves_types.hpp"
+#include "adaptive_cap_domain.hpp"
 #include "adaptive_packets.hpp"
 #include "adaptive_surface_view.hpp"
 #include <limits>
 #include <optional>
 #include <variant>
 namespace bgmesh::adaptive {
+struct SurfacePointResultData;
 struct FaceConstructionKey final {
   uint64_t source_generation = 0, query = 0, boundary_generation = 0;
   uint64_t chart_revision = 0, profile_revision = 0, construction_revision = 0;
   Slot<DefinitionTag> definition;
   Slot<FaceTag> face;
   uint64_t assignment_epoch = 0;
+  uint64_t face_generation = 0, domain_revision = 0;
   auto operator<=>(const FaceConstructionKey &) const = default;
 };
+[[nodiscard]] inline uint64_t effective_face_generation(const FaceConstructionKey &key) noexcept {
+  return key.face_generation == 0 && key.domain_revision == 0 ? key.boundary_generation
+                                                            : key.face_generation;
+}
 enum class DomainPolicy : uint32_t { reconstructed_selected = 1, authoritative_exact_image = 2 };
 struct WholeUseLineImage final {
   Slot<CoedgeTag> use;
@@ -29,16 +36,27 @@ struct FaceDomainUse final {
   DomainPolicy policy = DomainPolicy::reconstructed_selected;
   std::optional<WholeUseLineImage> image;
 };
+struct WedgeSectorBinding final {
+  uint32_t wedge, sector;
+};
 struct SourceOccurrenceBinding final {
   uint32_t shared_site, construction_site;
+  std::optional<WedgeSectorBinding> wedge_sector{};
+};
+struct CapPointBinding final {
+  uint32_t construction_site = UINT32_MAX, sample_row = UINT32_MAX;
 };
 struct DomainBoundarySite final {
   uint32_t shared_site, boundary_node;
   std::array<ExactRef, 2> uv;
 };
+struct CapConnectorKey final {
+  uint32_t wedge;
+  uint64_t domain_revision;
+};
 struct DomainBoundaryEdge final {
   std::array<uint32_t, 2> sites;
-  BoundaryKey provenance;
+  std::variant<BoundaryKey, CapConnectorKey> provenance;
 };
 struct DomainBoundaryLoop final {
   Slot<LoopTag> source;
@@ -57,11 +75,13 @@ struct FaceDomainData final {
   std::pmr::vector<SourceOccurrenceBinding> source_bindings;
   std::pmr::vector<DomainBoundaryEdge> edges;
   std::pmr::vector<DomainBoundaryLoop> loops;
+  ProducedCapDomainLease caps;
   FaceDomainData(std::shared_ptr<RunResource> owner, SourceStore original,
                  SharedCurveSnapshot boundary, FaceConstructionKey identity, ExactTable exact)
       : resource(std::move(owner)), source(std::move(original)), curves(std::move(boundary)),
         key(identity), values(std::move(exact)), uses(resource.get()), sites(resource.get()),
         source_bindings(resource.get()), edges(resource.get()), loops(resource.get()) {
+    key.face_generation = effective_face_generation(identity);
     if (!resource || source.view().resource != resource || !curves ||
         &curves->source.view() != &source.view() || curves->resource != resource ||
         values.resource() != resource || key.definition != curves->definition ||
@@ -70,7 +90,7 @@ struct FaceDomainData final {
   }
 };
 using FaceDomainLease = std::shared_ptr<const FaceDomainData>;
-enum class FacetGenerator : uint32_t { packet = 1, band = 2 };
+enum class FacetGenerator : uint32_t { packet = 1, band = 2, mapped_cap = 3 };
 // Qualified by ONE retained FaceConstructionKey in the containing work/result.
 struct FacetKey final {
   FacetGenerator generator = FacetGenerator::band;
@@ -94,14 +114,27 @@ struct ConstructionSite final {
   uint64_t constructed_revision = 0;
   std::variant<BoundarySiteSource, SurfaceSiteSource> source;
 };
-// Original occurrence rows may share a settled loop joint, never a UV seam
-// sector.
+// Ordinary occurrence rows share only equal-UV settled joints. An explicit
+// WedgeSectorBinding retains both raw sectors at one mapped physical pole.
 
+struct CapNormalDescriptor final {
+  AnalyticCapKind kind;
+  int32_t regular_sheet_sign;
+  // Refs address containing construction.values, not locator UV at the pole.
+  std::array<ExactRef, 2> angular_interval;
+};
+struct MappedCapFacet final {
+  uint32_t cap, piece;
+  // For source role POLE/LEFT/RIGHT, index into containing facet.sites.
+  std::array<uint32_t, 3> source_role_to_facet;
+  CapNormalDescriptor normal;
+};
 struct RegionFacet final {
   FacetKey key;
   std::array<uint32_t, 3> sites;
   uint32_t component = UINT32_MAX;
   uint32_t leaf = UINT32_MAX;
+  std::optional<MappedCapFacet> mapped{};
 };
 struct RimIntervalKey final {
   uint64_t footprint_side = 0, revision = 0;
@@ -144,6 +177,9 @@ struct FaceConstructionResultData final {
   std::pmr::vector<RegionFacet> facets;
   std::pmr::vector<uint32_t> changed_facets;
   std::pmr::vector<uint64_t> anchor_components;
+  std::shared_ptr<const SurfacePointResultData> cap_points;
+  // Plan point -> actual construction site and retained sampler row (or MAX).
+  std::pmr::vector<CapPointBinding> cap_point_bindings;
   FaceConstructionResultData(std::shared_ptr<RunResource> owner, SourceStore original,
                              SourceCache roots, SharedCurveSnapshot boundary,
                              FaceDomainLease policy, SurfaceBoundView cover, PacketMesh interior,
@@ -153,7 +189,9 @@ struct FaceConstructionResultData final {
         packets(std::move(interior)), key(identity), values(std::move(exact)),
         sites(resource.get()), source_bindings(resource.get()), loop_sites(resource.get()),
         edges(resource.get()), loops(resource.get()), components(resource.get()),
-        facets(resource.get()), changed_facets(resource.get()), anchor_components(resource.get()) {
+        facets(resource.get()), changed_facets(resource.get()), anchor_components(resource.get()),
+        cap_point_bindings(resource.get()) {
+    key.face_generation = effective_face_generation(identity);
     if (!resource || source.view().resource != resource || values.resource() != resource ||
         !curves || !domain || !surface || !packets || curves->resource != resource ||
         domain->resource != resource || &curves->source.view() != &source.view() ||

@@ -3,8 +3,9 @@
 `brepgpu-adaptive-model` runs complete placed definitions through the native
 cached-adaptive mesher and writes assembled/exploded labeled images from their
 actual stored mesh positions. It retains the original source bytes and paired
-per-face boundary artifacts. The regular authored assembly path is delivered;
-the singular cap connection and complete imported watch remain in progress.
+per-face boundary artifacts. The regular authored assembly and
+[three-use analytic cap](ADAPTIVE_CAPS.md) paths are connected; the complete
+imported watch remains in progress.
 
 ```sh
 brepgpu-adaptive-model --source original.bgsource --output new-result \

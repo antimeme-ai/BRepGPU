@@ -1,5 +1,6 @@
 #include "adaptive_curve_numeric.hpp"
 #include "adaptive_traces.hpp"
+#include "adaptive_curves.hpp"
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -234,6 +235,24 @@ UseTraceResult run(Fixture &fixture, double tolerance = 1e-4) {
   require(trace_intervals(result).size() > 0, "trace interval operation returned no intervals");
   return result;
 }
+void narrow_bank_refuses(Fixture &fixture) {
+  const auto carrier = fixture.source.view().carrier_index.find(CarrierId{9});
+  const CarrierRequest requested{carrier, {.25, .75, 0., 1.}};
+  auto bank = prepare_trace_source_cache(fixture.source, std::span(&requested, 1),
+                                          fixture.resource, {}, {}, fixture.budget);
+  AdaptiveBoundarySession session(fixture.resource, fixture.source, fixture.definition,
+                                  fixture.curves, bank, {});
+  const auto request = fixture.request(1.e-4);
+  session.begin({1, request.allowances, request.positional, request.node_source, {}});
+  JobContext context({uint64_t{1} << 28, uint64_t{1} << 40}, fixture.resource.get(), {});
+  refuses([&] {
+    for (uint32_t i = 0; i < 1000000; ++i)
+      if (session.step(context) == StepState::done)
+        throw std::runtime_error("narrow prepared bank silently widened");
+    throw std::runtime_error("narrow prepared bank did not settle");
+  }, ErrorCode::unsupported, "natural-domain recovery clipped to narrow cache bank");
+  session.close();
+}
 } // namespace
 int main(int argc, char **argv) {
   try {
@@ -243,6 +262,19 @@ int main(int argc, char **argv) {
     auto ordinary = run(base);
     require(trace_requests(ordinary).empty(),
             "literal C0 exact boundary requested unnecessary split");
+    Fixture natural(variants / "natural-proposal.bgsource");
+    const auto recovered = run(natural);
+    require(trace_requests(recovered).empty(), "reconstructed guide outside natural R did not recover");
+    for (const auto &site : trace_sites(recovered))
+      for (uint32_t axis = 0; axis < 2; ++axis) {
+        const auto uv = import_exact(natural.budget, trace_values(recovered).view(site.chosen_original_uv[axis]));
+        require(uv.sign() >= 0 && uv.compare(Rational(natural.budget, 1)) <= 0,
+                "reconstructed natural-domain proposal was not inside original R");
+      }
+    narrow_bank_refuses(natural);
+    Fixture natural_bad(variants / "natural-sourceguard.bgsource");
+    refuses([&] { static_cast<void>(run(natural_bad)); }, ErrorCode::unresolved,
+            "natural-domain projection bypassed original source guard");
     Fixture mapped(variants / "maps.bgsource");
     const auto use = mapped.source.view().coedge_index.find(CoedgeId{500});
     auto t = Rational::from_double(mapped.budget, .75);

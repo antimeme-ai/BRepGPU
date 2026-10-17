@@ -250,7 +250,9 @@ bool same_domain_generation(const FaceConstructionKey &a, const FaceConstruction
   return a.definition == b.definition && a.face == b.face &&
          a.source_generation == b.source_generation && a.query == b.query &&
          a.boundary_generation == b.boundary_generation && a.chart_revision == b.chart_revision &&
-         a.profile_revision == b.profile_revision && a.assignment_epoch == b.assignment_epoch;
+         a.profile_revision == b.profile_revision && a.assignment_epoch == b.assignment_epoch &&
+         effective_face_generation(a) == effective_face_generation(b) &&
+         a.domain_revision == b.domain_revision;
 }
 Interval exact_interval(const Rational &value) {
   const auto bounds = value.bounds();
@@ -299,6 +301,8 @@ TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surf
           identity.source_generation == view_key.face.source_generation &&
           identity.query == view_key.selection.query &&
           identity.boundary_generation == view_key.face.boundary_generation &&
+          effective_face_generation(identity) == view_key.face.face_generation &&
+          identity.domain_revision == view_key.face.domain_revision &&
           identity.chart_revision == view_key.face.chart_revision &&
           identity.profile_revision == view_key.selection.profile_revision &&
           identity.assignment_epoch == view_key.face.assignment_epoch,
@@ -385,6 +389,9 @@ TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surf
   std::optional<LeafIndex> index;
   uint64_t exact_entries = 0;
   for (const auto facet_id : requested) {
+    require(construction->facets[facet_id].key.generator != FacetGenerator::mapped_cap &&
+                !construction->facets[facet_id].mapped,
+            "mapped cap facet entered ordinary source-triangle work");
     const auto uv = facet_uv(budget, *construction, facet_id);
     const auto xyz = facet_xyz(*construction, facet_id);
     const auto parent_area = orientation(uv);

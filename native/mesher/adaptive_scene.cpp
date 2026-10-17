@@ -159,7 +159,9 @@ struct Candidate final {
   AdaptiveSceneVertexSource source;
   uint64_t corner;
   auto key() const {
-    return std::tuple{vertex.physical, source.face, source.site, vertex.carrier, vertex.flags};
+    return std::tuple{vertex.physical, source.face,
+                      source.site,     vertex.carrier,
+                      vertex.flags,    source.mapped_normal_piece.value_or(UINT32_MAX)};
   }
 };
 class Builder final {
@@ -375,15 +377,84 @@ public:
           budget.charge(1);
           const auto &facet = mesh.facets[t];
           if (facet.key.generator != FacetGenerator::packet &&
-              facet.key.generator != FacetGenerator::band)
+              facet.key.generator != FacetGenerator::band &&
+              facet.key.generator != FacetGenerator::mapped_cap)
             throw Error(ErrorCode::unsupported,
                         "adaptive mapped-facet display profile unavailable");
+          require((facet.key.generator == FacetGenerator::mapped_cap) == facet.mapped.has_value(),
+                  "adaptive scene mapped generator/payload mismatch");
           for (auto s : facet.sites)
             require(s < mesh.sites.size(), "adaptive scene facet site outside construction");
           const std::array<UV, 3> triangle{locations[facet.sites[0]], locations[facet.sites[1]],
                                            locations[facet.sites[2]]};
-          require(cross(triangle[0], triangle[1], triangle[2]).sign() > 0,
-                  "adaptive scene requires positive source roles");
+          Vec2 pole_locator{};
+          uint32_t pole_role = UINT32_MAX, pole_flags = 0;
+          if (facet.mapped) {
+            const auto &mapped = *facet.mapped;
+            const auto &domain = mesh.domain;
+            require(domain && domain->caps && !rational && domain->caps.curves() == mesh.curves &&
+                        &domain->caps.source().view() == &mesh.surface_source.view(),
+                    "adaptive scene mapped facet lacks matching source domain");
+            const auto &caps = domain->caps;
+            const auto &identity = caps.key();
+            require(identity.source_generation == mesh.key.source_generation &&
+                        identity.query == mesh.key.query &&
+                        identity.definition == mesh.key.definition &&
+                        identity.face == mesh.key.face &&
+                        identity.boundary_generation == mesh.key.boundary_generation &&
+                        identity.face_generation == mesh.key.face_generation &&
+                        identity.chart_revision == mesh.key.chart_revision &&
+                        identity.domain_revision == mesh.key.domain_revision &&
+                        identity.assignment_epoch == mesh.key.assignment_epoch &&
+                        identity.profile_revision == mesh.key.profile_revision &&
+                        mapped.cap < caps.caps().size() && mapped.piece < caps.pieces().size(),
+                    "adaptive scene stale mapped face/source key");
+            const auto &cap = caps.caps()[mapped.cap];
+            const auto &piece = caps.pieces()[mapped.piece];
+            require(piece.cap == mapped.cap && cap.wedge < caps.wedges().size() &&
+                        cap.pieces.first <= mapped.piece &&
+                        mapped.piece - cap.pieces.first < cap.pieces.count &&
+                        mapped.normal.kind == caps.wedges()[cap.wedge].kind &&
+                        mapped.normal.regular_sheet_sign == piece.regular_sheet_sign &&
+                        (piece.regular_sheet_sign == -1 || piece.regular_sheet_sign == 1),
+                    "adaptive scene mapped normal descriptor differs from source map");
+            const bool sphere = mapped.normal.kind == AnalyticCapKind::sphere_north ||
+                                mapped.normal.kind == AnalyticCapKind::sphere_south;
+            require((sphere && source.carriers[slot.value].kind == 4) ||
+                        (mapped.normal.kind == AnalyticCapKind::cone_apex &&
+                         source.carriers[slot.value].kind == 3),
+                    "adaptive scene pole normal has foreign analytic source kind");
+            for (uint32_t role = 0; role < 3; ++role)
+              require(piece.positive_chart_roles[role] < 3 &&
+                          mapped.source_role_to_facet[piece.positive_chart_roles[role]] == role,
+                      "adaptive scene mapped source-role permutation changed");
+            const auto angular0 =
+                import_exact(budget, mesh.values.view(mapped.normal.angular_interval[0]));
+            const auto angular1 =
+                import_exact(budget, mesh.values.view(mapped.normal.angular_interval[1]));
+            require(
+                angular0.compare(import_exact(budget, caps.values().view(piece.cut_uv[0]))) == 0 &&
+                    angular1.compare(import_exact(budget, caps.values().view(piece.cut_uv[2]))) ==
+                        0 &&
+                    angular0.compare(angular1) < 0,
+                "adaptive scene pole normal lost its increasing angular sector");
+            const auto v0 = import_exact(budget, caps.values().view(piece.finite_v[0]));
+            const auto v1 = import_exact(budget, caps.values().view(piece.finite_v[1]));
+            pole_locator = {angular0.add(angular1).divide(Rational(budget, 2)).to_double(),
+                            v0.add(v1).divide(Rational(budget, 2)).to_double()};
+            pole_role = mapped.source_role_to_facet[0];
+            require(pole_role < 3, "adaptive scene mapped pole role outside triangle");
+            const auto *pole_source =
+                std::get_if<BoundarySiteSource>(&mesh.sites[facet.sites[pole_role]].source);
+            require(pole_source && pole_source->boundary_node == cap.pole_boundary_node,
+                    "adaptive scene mapped pole lost original physical authority");
+            pole_flags =
+                bgom10::ANALYTIC_NORMAL_LIMIT |
+                (piece.regular_sheet_sign < 0 ? bgom10::NEGATIVE_RADIAL_SHEET : 0) |
+                (mapped.normal.kind == AnalyticCapKind::sphere_south ? bgom10::SPHERE_SOUTH : 0);
+          } else
+            require(cross(triangle[0], triangle[1], triangle[2]).sign() > 0,
+                    "adaptive scene requires positive source roles");
           bgom10::Triangle output{};
           output.face = face.id.value;
           output.material =
@@ -396,14 +467,20 @@ public:
                          : OriginalRootSlot{invalid_slot};
             bgom10::Vertex vertex{};
             std::copy(site.actual_xyz.begin(), site.actual_xyz.end(), vertex.xyz);
-            std::copy(rounded[s].begin(), rounded[s].end(), vertex.uv);
-            vertex.carrier = normal_carrier(mesh.surface_source, slot, original, rounded[s]);
+            const auto &locator = role == pole_role ? pole_locator : rounded[s];
+            std::copy(locator.begin(), locator.end(), vertex.uv);
+            vertex.carrier = normal_carrier(mesh.surface_source, slot, original, locator);
             vertex.flags = bgom10::STORED_XYZ | bgom10::COFACTOR_NORMAL |
-                           (face.orientation < 0 ? bgom10::REVERSE_NORMAL : 0);
+                           (face.orientation < 0 ? bgom10::REVERSE_NORMAL : 0) |
+                           (role == pole_role ? pole_flags : 0);
             vertex.physical = physical_id(component_site_key(component, {f, s}));
             const auto corner = candidates.size();
             output.vertex[role] = narrow(corner);
-            candidates.push_back({vertex, {c, f, s, original, site.uv}, corner});
+            candidates.push_back(
+                {vertex,
+                 {c, f, s, original, site.uv,
+                  role == pole_role ? std::optional(facet.mapped->piece) : std::nullopt},
+                 corner});
           }
           if (face.orientation < 0)
             std::swap(output.vertex[1], output.vertex[2]);

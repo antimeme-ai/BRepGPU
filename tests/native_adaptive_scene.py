@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 
 from native_adaptive_component import box_source
+from native_adaptive_cap_fixture import cap_source
 from native_adaptive_curves_caller import Reader, read as read_curves, check as check_curves, check_seam
 from native_adaptive_trimmed_caller import (
     read_face, qualify_face, cylinder_source, c0_source, curved_source, source_value, cylinder_trig, orient)
@@ -38,6 +39,8 @@ def source_case(family):
         return cylinder_source(),'cylinder'
     if family == 'c0':
         return c0_source(),'c0_hanging'
+    if family in ('north','cone'):
+        return cap_source(family),family
     return curved_source('weighted'),'weighted'
 
 
@@ -80,7 +83,7 @@ def cross(a,b):
     return (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])
 
 
-def source_normal(src,face,uv,display,kind):
+def source_normal(src,face,uv,display,kind,mapped=None):
     carrier = next(c for c in src.carriers if c.id == face.carrier_id)
     u,v = map(F,uv)
     if kind == 'plane':
@@ -88,6 +91,35 @@ def source_normal(src,face,uv,display,kind):
     elif kind == 'cylinder':
         sine,cosine = cylinder_trig(u)
         normal = (sum(cosine)/2,sum(sine)/2,F(0))
+    elif kind in ('north','cone'):
+        x,y,z = (tuple(map(F,carrier.frame[a:a+3])) for a in (3,6,9))
+        sine,cosine = (sum(box)/2 for box in cylinder_trig(u))
+        e = tuple(cosine*a+sine*b for a,b in zip(x,y))
+        ep = tuple(-sine*a+cosine*b for a,b in zip(x,y))
+        if carrier.kind == 4:
+            if mapped is not None:
+                lo,hi = cylinder_trig(mapped['cut_v'])[1]
+                assert lo > 0 or hi < 0, 'original cut sheet unresolved'
+                sheet = 1 if lo > 0 else -1
+                assert sheet == mapped['sheet']
+                normal = tuple(sheet*(-1 if mapped['kind'] == 1 else 1)*a
+                               for a in cross(x,y))
+            else:
+                sv,cv = (sum(box)/2 for box in cylinder_trig(v))
+                normal = cross(tuple(cv*a for a in ep),
+                               tuple(-sv*a+cv*b for a,b in zip(e,z)))
+        else:
+            sa,ca = (sum(box)/2 for box in cylinder_trig(F(carrier.radii[1])))
+            normal = tuple(sa*a+ca*b for a,b in zip(cross(ep,e),cross(ep,z)))
+            if mapped is not None:
+                radii = [F(carrier.radii[0])+mapped['cut_v']*s
+                         for s in cylinder_trig(F(carrier.radii[1]))[0]]
+                assert min(radii) > 0 or max(radii) < 0, 'original cut sheet unresolved'
+                scale = 1 if min(radii) > 0 else -1
+                assert scale == mapped['sheet']
+            else:
+                scale = F(carrier.radii[0])+v*sa
+            normal = tuple(scale*a for a in normal)
     elif kind == 'weighted':
         normal = (-2*v/(1+v),-u,F(1))
     else:
@@ -156,7 +188,7 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
             mesh = read_face(output/paths[1])
             if check_geometry and kind == 'cylinder':
                 check_seam(boundary,src,mesh['upper'],mesh['node_source'])
-            elif check_geometry:
+            elif check_geometry and kind not in ('north','cone'):
                 def value(use,uv):
                     if kind != 'plane':
                         return source_value(kind,*uv)
@@ -168,7 +200,7 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
             if check_geometry:
                 qualify_face(src,boundary,mesh,mesh['upper'],mesh['node_source'],kind,face=face)
             assert len(face_triangles[face.id]) == len(mesh['facets'])
-            for row,facet in zip(face_triangles[face.id],mesh['facets']):
+            for facet_index,(row,facet) in enumerate(zip(face_triangles[face.id],mesh['facets'])):
                 roles = facet['sites'] if face.orientation > 0 else (facet['sites'][0],facet['sites'][2],facet['sites'][1])
                 exact_triangle = [mesh['sites'][i]['uv'] for i in facet['sites']]
                 for local,site_id in zip(row[:3],roles):
@@ -176,8 +208,19 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
                     used.add(global_id)
                     display,site = vertices[global_id],mesh['sites'][site_id]
                     assert tuple(map(F,display['xyz'])) == site['xyz']
-                    assert display['uv'] == tuple(float(x) for x in site['uv'])
-                    assert display['flags'] == 33+(2 if face.orientation < 0 else 0)
+                    mapped = mesh['mapped'].get(facet_index)
+                    pole = mapped is not None and site_id == facet['sites'][mapped['roles'][0]]
+                    expected_uv = site['uv']
+                    flags = 33+(2 if face.orientation < 0 else 0)
+                    if pole:
+                        assert mapped['kind'] == (0 if kind == 'north' else 2)
+                        piece = mesh['cap_pieces'][mapped['piece']]
+                        mapped = dict(mapped,cut_v=(piece['uv'][1]+piece['uv'][3])/2)
+                        expected_uv = ((piece['uv'][0]+piece['uv'][2])/2,sum(piece['finite'])/2)
+                        assert mapped['sector'] == (piece['uv'][0],piece['uv'][2])
+                        flags |= 4+(8 if mapped['sheet'] < 0 else 0)+(16 if mapped['kind'] == 1 else 0)
+                    assert display['uv'] == tuple(float(x) for x in expected_uv)
+                    assert display['flags'] == flags
                     carrier = carriers[display['carrier']]
                     original = next(c for c in src.carriers if c.id == face.carrier_id)
                     assert carrier['id'] == original.id and carrier['kind'] == original.kind
@@ -198,7 +241,7 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
                         key = ('face',definition,face.id,site_id)
                     assert physical_to_source.setdefault(display['physical'],key) == key
                     assert source_to_physical.setdefault(key,display['physical']) == display['physical']
-                    expected = source_normal(src,face,site['uv'],carrier,kind)
+                    expected = source_normal(src,face,display['uv'],carrier,kind,mapped if pole else None)
                     if jets is not None:
                         close_vector(jets[global_id][9:12],expected)
                         assert struct.pack('<3d',*jets[global_id][12:15]) == struct.pack('<3d',*display['xyz'])
@@ -265,7 +308,7 @@ def run(options,root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable',type=Path,required=True)
-    parser.add_argument('--family',choices=('box','cylinder','weighted','c0','styled'),required=True)
+    parser.add_argument('--family',choices=('box','cylinder','weighted','c0','styled','north','cone'),required=True)
     parser.add_argument('--workspace',type=Path)
     parser.add_argument('--module',type=Path)
     parser.add_argument('--device',type=int,choices=(0,1),default=0)

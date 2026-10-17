@@ -429,7 +429,7 @@ def original_boundary(src, boundary, bindings, chart, face=None):
 def read_face(path):
     r = Reader(path.read_bytes())
     magic, wire, profile, digest = r.unpack('<8sII32s')
-    assert (magic, wire) == (b'BGATRM01', 1), 'wrong complete-face wire'
+    assert magic == b'BGATRM01' and wire in (1,2), 'wrong complete-face wire'
     keys = r.unpack('<9Q')
     orientation, policy = r.unpack('<iI')
     assert orientation in (-1, 1) and policy in (1, 2)
@@ -501,8 +501,8 @@ def read_face(path):
             loops=checked_range(lf,ln,nl), facets=checked_range(ff,fn,nf)))
     for _ in range(nf):
         generator, owner, revision, ordinal, a,b,c,component = r.unpack('<IQQI4I')
-        assert generator in (1,2) and max(a,b,c) < ns
-        assert (component == 2**32-1) == (generator == 1)
+        assert generator in (1,2,3) and max(a,b,c) < ns
+        assert (component == 2**32-1) == (generator in (1,3))
         assert component == 2**32-1 or component < nc
         if generator == 1:
             assert owner in packets and packets[owner]['revision'] == revision
@@ -522,11 +522,279 @@ def read_face(path):
             payload = dict(raw=raw, traversal=traversal, sites=(first,count),
                            endpoints=r.exacts(4), covector=r.exacts(2), scalar=r.exacts(2))
         uses.append(dict(use=use, policy=use_policy, image=payload))
+    caps, cap_points, cap_pieces, mapped, wedge_bindings = [], [], [], {}, [None]*nb
+    cap_key = None
+    if wire >= 2:
+        cap_key = r.unpack('<3Q')
+        ncap, npoint, npiece, nmapped = r.unpack('<4Q')
+        assert max(ncap,npoint,npiece,nmapped) <= len(r.raw)//4
+        for _ in range(ncap):
+            wedge,pole,*angular = r.unpack('<4I')
+            loop, = r.unpack('<Q')
+            pf,pn,ff,fn = r.unpack('<4Q')
+            precision = r.unpack('<2I')
+            meridians = (r.key(),r.key())
+            assert sorted(angular) == [0,1] and all(k[2] == 0 for k in meridians)
+            caps.append(dict(wedge=wedge,pole=pole,angular=tuple(angular),loop=loop,
+                points=checked_range(pf,pn,npoint),pieces=checked_range(ff,fn,npiece),
+                precision=precision,meridians=meridians))
+        for _ in range(npoint):
+            uv,tag = r.exacts(2),r.unpack('<I')[0]
+            assert tag in (1,2)
+            if tag == 1:
+                edge,use = r.unpack('<2Q')
+                t = r.exact()
+                key = r.unpack('<I3Q')
+                authority = dict(edge=edge,use=use,t=t,key=key)
+            else:
+                root, = r.unpack('<I')
+                assert root < nr
+                authority = dict(root=root)
+            site,row = r.unpack('<2I')
+            assert site < ns and sites[site]['uv'] == uv
+            assert tag != 1 or row == 2**32-1
+            cap_points.append(dict(uv=uv,tag=tag,authority=authority,site=site,row=row))
+        for _ in range(npiece):
+            cap,root,a,b = r.unpack('<4I')
+            assert cap < ncap and root < nr and max(a,b) < npoint
+            uv,vf = r.exacts(4),r.exacts(2)
+            roles,sheet,key = r.unpack('<3I'),r.unpack('<i')[0],r.key()
+            assert sorted(roles) == [0,1,2] and sheet in (-1,1) and key[2] == 1
+            assert uv == (*cap_points[a]['uv'],*cap_points[b]['uv']) and uv[0] < uv[2]
+            cap_pieces.append(dict(cap=cap,root=root,points=(a,b),uv=uv,finite=vf,
+                                   roles=roles,sheet=sheet,key=key))
+        for _ in range(nmapped):
+            facet,cap,piece,*roles = r.unpack('<6I')
+            kind,sheet = r.unpack('<Ii')
+            sector = r.exacts(2)
+            assert facet < nf and cap < ncap and piece < npiece and facet not in mapped
+            assert sorted(roles) == [0,1,2] and kind in (0,1,2) and sheet in (-1,1)
+            assert facets[facet]['key'][0] == 3 and cap_pieces[piece]['cap'] == cap
+            assert sector == cap_pieces[piece]['uv'][::2] and sheet == cap_pieces[piece]['sheet']
+            assert all(roles[role] == cap_pieces[piece]['roles'].index(role) for role in range(3))
+            mapped[facet] = dict(cap=cap,piece=piece,roles=tuple(roles),kind=kind,sheet=sheet,sector=sector)
+        for i in range(nb):
+            tag, = r.unpack('<I')
+            assert tag in (0,1)
+            if tag:
+                wedge,sector = r.unpack('<2I')
+                assert sector < 2
+                wedge_bindings[i] = (wedge,sector)
+    assert {i for i,f in enumerate(facets) if f['key'][0] == 3} == set(mapped)
     assert r.at == len(r.raw), 'trailing complete-face bytes'
     return dict(profile=profile, digest=digest, key=keys, orientation=orientation, policy=policy,
         metric=metric, upper=upper, node_source=node_source, roots=roots, sites=sites,
         bindings=bindings, loop_sites=loop_sites, edges=edges, loops=loops,
-        components=components, facets=facets, uses=uses, packets=packets)
+        components=components, facets=facets, uses=uses, packets=packets, wire=wire,
+        caps=caps, cap_points=cap_points, cap_pieces=cap_pieces, mapped=mapped,
+        wedge_bindings=wedge_bindings, cap_key=cap_key)
+
+
+
+def analytic_source_interval(carrier, uv):
+    """Literal original analytic carrier, with existing rational Taylor trig."""
+    u,v = uv
+    sine,cosine = cylinder_trig(u)
+    def add(a,b): return a[0]+b[0],a[1]+b[1]
+    def mul(a,b):
+        values = [x*y for x in a for y in b]
+        return min(values),max(values)
+    if carrier.kind == 4:
+        sv,cv = cylinder_trig(v)
+        radial = tuple(mul(a,cv) for a in (cosine,sine))
+        terms = (*radial,sv)
+        scales = (F(carrier.radii[0]),)*3
+    else:
+        assert carrier.kind == 3
+        sa,ca = cylinder_trig(F(carrier.radii[1]))
+        radius = add((F(carrier.radii[0]),)*2,mul((v,v),sa))
+        terms = (mul(radius,cosine),mul(radius,sine),mul((v,v),ca))
+        scales = (F(1),)*3
+    result = []
+    for axis in range(3):
+        value = (F(carrier.frame[axis]),)*2
+        for j in range(3):
+            value = add(value,mul(terms[j],(scales[j]*F(carrier.frame[3+3*j+axis]),)*2))
+        result.append(value)
+    return tuple(result)
+
+
+def analytic_second_bounds(carrier, v_range):
+    # L1 source-vector bounds imply Euclidean bounds. This is an independent
+    # original formula, not the cache's e+B-L certificate.
+    xy = sum(abs(F(x)) for x in carrier.frame[3:9])
+    z = sum(abs(F(x)) for x in carrier.frame[9:12])
+    if carrier.kind == 4:
+        mid = sum(v_range)/2
+        sv,cv = cylinder_trig(mid)
+        radius = (v_range[1]-v_range[0])/2
+        sinmax = min(F(1),max(map(abs,sv))+radius)
+        cosmax = min(F(1),max(map(abs,cv))+radius)
+        r = abs(F(carrier.radii[0]))
+        return r*xy*cosmax,r*xy*sinmax,r*(xy+z)
+    sa,_ = cylinder_trig(F(carrier.radii[1]))
+    sinmax = max(map(abs,sa))
+    radial = max(abs(F(carrier.radii[0])+v*s) for v in v_range for s in sa)
+    return xy*radial,xy*sinmax,F(0)
+
+
+def prove_cap_facet(carrier,piece,xyz,upper):
+    """Whole finite QUAD -> SAME actual bilinear L; no ideal-pole substitution."""
+    u0,g0,u1,g1 = piece['uv']
+    f0,f1 = piece['finite']
+    def source_uv(x,r):
+        finite = f0+x*(f1-f0)
+        cut = g0+x*(g1-g0)
+        return u0+x*(u1-u0),finite+r*(cut-finite)
+    def actual(x,r):
+        return tuple((1-r)*xyz[0][a]+r*((1-x)*xyz[1][a]+x*xyz[2][a]) for a in range(3))
+    pending = [(F(0),F(1),F(0),F(1),0)]
+    while pending:
+        xa,xb,ra,rb,depth = pending.pop()
+        corners = [(x,r) for x in (xa,xb) for r in (ra,rb)]
+        uv = [source_uv(x,r) for x,r in corners]
+        mxx,mxr,mrr = analytic_second_bounds(carrier,(min(v for u,v in uv),max(v for u,v in uv)))
+        du = u1-u0
+        vx = max(abs((1-r)*(f1-f0)+r*(g1-g0)) for r in (ra,rb))
+        vr = max(abs((g0-f0)+x*((g1-g0)-(f1-f0))) for x in (xa,xb))
+        ex = (mxx*du*du+2*mxr*abs(du)*vx+mrr*vx*vx)*(xb-xa)**2/8
+        er = mrr*vr*vr*(rb-ra)**2/8
+        departure = F(0)
+        for (x,r),p in zip(corners,uv):
+            q = actual(x,r)
+            source = analytic_source_interval(carrier,p)
+            departure = max(departure,sum(max(abs(lo-q[a]),abs(hi-q[a]))**2
+                                          for a,(lo,hi) in enumerate(source)))
+        if ex+er <= upper and departure <= (upper-ex-er)**2:
+            continue
+        assert depth < 24, 'independent original finite-cap bound unresolved'
+        if ex >= er:
+            mid = (xa+xb)/2
+            pending.extend(((xa,mid,ra,rb,depth+1),(mid,xb,ra,rb,depth+1)))
+        else:
+            mid = (ra+rb)/2
+            pending.extend(((xa,xb,ra,mid,depth+1),(xa,xb,mid,rb,depth+1)))
+
+
+def prove_analytic_facet(carrier,uv,xyz,upper,depth=0):
+    ru = max(p[0] for p in uv)-min(p[0] for p in uv)
+    rv = max(p[1] for p in uv)-min(p[1] for p in uv)
+    muu,muv,mvv = analytic_second_bounds(carrier,(min(p[1] for p in uv),max(p[1] for p in uv)))
+    geometric = muu*ru*ru/8+muv*ru*rv/4+mvv*rv*rv/8
+    departure = max(sum(max(abs(lo-q[a]),abs(hi-q[a]))**2 for a,(lo,hi) in
+                        enumerate(analytic_source_interval(carrier,p))) for p,q in zip(uv,xyz))
+    if geometric <= upper and departure <= (upper-geometric)**2:
+        return
+    assert depth < 18, 'independent original analytic facet bound unresolved'
+    p = [*uv,*[tuple((uv[i][a]+uv[(i+1)%3][a])/2 for a in range(2)) for i in range(3)]]
+    q = [*xyz,*[tuple((xyz[i][a]+xyz[(i+1)%3][a])/2 for a in range(3)) for i in range(3)]]
+    for ids in ((0,3,5),(3,1,4),(5,4,2),(3,4,5)):
+        prove_analytic_facet(carrier,[p[i] for i in ids],[q[i] for i in ids],upper,depth+1)
+
+
+def cap_coverage(src, boundary, mesh, face, bindings):
+    """Same positive-chain reader, using finite quads rather than pole locators."""
+    points, indices = {}, {}
+    def point(uv):
+        uv = tuple(uv)
+        if uv not in indices:
+            indices[uv] = len(points)
+            points[indices[uv]] = uv
+        return indices[uv]
+    triangles, finite_points = [], set()
+    used_actual = set()
+    for i,facet in enumerate(mesh['facets']):
+        used_actual.update(facet['sites'])
+        if i not in mesh['mapped']:
+            triangles.append(tuple(point(mesh['sites'][j]['uv']) for j in facet['sites']))
+            continue
+        mapped = mesh['mapped'][i]
+        piece = mesh['cap_pieces'][mapped['piece']]
+        cap = mesh['caps'][piece['cap']]
+        assert cap['wedge'] < len(boundary['wedges'])
+        wedge = boundary['wedges'][cap['wedge']]
+        assert wedge['loop'] == cap['loop'] and wedge['kind'] == mapped['kind']
+        pole,left,right = (facet['sites'][j] for j in mapped['roles'])
+        assert mesh['sites'][pole]['kind'] == 1 and mesh['sites'][pole]['source'][0] == cap['pole']
+        assert (left,right) == tuple(mesh['cap_points'][j]['site'] for j in piece['points'])
+        u0,v0,u1,v1 = piece['uv']
+        bottom = ((u0,piece['finite'][0]),(u1,piece['finite'][1]))
+        sectors = [wedge['uv'][2*j:2*j+2] for j in cap['angular']]
+        assert sectors[0][0] <= u0 < u1 <= sectors[1][0]
+        for u,v in bottom:
+            xi = (u-sectors[0][0])/(sectors[1][0]-sectors[0][0])
+            assert v == sectors[0][1]+xi*(sectors[1][1]-sectors[0][1])
+        finite_points.update(bottom)
+        quad = [*bottom,(u1,v1),(u0,v0)]
+        if orient(*quad[:3]) < 0:
+            quad.reverse()
+        assert all(orient(quad[j],quad[(j+1)%4],quad[(j+2)%4]) > 0 for j in range(4))
+        ids = tuple(map(point,quad))
+        triangles.extend(((ids[0],ids[1],ids[2]),(ids[0],ids[2],ids[3])))
+    assert used_actual == set(range(len(mesh['sites']))), 'unused actual construction site'
+    source_uses = {u.id:u for u in src.coedges}
+    actual_uses = {u['ids'][0]:u for u in boundary['uses']}
+    definition_faces = {f.id for f in src.faces if f.definition_id == face.definition_id}
+    definition_loops = {l.id for l in src.loops if l.face_id in definition_faces}
+    assert set(actual_uses) == {u.id for u in src.coedges if u.loop_id in definition_loops}
+    loops, physical = [], Counter()
+    for loop in (l for l in src.loops if l.id in face.loop_ids):
+        chart, actual = [], []
+        for use_id in loop.coedge_ids:
+            assert source_uses[use_id].loop_id == loop.id
+            first,count = actual_uses[use_id]['sites']
+            ids = list(range(first,first+count))
+            for a,b in zip(ids,ids[1:]):
+                assert bindings[a] != bindings[b]
+                physical[bindings[a],bindings[b]] += 1
+            for j in ids:
+                uv = boundary['sites'][j]['uv']
+                if not chart or chart[-1] != uv:
+                    chart.append(uv)
+        if chart[0] == chart[-1]: chart.pop()
+        assert len(set(chart)) == len(chart)
+        area = sum(orient((F(0),F(0)),a,b) for a,b in zip(chart,chart[1:]+chart[:1]))
+        if (area > 0) != loop.outer:
+            chart.reverse()
+            physical = Counter({(b,a):n for (a,b),n in physical.items()})
+        expanded = []
+        for a,b in zip(chart,chart[1:]+chart[:1]):
+            expanded.append(point(a))
+            axis = 0 if a[0] != b[0] else 1
+            interior = [q for q in finite_points if q != a and q != b and orient(a,b,q) == 0
+                        and min(a[axis],b[axis]) < q[axis] < max(a[axis],b[axis])]
+            interior.sort(key=lambda q:(q[axis]-a[axis])/(b[axis]-a[axis]))
+            expanded.extend(map(point,interior))
+        loops.append(tuple(expanded))
+    case = SimpleNamespace(points=points,loops=tuple(loops))
+    qualify_chain(case,triangles,required_sites=points,
+                  positive_cycles=sum(l.outer for l in src.loops if l.id in face.loop_ids))
+    assert Counter(e['sites'] for e in mesh['edges'] if e['kind'] == 1 and e['key'][2] == 0) == physical
+    valid_keys = {row['key'] for row in boundary['physical']}
+    assert all(e['key'] in valid_keys for e in mesh['edges'] if e['kind'] == 1 and e['key'][2] == 0)
+    for cap in mesh['caps']:
+        wedge = boundary['wedges'][cap['wedge']]
+        original_loop = next(l for l in src.loops if l.id == wedge['loop'])
+        assert original_loop.face_id == face.id and len(original_loop.coedge_ids) == 3
+        original_sectors = [source_uses[u] for u in wedge['uses']]
+        assert original_sectors[0].edge_id == original_sectors[1].edge_id
+        assert original_sectors[0].sense == -original_sectors[1].sense
+        meridian = next(e for e in src.edges if e.id == original_sectors[0].edge_id)
+        assert wedge['vertex'] in meridian.vertex_ids and not meridian.degenerate
+        pole = boundary['nodes'][cap['pole']]
+        assert pole['key'][0] == 0 and pole['key'][1] == wedge['vertex']
+        for angular,sector in enumerate(cap['angular']):
+            pf,pn = cap['points']
+            target = mesh['cap_points'][pf if angular == 0 else pf+pn-1]
+            assert target['tag'] == 1 and target['authority']['use'] == wedge['uses'][sector]
+            site = mesh['sites'][target['site']]
+            node = boundary['nodes'][site['source'][0]]
+            assert node['key'] == target['authority']['key'] and node['t'] == target['authority']['t']
+            radial = [e for e in mesh['edges'] if e['kind'] == 1 and
+                      e['key'] == cap['meridians'][sector] and target['site'] in e['sites'] and
+                      any(mesh['sites'][j]['kind'] == 1 and mesh['sites'][j]['source'][0] == cap['pole']
+                          for j in e['sites'])]
+            assert len(radial) == 1, 'mapped spoke lacks captured original interval'
 
 
 def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=None, facet_proof=None):
@@ -542,9 +810,16 @@ def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=N
     assert set(bindings) == expected_sites, 'omitted original face occurrence'
     assert {row['use'] for row in mesh['uses']} == {u['ids'][0] for u in selected}
     assert len({s['uv'] for s in sites}) == len(sites), 'undeclared coincident chart sites'
+    wedge_bindings = dict(zip((a for a,b in mesh['bindings']),mesh['wedge_bindings']))
     for shared, construction in bindings.items():
         use_site, site = boundary['sites'][shared], sites[construction]
-        assert site['kind'] == 1 and site['uv'] == use_site['chart'] == use_site['uv']
+        sector = wedge_bindings[shared]
+        assert site['kind'] == 1 and use_site['chart'] == use_site['uv']
+        if sector is None:
+            assert site['uv'] == use_site['uv']
+        else:
+            wedge,side = sector
+            assert wedge < len(boundary['wedges']) and boundary['wedges'][wedge]['sites'][side] == shared
         actual = boundary['nodes'][site['source'][0]]
         expected = boundary['nodes'][use_site['node']]
         assert actual['key'] == expected['key'] and site['xyz'] == actual['xyz'] == expected['xyz']
@@ -556,29 +831,38 @@ def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=N
             root = mesh['roots'][site['source'][0]]
             assert root['carrier'] == face.carrier_id
             assert all(root['box'][2*a] <= site['uv'][a] <= root['box'][2*a+1] for a in (0,1))
-    cycles, required = original_boundary(src, boundary, bindings, [s['uv'] for s in sites], face)
-    case = SimpleNamespace(points={i:s['uv'] for i,s in enumerate(sites)}, loops=cycles)
-    triangles = [facet['sites'] for facet in mesh['facets']]
-    positive = sum(loop.outer for loop in src.loops if loop.id in face.loop_ids)
-    qualify_chain(case, triangles, required_sites=case.points, positive_cycles=positive)
-    assert required <= set(case.points)
-    assert len({f['key'] for f in mesh['facets']}) == len(mesh['facets']), 'duplicate facet identity'
-    expected_edges = Counter((a,b) for loop in cycles for a,b in zip(loop,loop[1:]+loop[:1]))
-    physical_edges = Counter(e['sites'] for e in mesh['edges'] if e['kind'] == 1)
-    assert physical_edges == expected_edges, 'protected source edges differ from original chain'
-    valid_keys = {row['key'] for row in boundary['physical']}
-    assert all(e['key'] in valid_keys for e in mesh['edges'] if e['kind'] == 1)
+    if mesh['mapped']:
+        cap_coverage(src,boundary,mesh,face,bindings)
+    else:
+        cycles, required = original_boundary(src, boundary, bindings, [s['uv'] for s in sites], face)
+        case = SimpleNamespace(points={i:s['uv'] for i,s in enumerate(sites)}, loops=cycles)
+        triangles = [facet['sites'] for facet in mesh['facets']]
+        positive = sum(loop.outer for loop in src.loops if loop.id in face.loop_ids)
+        qualify_chain(case, triangles, required_sites=case.points, positive_cycles=positive)
+        assert required <= set(case.points)
+        assert len({f['key'] for f in mesh['facets']}) == len(mesh['facets']), 'duplicate facet identity'
+        expected_edges = Counter((a,b) for loop in cycles for a,b in zip(loop,loop[1:]+loop[:1]))
+        physical_edges = Counter(e['sites'] for e in mesh['edges'] if e['kind'] == 1 and e['key'][2] == 0)
+        assert physical_edges == expected_edges, 'protected source edges differ from original chain'
+        valid_keys = {row['key'] for row in boundary['physical']}
+        assert all(e['key'] in valid_keys for e in mesh['edges'] if e['kind'] == 1 and e['key'][2] == 0)
     carrier = next(c for c in src.carriers if c.id == face.carrier_id)
     if kind == 'cylinder':
         assert carrier.kind == 2 and carrier.radii[0] == 1
         assert carrier.frame == (0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
-    for facet in mesh['facets']:
+    for facet_index,facet in enumerate(mesh['facets']):
         points = [sites[i] for i in facet['sites']]
         a = tuple(points[1]['xyz'][j]-points[0]['xyz'][j] for j in range(3))
         b = tuple(points[2]['xyz'][j]-points[0]['xyz'][j] for j in range(3))
         cross = (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])
         assert any(cross), 'actual physical facet collapsed'
-        if facet_proof is not None:
+        if facet_index in mesh['mapped']:
+            record = mesh['mapped'][facet_index]
+            prove_cap_facet(carrier,mesh['cap_pieces'][record['piece']],
+                [points[j]['xyz'] for j in record['roles']],mesh['upper'])
+        elif carrier.kind in (3,4):
+            prove_analytic_facet(carrier,[p['uv'] for p in points],[p['xyz'] for p in points],mesh['upper'])
+        elif facet_proof is not None:
             facet_proof(carrier, [p['uv'] for p in points], [p['xyz'] for p in points], mesh['upper'])
         elif kind == 'plane':
             for point in points:

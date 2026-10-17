@@ -53,3 +53,33 @@ BGATRM/BGACRV plus scene.bgscene, so the fresh matched reference caller needs an
 explicit native-artifact boundary adapter. Do not fabricate legacy completion
 rows or reuse historical incomplete reference numbers. Reference query/source
 bridges remain external and original-source inventory/failures stay visible.
+
+Captured genuine publication RED from an ALL-accepted north face (178 facets,
+after forced physical cut continuation): existing read_face rejects its mapped
+generator and the old writer lacks the source-map extension. Implemented the
+reviewed BGACRV3/BGATRM2 records, complete local-to-global wedge remap and
+independent face/domain keys. Source peer ACCEPT; sampler request row is
+explicitly diagnostic, never a serialized PointPool pointer.
+
+The actual complete component then passed its existing contact horizon and
+reached the old scene mapped-facet refusal (126 facets). Implemented the retained
+source-qualified analytic pole normal sector in AdaptiveScene, leaving actual
+XYZ words/original UV provenance unchanged. Source peer ACCEPT. The resulting
+complete CPU1 and P1000 model calls both produce assembled/exploded images and
+semantic artifacts; original finite-quad/whole-facet/chain reader passes and
+paired mesh/boundary bytes match. Root inspected the actual CPU cap image.
+Separate SAME scene consumers check original pole normals, unchanged physical
+positions and placements: north CPU448 facets and cone P10080 facets pass.
+One regular two-definition/three-occurrence CPU4 fine/coarse/fine model call
+passes the existing complete source/chain/scene/PNG reader after quotient-bank
+integration. This does not imply a complete watch or external alpha result.
+
+First full original watch attempts, CPU12 and P1001 on separate CPU sockets,
+both refuse the same supplied-profile guard after about26/27 seconds. Neither
+produces a final directory/image. Diagnostic source inspection identifies a
+literal reconstructed NURBS guide endpoint slightly outside its original
+natural domain. Source IDs/coordinates and command logs stay private. Follow-up
+candidate generation must preserve natural R, narrow supplied-bank refusal,
+raw guide bytes and all original node/whole-trace guards. Root and independent
+source peer accepted that finite amendment before its body; construction owner
+implements it. No whole-watch claim or benchmark speedup from these failures.

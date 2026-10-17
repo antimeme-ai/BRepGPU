@@ -1063,7 +1063,8 @@ struct AdaptiveBoundarySession::Impl {
                 bank.profile().revision == roots->profile().revision,
             ErrorCode::invalid_source, "supplied carrier profile source/generation mismatch");
     require(bank.purpose() == SourceCachePurpose::regular_patch ||
-                bank.purpose() == SourceCachePurpose::trace_geometry,
+                bank.purpose() == SourceCachePurpose::trace_geometry ||
+                bank.purpose() == SourceCachePurpose::quotient_trim,
             ErrorCode::invalid_source, "unsupported supplied carrier source purpose");
     std::pmr::vector<CarrierProfile> profiles(source.view().carriers.size(), &budget);
     std::pmr::vector<uint8_t> originals(source.view().carriers.size(), 0, &budget);
@@ -1107,15 +1108,25 @@ struct AdaptiveBoundarySession::Impl {
     carriers = std::move(retained);
     fixed_carriers = fixed;
   }
-  void admit_chosen_uv(Slot<CarrierTag> carrier, std::span<const Rational, 2> uv) const {
+  void admit_chosen_uv(Slot<CarrierTag> carrier, std::span<const Rational, 2> uv,
+                       Slot<FaceTag> face) const {
     const auto &profile = carrier_profiles.at(carrier.value);
     require(profile.ready, ErrorCode::invalid_source, "chosen UV has no supplied carrier profile");
     auto &owner = uv[0].budget();
     for (uint32_t a = 0; a < 2; ++a) {
       owner.charge(1);
-      require(uv[a].compare(Rational::from_double(owner, profile.box[2 * a])) >= 0 &&
-                  uv[a].compare(Rational::from_double(owner, profile.box[2 * a + 1])) <= 0,
-              ErrorCode::unsupported, "chosen UV outside supplied carrier profile");
+      if (uv[a].compare(Rational::from_double(owner, profile.box[2 * a])) < 0 ||
+          uv[a].compare(Rational::from_double(owner, profile.box[2 * a + 1])) > 0) {
+        char message[320];
+        std::snprintf(message, sizeof(message),
+                      "chosen UV outside supplied carrier profile: definition=%llu face=%llu "
+                      "carrier=%llu axis=%u chosen=%.17g profile=[%.17g,%.17g]",
+                      static_cast<unsigned long long>(source.view().definitions[definition.value].id.value),
+                      static_cast<unsigned long long>(source.view().faces[face.value].id.value),
+                      static_cast<unsigned long long>(source.view().carriers[carrier.value].id.value),
+                      a, uv[a].to_double(), profile.box[2 * a], profile.box[2 * a + 1]);
+        throw Error(ErrorCode::unsupported, message);
+      }
     }
   }
   void admit_authoritative_profiles(const UseTraceResult &result) {
@@ -1436,7 +1447,7 @@ struct AdaptiveBoundarySession::Impl {
         std::array<Rational, 2> uv{
             import_exact(context.budget, trace_values(work).view(task.uv[0])),
             import_exact(context.budget, trace_values(work).view(task.uv[1]))};
-        admit_chosen_uv(task.carrier, uv);
+        admit_chosen_uv(task.carrier, uv, active_faces[f]);
         OriginalRootSlot root;
         try {
           root = find_original_carrier_root(needed(carriers), task.carrier, uv);
@@ -1540,6 +1551,7 @@ struct AdaptiveBoundarySession::Impl {
     std::pmr::vector<UseCurveTrace> use_rows(resource.get());
     std::pmr::vector<UseCurveSite> site_rows(resource.get());
     std::pmr::vector<UseCurveInterval> interval_rows(resource.get());
+    std::pmr::vector<SeamWedge> wedge_rows(resource.get());
     for (const auto &result : trace_results) {
       require(result != nullptr, ErrorCode::internal_error, "missing original face trace result");
       const auto &from = trace_values(result);
@@ -1606,6 +1618,13 @@ struct AdaptiveBoundarySession::Impl {
         }
         use_rows.push_back(row);
       }
+      for (auto row : trace_wedges(result)) {
+        for (auto &index : row.shared_endpoint_sites)
+          index += site_offset;
+        for (auto &ref : row.finite_connector_uv)
+          ref = copy(ref, from);
+        wedge_rows.push_back(row);
+      }
     }
     auto result = std::allocate_shared<SharedCurveSnapshotData>(
         RunAllocator<SharedCurveSnapshotData>(resource), resource, source, definition, query,
@@ -1613,6 +1632,7 @@ struct AdaptiveBoundarySession::Impl {
     result->physical_intervals = std::move(physical_rows);
     result->uses = std::move(use_rows);
     result->sites = std::move(site_rows);
+    result->seam_wedges = std::move(wedge_rows);
     result->intervals = std::move(interval_rows);
     result->curve_source = roots;
     result->carrier_source = carriers;

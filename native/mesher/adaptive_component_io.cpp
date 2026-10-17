@@ -52,6 +52,9 @@ CacheStats surface_totals(std::span<const TrimFaceStats> owners) {
     add(out.control_restrictions, from.control_restrictions);
     add(out.exact_fallbacks, from.exact_fallbacks);
     add(out.source_triangle_tests, from.source_triangle_tests);
+    add(out.cap_facet_tests, from.cap_facet_tests);
+    add(out.device_cap_facets, from.device_cap_facets);
+    add(out.domain_replacements, from.domain_replacements);
     add(out.uploaded_bytes, from.uploaded_bytes);
     add(out.downloaded_bytes, from.downloaded_bytes);
     add(out.host_reserved_bytes, from.host_reserved_bytes);

@@ -333,6 +333,18 @@ curve studies before product code.
 
 ## Development workflow
 
+The native mapped analytic-cap connection is delivered through construction,
+resident CPU/P100 bounds, pooled continuation, original source edge contacts,
+versioned artifacts and assembled/exploded display. Read docs/ADAPTIVE_CAPS.md
+and its linked plans/journals for the finite three-use seam-wedge profile.
+Whole original-source quad/facet/chain readers, actual normal consumers,
+CPU4/P1000 lifecycle and optimized CPU4 ASan/UBSan/leaks pass; the separate
+unoptimized Debug120s censor remains recorded. Reconstructed rational guide
+proposals may project into the ORIGINAL natural knot rectangle before unchanged
+original node/whole-trace guards; explicit narrower cache banks still refuse.
+This does not establish a complete watch render or whole-watch GPU advantage.
+Keep the complete source scope and fresh NVIDIA reference requirements above.
+
 Use a feature branch for each substantial delivery. Make frequent, coherent
 commits as design, implementation, qualification and documentation milestones
 land, and push meaningful checkpoints so the public repository reflects ongoing

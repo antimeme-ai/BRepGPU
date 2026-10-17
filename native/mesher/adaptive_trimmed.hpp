@@ -1,8 +1,23 @@
 #ifndef BREPGPU_MESHER_ADAPTIVE_TRIMMED_HPP
 #define BREPGPU_MESHER_ADAPTIVE_TRIMMED_HPP
+#include "adaptive_cap_domain.hpp"
 #include "adaptive_surface_cache.hpp"
 
 namespace bgmesh::adaptive {
+struct FaceContinuationData final {
+  std::shared_ptr<RunResource> resource;
+  SourceCache source;
+  CapDomainKey origin;
+  ExactTable values;
+  ExactRef positional, node_source;
+  CapCutControlLease control;
+  FaceContinuationData(std::shared_ptr<RunResource> owner, SourceCache bank, CapDomainKey captured,
+                       FacetAllowances quality, ExactRef delta, CapCutControlLease history)
+      : resource(std::move(owner)), source(std::move(bank)), origin(captured),
+        values(std::move(quality.values)), positional(quality.face_position), node_source(delta),
+        control(std::move(history)) {}
+};
+using FaceContinuation = std::shared_ptr<const FaceContinuationData>;
 struct TrimFaceQuery final {
   uint64_t generation;
   Slot<DefinitionTag> definition;
@@ -11,6 +26,13 @@ struct TrimFaceQuery final {
   ExactTable values;
   ExactRef positional, node_source;
   uint64_t assignment = 0; // zero selects the legacy strictly increasing-query API
+  FaceContinuation continuation{};
+};
+struct TrimDomainReplacement final {
+  SurfaceBoundView expected;
+  FaceDomainLease domain;
+  ExactTable values;
+  ExactRef positional, node_source;
 };
 struct TrimFaceLimits final {
   CacheLimits surface;
@@ -58,6 +80,8 @@ public:
   TrimFaceProgress step(JobContext &);
   [[nodiscard]] std::span<const BoundaryKey> boundary_requests() const;
   void replace_boundary(SharedCurveSnapshot);
+  void replace_domain(const TrimDomainReplacement &);
+  [[nodiscard]] FaceContinuation continuation() const;
   [[nodiscard]] FaceTrimResult result() const;
   [[nodiscard]] TrimFaceStats stats() const noexcept;
   void release_result();

@@ -4,33 +4,27 @@
 #include <cmath>
 
 namespace bgmesh::adaptive::caller {
-void write_curves(const std::filesystem::path &path,
-                  const SharedCurveSnapshotData &mesh, bgfd::Budget &budget) {
+void write_curves(const std::filesystem::path &path, const SharedCurveSnapshotData &mesh,
+                  bgfd::Budget &budget) {
   const auto &s = mesh.source.view();
   const auto &b = *mesh.boundary;
   if (mesh.physical_intervals.size() != b.intervals.size() ||
-      b.nodes.size() != b.constructed_revisions.size() ||
-      b.nodes.size() != b.sample_paths.size())
-    throw Error(ErrorCode::internal_error,
-                "incomplete shared-boundary row inventory");
+      b.nodes.size() != b.constructed_revisions.size() || b.nodes.size() != b.sample_paths.size())
+    throw Error(ErrorCode::internal_error, "incomplete shared-boundary row inventory");
   Wire out(path, budget);
-  constexpr std::array magic{std::byte{'B'}, std::byte{'G'}, std::byte{'A'},
-                             std::byte{'C'}, std::byte{'R'}, std::byte{'V'},
-                             std::byte{'0'}, std::byte{'1'}};
+  constexpr std::array magic{std::byte{'B'}, std::byte{'G'}, std::byte{'A'}, std::byte{'C'},
+                             std::byte{'R'}, std::byte{'V'}, std::byte{'0'}, std::byte{'1'}};
   out.bytes(magic);
-  out.word<4>(2); // Explicit whole-use line-image record; interval semantics
-                  // stay unchanged.
+  out.word<4>(mesh.seam_wedges.empty() ? 2 : 3); // Explicit whole-use line-image record; interval
+                                                 // semantics stay unchanged.
   out.word<4>(1);
-  for (uint64_t value :
-       {s.definitions[mesh.definition.value].id.value, uint64_t(b.nodes.size()),
-        uint64_t(b.edges.size()), uint64_t(b.vertex_aliases.size()),
-        uint64_t(mesh.physical_intervals.size()), uint64_t(mesh.uses.size()),
-        uint64_t(mesh.sites.size()), uint64_t(mesh.intervals.size())})
+  for (uint64_t value : {s.definitions[mesh.definition.value].id.value, uint64_t(b.nodes.size()),
+                         uint64_t(b.edges.size()), uint64_t(b.vertex_aliases.size()),
+                         uint64_t(mesh.physical_intervals.size()), uint64_t(mesh.uses.size()),
+                         uint64_t(mesh.sites.size()), uint64_t(mesh.intervals.size())})
     out.word<8>(value);
   out.bytes(s.source_digest);
-  const auto rational = [&](ExactRef ref) {
-    out.rational(mesh.values.view(ref));
-  };
+  const auto rational = [&](ExactRef ref) { out.rational(mesh.values.view(ref)); };
   const auto optional_exact = [&](const std::optional<ExactRef> &ref) {
     out.word<4>(ref.has_value());
     if (ref)
@@ -57,17 +51,15 @@ void write_curves(const std::filesystem::path &path,
   };
   const auto range = [](uint64_t first, uint64_t count, uint64_t size) {
     if (first > size || count > size - first)
-      throw Error(ErrorCode::internal_error,
-                  "shared-boundary output range outside retained rows");
+      throw Error(ErrorCode::internal_error, "shared-boundary output range outside retained rows");
   };
   for (std::size_t i = 0; i < b.nodes.size(); ++i) {
     const auto &node = b.nodes[i];
     if (!node.original_parameter)
-      throw Error(ErrorCode::internal_error,
-                  "boundary node lacks original parameter");
+      throw Error(ErrorCode::internal_error, "boundary node lacks original parameter");
     out.word<4>(static_cast<uint32_t>(node.key.generator));
-    for (uint64_t value : {node.key.source, node.key.generation,
-                           node.key.ordinal, b.constructed_revisions[i]})
+    for (uint64_t value :
+         {node.key.source, node.key.generation, node.key.ordinal, b.constructed_revisions[i]})
       out.word<8>(value);
     for (double value : node.xyz) {
       if (!std::isfinite(value))
@@ -78,8 +70,7 @@ void write_curves(const std::filesystem::path &path,
     const auto path_bits = b.sample_paths[i];
     range(path_bits.first, path_bits.count, b.path_bits.size());
     if (path_bits.count > UINT32_MAX)
-      throw Error(ErrorCode::resource_exhausted,
-                  "boundary path exceeds wire index");
+      throw Error(ErrorCode::resource_exhausted, "boundary path exceeds wire index");
     out.word<4>(path_bits.count);
     for (uint64_t j = 0; j < path_bits.count; ++j) {
       const auto direction = b.path_bits[path_bits.first + j];
@@ -94,15 +85,13 @@ void write_curves(const std::filesystem::path &path,
     range(row.nodes.first, row.nodes.count, b.nodes.size());
     range(row.intervals.first, row.intervals.count, b.intervals.size());
     for (uint64_t value :
-         {edge.id.value, edge.curve_id.value, edge.vertex_ids[0].value,
-          edge.vertex_ids[1].value, row.nodes.first, row.nodes.count,
-          row.intervals.first, row.intervals.count})
+         {edge.id.value, edge.curve_id.value, edge.vertex_ids[0].value, edge.vertex_ids[1].value,
+          row.nodes.first, row.nodes.count, row.intervals.first, row.intervals.count})
       out.word<8>(value);
     for (double value : edge.parameter_range)
       out.word<8>(std::bit_cast<uint64_t>(value));
-    for (uint32_t value :
-         {uint32_t(edge.curve_same_sense), uint32_t(edge.same_parameter),
-          uint32_t(edge.degenerate), uint32_t{0}})
+    for (uint32_t value : {uint32_t(edge.curve_same_sense), uint32_t(edge.same_parameter),
+                           uint32_t(edge.degenerate), uint32_t{0}})
       out.word<4>(value);
   }
   for (const auto &alias : b.vertex_aliases) {
@@ -112,13 +101,11 @@ void write_curves(const std::filesystem::path &path,
   for (std::size_t i = 0; i < mesh.physical_intervals.size(); ++i) {
     const auto &row = mesh.physical_intervals[i];
     if (row.boundary_key != b.intervals[i])
-      throw Error(ErrorCode::internal_error,
-                  "physical interval ordering differs from boundary");
+      throw Error(ErrorCode::internal_error, "physical interval ordering differs from boundary");
     key(row.boundary_key);
     for (auto node : row.boundary_nodes) {
       if (node >= b.nodes.size())
-        throw Error(ErrorCode::internal_error,
-                    "physical interval references absent node");
+        throw Error(ErrorCode::internal_error, "physical interval references absent node");
       out.word<4>(node);
     }
     for (auto ref : row.original_t)
@@ -133,8 +120,8 @@ void write_curves(const std::filesystem::path &path,
     const auto &face = s.faces.at(row.face.value);
     range(row.sites.first, row.sites.count, mesh.sites.size());
     range(row.intervals.first, row.intervals.count, mesh.intervals.size());
-    for (uint64_t value : {use.id.value, face.id.value, use.edge_id.value,
-                           face.carrier_id.value, use.loop_id.value})
+    for (uint64_t value :
+         {use.id.value, face.id.value, use.edge_id.value, face.carrier_id.value, use.loop_id.value})
       out.word<8>(value);
     out.word<4>(static_cast<uint32_t>(use.sense));
     out.word<4>(use.reconstructed);
@@ -142,9 +129,8 @@ void write_curves(const std::filesystem::path &path,
     for (int32_t value : use.periodic_shift)
       out.word<4>(static_cast<uint32_t>(value));
     out.word<4>(static_cast<uint32_t>(row.authority));
-    for (uint64_t value :
-         {row.sites.first, row.sites.count, row.intervals.first,
-          row.intervals.count, row.face_generation, row.boundary_generation})
+    for (uint64_t value : {row.sites.first, row.sites.count, row.intervals.first,
+                           row.intervals.count, row.face_generation, row.boundary_generation})
       out.word<8>(value);
     out.word<4>(row.whole_line_image.has_value());
     if (row.whole_line_image) {
@@ -161,8 +147,7 @@ void write_curves(const std::filesystem::path &path,
   }
   for (const auto &row : mesh.sites) {
     if (row.boundary_node >= b.nodes.size())
-      throw Error(ErrorCode::internal_error,
-                  "use site references absent boundary node");
+      throw Error(ErrorCode::internal_error, "use site references absent boundary node");
     out.word<4>(row.boundary_node);
     out.word<8>(s.loops.at(row.loop.value).id.value);
     out.word<4>(row.junction_occurrence);
@@ -182,8 +167,7 @@ void write_curves(const std::filesystem::path &path,
     key(row.boundary_key);
     for (auto site : row.sites) {
       if (site >= mesh.sites.size())
-        throw Error(ErrorCode::internal_error,
-                    "use interval references absent site");
+        throw Error(ErrorCode::internal_error, "use interval references absent site");
       out.word<4>(site);
     }
     out.word<4>(static_cast<uint32_t>(row.authority));
@@ -207,6 +191,30 @@ void write_curves(const std::filesystem::path &path,
       rational(identity.constant_v);
     }
   }
+  if (!mesh.seam_wedges.empty()) {
+    out.word<8>(mesh.seam_wedges.size());
+    for (const auto &wedge : mesh.seam_wedges) {
+      if (wedge.vertex.value >= s.vertices.size() || wedge.loop.value >= s.loops.size())
+        throw Error(ErrorCode::internal_error,
+                    "wedge artifact references absent source vertex/loop");
+      out.word<8>(s.vertices[wedge.vertex.value].id.value);
+      out.word<8>(s.loops[wedge.loop.value].id.value);
+      for (auto use : wedge.meridian_uses) {
+        if (use.value >= s.coedges.size() ||
+            s.coedges[use.value].loop_id != s.loops[wedge.loop.value].id)
+          throw Error(ErrorCode::internal_error, "wedge artifact source occurrence mismatch");
+        out.word<8>(s.coedges[use.value].id.value);
+      }
+      for (auto site : wedge.shared_endpoint_sites) {
+        if (site >= mesh.sites.size())
+          throw Error(ErrorCode::internal_error, "wedge artifact references absent source site");
+        out.word<4>(site);
+      }
+      out.word<4>(static_cast<uint32_t>(wedge.kind));
+      for (auto ref : wedge.finite_connector_uv)
+        rational(ref);
+    }
+  }
   out.finish();
 }
 void digest(std::ostream &out, const SourceDigest &source) {
@@ -216,8 +224,7 @@ void digest(std::ostream &out, const SourceDigest &source) {
     out << digits[value >> 4] << digits[value & 15];
   }
 }
-CurveRequest endpoint_curve_request(const SourceData &source,
-                                    Slot<CurveTag> slot, double t) {
+CurveRequest endpoint_curve_request(const SourceData &source, Slot<CurveTag> slot, double t) {
   const auto &curve = source.curves.at(slot.value);
   auto domain = curve.parameter_range;
   if (curve.kind == 4)
@@ -225,8 +232,7 @@ CurveRequest endpoint_curve_request(const SourceData &source,
   if (curve.kind == 5) {
     const auto knots = source.view(curve.knots);
     const auto mult = source.view(curve.multiplicities);
-    const auto controls =
-        source.view(curve.controls).size() / (curve.dimension + 1);
+    const auto controls = source.view(curve.controls).size() / (curve.dimension + 1);
     uint64_t expanded = 0;
     bool first = false, last = false;
     for (std::size_t i = 0; i < knots.size(); ++i) {
@@ -243,20 +249,17 @@ CurveRequest endpoint_curve_request(const SourceData &source,
     }
     if (first && last)
       for (std::size_t i = 1; i < knots.size(); ++i)
-        if (knots[i - 1] >= domain[0] && knots[i] <= domain[1] &&
-            knots[i - 1] < knots[i] && knots[i - 1] <= t && t <= knots[i])
+        if (knots[i - 1] >= domain[0] && knots[i] <= domain[1] && knots[i - 1] < knots[i] &&
+            knots[i - 1] <= t && t <= knots[i])
           return {slot, {knots[i - 1], knots[i]}};
-    throw Error(ErrorCode::unsupported,
-                "zero-range edge has no original positive spline span");
+    throw Error(ErrorCode::unsupported, "zero-range edge has no original positive spline span");
   }
   if (!(domain[0] < domain[1] && domain[0] <= t && t <= domain[1]))
-    throw Error(ErrorCode::unsupported,
-                "zero-range edge has no original positive curve span");
+    throw Error(ErrorCode::unsupported, "zero-range edge has no original positive curve span");
   return {slot, domain};
 }
 std::pmr::vector<CurveRequest>
-definition_curve_requests(const SourceStore &source,
-                          Slot<DefinitionTag> definition,
+definition_curve_requests(const SourceStore &source, Slot<DefinitionTag> definition,
                           const std::shared_ptr<RunResource> &resource) {
   const auto &s = source.view();
   std::pmr::vector<CurveRequest> requests(resource.get());
@@ -269,10 +272,9 @@ definition_curve_requests(const SourceStore &source,
       std::swap(physical_domain[0], physical_domain[1]);
     if (edge.curve_id) {
       const auto curve = s.curve_index.find(edge.curve_id);
-      requests.push_back(
-          physical_domain[0] < physical_domain[1]
-              ? CurveRequest{curve, physical_domain}
-              : endpoint_curve_request(s, curve, physical_domain[0]));
+      requests.push_back(physical_domain[0] < physical_domain[1]
+                             ? CurveRequest{curve, physical_domain}
+                             : endpoint_curve_request(s, curve, physical_domain[0]));
     }
     for (auto use_slot : s.edge_coedges.at(edge_slot)) {
       const auto &use = s.coedges.at(use_slot);
@@ -281,18 +283,15 @@ definition_curve_requests(const SourceStore &source,
       if (face.definition_id != s.definitions[definition.value].id)
         continue;
       if (use.parameter_map_kind != 1 && use.parameter_map_kind != 2)
-        throw Error(ErrorCode::unsupported,
-                    "unimplemented original use parameter map");
+        throw Error(ErrorCode::unsupported, "unimplemented original use parameter map");
       // Keep every occurrence of THIS definition, not one guide per edge. A
       // kind2 map may demand values beyond the saved guide range.
       auto domain = physical_domain;
       if (use.parameter_map_kind == 2) {
         const auto map =
-            std::span(s.parameter_maps)
-                .subspan(use.parameter_map.first, use.parameter_map.count);
+            std::span(s.parameter_maps).subspan(use.parameter_map.first, use.parameter_map.count);
         if (map.empty())
-          throw Error(ErrorCode::invalid_source,
-                      "empty original piecewise parameter map");
+          throw Error(ErrorCode::invalid_source, "empty original piecewise parameter map");
         domain = {map.front()[1], map.front()[1]};
         for (const auto &pair : map) {
           domain[0] = std::min(domain[0], pair[1]);
@@ -300,9 +299,8 @@ definition_curve_requests(const SourceStore &source,
         }
       }
       const auto guide = s.curve_index.find(use.curve_id);
-      requests.push_back(domain[0] < domain[1]
-                             ? CurveRequest{guide, domain}
-                             : endpoint_curve_request(s, guide, domain[0]));
+      requests.push_back(domain[0] < domain[1] ? CurveRequest{guide, domain}
+                                               : endpoint_curve_request(s, guide, domain[0]));
     }
   }
   return requests;

@@ -110,7 +110,7 @@ std::pmr::vector<uint64_t> face_generations(const SharedCurveSnapshot &snapshot,
 FaceFrontierIdentity identity(const FaceConstructionResult &face) {
   return {{OwnerKind::face, face->key.definition.value,
            face->source.view().faces[face->key.face.value].id.value},
-          face->key.construction_revision,
+          face->key.face_generation,
           face->key.boundary_generation};
 }
 struct SiteRow final {
@@ -221,9 +221,16 @@ ContactEpochStats check_contacts(ComponentResultData &output, ContactEpochLimits
         input.edges[i] = {ContactEdgeKind::internal_face, face.owner.id, face.face_generation,
                           (uint64_t{physical_pair[0]} << 32) | physical_pair[1]};
         if (found != source_edges.end() && found->sites == endpoint) {
-          require(found->key.kind == BoundaryOwnerKind::source_edge, ErrorCode::unsupported,
-                  "component source face carries a generated face-cut edge");
-          input.edges[i] = {ContactEdgeKind::source_edge, found->key.owner, 0, found->key.interval};
+          if (found->key.kind == BoundaryOwnerKind::source_edge)
+            input.edges[i] = {ContactEdgeKind::source_edge, found->key.owner, 0,
+                              found->key.interval};
+          else {
+            require(found->key.kind == BoundaryOwnerKind::face_cut &&
+                        found->key.owner == face.owner.id,
+                    ErrorCode::invalid_source, "component face-cut owner mismatch");
+            input.edges[i] = {ContactEdgeKind::face_cut, face.owner.id, face.face_generation,
+                              found->key.interval};
+          }
         }
         input.node_keys[i] = component_site_key(output, {at, a});
       }
@@ -309,9 +316,10 @@ struct ComponentMesher::Impl final {
       : resource(std::move(owner)), source(std::move(bank)), limits(caps),
         device(std::move(placement)), pool(resource.get()) {
     require(resource && source.source().view().resource == resource &&
-                source.purpose() == SourceCachePurpose::regular_patch && limits.face_owners &&
-                limits.maximum_boundary_rounds && limits.contacts.pair_capacity &&
-                limits.contact_batch,
+                (source.purpose() == SourceCachePurpose::regular_patch ||
+                 source.purpose() == SourceCachePurpose::quotient_trim) &&
+                limits.face_owners && limits.maximum_boundary_rounds &&
+                limits.contacts.pair_capacity && limits.contact_batch,
             ErrorCode::invalid_source, "component source owner/profile/limits invalid");
     limits.face.surface.cpu_threads = 1;
     external_stop.emplace(token, StopForward{&cancellation});
@@ -426,6 +434,9 @@ ComponentResult ComponentMesher::mesh(const ComponentQuery &query, NativeSchedul
     };
     settle();
     output->stats.boundary_seconds += elapsed(tick);
+    // Query-local immutable source/cut history survives pooled retirement and
+    // later invalidation of a COMPLETE face by another face's boundary request.
+    std::pmr::vector<FaceContinuation> continuations(inventory.size(), FaceContinuation{}, &budget);
     for (uint64_t round = 0;; ++round) {
       budget.charge(1);
       require(round < p.limits.maximum_boundary_rounds, ErrorCode::unresolved,
@@ -449,7 +460,8 @@ ComponentResult ComponentMesher::mesh(const ComponentQuery &query, NativeSchedul
                              query.values,
                              query.positional,
                              query.node_source,
-                             epoch});
+                             epoch,
+                             continuations[index]});
         ++output->stats.assignments;
         return std::allocate_shared<FaceStep>(
             RunAllocator<FaceStep>(resource_),
@@ -485,6 +497,7 @@ ComponentResult ComponentMesher::mesh(const ComponentQuery &query, NativeSchedul
                     "component face requested an empty physical refinement horizon");
             requests.insert(requests.end(), wanted.begin(), wanted.end());
           }
+          continuations[task->face] = task->owner->continuation();
           task->owner->retire_assignment();
           if (next_face < pending.size())
             tasks.push_back(assign(task->slot));

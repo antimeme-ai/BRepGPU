@@ -1,5 +1,6 @@
 #include "adaptive_trimmed_io.hpp"
 #include "adaptive_caller_io.hpp"
+#include <algorithm>
 #include <bit>
 #include <cmath>
 
@@ -24,6 +25,28 @@ void write_trimmed_face(const std::filesystem::path &path, const FaceTrimResult 
           "trimmed artifact has mixed generations");
   const auto &source = mesh.source.view();
   const auto &key = mesh.key;
+  const auto &caps = mesh.domain->caps;
+  const bool extended =
+      key.domain_revision != 0 || key.face_generation != key.boundary_generation ||
+      (caps && !caps.caps().empty()) ||
+      std::ranges::any_of(mesh.source_bindings,
+                          [](const auto &binding) { return binding.wedge_sector.has_value(); }) ||
+      std::ranges::any_of(mesh.facets, [](const auto &facet) { return facet.mapped.has_value(); });
+  require(!extended || static_cast<bool>(caps), "extended face artifact lacks produced cap domain");
+  if (caps) {
+    const auto &identity = caps.key();
+    require(caps.curves() == mesh.curves && &caps.source().view() == &mesh.surface_source.view() &&
+                identity.source_generation == key.source_generation &&
+                identity.query == key.query && identity.definition == key.definition &&
+                identity.face == key.face &&
+                identity.boundary_generation == key.boundary_generation &&
+                identity.face_generation == key.face_generation &&
+                identity.chart_revision == key.chart_revision &&
+                identity.domain_revision == key.domain_revision &&
+                identity.assignment_epoch == key.assignment_epoch &&
+                identity.profile_revision == key.profile_revision,
+            "face artifact cap/source key mismatch");
+  }
   const auto &face = source.faces.at(key.face.value);
   const auto &carrier = source.carriers.at(source.carrier_index.find(face.carrier_id).value);
   require(face.definition_id == source.definitions.at(key.definition.value).id &&
@@ -68,7 +91,7 @@ void write_trimmed_face(const std::filesystem::path &path, const FaceTrimResult 
   Wire out(path, budget);
   constexpr char magic[] = "BGATRM01";
   out.bytes(std::as_bytes(std::span(magic).first(8)));
-  out.word<4>(1);
+  out.word<4>(extended ? 2 : 1);
   out.word<4>(key.profile_revision);
   out.bytes(source.source_digest);
   for (uint64_t value :
@@ -204,6 +227,8 @@ void write_trimmed_face(const std::filesystem::path &path, const FaceTrimResult 
       out.word<8>(value);
   }
   for (const auto &facet : mesh.facets) {
+    require((facet.key.generator == FacetGenerator::mapped_cap) == facet.mapped.has_value(),
+            "face artifact mapped generator/payload mismatch");
     out.word<4>(static_cast<uint32_t>(facet.key.generator));
     out.word<8>(facet.key.owner);
     out.word<8>(facet.key.revision);
@@ -235,6 +260,130 @@ void write_trimmed_face(const std::filesystem::path &path, const FaceTrimResult 
       domain_exact(ref);
     for (auto ref : image.scalar_endpoints)
       domain_exact(ref);
+  }
+  if (extended) {
+    const auto cap_exact = [&](ExactRef ref) { out.rational(caps.values().view(ref)); };
+    const auto boundary_key = [&](BoundaryKey value) {
+      out.word<8>(value.owner);
+      out.word<8>(value.interval);
+      out.word<4>(static_cast<uint32_t>(value.kind));
+    };
+    std::pmr::vector<uint32_t> wedge_remap(result->resource.get());
+    for (const auto &local : caps.wedges()) {
+      uint32_t found = UINT32_MAX;
+      for (uint32_t i = 0; i < mesh.curves->seam_wedges.size(); ++i) {
+        budget.charge(1);
+        const auto &original = mesh.curves->seam_wedges[i];
+        if (local.vertex != original.vertex || local.loop != original.loop ||
+            local.meridian_uses != original.meridian_uses ||
+            local.shared_endpoint_sites != original.shared_endpoint_sites ||
+            local.kind != original.kind)
+          continue;
+        require(found == UINT32_MAX, "face artifact wedge identity is duplicated");
+        for (uint32_t j = 0; j < 4; ++j)
+          require(import_exact(budget, caps.values().view(local.finite_connector_uv[j]))
+                          .compare(import_exact(budget, mesh.curves->values.view(
+                                                            original.finite_connector_uv[j]))) == 0,
+                  "face artifact finite connector changed");
+        found = i;
+      }
+      require(found != UINT32_MAX, "face artifact wedge absent from paired snapshot");
+      wedge_remap.push_back(found);
+    }
+    for (uint64_t value : {key.face_generation, key.domain_revision, key.assignment_epoch})
+      out.word<8>(value);
+    const auto mapped_count = std::ranges::count_if(
+        mesh.facets, [](const auto &facet) { return facet.mapped.has_value(); });
+    for (uint64_t value : {uint64_t(caps.caps().size()), uint64_t(caps.points().size()),
+                           uint64_t(caps.pieces().size()), uint64_t(mapped_count)})
+      out.word<8>(value);
+    for (const auto &cap : caps.caps()) {
+      require(cap.wedge < wedge_remap.size() &&
+                  cap.pole_boundary_node < mesh.curves->boundary->nodes.size(),
+              "face artifact cap row exceeds retained source pool");
+      check_range(cap.points, caps.points().size());
+      check_range(cap.pieces, caps.pieces().size());
+      out.word<4>(wedge_remap[cap.wedge]);
+      out.word<4>(cap.pole_boundary_node);
+      for (auto sector : cap.angular_to_sector)
+        out.word<4>(sector);
+      out.word<8>(source.loops.at(caps.wedges()[cap.wedge].loop.value).id.value);
+      for (uint64_t value : {uint64_t(cap.points.first), uint64_t(cap.points.count),
+                             uint64_t(cap.pieces.first), uint64_t(cap.pieces.count)})
+        out.word<8>(value);
+      out.word<4>(cap.transcendental_bits);
+      out.word<4>(cap.norm_fractional_bits);
+      for (auto interval : cap.meridian_intervals)
+        boundary_key(interval);
+    }
+    require(mesh.cap_point_bindings.size() == caps.points().size(),
+            "face artifact missing cut bindings");
+    for (uint32_t i = 0; i < caps.points().size(); ++i) {
+      const auto &point = caps.points()[i];
+      for (auto ref : point.uv)
+        cap_exact(ref);
+      if (const auto *physical = std::get_if<PhysicalCapEndpoint>(&point.authority)) {
+        out.word<4>(1);
+        out.word<8>(source.edges.at(physical->edge.value).id.value);
+        out.word<8>(source.coedges.at(physical->sector.value).id.value);
+        cap_exact(physical->original_t);
+        out.word<4>(static_cast<uint32_t>(physical->expected_key.generator));
+        for (auto value : {physical->expected_key.source, physical->expected_key.generation,
+                           physical->expected_key.ordinal})
+          out.word<8>(value);
+      } else {
+        out.word<4>(2);
+        out.word<4>(local_root(std::get<SurfaceCapPoint>(point.authority).original_root));
+      }
+      const auto &binding = mesh.cap_point_bindings[i];
+      require(binding.construction_site < mesh.sites.size(),
+              "face artifact cut binding lacks actual site");
+      out.word<4>(binding.construction_site);
+      out.word<4>(binding.sample_row);
+    }
+    for (const auto &piece : caps.pieces()) {
+      require(piece.cap < caps.caps().size(), "face artifact piece references absent cap");
+      out.word<4>(piece.cap);
+      out.word<4>(local_root(piece.original_root));
+      for (auto point : piece.cut_points) {
+        require(point < caps.points().size(), "face artifact piece references absent cut point");
+        out.word<4>(point);
+      }
+      for (auto ref : piece.cut_uv)
+        cap_exact(ref);
+      for (auto ref : piece.finite_v)
+        cap_exact(ref);
+      for (auto role : piece.positive_chart_roles)
+        out.word<4>(role);
+      out.word<4>(static_cast<uint32_t>(piece.regular_sheet_sign));
+      boundary_key(piece.cut_key);
+    }
+    for (uint32_t i = 0; i < mesh.facets.size(); ++i) {
+      if (!mesh.facets[i].mapped)
+        continue;
+      const auto &mapped = *mesh.facets[i].mapped;
+      require(mapped.cap < caps.caps().size() && mapped.piece < caps.pieces().size(),
+              "face artifact mapped facet references absent source map");
+      out.word<4>(i);
+      out.word<4>(mapped.cap);
+      out.word<4>(mapped.piece);
+      for (auto role : mapped.source_role_to_facet)
+        out.word<4>(role);
+      out.word<4>(static_cast<uint32_t>(mapped.normal.kind));
+      out.word<4>(static_cast<uint32_t>(mapped.normal.regular_sheet_sign));
+      for (auto ref : mapped.normal.angular_interval)
+        exact(ref);
+    }
+    for (const auto &binding : mesh.source_bindings) {
+      out.word<4>(binding.wedge_sector.has_value());
+      if (binding.wedge_sector) {
+        require(binding.wedge_sector->wedge < wedge_remap.size() &&
+                    binding.wedge_sector->sector < 2,
+                "face artifact wedge binding outside retained source pool");
+        out.word<4>(wedge_remap[binding.wedge_sector->wedge]);
+        out.word<4>(binding.wedge_sector->sector);
+      }
+    }
   }
   out.finish();
 }

@@ -55,6 +55,24 @@ void validate_domain_request(const DomainRequest &request) {
               s.faces[request.key.face.value].definition_id ==
                   s.definitions[request.key.definition.value].id,
           "foreign trimmed face/definition");
+  if (request.caps) {
+    const auto &key = request.caps.key();
+    require(request.caps.curves() == request.curves && request.caps.resource() == curves.resource &&
+                key.source_generation == request.key.source_generation && key.query == request.key.query &&
+                key.definition == request.key.definition && key.face == request.key.face &&
+                key.boundary_generation == request.key.boundary_generation &&
+                key.face_generation == effective_face_generation(request.key) &&
+                key.domain_revision == request.key.domain_revision &&
+                key.chart_revision == request.key.chart_revision &&
+                key.assignment_epoch == request.key.assignment_epoch &&
+                key.profile_revision == request.key.profile_revision &&
+                request.table_key != request.caps.values().key(),
+            "trimmed domain has foreign/stale produced cap plan");
+  }
+  for (const auto &wedge : curves.seam_wedges)
+    if (s.loops[wedge.loop.value].face_id == s.faces[request.key.face.value].id)
+      require(request.caps && !request.caps.caps().empty(),
+              "source seam wedge needs produced mapped domain");
 }
 void require_domain_key(const FaceDomainLease &domain, const FaceConstructionKey &key) {
   require(domain && domain->key.source_generation == key.source_generation &&
@@ -63,6 +81,8 @@ void require_domain_key(const FaceDomainLease &domain, const FaceConstructionKey
               domain->key.chart_revision == key.chart_revision &&
               domain->key.profile_revision == key.profile_revision &&
               domain->key.assignment_epoch == key.assignment_epoch &&
+              effective_face_generation(domain->key) == effective_face_generation(key) &&
+              domain->key.domain_revision == key.domain_revision &&
               domain->key.face == key.face && domain->key.definition == key.definition,
           "stale source face domain lease");
 }
@@ -210,10 +230,16 @@ DomainPreparation prepare_face_domain(const DomainRequest &request, JobContext &
         const auto original_uv = read_uv(budget, request.curves->values, raw.chosen_original_uv);
         require(equal_uv(uv, original_uv), "ordinary UV constructor received alternate chart");
         uint32_t site = none;
+        std::optional<WedgeSectorBinding> wedge_sector;
+        if (request.caps)
+          for (uint32_t wi = 0; wi < request.caps.wedges().size(); ++wi)
+            for (uint32_t sector = 0; sector < 2; ++sector)
+              if (request.caps.wedges()[wi].shared_endpoint_sites[sector] == global)
+                wedge_sector = WedgeSectorBinding{wi, sector};
         if (j == 0 || j + 1 == trace.sites.count) {
           const auto joint = j == 0 ? ui : (ui + 1) % original.coedges.count;
           require(raw.junction_occurrence == joint, "original loop joint occurrence differs");
-          site = joints[joint];
+          site = wedge_sector ? none : joints[joint];
           if (site != none) {
             require(equal_uv(points[site], uv), "settled adjacent chart joint differs");
             const auto &a = request.curves->boundary->nodes[sites[site].boundary_node];
@@ -224,7 +250,8 @@ DomainPreparation prepare_face_domain(const DomainRequest &request, JobContext &
                       "loop joint actual XYZ differs");
           } else {
             site = word(points.size());
-            joints[joint] = site;
+            if (!wedge_sector)
+              joints[joint] = site;
           }
         } else
           require(raw.junction_occurrence == none, "interior use point claims joint identity");
@@ -237,7 +264,7 @@ DomainPreparation prepare_face_domain(const DomainRequest &request, JobContext &
         }
         require(mapped[global - site_first] == none, "repeated shared use-site row");
         mapped[global - site_first] = site;
-        bindings.push_back({global, site});
+        bindings.push_back({global, site, wedge_sector});
         if (j) {
           const auto &interval = request.curves->intervals[trace.intervals.first + j - 1];
           require(interval.sites == std::array<uint32_t, 2>{global - 1, global},
@@ -245,6 +272,30 @@ DomainPreparation prepare_face_domain(const DomainRequest &request, JobContext &
           edges.push_back({{mapped[global - 1 - site_first], site}, interval.boundary_key});
         }
       }
+    }
+    // A wedge has two chart sectors of one original joint. Join them only by a
+    // typed coverage connector; original use/coedge inventory is unchanged.
+    for (size_t j = start; j < edges.size(); ++j) {
+      const auto next_edge = j + 1 == edges.size() ? start : j + 1;
+      if (edges[j].sites[1] == edges[next_edge].sites[0])
+        continue;
+      bool declared = false;
+      if (request.caps)
+        for (uint32_t wi = 0; wi < request.caps.wedges().size(); ++wi) {
+          const auto &wedge = request.caps.wedges()[wi];
+          if (wedge.loop != loop_slot)
+            continue;
+          const auto in = mapped[wedge.shared_endpoint_sites[0] - site_first],
+                     out = mapped[wedge.shared_endpoint_sites[1] - site_first];
+          if (edges[j].sites[1] == in && edges[next_edge].sites[0] == out) {
+            edges.insert(edges.begin() + static_cast<std::ptrdiff_t>(j + 1),
+                         {{in, out}, CapConnectorKey{wi, request.key.domain_revision}});
+            ++j;
+            declared = true;
+            break;
+          }
+        }
+      require(declared, "chosen source loop has undeclared chart gap");
     }
     Rational area(budget);
     for (size_t j = start; j < edges.size(); ++j) {
@@ -309,19 +360,84 @@ DomainPreparation prepare_face_domain(const DomainRequest &request, JobContext &
   domain->source_bindings = std::move(bindings);
   domain->edges = std::move(edges);
   domain->loops = std::move(loops);
+  domain->caps = request.caps;
   result.domain = std::move(domain);
   return result;
 }
 struct FaceDomainClassifier::Impl final {
+  struct CapQuad final {
+    uint32_t piece;
+    std::array<UV, 4> points;
+    std::array<Rational, 4> box;
+  };
   FaceDomainLease domain;
   bgfd::Budget budget;
   ImportedDomain imported;
   DomainSegmentIndex index;
+  std::pmr::vector<CapQuad> cap_quads;
   Impl(const std::shared_ptr<RunResource> &resource, FaceDomainLease policy,
        DomainClassifierLimits limits, std::stop_token stop)
       : domain(std::move(policy)),
         budget({limits.bytes, limits.work}, resource.get(), std::move(stop)),
-        imported(domain, budget), index(budget, imported.refs, imported.stats, imported.segments) {}
+        imported(domain, budget), index(budget, imported.refs, imported.stats, imported.segments),
+        cap_quads(&budget) {
+    if (domain->caps)
+      for (uint32_t i = 0; i < domain->caps.pieces().size(); ++i) {
+        const auto &piece = domain->caps.pieces()[i];
+        const auto &values = domain->caps.values();
+        const auto u0 = import_exact(budget, values.view(piece.cut_uv[0]));
+        const auto u1 = import_exact(budget, values.view(piece.cut_uv[2]));
+        const auto v0 = import_exact(budget, values.view(piece.finite_v[0]));
+        const auto v1 = import_exact(budget, values.view(piece.finite_v[1]));
+        const auto c0 = import_exact(budget, values.view(piece.cut_uv[1]));
+        const auto c1 = import_exact(budget, values.view(piece.cut_uv[3]));
+        std::array<UV, 4> quad{{{u0, v0}, {u1, v1}, {u1, c1}, {u0, c0}}};
+        if (c0.compare(v0) < 0)
+          std::reverse(quad.begin(), quad.end());
+        auto low = v0, high = v0;
+        for (const auto *v : {&v1, &c0, &c1}) {
+          if (v->compare(low) < 0)
+            low = *v;
+          if (v->compare(high) > 0)
+            high = *v;
+        }
+        cap_quads.push_back({i, std::move(quad), {u0, u1, low, high}});
+      }
+  }
+  bool cap_overlap(const CapQuad &quad, const std::array<Rational, 4> &box) {
+    budget.charge(1);
+    for (uint32_t axis = 0; axis < 2; ++axis)
+      if (quad.box[2 * axis + 1].compare(box[2 * axis]) < 0 ||
+          quad.box[2 * axis].compare(box[2 * axis + 1]) > 0)
+        return false;
+    const std::array<UV, 4> corners{{{box[0], box[2]}, {box[1], box[2]},
+                                     {box[1], box[3]}, {box[0], box[3]}}};
+    for (uint32_t edge = 0; edge < 4; ++edge) {
+      bool separated = true;
+      for (const auto &corner : corners)
+        if (cross(quad.points[edge], quad.points[(edge + 1) % 4], corner).sign() >= 0)
+          separated = false;
+      if (separated)
+        return false;
+    }
+    return true;
+  }
+  bool entirely_pole_side(const std::array<Rational, 4> &box) {
+    require(domain->caps && domain->caps.caps().size() == 1, "cap classifier source partition absent");
+    const auto pieces = domain->caps.pieces();
+    const auto &a = pieces.front(), &b = pieces.back();
+    const auto &values = domain->caps.values();
+    const UV left{import_exact(budget, values.view(a.cut_uv[0])),
+                    import_exact(budget, values.view(a.cut_uv[1]))};
+    const UV right{import_exact(budget, values.view(b.cut_uv[2])),
+                     import_exact(budget, values.view(b.cut_uv[3]))};
+    const auto side = left[1].subtract(import_exact(budget, values.view(a.finite_v[0]))).sign();
+    for (const auto &point : std::array<UV, 4>{{{box[0], box[2]}, {box[1], box[2]},
+                                                {box[1], box[3]}, {box[0], box[3]}}})
+      if (cross(left, right, point).sign() * side > 0)
+        return false;
+    return true;
+  }
 };
 FaceDomainClassifier::FaceDomainClassifier(std::shared_ptr<RunResource> resource,
                                            FaceDomainLease domain, DomainClassifierLimits limits,
@@ -356,6 +472,8 @@ CandidateClassification FaceDomainClassifier::classify(const CandidateBoxes &can
   require(domain->key.definition == face.definition && domain->key.face == face.face &&
               domain->key.source_generation == face.source_generation &&
               domain->key.assignment_epoch == face.assignment_epoch &&
+              effective_face_generation(domain->key) == face.face_generation &&
+              domain->key.domain_revision == face.domain_revision &&
               domain->key.boundary_generation == face.boundary_generation &&
               domain->key.chart_revision == face.chart_revision &&
               domain->key.query == candidates->key.selection.query &&
@@ -365,22 +483,45 @@ CandidateClassification FaceDomainClassifier::classify(const CandidateBoxes &can
   budget.charge(0);
   CandidateClassification result(candidates);
   result.domain = domain;
+  std::shared_ptr<CapClassificationData> coverage;
+  if (domain->caps) {
+    require(&domain->caps.source().view() == &candidates->source.view(),
+            "cap classification has another immutable source bank");
+    coverage = std::allocate_shared<CapClassificationData>(
+        RunAllocator<CapClassificationData>(resource_), candidates);
+    coverage->domain = domain;
+  }
   for (const auto &candidate : candidates->boxes) {
     budget.charge(1);
     std::array<Rational, 4> box{import_exact(budget, candidates->values.view(candidate.box[0])),
                                 import_exact(budget, candidates->values.view(candidate.box[1])),
                                 import_exact(budget, candidates->values.view(candidate.box[2])),
                                 import_exact(budget, candidates->values.view(candidate.box[3]))};
+    SurfaceClass label;
     if (impl_->index.touches_rectangle(box))
-      result.labels.push_back(SurfaceClass::band);
+      label = SurfaceClass::band;
     else {
       UV middle{box[0].add(box[1]).divide(Rational(budget, 2)),
                 box[2].add(box[3]).divide(Rational(budget, 2))};
       const auto winding = impl_->index.winding({&middle[0], &middle[1]});
       require(winding == 0 || winding == 1, "chosen face winding multiplicity differs");
-      result.labels.push_back(winding ? SurfaceClass::interior : SurfaceClass::outside);
+      label = winding ? SurfaceClass::interior : SurfaceClass::outside;
     }
+    if (coverage) {
+      const auto first = coverage->pieces.size();
+      if (label != SurfaceClass::outside)
+        for (const auto &quad : impl_->cap_quads)
+          if (impl_->cap_overlap(quad, box))
+            coverage->pieces.push_back(quad.piece);
+      const auto count = coverage->pieces.size() - first;
+      if (count)
+        label = impl_->entirely_pole_side(box) ? SurfaceClass::mapped_cap : SurfaceClass::band;
+      coverage->rows.push_back({label, {first, count}});
+    }
+    result.labels.push_back(label);
   }
+  if (coverage)
+    result.cap_classification = CapClassificationLease(std::move(coverage));
   return result;
 }
 std::pmr::vector<SurfaceClass>
@@ -400,7 +541,25 @@ FaceDomainClassifier::classify_points(const ExactTable &values,
     else {
       const auto winding = impl_->index.winding(query);
       require(winding == 0 || winding == 1, "point classification has material multiplicity");
-      result.push_back(winding ? SurfaceClass::interior : SurfaceClass::outside);
+      auto label = winding ? SurfaceClass::interior : SurfaceClass::outside;
+      if (winding)
+        for (const auto &quad : impl_->cap_quads) {
+          bool inside = true;
+          for (uint32_t j = 0; j < 4; ++j)
+            if (cross(quad.points[j], quad.points[(j + 1) % 4], point).sign() < 0)
+              inside = false;
+          if (inside) {
+            const auto pieces = impl_->domain->caps.pieces();
+            const auto &from = impl_->domain->caps.values();
+            const UV a{import_exact(budget, from.view(pieces.front().cut_uv[0])),
+                         import_exact(budget, from.view(pieces.front().cut_uv[1]))};
+            const UV c{import_exact(budget, from.view(pieces.back().cut_uv[2])),
+                         import_exact(budget, from.view(pieces.back().cut_uv[3]))};
+            label = cross(a, c, point).sign() == 0 ? SurfaceClass::band : SurfaceClass::mapped_cap;
+            break;
+          }
+        }
+      result.push_back(label);
     }
   }
   return result;
@@ -487,6 +646,8 @@ CandidateClassification apply_footprint(const PacketFootprint &footprint,
   require(raw.labels.size() == candidate.boxes.size(), "partial footprint classification horizon");
   for (uint32_t i = 0; i < raw.labels.size(); ++i) {
     budget.charge(1);
+    if (raw.labels[i] == SurfaceClass::mapped_cap)
+      continue;
     const auto &key = candidate.boxes[i].key;
     const auto role = footprint_role(footprint, key, candidate.path_words, budget);
     if (!role) {
@@ -603,6 +764,14 @@ std::array<Rational, 4> face_metric(const RegionInput &input, bgfd::Budget &budg
           import_exact(budget, input.previous->values.view(input.previous->fixed_metric_factor[i]));
     return metric;
   }
+  if (input.domain->caps && input.domain->caps.control() &&
+      input.domain->caps.control().fixed_metric_factor()) {
+    std::array<Rational, 4> factor{Rational(budget), Rational(budget), Rational(budget), Rational(budget)};
+    const auto &control = input.domain->caps.control();
+    for (uint32_t i = 0; i < 4; ++i)
+      factor[i] = import_exact(budget, control.values().view((*control.fixed_metric_factor())[i]));
+    return factor;
+  }
   const auto selection = input.surface.selection();
   require(!selection->leaves.empty(), "face metric has no covered source leaf");
   std::pmr::vector<uint8_t> packet(selection->leaves.size(), uint8_t{0}, &budget);
@@ -663,6 +832,8 @@ class RegionBuilder final {
   std::pmr::vector<uint32_t> grid;
   std::pmr::vector<uint32_t> anchors;
   std::pmr::vector<SideGeometry> sides;
+  std::pmr::vector<CapPointBinding> cap_bindings;
+  std::pmr::vector<uint32_t> cap_poles, inactive_poles;
   std::array<Rational, 4> metric;
   uint32_t append(UV uv, ConstructionSite site) {
     const auto slot = word(points.size());
@@ -690,6 +861,128 @@ class RegionBuilder final {
         SurfaceSiteSource{point.key.original, point.key.stage, false, 0, point.departure_upper}};
     return grid[slot] = append(std::move(uv), std::move(site));
   }
+  void bind_cap_points() {
+    const auto &caps = input.domain->caps;
+    const auto &boundary = *input.domain->curves->boundary;
+    cap_bindings.resize(caps.points().size());
+    if (input.cut_points)
+      require(input.cut_points->view.key() == input.surface.key() &&
+                  input.cut_points->view.selection() == input.surface.selection() &&
+                  input.cut_points->points.size() == input.cut_point_plan_indices.size(),
+              "cap cut samples have stale view or partial plan mapping");
+    else
+      require(input.cut_point_plan_indices.empty(), "cap sample mapping has no result lease");
+    for (uint32_t row = 0; row < input.cut_point_plan_indices.size(); ++row) {
+      const auto point = input.cut_point_plan_indices[row];
+      require(point < cap_bindings.size() && cap_bindings[point].sample_row == none &&
+                  std::holds_alternative<SurfaceCapPoint>(caps.points()[point].authority),
+              "cap sample row repeats or names physical authority");
+      cap_bindings[point].sample_row = row;
+    }
+    for (uint32_t i = 0; i < caps.points().size(); ++i) {
+      budget.charge(1);
+      const auto &plan = caps.points()[i];
+      const auto uv = read_uv(budget, caps.values(), plan.uv);
+      auto &binding = cap_bindings[i];
+      if (const auto *physical = std::get_if<PhysicalCapEndpoint>(&plan.authority)) {
+        const auto t = import_exact(budget, caps.values().view(physical->original_t));
+        for (uint32_t j = 0; j < input.domain->sites.size(); ++j) {
+          const auto &from = input.domain->sites[j];
+          const auto &node = boundary.nodes[from.boundary_node];
+          budget.charge(1);
+          if (node.key == physical->expected_key && node.original_parameter &&
+              import_exact(budget, boundary.parameters.view(*node.original_parameter)).compare(t) == 0 &&
+              equal_uv(points[j], uv)) {
+            require(binding.construction_site == none, "cap physical endpoint has multiple chart bindings");
+            binding.construction_site = j;
+          }
+        }
+        require(binding.construction_site != none && binding.sample_row == none,
+                "cap physical cut endpoint was privately sampled or lost");
+      } else {
+        require(input.cut_points && binding.sample_row < input.cut_points->points.size(),
+                "cap interior cut point lacks SAME PointPool result");
+        const auto &point = input.cut_points->points[binding.sample_row];
+        const auto expected = std::get<SurfaceCapPoint>(plan.authority).original_root;
+        require(point.key.original.value == expected.value &&
+                    equal_uv(uv, read_uv(budget, input.cut_points->values, point.original_uv)) &&
+                    equal_uv(uv, read_uv(budget, input.cut_points->values, point.chart_xy)),
+                "cap interior cut source/UV differs from plan");
+        binding.construction_site = append(
+            uv, ConstructionSite{{}, point.actual_xyz, point.key.constructed_generation,
+              SurfaceSiteSource{point.key.original, point.key.stage, false, 0, point.departure_upper}});
+      }
+    }
+    cap_poles.resize(caps.caps().size(), none);
+    for (uint32_t i = 0; i < caps.caps().size(); ++i) {
+      const auto &cap = caps.caps()[i];
+      const auto &wedge = caps.wedges()[cap.wedge];
+      for (auto &binding : bindings)
+        if (binding.wedge_sector && binding.wedge_sector->wedge == cap.wedge) {
+          require(binding.shared_site == wedge.shared_endpoint_sites[binding.wedge_sector->sector],
+                  "cap wedge source-sector binding differs");
+          const auto site = binding.construction_site;
+          require(std::holds_alternative<BoundarySiteSource>(sites[site].source) &&
+                      std::get<BoundarySiteSource>(sites[site].source).boundary_node == cap.pole_boundary_node,
+                  "mapped pole is not captured original physical vertex");
+          if (cap_poles[i] == none)
+            cap_poles[i] = site;
+          else if (cap_poles[i] != site) {
+            inactive_poles.push_back(site);
+            binding.construction_site = cap_poles[i];
+          }
+        }
+      require(cap_poles[i] != none, "cap pole lost complete source binding");
+    }
+  }
+  void ordinary_cap_loop(const DomainBoundaryLoop &row, BuildLoop &loop) {
+    const auto &caps = input.domain->caps;
+    require(caps.caps().size() == 1, "ordinary remainder supports one mapped cap");
+    const auto pieces = caps.pieces();
+    const auto &from = caps.values();
+    const UV left{import_exact(budget, from.view(pieces.front().cut_uv[0])),
+                    import_exact(budget, from.view(pieces.front().cut_uv[1]))};
+    const UV right{import_exact(budget, from.view(pieces.back().cut_uv[2])),
+                     import_exact(budget, from.view(pieces.back().cut_uv[3]))};
+    const auto sign = left[1].subtract(import_exact(budget, from.view(pieces.front().finite_v[0]))).sign();
+    std::pmr::vector<ProtectedRegionEdge> kept(&budget);
+    for (uint64_t j = 0; j < row.edges.count; ++j) {
+      const auto &edge = input.domain->edges[row.edges.first + j];
+      if (std::holds_alternative<CapConnectorKey>(edge.provenance))
+        continue;
+      const auto a = cross(left, right, points[edge.sites[0]]).sign() * sign;
+      const auto b = cross(left, right, points[edge.sites[1]]).sign() * sign;
+      if (a >= 0 && b >= 0)
+        kept.push_back({edge.sites, std::get<BoundaryKey>(edge.provenance)});
+      else
+        require(a <= 0 && b <= 0, "cap cut crosses an unsplit original source interval");
+    }
+    require(!kept.empty(), "fully mapped cap face is outside finite construction profile");
+    uint32_t start = none;
+    for (uint32_t j = 0; j < kept.size(); ++j)
+      if (kept[(j + kept.size() - 1) % kept.size()].sites[1] != kept[j].sites[0]) {
+        require(start == none, "cap carving disconnected the ordinary source remainder");
+        start = j;
+      }
+    require(start != none, "cap carving failed to expose its shared cut gap");
+    for (uint32_t j = 0; j < kept.size(); ++j)
+      loop.edges.push_back(kept[(start + j) % kept.size()]);
+    const auto first = loop.edges.front().sites[0], last = loop.edges.back().sites[1];
+    const auto low = cap_bindings.front().construction_site,
+               high = cap_bindings.back().construction_site;
+    require((last == low && first == high) || (last == high && first == low),
+            "ordinary remainder cut endpoints differ from current master cuts");
+    if (last == low)
+      for (uint32_t j = 0; j < pieces.size(); ++j)
+        loop.edges.push_back({{cap_bindings[j].construction_site, cap_bindings[j + 1].construction_site},
+                               pieces[j].cut_key});
+    else
+      for (uint32_t j = word(pieces.size()); j > 0; --j)
+        loop.edges.push_back({{cap_bindings[j].construction_site, cap_bindings[j - 1].construction_site},
+                               pieces[j - 1].cut_key});
+    for (const auto &edge : loop.edges)
+      loop.sites.push_back(edge.sites[0]);
+  }
   void source_sites() {
     const auto &boundary = *input.domain->curves->boundary;
     for (const auto &row : input.domain->sites) {
@@ -704,19 +997,76 @@ class RegionBuilder final {
                               BoundarySiteSource{row.boundary_node}});
     }
     bindings.assign(input.domain->source_bindings.begin(), input.domain->source_bindings.end());
+    const bool mapped = input.domain->caps && !input.domain->caps.caps().empty();
+    if (mapped)
+      bind_cap_points();
     for (const auto &row : input.domain->loops) {
       loops.emplace_back(&budget);
       auto &loop = loops.back();
       loop.source = row.source;
       loop.adapter = row.traversal_adapter;
       loop.positive = row.positive;
+      if (mapped) {
+        ordinary_cap_loop(row, loop);
+        continue;
+      }
       for (uint64_t j = 0; j < row.edges.count; ++j) {
         const auto &edge = input.domain->edges[row.edges.first + j];
         require(edge.sites[0] < sites.size() && edge.sites[1] < sites.size(),
                 "domain boundary site is missing");
         loop.sites.push_back(edge.sites[0]);
-        loop.edges.push_back({edge.sites, edge.provenance});
+        const auto *source_key = std::get_if<BoundaryKey>(&edge.provenance);
+        require(source_key != nullptr, "coverage connector entered ordinary region topology");
+        loop.edges.push_back({edge.sites, *source_key});
       }
+    }
+  }
+  void mapped_facets() {
+    if (!input.domain->caps || input.domain->caps.caps().empty())
+      return;
+    const auto &caps = input.domain->caps;
+    std::pmr::vector<uint32_t> previous_piece(caps.pieces().size(), none, &budget);
+    if (input.previous && input.previous->domain == input.domain) {
+      const auto begin = std::lower_bound(input.previous->facets.begin(), input.previous->facets.end(),
+          FacetGenerator::mapped_cap,
+          [](const auto &facet, auto generator) { return facet.key.generator < generator; });
+      for (auto at = begin; at != input.previous->facets.end(); ++at)
+        if (at->mapped && at->mapped->piece < previous_piece.size())
+          previous_piece[at->mapped->piece] = word(static_cast<size_t>(at - input.previous->facets.begin()));
+    }
+    for (uint32_t i = 0; i < caps.pieces().size(); ++i) {
+      const auto &piece = caps.pieces()[i];
+      const auto &cap = caps.caps()[piece.cap];
+      const std::array<uint32_t, 3> source_sites{cap_poles[piece.cap],
+          cap_bindings[piece.cut_points[0]].construction_site,
+          cap_bindings[piece.cut_points[1]].construction_site};
+      std::array<uint32_t, 3> actual{}, inverse{};
+      for (uint32_t role = 0; role < 3; ++role) {
+        require(piece.positive_chart_roles[role] < 3, "mapped cap role is outside triangle");
+        actual[role] = source_sites[piece.positive_chart_roles[role]];
+        inverse[piece.positive_chart_roles[role]] = role;
+      }
+      RegionFacet facet{{FacetGenerator::mapped_cap, piece.cap, input.key.construction_revision, i},
+                          actual, none, none,
+                          MappedCapFacet{piece.cap, i, inverse,
+                            {caps.wedges()[cap.wedge].kind, piece.regular_sheet_sign,
+                              {exact.append(import_exact(budget, caps.values().view(piece.cut_uv[0]))),
+                               exact.append(import_exact(budget, caps.values().view(piece.cut_uv[2])))}}}};
+      bool unchanged = false;
+      if (previous_piece[i] != none) {
+            const auto &old = input.previous->facets[previous_piece[i]];
+            unchanged = true;
+            for (uint32_t j = 0; j < 3; ++j)
+              if (!equal_uv(points[actual[j]], read_uv(budget, input.previous->values,
+                                                       input.previous->sites[old.sites[j]].uv)) ||
+                  !same_actual(sites[actual[j]], input.previous->sites[old.sites[j]]))
+                unchanged = false;
+            if (unchanged)
+              facet.key = old.key;
+      }
+      if (!unchanged)
+        changed_keys.push_back(facet.key);
+      facets.push_back(facet);
     }
   }
   void packet_facets() {
@@ -1190,13 +1540,15 @@ public:
         exact(resource, request.table_key), points(&budget), sites(resource.get()),
         bindings(resource.get()), loops(&budget), facets(resource.get()), changed_keys(&budget),
         components(resource.get()), grid(request.surface.selection()->points.size(), none, &budget),
-        anchors(&budget), sides(&budget), metric(face_metric(request, budget)) {}
+        anchors(&budget), sides(&budget), cap_bindings(resource.get()), cap_poles(&budget),
+        inactive_poles(&budget), metric(face_metric(request, budget)) {}
   FaceConstructionResult run() {
     source_sites();
     packet_facets();
     rim_loops();
     anchor_sites();
     band_facets();
+    mapped_facets();
     // Group actual facets and source cycles by stable generator/component keys.
     // Initial global component output has not yet assigned per-component
     // ordinals.
@@ -1223,7 +1575,8 @@ public:
       budget.charge(1);
       if (!used[i]) {
         const auto *sample = std::get_if<SurfaceSiteSource>(&sites[i].source);
-        require(!input.previous && sample && sample->anchor,
+        require(std::find(inactive_poles.begin(), inactive_poles.end(), i) != inactive_poles.end() ||
+                    (!input.previous && sample && sample->anchor),
                 "construction retained an unused numerical/source site");
         continue;
       }
@@ -1258,6 +1611,29 @@ public:
                               loop.source,
                               loop.adapter});
     }
+    // Consumed source meridians remain protected actual edges of the fan.
+    // They are not edges of any ordinary remainder loop.
+    if (input.domain->caps)
+      for (uint32_t id = 0; id < input.domain->caps.caps().size(); ++id) {
+        const auto &cap = input.domain->caps.caps()[id];
+        require(cap.pieces.count != 0, "mapped cap has no radial-edge roles");
+        const auto &first = input.domain->caps.pieces()[cap.pieces.first];
+        const auto &last = input.domain->caps.pieces()[cap.pieces.first + cap.pieces.count - 1];
+        const std::array<uint32_t, 2> cut_sites{
+            cap_bindings[first.cut_points[0]].construction_site,
+            cap_bindings[last.cut_points[1]].construction_site};
+        const bool source_roles_positive = first.positive_chart_roles ==
+                                          std::array<uint32_t, 3>{0, 1, 2};
+        for (uint32_t side = 0; side < 2; ++side) {
+          const auto key = cap.meridian_intervals[cap.angular_to_sector[side]];
+          require(key.kind == BoundaryOwnerKind::source_edge,
+                  "mapped radial edge lost original meridian provenance");
+          std::array<uint32_t, 2> radial{site_remap[cap_poles[id]], site_remap[cut_sites[side]]};
+          if ((side == 1) == source_roles_positive)
+            std::swap(radial[0], radial[1]);
+          edges.push_back({radial, key});
+        }
+      }
     for (size_t at = 0; at < loop_order.size();) {
       const auto component = loops[loop_order[at]].component;
       size_t end = at + 1;
@@ -1287,6 +1663,10 @@ public:
         input.key, exact.seal());
     output->fixed_metric_factor = factor;
     output->sites = std::move(retained_sites);
+    output->cap_points = input.cut_points;
+    output->cap_point_bindings = std::move(cap_bindings);
+    for (auto &binding : output->cap_point_bindings)
+      binding.construction_site = site_remap[binding.construction_site];
     output->source_bindings = std::move(bindings);
     output->loop_sites = std::move(loop_sites);
     for (auto &facet : facets)
@@ -1352,6 +1732,8 @@ void validate_region_input(const RegionInput &input) {
               key.face.boundary_generation == input.key.boundary_generation &&
               key.face.chart_revision == input.key.chart_revision &&
               key.face.assignment_epoch == input.key.assignment_epoch &&
+              key.face.face_generation == effective_face_generation(input.key) &&
+              key.face.domain_revision == input.key.domain_revision &&
               key.selection.query == input.key.query &&
               key.selection.profile_revision == input.key.profile_revision,
           "stale face surface construction view");

@@ -536,6 +536,11 @@ brepgpu_native_cpu_rigor(brepgpu-adaptive-patch)
 add_library(brepgpu_mesher_adaptive_curve_geometry STATIC curve_source_cache.cpp adaptive_curve_geometry.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_curve_geometry PUBLIC brepgpu_mesher_adaptive_geometry)
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_curve_geometry)
+add_library(brepgpu_mesher_adaptive_cap_domain STATIC adaptive_cap_domain.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cap_domain PUBLIC
+  brepgpu_mesher_adaptive_cap_geometry brepgpu_mesher_adaptive_curve_geometry
+  brepgpu_mesher_source brepgpu_mesher_exact)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cap_domain)
 add_library(brepgpu_mesher_adaptive_traces STATIC adaptive_traces.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_traces PUBLIC brepgpu_mesher_adaptive_curve_geometry
   brepgpu_mesher_boundary)
@@ -554,13 +559,19 @@ brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_trimmed_geometry)
 add_library(brepgpu_mesher_adaptive_surface_cache STATIC adaptive_surface_cache.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_surface_cache PUBLIC
   brepgpu_mesher_adaptive_cache brepgpu_mesher_adaptive_trimmed_geometry
+  brepgpu_mesher_adaptive_cap_work
   brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_surface_cache)
 add_library(brepgpu_mesher_adaptive_regions STATIC adaptive_region_cdt.cpp adaptive_regions.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_regions PUBLIC brepgpu_mesher_exact
   brepgpu_mesher_domain_index brepgpu_mesher_direct_cdt brepgpu_mesher_adaptive_packets
-  brepgpu_mesher_adaptive_traces brepgpu_mesher_adaptive_trimmed_geometry)
+  brepgpu_mesher_adaptive_traces brepgpu_mesher_adaptive_trimmed_geometry
+  brepgpu_mesher_adaptive_cap_domain)
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_regions)
+add_library(brepgpu_mesher_adaptive_cap_work STATIC adaptive_cap_work.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cap_work PUBLIC
+  brepgpu_mesher_adaptive_regions brepgpu_mesher_adaptive_cap_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cap_work)
 add_library(brepgpu_mesher_adaptive_trimmed STATIC adaptive_trimmed.cpp)
 target_link_libraries(brepgpu_mesher_adaptive_trimmed PUBLIC
   brepgpu_mesher_adaptive_regions brepgpu_mesher_adaptive_surface_cache
@@ -647,6 +658,18 @@ if(BUILD_TESTING)
   target_link_libraries(brepgpu_native_adaptive_cap_geometry PRIVATE
     brepgpu_mesher_adaptive_cap_geometry ${CMAKE_DL_LIBS})
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_geometry)
+  add_executable(brepgpu_native_adaptive_cap_construction
+    ../../tests/native_adaptive_cap_construction.cpp ../../tests/native_adaptive_cap_work.cpp)
+  target_link_libraries(brepgpu_native_adaptive_cap_construction PRIVATE
+    brepgpu_mesher_adaptive_curves brepgpu_mesher_adaptive_cap_domain
+    brepgpu_mesher_adaptive_regions brepgpu_mesher_adaptive_surface_cache
+    brepgpu_mesher_adaptive_cap_work)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_construction)
+  add_executable(brepgpu_native_adaptive_cap_runtime
+    ../../tests/native_adaptive_cap_runtime.cpp adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_cap_runtime PRIVATE
+    brepgpu_mesher_adaptive_trimmed brepgpu_mesher_adaptive_caller_io ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_runtime)
   add_test(NAME native_adaptive_cap_sources COMMAND "${Python3_EXECUTABLE}" -B
     "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_cap_fixture.py"
     "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture")
@@ -825,7 +848,8 @@ if(BUILD_TESTING)
       ../../python/brepgpu/imported_source.py VERBATIM)
   add_custom_target(brepgpu_native_adaptive_trace_fixture DEPENDS "${TRACE_FIXTURE_DIR}/maps.bgsource")
   add_executable(brepgpu_native_adaptive_traces ../../tests/native_adaptive_traces.cpp)
-  target_link_libraries(brepgpu_native_adaptive_traces PRIVATE brepgpu_mesher_adaptive_traces)
+  target_link_libraries(brepgpu_native_adaptive_traces PRIVATE
+    brepgpu_mesher_adaptive_traces brepgpu_mesher_adaptive_curves)
   add_dependencies(brepgpu_native_adaptive_traces brepgpu_native_adaptive_trace_fixture)
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_traces)
   add_test(NAME native_adaptive_traces COMMAND brepgpu_native_adaptive_traces
