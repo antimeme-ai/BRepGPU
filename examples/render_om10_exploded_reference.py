@@ -61,13 +61,18 @@ def main(args):
     require((len(source.definitions),len(source.faces),len(match.assembly.occurrences))==(107,9162,166),
             'complete original watch required')
     metadata={r['field']:r['value'] for r in rows(args.reference/'metadata.tsv')}
+    chord=float(metadata['chord_height_mm']);curve_angle=float(metadata['curve_angle_degrees'])
+    surface_angle=float(metadata['surface_angle_degrees']);heal=int(metadata['heal'])
+    require(chord==.005 and all(math.isfinite(x) and x>=0 for x in (curve_angle,surface_angle)) and
+            heal in (0,1) and args.config==f'heal{heal}','reference requested policy differs')
     require(metadata['source_sha256']==source.source_sha256 and
             (int(metadata['source_definitions']),int(metadata['source_faces']),int(metadata['occurrences']))==(107,9162,166),
             'reference source inventory metadata differs')
     reports=rows(args.reference/'definitions.tsv')
     require(len(reports)==107 and len({int(r['definition_id']) for r in reports})==107 and
             {int(r['definition_id']) for r in reports}=={d.id for d in source.definitions} and
-            all(r['status']=='PASS' for r in reports),'NVIDIA definition pipeline incomplete')
+            all(r['status']=='PASS' and int(r['heal'])==heal and float(r['chord_mm'])==chord for r in reports),
+            'NVIDIA definition pipeline incomplete or requested policy differs')
     physical=rows(args.reference/'physical.tsv')
     require(len(physical)==107 and len({int(r['definition_id']) for r in physical})==107 and
             {int(r['definition_id']) for r in physical}=={d.id for d in source.definitions} and
@@ -116,6 +121,7 @@ def main(args):
             outcome['views_sha256']==digest(args.reference/'views.bgview'),
             'selected outcome does not describe complete reference images')
     paths=[('reference_scene',args.reference/'scene.bgrefmesh'),('reference_source',args.reference/'source/source.bgocct'),
+           ('reference_metadata',args.reference/'metadata.tsv'),
            ('reference_outcomes',args.outcomes),('native_model_scene',match.scene_path),
            ('native_source',args.model/'source.bgsource'),('layout_scene',args.layout/'diagram.bgscene'),
            ('layout_views',args.layout/'views.bgview'),('layout_manifest',args.layout/'explosion.tsv'),
@@ -128,6 +134,7 @@ def main(args):
     for name in ('labels.tsv','explosion.tsv','views.bgview'):shutil.copyfile(args.layout/name,args.output/name)
     (args.output/'diagram.bgrefmesh').write_bytes(changed)
     shutil.copyfile(args.outcomes,args.output/'original-reference-outcomes.tsv')
+    shutil.copyfile(args.reference/'metadata.tsv',args.output/'original-reference-metadata.tsv')
     command=[str(args.display),'--mesh',str(args.output/'diagram.bgrefmesh'),'--views',str(args.output/'views.bgview'),
              '--threads','12','--output-directory',str(args.output/'native')]
     (args.output/'command.txt').write_text(repr(tuple(command))+'\n')
@@ -159,7 +166,9 @@ def main(args):
     tsv(args.output/'visibility.tsv',('display_label','occurrence_id','original_product_name','module','actual_visible_pixels','major_part'),visibility)
     tsv(args.output/'guides.tsv',('occurrence_id','source_x','source_y','exploded_x','exploded_y','role'),annotation[1])
     stages.append(('actual_reference_visibility_mask_and_guides',time.perf_counter()-begin));begin=time.perf_counter()
-    caption=f'NVIDIA CPU reference mesh · Original source → both images: {original_wall:.2f}s · {args.config} / {outcome["status"]} · .005mm request; qualification separate · no remeshing'
+    caption=(f'NVIDIA CPU reference mesh · Original source → both images: {original_wall:.2f}s · '
+             f'heal{heal} · chord {chord:g}mm · curve/surface {curve_angle:g}°/{surface_angle:g}° · '
+             f'{outcome["status"]} · no remeshing')
     height=poster(args.output/'exploded-assembly.svg',args.output/'exploded-raw.png',mask,views[1],records,labels,
         annotation,'NVIDIA CPU MESH / CPU12 DISPLAY',{'raster':raster[1],'display':display,'reference_caption':caption},reference=True)
     stages.append(('compose_reference_svg_and_complete_legend',time.perf_counter()-begin));begin=time.perf_counter()
@@ -171,6 +180,8 @@ def main(args):
         ('source_sha256',source.source_sha256),('original_definitions',107),('original_faces',9162),('occurrences',166),
         ('native_width',views[1].width),('native_height',views[1].height),('supersample',views[1].supersample),
         ('poster_width',views[1].width),('poster_height',height),('reference_outcome_scope',outcome['scope']),
+        ('heal',heal),('chord_height_mm',chord),('curve_angle_degrees',curve_angle),
+        ('surface_angle_degrees',surface_angle),('independent_distance_qualification',metadata['independent_distance_qualification']),
         ('reference_outcome_status',outcome['status']),('original_source_to_both_images_seconds',original_wall),
         ('new_exploded_raster_and_host_copy_seconds',raster[1]),('new_both_view_display_process_seconds',display),
         ('actual_visible_occurrences',sum(counts.get(r.occurrence_id,0)>0 for r in records))))

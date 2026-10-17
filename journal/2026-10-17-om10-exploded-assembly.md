@@ -163,3 +163,49 @@ and tool/source pins. README OM10 hero now uses the proper functional assembly
 diagram; source credit/CC BY-SA3.0 and authored-translation limitations remain.
 The NVIDIA adapter is ready, but reference physical completion remains pending;
 no NVIDIA diagram or qualified-quality claim is published.
+
+## Complete genuine NVIDIA diagrams
+
+Parent supplied both complete chord-only reference outcomes and authorized two
+serial replays after all reference measurements ended. Both have all107 physical
+shell/source-Euler checks PASS, complete107/9162/166 original inventory, and
+COMPLETE_UNQUALIFIED status. Actual policy is0.005mm chord, curve/surface angles
+0°/0°, heal0/1, explicit periodic-plane preparation. Added those actual metadata
+fields visibly to the caption and retained the original metadata/outcome. No
+new meshing, geometry repair or independent distance qualification ran.
+
+Ran both proper-layout replays serially with CPU12 affinity0,2,…,22. Both final
+PNGs were inspected. Every20 selected major part has real visible pixels;
+150/166 occurrences are visible and all166 remain. The exact manifest, view and
+label byte hashes match both owned diagrams. Supplied reference materials remain
+unchanged, explaining the reference's gray/gold palette. Only BGREF instance
+explosion triples changed; exact pose, geometry, normals, keys, faces and materials
+were preserved by the slice comparison. All input/tool hashes remained unchanged.
+Each scene has694,248 raw normal corners and281,156 placed triangles. The two
+healing policies have equal assembled raw PNG bytes but different exploded raw
+PNG bytes; no forced equality or replacement.
+
+| Scope | NVIDIA heal0 seconds | NVIDIA heal1 seconds |
+|---|---:|---:|
+| Parent's original fresh source→both old views |43.673683950|45.001244677|
+| New assembled raster + host copy |2.174333243|2.423829944|
+| New exploded raster + host copy |0.478745018|0.526560666|
+| New both-view native process (`time`) |5.57|6.11|
+| Source/pose/layout admission + copy |12.662044913|11.914417957|
+| Both PNG encodes |1.257947359|1.261015085|
+| Actual-ID mask/visibility/guides |13.325605402|13.251167394|
+| SVG composition |0.008750942|0.008363309|
+| SVG rasterization |2.669154608|2.706944669|
+| Complete new replay/export |36.140975761|35.871445750|
+
+Original source pipeline scopes and every new native/replay stage are retained
+in the public result tables, with nesting explicitly nonadditive. New process
+RSS/user/system are actual `/usr/bin/time` results, not fabricated legacy fields.
+No matched-quality ratio follows: the nominal NVIDIA request is unqualified.
+
+Published both large NVIDIA diagrams under new filenames, left owned CPU/P100
+images unchanged, and updated the result report/license/README. Preserved policy
+history:25°/25° exported107 but one shell failed physical checks under both heals;
+a private advancing-front control was censored180s without a result and was not
+used in production. No further runs are selected. Ignored actual bundles are
+`context/explosion/final-nvidia-chord-only-heal{0,1}` locally and on fleet.

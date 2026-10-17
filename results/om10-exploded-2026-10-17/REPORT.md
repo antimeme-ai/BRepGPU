@@ -51,9 +51,70 @@ The original completed CPU12 cold source→mesh→1920both-view process took875.
 its meshing scope took847.712234s. Those earlier costs and the separate original
 P100 run are retained in the [whole-watch report](../om10-watch-2026-10-17/REPORT.md).
 This replay establishes no new meshing speedup or whole-watch quality proof.
-Independent whole-watch distance/alpha qualification remains separate. A
-NVIDIA external-mesh adapter now accepts the exact layout and cameras, but no
-NVIDIA diagram is published here while its full physical pipeline is unresolved.
+Independent whole-watch distance/alpha qualification remains separate. The genuine NVIDIA reference diagrams below use the exact same layout and
+cameras, with separate geometry and explicit qualification status.
+
+## Genuine NVIDIA CPU reference geometry
+
+[![Genuine NVIDIA CPU mesh in the same assembly diagram](../../assets/om10/nvidia-heal0-exploded-assembly-4k.png)](../../assets/om10/nvidia-heal0-exploded-assembly-4k.png)
+
+Full size: [heal0](../../assets/om10/nvidia-heal0-exploded-assembly-4k.png) ·
+[heal1](../../assets/om10/nvidia-heal1-exploded-assembly-4k.png).
+These use genuine NVIDIA CPU tessellation and the existing BRepGPU **CPU12 raw
+reference display**, not NVIDIA rendering or owned substitute triangles.
+All107 definitions,9,162 original faces and166 occurrences are present. Every
+existing physical shell/source-Euler check passes under both healing policies.
+Both show all20 selected major parts and150of166 actual visible occurrences.
+
+The named completed policy uses a **0.005mm chord request, curve angle0° and
+surface angle0°**, with explicit periodic/plane representation preparation.
+The status is **COMPLETE_UNQUALIFIED**: independent source-to-mesh distance
+qualification was not performed. Zero means the angular constraints are ignored;
+a nominal chord request and watertight shells do not prove a5µm error bound.
+No matched-quality speedup or ratio follows from these times.
+
+| Actual measured scope | NVIDIA heal0 | NVIDIA heal1 |
+|---|---:|---:|
+| Fresh source → both original labeled views |43.673684s|45.001245s|
+| New assembled diagram raster + host copy |2.174333s|2.423830s|
+| New exploded diagram raster + host copy |0.478745s|0.526561s|
+| New both-view native CPU12 process |5.57s|6.11s|
+| Source/pose/layout admission and scene copy |12.662045s|11.914418s|
+| Both PNG encodes |1.257947s|1.261015s|
+| Actual-ID mask, visibility and guides |13.325605s|13.251167s|
+| SVG composition |0.008751s|0.008363s|
+| SVG rasterization |2.669155s|2.706945s|
+| Complete new diagram replay/export |36.140976s|35.871446s|
+
+The first row is the original complete fresh reference pipeline, including
+source import/preparation, NVIDIA tessellation, physical admission and the
+original two views. Remaining rows replay its retained geometry into this new
+3840×4000SS2 diagram; no new tessellation is included. Both operations ran serially
+on twelve physical CPU cores. Nested stage scopes are not additive. See the
+literal [complete outcomes](nvidia-reference-outcomes.tsv), every recorded
+[original/new stage](nvidia-stages.tsv), actual new display
+[process costs](nvidia-processes.tsv), [metadata](nvidia-metadata.tsv),
+[visibility](nvidia-visibility.tsv) and [pins](nvidia-pins.tsv).
+
+The exact166-row translation manifest, label word and BGVIEW bytes match the
+owned CPU/P100 diagrams. Only the three explosion doubles per reference instance
+change; all NVIDIA geometry, normals, physical keys, triangle face ordinals and
+materials remain byte-identical to the retained reference scene. Its supplied
+illustrative palette is retained, so its colors differ from the owned images.
+Original placements match exact native-source composition. SDK face ordinals
+are checked against actual staged `input_faces`; they are not forged into STEP
+FaceIDs. Original coverage is retained separately through source inventory and
+source-linked preparation history. Both reference scenes contain694,248 stored
+normal corners and281,156 placed triangles. Heal0/heal1 assembled raw pixels
+are byte-identical; their exploded raw pixels differ. Neither mesh is replaced
+or normalized to manufacture agreement.
+
+Retained unsuccessful policies remain unsuccessful: at25°/25°, both healing
+policies exported all107 components but component1808 failed physical manifold
+checks. A private advancing-front control was censored at180s with no result;
+no advancing-front product route or repaired/fallback triangles were used here.
+The successful0°/0° policy is a separately named outcome, not a relabeling of
+those failures. All posters visibly state policy and qualification status.
 
 ## Reproduction and source
 
