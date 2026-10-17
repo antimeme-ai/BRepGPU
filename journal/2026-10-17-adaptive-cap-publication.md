@@ -122,3 +122,19 @@ intrinsic source gap. The declared original edge tolerance is metadata; it does
 not authorize raising the requested cap. Selected next unit is coherent
 reconstructed analytic locator proposals behind the existing source guard and
 whole-trace bound, with literal source frames and guide branch retained.
+
+The analytic locator and known-dyadic conversion units are now implemented,
+source-reviewed and pass their finite affected checks. A newly pinned native
+model completes the actual previously failing selected definition:45 faces,
+1,952 facets and zero forbidden final contacts,8.14349s component/19.0194s whole
+process including complete source preparation. This is a selected-component
+development observation, not a watch or independent qualification PASS.
+
+Started fresh complete CPU12/P1001 runs at the SAME0.005mm positional and0.001mm
+source-node targets. The render attempt window is now1800s, allowing the full
+assembly to advance beyond its known first component rather than repeating a
+600s diagnostic censor. Earlier censors/failures remain retained. The exact
+original source, source count, CPU socket allocation, GPU modules, camera size
+and explosion factor stay matched. The new saved-output reader separately checks
+the actual completed selected component under a180s window; this cannot be
+confused with native rendering or whole-watch qualification.
