@@ -21,6 +21,17 @@ are separately recorded. Fresh NVIDIA heal0/heal1 preparations each complete
 103/107 and fail; their21.969/87.467s are not complete-render times.
 Do not restart a certification campaign or imply an overall GPU speedup.
 
+The focused NVIDIA follow-up now repairs the two polygon cases through explicit
+conservative Plane face:range preparation, retaining original support geometry,
+curves/topology and the unchanged genuine SDK/raw exporter. Both healing policies
+pass9004/7060-triangle controls plus physical/source-Euler checks. Read
+docs/NVIDIA_REFERENCE_PREPARATION.md and the watch report's recovery section.
+The producer supports explicit --usd-definition inputs; original --definition
+and omitted angular0/0 settings remain unchanged. The benchmark driver has not
+silently switched policy. The two earlier periodic conversion refusals are
+diagnosed; a documented split gets one named derivative through, while the
+other remains unresolved. No new full107 reference run or image is claimed.
+
 Build toward an owned GPU B-rep kernel through useful selective acceleration.
 Current phase: implemented owned rational-patch CPU/CUDA evaluator and resident
 seeded box-stationary projection, with independently qualified output on CPU

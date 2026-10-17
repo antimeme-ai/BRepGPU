@@ -102,3 +102,29 @@ USD and complete genuine mesh across original/prepared input paths. Peer source
 review accepts the boundary, shared duplicate gate, input-kind/copy reporting
 and tests. The separate plane helper/authored fixture and public real-input
 controls are completing before this delivery is called finished.
+
+The public plane helper and independent translated rational-cylinder regression
+are now delivered in7aeb649, including CMake wiring. Root independently reviewed
+the actual homogeneous capture, final canonical frame, exact Gram/AABB arithmetic,
+outward conversion and typed-layer preservation. Findings closed: avoid claiming
+an extraULP certifies rounded SDK projections; report input-read/frame costs and
+full external process wall; compare root-layer/stage metadata; format the native
+helper; name support-geometry versus finite-domain changes explicitly. The
+fixture's initial center-origin chart assumption was corrected from actual SDK
+source; literal physical circle cardinal points now use the declared translated
+chart, and actual mesh points still satisfy original cylinder equations.
+
+The authored fixture passes in1.030s. Final public helper/script plus root
+--usd-definition succeeds on both actual heal0 inputs: preparation processes
+.415430602/.416043178s; complete producer processes.662115428/.816550042s;
+9004/7060 genuine triangles; physical/source-Euler2. These start from retained
+converter-produced USD and exclude STEP transfer/OCCT conversion. The private
+paired-healing controls already pass both policies, with unchanged geometry
+construction and exporter. No additional rerun/certification is selected.
+
+Published the small process/stage table and actual executable/source pins in the
+watch result directory, added usable reference-preparation documentation, and
+preserved historical103/107 outcomes separately. The two requested polygon cases
+have an implemented usable repair. The two other refusals have source/API/binary
+diagnoses, one supported derivative success and one explicit unresolved case.
+No new complete NVIDIA image, full107 result or whole-render speedup is claimed.
