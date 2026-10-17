@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <cstring>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -58,6 +59,68 @@ void print_exact(const Rational &value) {
     std::printf("-");
   std::printf("%llu/%llu", static_cast<unsigned long long>(integer(numerator)),
               static_cast<unsigned long long>(integer(denominator)));
+}
+void storage_grid() {
+  constexpr uint32_t side = 128;
+  bgfd::Budget budget({uint64_t{16} << 20, uint64_t{1} << 40});
+  std::vector<std::array<Rational, 2>> points;
+  points.reserve(side * side + 4);
+  const auto append = [&](int64_t x, int64_t y) {
+    points.push_back({Rational(budget, x), Rational(budget, y)});
+  };
+  append(0, 0);
+  append(side + 1, 0);
+  append(side + 1, side + 1);
+  append(0, side + 1);
+  for (uint32_t y = 1; y <= side; ++y)
+    for (uint32_t x = 1; x <= side; ++x)
+      append(x, y);
+  const std::array<uint32_t, 4> loop{0, 1, 2, 3};
+  const std::array<RegionCycleView, 1> cycles{{{loop}}};
+  const std::array<Rational, 4> factor{Rational(budget, 2), Rational(budget, 1), Rational(budget),
+                                       Rational(budget, 1)};
+  const auto baseline = budget.live();
+  {
+    const auto result = construct_region_cdt(budget, points, cycles, factor, 0);
+    require(result.triangles.size() == 2 * points.size() - 6,
+            "storage grid original-site inventory differs");
+    std::puts("case\tstorage");
+    for (uint32_t i = 0; i < points.size(); ++i) {
+      std::printf("point\t%u\t", i);
+      print_exact(points[i][0]);
+      std::printf("\t");
+      print_exact(points[i][1]);
+      std::puts("");
+    }
+    std::puts("loop\t0\t1\t2\t3");
+    for (size_t i = 0; i < result.triangles.size(); ++i) {
+      const auto triangle = result.triangles[i];
+      std::printf("triangle\t%u\t%u\t%u\t%u\n", triangle[0], triangle[1], triangle[2],
+                  result.components[i]);
+    }
+    std::fprintf(stderr,
+                 "region_storage sites=%zu boundary=4 triangles=%zu peak=%llu "
+                 "work=%llu\n",
+                 points.size(), result.triangles.size(),
+                 static_cast<unsigned long long>(budget.peak()),
+                 static_cast<unsigned long long>(budget.work()));
+  }
+  require(budget.live() == baseline, "storage grid retained completed bridge scratch");
+  bgfd::Budget tiny({2048, uint64_t{1} << 24});
+  std::vector<std::array<Rational, 2>> tiny_points;
+  for (const auto &point : std::array<std::array<int64_t, 2>, 4>{{{0, 0}, {1, 0}, {1, 1}, {0, 1}}})
+    tiny_points.push_back({Rational(tiny, point[0]), Rational(tiny, point[1])});
+  const std::array<Rational, 4> tiny_factor{Rational(tiny, 1), Rational(tiny), Rational(tiny),
+                                            Rational(tiny, 1)};
+  const auto tiny_baseline = tiny.live();
+  bool refused = false;
+  try {
+    static_cast<void>(construct_region_cdt(tiny, tiny_points, cycles, tiny_factor, 0));
+  } catch (const bgfd::Failure &error) {
+    refused = error.status == BGFD_RESOURCE_EXHAUSTED;
+  }
+  require(refused && tiny.live() == tiny_baseline,
+          "tiny region cap was ignored or exception retained bridge scratch");
 }
 void whole_face(const char *path) {
   auto resource = std::make_shared<RunResource>(uint64_t{1} << 31);
@@ -126,11 +189,12 @@ void whole_face(const char *path) {
   std::vector<RootAllowance> root_allowances;
   for (uint32_t i = 0; i < cache.roots().size(); ++i)
     root_allowances.push_back({{i}, tau});
-  surface.begin({1,
-                 {{0}, {0}, cache.generation(), key.boundary_generation, 1, 1},
-                 cache,
-                 values,
-                 root_allowances});
+  surface.begin(
+      {1,
+       {{0}, {0}, cache.generation(), key.boundary_generation, effective_face_generation(key), 1},
+       cache,
+       values,
+       root_allowances});
   bool selected = false;
   for (uint32_t step = 0; step < 1000000; ++step) {
     const auto progress = surface.step(context);
@@ -339,7 +403,8 @@ void whole_face(const char *path) {
     for (uint32_t j = 0; j < 3; ++j)
       require(oriented(uv[j], uv[(j + 1) % 3], point).multiply(Rational(budget, 6)).compare(area) >=
                   0,
-              "band anchor hugs a clipped-piece corner instead of its actual parent center");
+              "band anchor hugs a clipped-piece corner instead of its actual "
+              "parent center");
   }
   surface.release_operation();
   surface.refine({refined_view, requests->splits, {}, {}, refined});
@@ -422,6 +487,10 @@ void whole_face(const char *path) {
 } // namespace
 int main(int argc, char **argv) {
   try {
+    if (argc == 2 && std::strcmp(argv[1], "--storage-only") == 0) {
+      storage_grid();
+      return 0;
+    }
     run("rational", {{0, 0}, {8, 0}, {8, 8}, {0, 8}, {3, 4}}, {{0, 1, 2, 3}}, 3);
     run("anchor", {{0, 0}, {8, 0}, {8, 8}, {0, 8}, {3, 4}}, {{0, 1, 2, 3}});
     run("disconnected",
@@ -480,12 +549,16 @@ int main(int argc, char **argv) {
         for (auto site : triangle)
           used[site] = true;
       require(used == std::array<bool, 7>{true, true, true, true, false, false, true},
-              "restart anchor filtering changed material or retained nonmaterial samples");
+              "restart anchor filtering changed material or retained "
+              "nonmaterial samples");
     }
     require(argc == 1 || argc == 2, "usage: regions [source]");
     if (argc == 2)
       whole_face(argv[1]);
     return 0;
+  } catch (const bgfd::Failure &e) {
+    std::fprintf(stderr, "%s\n", e.what());
+    return 1;
   } catch (const std::exception &e) {
     std::fprintf(stderr, "%s\n", e.what());
     return 1;
