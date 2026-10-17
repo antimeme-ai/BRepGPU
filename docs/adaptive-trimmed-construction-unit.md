@@ -243,9 +243,11 @@ packet demotion changes the frozen footprint. Grid-depth exhaustion is unresolve
 Multiple targets are exact-deduplicated. For each point, locate current selected
 leaf branches containing it and bisect coordinates while a non-endpoint target
 coordinate remains interior. Split the axis with the greater remaining dyadic
-depth, U tie. Recurse only into children whose CLOSED box contains the target;
-this reaches both sides when the target lies on a selected side. Stop each path
-only when target is its corner; retain all companion children. Union the full
+depth, U tie. Continue through the canonical lower-key child whose CLOSED box contains
+the target; at an exact split-line tie one such child is sufficient. Stop when
+target is its corner, retaining all companion children. The existing side-event
+sweep exposes that corner as a hanging sample to every incident coarse side;
+forcing both sides to split would add unnecessary balancing work. Union the full
 multi-target split DAG before reserving controls/nodes/points/frontier, and retain
 captured cover/profile revisions. The runtime plan must enumerate required new
 corner keys before mutation. Active corner+common-schedule conformity forbids

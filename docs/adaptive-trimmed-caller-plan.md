@@ -79,9 +79,11 @@ writer/reader RED; the required semantic rows are:
 * Triangle table: three site indices, packet/component semantic generator and
   revision, facet ordinal, actual bound/domain policy and source association.
   UV-positive order stays explicit; physical face orientation is separate.
-* Metric: actual fixed binary64 factor and exact common Gram values defining
-  the connectivity predicate. The independent coverage oracle uses original
-  chart coordinates, not metric coordinates.
+* Metric: actual fixed EXACT dyadic factor4 in the canonical rational wire and
+  chosen Gram values defining the connectivity predicate. The exponent-safe
+  53-significand factor need not fit binary64. Distinguish its chosen T-transpose-T
+  Gram from the source Gram proposal. The independent coverage oracle uses
+  original chart coordinates, not metric coordinates.
 
 Canonical rationals use BGAPCH01/BGACRV01 sign and reduced uint32 limb format.
 All counts/index ranges/optional tags are checked. No trailing or partial
@@ -89,6 +91,13 @@ artifact is accepted. Bounds are emitted as exact rational uppers when native
 acceptance used exact tau; rounded values must not contradict that acceptance.
 Wire details cannot require exposing host placeholder controls or downloading
 device child nets.
+
+Scoped source/lifetime and original-oracle plan review accepts this operation.
+The metric wire was corrected after review: the existing exponent-safe metric
+arithmetic emits exact dyadics outside binary64's finite exponent range. The
+analytic declared envelope is an explicit finite profile, not an analytic
+surface's mathematical natural domain or an inferred general atlas. Lifted
+chosen sites outside it visibly refuse.
 
 ## One direct original-output reader
 
@@ -171,3 +180,44 @@ Overlapping worker/device scopes are not summed into process wall. Oracle time
 is separate. Retain unsupported/failed/censored observations. GPU advantage is
 a measured hypothesis, not an acceptance requirement. No watch retry or render
 is part of this checkpoint; complete component/assembly publication follows it.
+
+## Literal BGATRM01 wire1
+
+Field order is little-endian, no struct padding. Header is
+`<8sII32s9QiI10Q>`: magic, wire1, numeric profile, source digest; source/query/
+boundary/chart/construction/cover revisions, original definition/face/carrier;
+physical orientation and domain policy; counts of sites, source bindings, flat
+loop sites, protected edges, loops, components, facets, original roots and domain
+uses and persistent packet owners. Then exact factor4, accepted positional upper and requested node-source
+allowance. Positional upper is the exact accepted threshold for ALL facets,
+explicitly not an observed maximum. First original-UV chart stores one exact UV
+pair; a later alternate chart requires an explicit wire/profile extension.
+
+Rows follow: original roots (`<Q5I4d>` carrier, spanU/V, family, degreeU/V,
+original evaluator box); packet owners (`<QQ3I4d2I>` owner/revision/original-root/
+prepared spanU/V/prepared box/depth/path-word-count, then uint64 path words and
+exact selected-leaf box4); sites (`<IQ3d>`, exact UV2, then physical `<I>` node-row
+or surface `<IIQ>` original-root/stage/birth-horizon). Site kind1=boundary,
+2=grid,3=anchor. Source bindings are `<II>` shared-curve site/construction site.
+Flat loop sites are uint32. Edges are `<3IQQI>` sites2/provenance-kind then either
+original BoundaryKey(owner,interval,kind) or rim(side,revision,ordinal).
+Loops are `<I5Qi>` positive/sites-range/edges-range/original LoopID (zero for
+packet rims)/signed source traversal adapter. Components are `<6Q>`
+ID/revision/loops-range/facets-range. Facets are `<IQQI4I>` generator/owner/
+revision/ordinal/sites3/component; UINT32_MAX component denotes a packet.
+
+Domain uses are `<QII>` original UseID/policy/image-present. Present image writes
+`<QiQQ>` original raw CurveID/traversal/shared-site-range and exact endpoints4,
+covector2, scalar endpoints2. Those refs are read from the domain's retained
+table; mesh refs are read from its own table. Physical source facts remain in
+the paired BGACRV01 artifact. Exact rationals have the existing reduced limb
+encoding. Counts/ranges/finite words and complete close are checked before
+publication. No device control slab is serialized.
+
+Packet owner identity persists through unrelated cache insertions; the transient
+selected-leaf ordinal is never written. The reader derives each exact leaf box
+from the prepared box and full split path and checks packet vertices against it.
+The paired BGACRV01 now writes wire2: each use appends an optional original raw
+CurveID, signed traversal, exact line endpoints4/covector2/scalar endpoints2.
+This whole-use image record does not assert equality on each mapped-parameter
+subinterval; interval domain bounds retain their original meaning.

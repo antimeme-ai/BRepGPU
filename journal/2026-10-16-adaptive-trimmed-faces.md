@@ -44,3 +44,17 @@ Saved the actual reasoning in papers/2026-10-16-adaptive-trimmed-integrated-revi
 Root's complete caller/original-output plan is in peer review while the three
 owners close literal interfaces and direct RED order. No product implementation
 has begun in this checkpoint; the next commit records that design milestone.
+
+The concrete construction and numerical plans passed integrated/scoped review;
+caller source/lifetime and independent edge-chain/original-function oracle were
+accepted, with the metric wire corrected to exact dyadics rather than binary64.
+Product units are now implementing their direct REDs. Root authored the tiny-hole
+complete-face caller fixture: current shared-curve executable rejects --face
+with unknown-option (exit1), as expected for the missing operation. The SAME
+original fixture completes the actual shared-boundary caller in6.783ms, proving
+the input can pass the existing boundary prerequisite. This is operation-missing
+RED, not a claim of a geometric counterexample. Logs stay in ignored context.
+
+Started the planned native caller-I/O extraction: both callers will share the
+unchanged BGACRV01 writer and original definition curve-request gatherer.
+No new physical boundary implementation or geometry callback is introduced.
