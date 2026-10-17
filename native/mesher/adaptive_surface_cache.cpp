@@ -1,6 +1,7 @@
 #include "adaptive_surface_cache.hpp"
 #include "adaptive_cache_detail.hpp"
 #include "adaptive_regions.hpp"
+#include "cuda/adaptive_assignment_api.h"
 #include "cuda/adaptive_trim_api.h"
 
 namespace bgmesh::adaptive {
@@ -11,6 +12,11 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
     std::array<Dyadic, 2> coordinate;
   };
   SurfaceFaceIdentity face;
+  enum class AssignmentMode { unset, legacy, pooled };
+  AssignmentMode assignment_mode = AssignmentMode::unset;
+  uint64_t last_assignment = 0;
+  bool pages_retired = true;
+  const AssignmentCudaAPI *assignment_api = nullptr;
   CandidateBoxes candidate;
   SurfaceBoundView cover;
   uint32_t candidate_ordinal = 0;
@@ -425,16 +431,51 @@ void SurfaceCacheSession::begin(const SurfaceQuery &query) {
     check(allowance.root.value < p.source.roots().size() &&
               p.source.roots()[allowance.root.value].source_slot == carrier.value,
           ErrorCode::invalid_source, "surface root does not belong to face carrier");
-  const bool replacement = query.generation == p.query && p.query != 0;
-  if (replacement)
+  const bool pooled = query.face.assignment_epoch != 0;
+  check(pooled ? p.assignment_mode != Impl::AssignmentMode::legacy
+               : p.assignment_mode != Impl::AssignmentMode::pooled,
+        ErrorCode::invalid_source, "surface legacy/pooled assignment mode mismatch");
+  const bool new_assignment = pooled && query.face.assignment_epoch > p.last_assignment;
+  if (pooled)
+    check(new_assignment ? p.pages_retired : query.face.assignment_epoch == p.last_assignment,
+          ErrorCode::invalid_source, "nonmonotone or unretired surface assignment");
+  const bool same_query = query.generation == p.query && p.query != 0;
+  const bool continuation = same_query && !new_assignment;
+  if (continuation)
     check(p.phase == Impl::Phase::idle && query.face.definition == p.face.definition &&
               query.face.face == p.face.face &&
               query.face.source_generation == p.face.source_generation &&
+              query.face.assignment_epoch == p.face.assignment_epoch &&
               query.face.face_generation > p.face.face_generation &&
               query.face.boundary_generation > p.face.boundary_generation,
           ErrorCode::invalid_source, "stale same-query surface boundary replacement");
-  begin_core(p, {query.generation, query.source, query.values, query.allowances}, true,
-             replacement);
+  if (pooled && !new_assignment)
+    check(continuation && !p.pages_retired, ErrorCode::invalid_source,
+          "stale pooled surface assignment");
+  auto staged = prepare_begin_core(
+      p, {query.generation, query.source, query.values, query.allowances}, true, same_query);
+  p.query_roots.reserve(query.allowances.size());
+  if (new_assignment && p.device) {
+    if (!p.assignment_api) {
+      using Getter = const AssignmentCudaAPI *(*)();
+      const auto get =
+          reinterpret_cast<Getter>(dlsym(p.device->module, "brepgpu_adaptive_assignment_cuda_v1"));
+      check(get, ErrorCode::unsupported, "CUDA assignment retirement extension unavailable");
+      p.assignment_api = get();
+      check(p.assignment_api && p.assignment_api->abi == adaptive_assignment_cuda_abi &&
+                p.assignment_api->size == sizeof(AssignmentCudaAPI) && p.assignment_api->retire,
+            ErrorCode::unsupported, "invalid CUDA assignment retirement extension");
+    }
+    DeviceError error{};
+    device_check(p.assignment_api->retire(p.device->session, p.last_assignment,
+                                          query.face.assignment_epoch, &error),
+                 error);
+  }
+  commit_begin_core(p, std::move(staged));
+  p.assignment_mode = pooled ? Impl::AssignmentMode::pooled : Impl::AssignmentMode::legacy;
+  if (new_assignment)
+    p.last_assignment = query.face.assignment_epoch;
+  p.pages_retired = false;
   p.query_roots.clear();
   p.query_roots.reserve(query.allowances.size());
   for (const auto &entry : query.allowances)
@@ -1080,17 +1121,17 @@ void SurfaceCacheSession::bound(const SurfaceFacetRequest &request) {
             request.limits.precise_tasks && request.limits.work && request.limits.pieces &&
             request.limits.exact_entries && request.limits.candidate_visits,
         ErrorCode::invalid_source, "invalid surface facet limits");
-  const auto tau = import_exact(p.budget,
-      request.allowances.values.view(request.allowances.face_position));
+  const auto tau =
+      import_exact(p.budget, request.allowances.values.view(request.allowances.face_position));
   check(tau.sign() > 0, ErrorCode::invalid_source, "nonpositive surface facet allowance");
-  std::pmr::vector<uint32_t> unique(request.selected_facets.begin(),
-                                   request.selected_facets.end(), &p.budget);
+  std::pmr::vector<uint32_t> unique(request.selected_facets.begin(), request.selected_facets.end(),
+                                    &p.budget);
   for (auto index : unique)
     check(index < request.construction->facets.size(), ErrorCode::invalid_source,
           "surface facet subset index outside captured construction");
   std::sort(unique.begin(), unique.end());
-  check(std::adjacent_find(unique.begin(), unique.end()) == unique.end(),
-        ErrorCode::invalid_source, "duplicate surface facet subset index");
+  check(std::adjacent_find(unique.begin(), unique.end()) == unique.end(), ErrorCode::invalid_source,
+        "duplicate surface facet subset index");
   p.selected_facets.assign(request.selected_facets.begin(), request.selected_facets.end());
   p.facet_request = request;
   p.facet_request->selected_facets = p.selected_facets;
@@ -1113,6 +1154,40 @@ void SurfaceCacheSession::release_query() {
   p.cover = {};
   p.query_values.reset();
   p.phase = Impl::Phase::idle;
+}
+void SurfaceCacheSession::retire_assignment() {
+  auto &p = *impl_;
+  p.stopped();
+  check(p.assignment_mode != Impl::AssignmentMode::legacy &&
+            (p.phase == Impl::Phase::idle || p.phase == Impl::Phase::done) && !p.jobs && !p.ticket,
+        ErrorCode::invalid_source, "surface assignment retirement is not drained");
+  if (p.phase == Impl::Phase::done)
+    release_query();
+  else
+    check(p.point_phase == Impl::PointPhase::none && p.facet_phase == Impl::FacetPhase::none,
+          ErrorCode::invalid_source, "idle surface owner retains an auxiliary operation");
+  retire_core_pages(p);
+  p.cover = {};
+  p.candidate.reset();
+  p.classified_domain.reset();
+  p.classified = false;
+  p.provenance_set = false;
+  p.controls_pending = false;
+  p.control_nodes.clear();
+  p.node_classes.clear();
+  p.required_targets.clear();
+  p.query_roots.clear();
+  p.absolute_index.clear();
+  p.requested_points.clear();
+  p.selected_facets.clear();
+  p.piece_queue.clear();
+  p.plane_queue.clear();
+  p.batch_indices.clear();
+  p.piece_accepted.clear();
+  p.plane_accepted.clear();
+  p.source_inputs.clear();
+  p.source_answers.clear();
+  p.pages_retired = true;
 }
 void SurfaceCacheSession::cancel() noexcept {
   impl_->cancelled.store(true, std::memory_order_relaxed);

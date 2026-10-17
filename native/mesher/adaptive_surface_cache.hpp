@@ -106,6 +106,7 @@ public:
   [[nodiscard]] CacheStats stats() const noexcept;
   void release_operation();
   void release_query();
+  void retire_assignment(); // drained selected/idle owner; retains fixed source/service bank
   void cancel() noexcept;
   void close();
 };

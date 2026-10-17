@@ -62,6 +62,7 @@ void require_domain_key(const FaceDomainLease &domain, const FaceConstructionKey
               domain->key.boundary_generation == key.boundary_generation &&
               domain->key.chart_revision == key.chart_revision &&
               domain->key.profile_revision == key.profile_revision &&
+              domain->key.assignment_epoch == key.assignment_epoch &&
               domain->key.face == key.face && domain->key.definition == key.definition,
           "stale source face domain lease");
 }
@@ -354,6 +355,7 @@ CandidateClassification FaceDomainClassifier::classify(const CandidateBoxes &can
   const auto &face = candidates->key.face;
   require(domain->key.definition == face.definition && domain->key.face == face.face &&
               domain->key.source_generation == face.source_generation &&
+              domain->key.assignment_epoch == face.assignment_epoch &&
               domain->key.boundary_generation == face.boundary_generation &&
               domain->key.chart_revision == face.chart_revision &&
               domain->key.query == candidates->key.selection.query &&
@@ -1349,6 +1351,7 @@ void validate_region_input(const RegionInput &input) {
               key.face.source_generation == input.key.source_generation &&
               key.face.boundary_generation == input.key.boundary_generation &&
               key.face.chart_revision == input.key.chart_revision &&
+              key.face.assignment_epoch == input.key.assignment_epoch &&
               key.selection.query == input.key.query &&
               key.selection.profile_revision == input.key.profile_revision,
           "stale face surface construction view");

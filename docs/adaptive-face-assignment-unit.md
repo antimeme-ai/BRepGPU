@@ -1,6 +1,6 @@
 # Bounded reusable face assignments
 
-2026-10-17. Finite runtime subplan for review before implementation. Root owns
+2026-10-17. Reviewed finite runtime subplan, implementation complete. Root owns
 the CUDA retirement extension, CMake and component coordinator. This lane owns
 the native face/cache retirement invariant and one actual-face fixture.
 
@@ -141,3 +141,13 @@ remain observable through existing stats. This is a bounded lifetime claim,
 not a performance speedup or a new numerical qualification campaign. If the
 real needs_boundary source cannot be expressed by existing admitted operations,
 report that gap rather than injecting an authored progress state.
+
+## Closure
+
+The actual fixture expresses the coarse closed-circle needs_boundary path and
+passes all9 assignments/8 complete faces on CPU1, CPU4 and both P100s. The
+existing reader qualifies every face; retained old host values serialize
+identically after close. Same-fixture ASan/UBSan/leak and TSan CPU4 pass, as do
+the affected legacy SurfaceCache/PatchSession controls. Root's actual-source
+runtime review accepts the implementation. See the implementation journal for
+the exact scope, device review and bank-local writer finding/closure.

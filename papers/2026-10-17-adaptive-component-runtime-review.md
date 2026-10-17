@@ -25,3 +25,13 @@ No remaining architecture blocker after root selected the fixed source bank and
 versioned device retirement seam. Implementation GO still follows the finite
 subplan review. Contact/component/assembly/display construction stays outside
 this first runtime unit.
+
+The concrete coordinator subplan was subsequently read in
+docs/adaptive-component-coordinator-unit.md. Scoped runtime ACCEPT: each owner
+uses one CPU step under the outer scheduler, avoiding nested queued waits;
+complete face arrivals precede a physical forest mutation; requests are copied
+before retirement; every retained completed face is matched to its actual
+per-face boundary generation while preserving its exact older snapshot lease.
+Final source/resource bank binding, terminal failed owners and output-after-contact
+closure are explicit. Contact policy mathematics and new assembly envelope
+arithmetic remain their owners' review scopes.

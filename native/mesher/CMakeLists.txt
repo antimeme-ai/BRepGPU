@@ -579,6 +579,36 @@ if(BREPGPU_MESHER_ENABLE_CUDA)
 endif()
 
 if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_assembly ../../tests/native_adaptive_assembly.cpp)
+  target_link_libraries(brepgpu_native_adaptive_assembly PRIVATE brepgpu_mesher_adaptive_assembly)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_assembly)
+  add_test(NAME native_adaptive_assembly COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_assembly.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_assembly>")
+  set_tests_properties(native_adaptive_assembly PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  add_executable(brepgpu_native_adaptive_face_assignments
+    ../../tests/native_adaptive_face_assignments.cpp adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_face_assignments PRIVATE
+    brepgpu_mesher_adaptive_trimmed brepgpu_mesher_adaptive_caller_io)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_face_assignments)
+  foreach(threads 1 4)
+    add_test(NAME native_adaptive_face_assignments_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_face_assignments.py"
+      --executable "$<TARGET_FILE:brepgpu_native_adaptive_face_assignments>" --threads "${threads}")
+    set_tests_properties(native_adaptive_face_assignments_cpu${threads} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_face_assignments_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_face_assignments.py"
+        --executable "$<TARGET_FILE:brepgpu_native_adaptive_face_assignments>" --threads 1
+        --module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+      set_tests_properties(native_adaptive_face_assignments_p100_${device} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+    endforeach()
+  endif()
   add_executable(brepgpu_native_adaptive_trim_source ../../tests/native_adaptive_trim_source.cpp)
   target_link_libraries(brepgpu_native_adaptive_trim_source PRIVATE brepgpu_mesher_adaptive_geometry)
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_trim_source)
@@ -743,14 +773,6 @@ if(BUILD_TESTING)
     --fixture "$<TARGET_FILE:brepgpu_native_adaptive_packets>" --source "${CELL_FIXTURE}")
 endif()
 if(BUILD_TESTING)
-  add_executable(brepgpu_native_adaptive_assembly ../../tests/native_adaptive_assembly.cpp)
-  target_link_libraries(brepgpu_native_adaptive_assembly PRIVATE brepgpu_mesher_adaptive_assembly)
-  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_assembly)
-  add_test(NAME native_adaptive_assembly COMMAND "${Python3_EXECUTABLE}" -B
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_assembly.py"
-    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_assembly>")
-  set_tests_properties(native_adaptive_assembly PROPERTIES
-    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
   add_executable(brepgpu_native_adaptive_runtime ../../tests/native_adaptive_runtime.cpp)
   target_link_libraries(brepgpu_native_adaptive_runtime PRIVATE brepgpu_mesher_adaptive_cache)
   add_dependencies(brepgpu_native_adaptive_runtime brepgpu_native_mesher_chart_fixture)
@@ -769,13 +791,18 @@ if(BUILD_TESTING)
     --executable "$<TARGET_FILE:brepgpu-adaptive-trimmed>")
   set_tests_properties(native_adaptive_trimmed_failures PROPERTIES
     ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
-  foreach(family plane plane_many_holes plane_reversed plane_authoritative bowl weighted saddle)
+  foreach(family plane plane_many_holes plane_reversed plane_authoritative bowl weighted saddle
+      c0_hanging nested_island cylinder_seam)
+    set(ADAPTIVE_TRIMMED_QUERY_ARGS --positional-mm .01 --positional-mm .005)
+    if(family MATCHES "^(c0_hanging|nested_island|cylinder_seam)$")
+      set(ADAPTIVE_TRIMMED_QUERY_ARGS --history-check)
+    endif()
     foreach(threads 1 4)
       add_test(NAME native_adaptive_trimmed_${family}_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_caller.py"
         "$<TARGET_FILE:brepgpu-adaptive-trimmed>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-trimmed-caller"
         --temporary-output --family "${family}" --threads "${threads}"
-        --positional-mm .01 --positional-mm .005)
+        ${ADAPTIVE_TRIMMED_QUERY_ARGS})
       set_tests_properties(native_adaptive_trimmed_${family}_cpu${threads} PROPERTIES
         ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
     endforeach()
@@ -785,7 +812,7 @@ if(BUILD_TESTING)
           "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_caller.py"
           "$<TARGET_FILE:brepgpu-adaptive-trimmed>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-trimmed-caller"
           --temporary-output --family "${family}" --threads 4
-          --positional-mm .01 --positional-mm .005
+          ${ADAPTIVE_TRIMMED_QUERY_ARGS}
           --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
         set_tests_properties(native_adaptive_trimmed_${family}_p100_${device} PROPERTIES
           ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)

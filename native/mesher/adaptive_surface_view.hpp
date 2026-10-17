@@ -9,6 +9,7 @@ struct SurfaceFaceIdentity final {
   Slot<FaceTag> face;
   uint64_t source_generation = 0, boundary_generation = 0;
   uint64_t face_generation = 0, chart_revision = 0;
+  uint64_t assignment_epoch = 0;
   auto operator<=>(const SurfaceFaceIdentity &) const = default;
 };
 struct SurfaceViewKey final {

@@ -1125,11 +1125,25 @@ inline void open_core(SurfaceCacheCore &p, const CacheDevice &request) {
                error);
 }
 
-inline void begin_core(SurfaceCacheCore &p, const PatchQuery &request, bool subset,
-                       bool replacement = false) {
+// Preparation owns all potentially throwing allowance decoding and initial
+// metadata allocation. Device assignment barriers run after this preparation.
+struct BeginPreparation final {
+  uint64_t generation;
+  bool replacement;
+  ExactTable values;
+  std::pmr::vector<ExactRef> allowances;
+  std::pmr::vector<double> tolerance_down;
+  std::pmr::vector<RootSlot> roots;
+  BeginPreparation(SurfaceCacheCore &p, const PatchQuery &request, bool same_query)
+      : generation(request.generation), replacement(same_query), values(request.values),
+        allowances(p.source.roots().size(), {}, &p.budget),
+        tolerance_down(p.source.roots().size(), 0., &p.budget), roots(&p.budget) {}
+};
+inline BeginPreparation prepare_begin_core(SurfaceCacheCore &p, const PatchQuery &request,
+                                           bool subset, bool replacement = false) {
   p.stopped();
-  check(p.phase == SurfaceCacheCore::Phase::idle && !p.mesh, ErrorCode::invalid_source,
-        "adaptive query already active");
+  check(p.phase == SurfaceCacheCore::Phase::idle && !p.mesh && !p.jobs && !p.ticket,
+        ErrorCode::invalid_source, "adaptive query already active");
   check(&request.source.view() == &p.source.view(), ErrorCode::invalid_source,
         "foreign adaptive source cache");
   check((request.generation > p.query || (replacement && request.generation == p.query)) &&
@@ -1138,42 +1152,55 @@ inline void begin_core(SurfaceCacheCore &p, const PatchQuery &request, bool subs
   check((subset || request.allowances.size() == p.source.roots().size()) &&
             !request.allowances.empty(),
         ErrorCode::invalid_source, "adaptive query requires complete root allowances");
-  p.query_values = request.values;
-  p.allowances.resize(p.source.roots().size());
-  p.tolerance_down.resize(p.source.roots().size());
+  check(request.allowances.size() <= p.limits.nodes &&
+            request.allowances.size() <= p.limits.frontier,
+        ErrorCode::resource_exhausted, "adaptive initial root capacity");
+  BeginPreparation staged(p, request, replacement);
   std::pmr::vector<uint8_t> seen(p.source.roots().size(), uint8_t{0}, &p.budget);
+  uint64_t missing = 0;
   for (const auto &entry : request.allowances) {
     check(entry.root.value < p.source.roots().size() && !seen[entry.root.value],
           ErrorCode::invalid_source, "duplicate/foreign adaptive root");
     seen[entry.root.value] = 1;
     auto tau = import_exact(p.budget, request.values.view(entry.positional));
     check(tau.sign() > 0, ErrorCode::invalid_source, "nonpositive adaptive positional allowance");
-    p.allowances[entry.root.value] = entry.positional;
-    p.tolerance_down[entry.root.value] = tau.bounds().lower;
+    staged.allowances[entry.root.value] = entry.positional;
+    staged.tolerance_down[entry.root.value] = tau.bounds().lower;
+    staged.roots.push_back(entry.root);
+    if (p.roots.empty() || p.roots[entry.root.value] == invalid_slot)
+      ++missing;
   }
-  p.query = request.generation;
-  if (!replacement) {
+  check(missing <= p.limits.nodes - p.nodes.size(), ErrorCode::resource_exhausted,
+        "adaptive initial root capacity");
+  p.nodes.reserve(p.nodes.size() + missing);
+  p.active_bounds.reserve(p.active_bounds.size() + missing);
+  p.roots.reserve(p.source.roots().size());
+  p.frontier.reserve(staged.roots.size());
+  return staged;
+}
+inline void commit_begin_core(SurfaceCacheCore &p, BeginPreparation staged) {
+  p.query_values = std::move(staged.values);
+  p.allowances = std::move(staged.allowances);
+  p.tolerance_down = std::move(staged.tolerance_down);
+  p.query = staged.generation;
+  if (!staged.replacement) {
     p.table_ordinal = 0;
     ++p.counts.queries;
-  }
-  if (!replacement)
     std::fill(p.point_stages.begin(), p.point_stages.end(), 0);
+  }
   p.frontier.clear();
   p.selected.clear();
   p.next.clear();
   p.restriction_tasks.clear();
   if (p.roots.empty())
     p.roots.resize(p.source.roots().size(), invalid_slot);
-  check(request.allowances.size() <= p.limits.nodes &&
-            request.allowances.size() <= p.limits.frontier,
-        ErrorCode::resource_exhausted, "adaptive initial root capacity");
-  for (const auto &entry : request.allowances) {
-    auto &root = p.roots[entry.root.value];
+  for (const auto entry : staged.roots) {
+    auto &root = p.roots[entry.value];
     if (root == invalid_slot) {
       NodeMeta n;
-      n.root = entry.root;
+      n.root = entry;
       n.coordinate = {Dyadic{0, 0}, Dyadic{1, 0}, Dyadic{0, 0}, Dyadic{1, 0}};
-      n.controls = p.source.roots()[entry.root.value].controls;
+      n.controls = p.source.roots()[entry.value].controls;
       root = p.make_node(n);
     }
     p.frontier.push_back(root);
@@ -1181,6 +1208,40 @@ inline void begin_core(SurfaceCacheCore &p, const PatchQuery &request, bool subs
   std::sort(p.frontier.begin(), p.frontier.end(),
             [&](auto a, auto b) { return p.less_node(a, b); });
   p.phase = SurfaceCacheCore::Phase::prepare;
+}
+inline void begin_core(SurfaceCacheCore &p, const PatchQuery &request, bool subset,
+                       bool replacement = false) {
+  commit_begin_core(p, prepare_begin_core(p, request, subset, replacement));
+}
+inline void retire_core_pages(SurfaceCacheCore &p) {
+  check(p.phase == SurfaceCacheCore::Phase::idle && !p.jobs && !p.ticket, ErrorCode::invalid_source,
+        "adaptive retirement requires a drained idle owner");
+  p.frozen.reset();
+  p.mesh.reset();
+  p.query_values.reset();
+  p.nodes.clear();
+  p.controls.resize(p.source.controls().size());
+  p.points.clear();
+  p.point_index.clear();
+  p.point_stages.clear();
+  p.resident_stages.clear();
+  p.roots.clear();
+  p.frontier.clear();
+  p.selected.clear();
+  p.next.clear();
+  p.frozen_point_ids.clear();
+  p.active_bounds.clear();
+  p.bound_tiers.clear();
+  p.allowances.clear();
+  p.tolerance_down.clear();
+  p.sample_tasks.clear();
+  p.sample_answers.clear();
+  p.restriction_tasks.clear();
+  p.node_tasks.clear();
+  p.node_answers.clear();
+  p.facet_tasks.clear();
+  p.facet_answers.clear();
+  p.operation = SurfaceCacheCore::Operation::none;
 }
 
 inline StepState step_core(SurfaceCacheCore &p, JobContext &context) {
