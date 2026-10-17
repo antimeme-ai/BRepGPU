@@ -3,6 +3,7 @@
 #include "curve_source_cache.hpp"
 #include <bit>
 #include <iostream>
+#include <optional>
 #include <thread>
 using namespace bgmesh;
 using namespace bgmesh::adaptive;
@@ -56,8 +57,71 @@ int main(int argc, char **argv) {
     limits.points = 1 << 17;
     limits.control_scalars = 1 << 20;
     limits.frontier = 1 << 16;
-    limits.cpu_threads = argc >= 3 ? static_cast<uint32_t>(std::stoul(argv[2])) : 1;
-    AdaptiveBoundarySession session(run, source, {0}, roots, limits);
+    const bool auth_profile = argc == 3 && std::string_view(argv[2]) == "--profile-auth";
+    const bool regular_profile = argc == 3 && std::string_view(argv[2]) == "--profile-regular";
+    limits.cpu_threads = argc >= 3 && !auth_profile && !regular_profile
+                             ? static_cast<uint32_t>(std::stoul(argv[2]))
+                             : 1;
+    const auto &carrier = source.view().carriers.front();
+    const auto domain = carrier.kind == 6 ? std::array{0., 1., 0., 1.} : carrier.uv_bounds;
+    const std::array carrier_requests{CarrierRequest{{0}, domain}};
+    const auto supplied = prepare_trim_source_cache(source, carrier_requests, run, {}, {}, budget);
+    if (regular_profile) {
+      AdaptiveBoundarySession fixed(run, source, {0}, roots, supplied, limits);
+      const auto retained = query(fixed, run, {1, 10.});
+      fixed.close();
+      check(retained->carrier_source && &retained->carrier_source->view() == &supplied.view(),
+            "rational source bank identity did not survive close");
+      const std::array narrow_request{CarrierRequest{{0}, {.25, .75, .25, .75}}};
+      const auto narrow = prepare_trim_source_cache(source, narrow_request, run, {}, {}, budget);
+      AdaptiveBoundarySession constrained(run, source, {0}, roots, narrow, limits);
+      bool refused_profile = false;
+      try {
+        (void)query(constrained, run, {1, 10.});
+      } catch (const Error &error) {
+        refused_profile =
+            error.code == ErrorCode::unsupported &&
+            std::string(error.what()).find("supplied carrier profile") != std::string::npos;
+      }
+      check(refused_profile, "original rational span bypassed prepared rectangle");
+      constrained.close();
+      std::cout << "rational prepared-profile handoff GREEN\n";
+      return 0;
+    }
+    if (auth_profile) {
+      AdaptiveBoundarySession guarded(run, source, {0}, roots, supplied, limits);
+      bool refused_profile = false;
+      try {
+        (void)query(guarded, run, {1, 10.});
+      } catch (const Error &error) {
+        refused_profile =
+            error.code == ErrorCode::unresolved &&
+            std::string(error.what())
+                    .find("authoritative original pcurve outside supplied carrier profile") !=
+                std::string::npos;
+      }
+      check(refused_profile, "whole authoritative image escaped the fixed prepared profile");
+      bool incomplete = false;
+      try {
+        (void)guarded.result();
+      } catch (const Error &) {
+        incomplete = true;
+      }
+      check(incomplete, "outside authoritative image exposed partial output");
+      guarded.close();
+      std::cout << "authoritative prepared-profile refusal GREEN\n";
+      return 0;
+    }
+    std::optional<AdaptiveBoundarySession> owner;
+    const auto &initial_curve =
+        source.view().curves[source.view().curve_index.find(source.view().edges[0].curve_id).value];
+    const bool use_supplied = carrier.kind == 2 || initial_curve.kind != 4 ||
+                              source.view().view(initial_curve.controls)[5] == 0.;
+    if (use_supplied)
+      owner.emplace(run, source, Slot<DefinitionTag>{0}, roots, supplied, limits);
+    else
+      owner.emplace(run, source, Slot<DefinitionTag>{0}, roots, limits);
+    auto &session = *owner;
     bool refused = false;
     try {
       (void)session.result();
@@ -82,6 +146,9 @@ int main(int argc, char **argv) {
       return 0;
     }
     const auto first = query(session, run, {1, .05});
+    if (use_supplied)
+      check(first->carrier_source && &first->carrier_source->view() == &supplied.view(),
+            "shared boundary replaced its supplied original carrier profile");
     const bool seam = source.view().carriers[0].kind == 2;
     const auto &first_curve =
         source.view().curves[source.view().curve_index.find(source.view().edges[0].curve_id).value];
@@ -176,8 +243,11 @@ int main(int argc, char **argv) {
                 refined->boundary->nodes.size() > second->boundary->nodes.size(),
             "consumer request did not continue the same shared authority");
       refused = false;
-      try { session.refine(second, std::span(&requested, 1)); }
-      catch (const Error &error) { refused = error.code == ErrorCode::invalid_source; }
+      try {
+        session.refine(second, std::span(&requested, 1));
+      } catch (const Error &error) {
+        refused = error.code == ErrorCode::invalid_source;
+      }
       check(refused && session.result() == refined, "stale feedback mutated current boundary");
     }
     session.release_result();
@@ -193,6 +263,37 @@ int main(int argc, char **argv) {
       session.release_result();
     }
     session.close();
+    if (use_supplied) {
+      check(first->carrier_source && &first->carrier_source->view() == &supplied.view(),
+            "retained trace profile did not survive session close");
+      const std::array narrow_request{CarrierRequest{{0}, {.25, .75, .25, .75}}};
+      const auto narrow = prepare_trim_source_cache(source, narrow_request, run, {}, {}, budget);
+      AdaptiveBoundarySession constrained(run, source, {0}, roots, narrow, limits);
+      bool outside = false;
+      try {
+        (void)query(constrained, run, {1, .05});
+      } catch (const Error &error) {
+        outside = error.code == ErrorCode::unsupported &&
+                  std::string(error.what()).find("supplied carrier profile") != std::string::npos;
+      }
+      check(outside, "narrow supplied profile silently expanded to chosen outside UV");
+      bool partial = false;
+      try {
+        (void)constrained.result();
+      } catch (const Error &) {
+        partial = true;
+      }
+      check(partial, "outside supplied profile exposed a partial snapshot");
+      constrained.close();
+      const auto missing = prepare_trim_source_cache(source, {}, run, {}, {}, budget);
+      bool closure = false;
+      try {
+        AdaptiveBoundarySession absent(run, source, {0}, roots, missing, limits);
+      } catch (const Error &error) {
+        closure = error.code == ErrorCode::invalid_source;
+      }
+      check(closure, "supplied bank omitted required original carrier closure");
+    }
     auto tiny_limits = limits;
     tiny_limits.nodes = 1;
     AdaptiveBoundarySession bounded(run, source, {0}, roots, tiny_limits);
@@ -212,6 +313,14 @@ int main(int argc, char **argv) {
     check(refused, "resource failure exposed partial shared curves");
     bounded.close();
     const auto other = load_source(argv[1], run);
+    const auto other_bank = prepare_trim_source_cache(other, carrier_requests, run, {}, {}, budget);
+    refused = false;
+    try {
+      AdaptiveBoundarySession foreign_bank(run, source, {0}, roots, other_bank, limits);
+    } catch (const Error &error) {
+      refused = error.code == ErrorCode::invalid_source;
+    }
+    check(refused, "session accepted foreign carrier source profile");
     refused = false;
     try {
       AdaptiveBoundarySession foreign(run, other, {0}, roots, limits);

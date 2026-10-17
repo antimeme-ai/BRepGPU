@@ -31,6 +31,11 @@ template <class T> const T &needed(const std::optional<T> &value) {
     throw Error(ErrorCode::internal_error, "missing active curve-session state");
   return value.value();
 }
+template <class T> const T &needed(const std::shared_ptr<const T> &value) {
+  if (!value)
+    throw Error(ErrorCode::internal_error, "missing retained curve-session source");
+  return *value;
+}
 uint32_t slot(std::size_t n) {
   require(n < invalid_slot, ErrorCode::resource_exhausted, "curve cache index overflow");
   return static_cast<uint32_t>(n);
@@ -312,7 +317,13 @@ struct AdaptiveBoundarySession::Impl {
   CurveOwner *device = nullptr;
   std::optional<CurveBoundaryQuery> request;
   std::pmr::vector<FaceCurveAllowance> overrides;
-  std::optional<SourceCache> carriers;
+  std::shared_ptr<const SourceCache> carriers;
+  struct CarrierProfile {
+    bool ready = false;
+    std::array<double, 4> box{};
+  };
+  std::pmr::vector<CarrierProfile> carrier_profiles;
+  bool fixed_carriers = false;
   std::optional<DefinitionBoundaryForest> forest;
   std::optional<BoundaryEvaluationBatch> evaluation;
   DefinitionBoundarySnapshot snapshot;
@@ -352,7 +363,8 @@ struct AdaptiveBoundarySession::Impl {
                                                      std::move(compiled))),
         limits(cap), stop(cancellation.get_token()),
         budget({cap.host_bytes, cap.total_work}, resource.get(), stop),
-        cache(budget, *roots, limits, counts), overrides(&budget), interval_nodes(&budget),
+        cache(budget, *roots, limits, counts), overrides(&budget),
+        carrier_profiles(source.view().carriers.size(), &budget), interval_nodes(&budget),
         sample_ids(&budget), evaluation_ids(&budget), promotion_points(&budget),
         promotion_rows(&budget), live_keys(&budget), requests(&budget), live_nodes(&budget),
         sample_tasks(&budget), sample_answers(&budget), node_tasks(&budget), node_answers(&budget),
@@ -1045,6 +1057,175 @@ struct AdaptiveBoundarySession::Impl {
     pool->intervals = std::move(rows);
     physical = std::move(pool);
   }
+  void install_carriers(SourceCache bank, bool fixed) {
+    require(bank.view().resource == resource && &bank.source().view() == &source.view() &&
+                bank.generation() == roots->generation() &&
+                bank.profile().revision == roots->profile().revision,
+            ErrorCode::invalid_source, "supplied carrier profile source/generation mismatch");
+    require(bank.purpose() == SourceCachePurpose::regular_patch ||
+                bank.purpose() == SourceCachePurpose::trace_geometry,
+            ErrorCode::invalid_source, "unsupported supplied carrier source purpose");
+    std::pmr::vector<CarrierProfile> profiles(source.view().carriers.size(), &budget);
+    std::pmr::vector<uint8_t> originals(source.view().carriers.size(), 0, &budget);
+    for (const auto &root : bank.original_roots()) {
+      budget.charge(1);
+      require(root.source_slot < originals.size(), ErrorCode::invalid_source,
+              "supplied carrier original root outside source");
+      originals[root.source_slot] = 1;
+    }
+    for (const auto &root : bank.roots()) {
+      budget.charge(4);
+      require(root.source_slot < profiles.size() &&
+                  root.original.value < bank.original_roots().size() &&
+                  bank.original_roots()[root.original.value].source_slot == root.source_slot,
+              ErrorCode::invalid_source, "supplied carrier prepared/original closure mismatch");
+      auto &profile = profiles[root.source_slot];
+      for (uint32_t i = 0; i < 4; ++i) {
+        const auto endpoint = root.prepared_box[i];
+        require(numeric::valid(endpoint) && endpoint.lower == endpoint.upper,
+                ErrorCode::invalid_source, "supplied carrier profile endpoint invalid");
+        if (!profile.ready)
+          profile.box[i] = endpoint.lower;
+        else if (i % 2 == 0)
+          profile.box[i] = std::min(profile.box[i], endpoint.lower);
+        else
+          profile.box[i] = std::max(profile.box[i], endpoint.upper);
+      }
+      profile.ready = true;
+    }
+    for (auto face : source.view().definition_faces.at(definition.value)) {
+      budget.charge(1);
+      const auto carrier = source.view().carrier_index.find(source.view().faces[face].carrier_id);
+      const auto &profile = profiles[carrier.value];
+      require(profile.ready && originals[carrier.value] && profile.box[0] < profile.box[1] &&
+                  profile.box[2] < profile.box[3],
+              ErrorCode::invalid_source, "supplied bank lacks required carrier source closure");
+    }
+    auto retained =
+        std::allocate_shared<SourceCache>(RunAllocator<SourceCache>(resource), std::move(bank));
+    carrier_profiles = std::move(profiles);
+    carriers = std::move(retained);
+    fixed_carriers = fixed;
+  }
+  void admit_chosen_uv(Slot<CarrierTag> carrier, std::span<const Rational, 2> uv) const {
+    const auto &profile = carrier_profiles.at(carrier.value);
+    require(profile.ready, ErrorCode::invalid_source, "chosen UV has no supplied carrier profile");
+    auto &owner = uv[0].budget();
+    for (uint32_t a = 0; a < 2; ++a) {
+      owner.charge(1);
+      require(uv[a].compare(Rational::from_double(owner, profile.box[2 * a])) >= 0 &&
+                  uv[a].compare(Rational::from_double(owner, profile.box[2 * a + 1])) <= 0,
+              ErrorCode::unsupported, "chosen UV outside supplied carrier profile");
+    }
+  }
+  void admit_authoritative_profiles(const UseTraceResult &result) {
+    if (!fixed_carriers)
+      return;
+    const auto &exact = trace_values(result);
+    for (const auto &row : trace_uses(result)) {
+      const auto &use = source.view().coedges[row.use.value];
+      if (use.reconstructed)
+        continue;
+      // The retained whole-use identity proves the original image equals the
+      // selected segment. Its already-admitted endpoints and convex rectangle
+      // cover that WHOLE image, including nonuniform original clocks.
+      if (row.whole_line_image)
+        continue;
+      const auto curve = source.view().curve_index.find(use.curve_id);
+      const auto carrier =
+          source.view().carrier_index.find(source.view().faces[row.face.value].carrier_id);
+      const auto &profile = carrier_profiles[carrier.value];
+      const auto sites = trace_sites(result).subspan(row.sites.first, row.sites.count);
+      require(!sites.empty(), ErrorCode::internal_error, "authoritative source use has no samples");
+      auto lo = import_exact(budget, exact.view(sites.front().mapped_s)), hi = lo;
+      for (const auto &site : sites) {
+        budget.charge(1);
+        const auto s = import_exact(budget, exact.view(site.mapped_s));
+        if (s.compare(lo) < 0)
+          lo = s;
+        if (s.compare(hi) > 0)
+          hi = s;
+      }
+      const std::array range{lo, hi};
+      const auto first = find_original_curve_root(*roots, curve, lo),
+                 last = find_original_curve_root(*roots, curve, hi);
+      std::array<Interval, 2> hull{};
+      bool initialized = false;
+      const auto include = [&](std::span<const Interval, 2> value) {
+        for (uint32_t a = 0; a < 2; ++a) {
+          require(numeric::valid(value[a]), ErrorCode::unresolved,
+                  "authoritative original pcurve profile hull unresolved");
+          if (!initialized)
+            hull[a] = value[a];
+          else {
+            hull[a].lower = std::min(hull[a].lower, value[a].lower);
+            hull[a].upper = std::max(hull[a].upper, value[a].upper);
+          }
+        }
+        initialized = true;
+      };
+      for (uint32_t i = first.value; i <= last.value; ++i) {
+        budget.charge(1);
+        const auto &root = roots->original_roots()[i];
+        if (root.family == CurveFamily::rational) {
+          for (uint32_t k = 0; k <= root.degree; ++k) {
+            budget.charge(1);
+            const auto base = root.controls.first + 3 * k;
+            const std::array value{
+                numeric::div(roots->controls()[base], roots->controls()[base + 2]),
+                numeric::div(roots->controls()[base + 1], roots->controls()[base + 2])};
+            include(value);
+          }
+        } else {
+          std::array<Interval, 2> value{};
+          for (uint32_t a = 0; a < 2; ++a) {
+            if (root.family == CurveFamily::line)
+              value[a] = numeric::add(
+                  numeric::point(root.frame[a]),
+                  numeric::scale({lo.bounds().lower, hi.bounds().upper}, root.frame[3 + a]));
+            else {
+              const auto radius =
+                  numeric::add(numeric::point(numeric::magnitude(numeric::scale(
+                                   numeric::point(root.frame[3 + a]), root.radii[0]))),
+                               numeric::point(numeric::magnitude(numeric::scale(
+                                   numeric::point(root.frame[6 + a]), root.radii[1]))))
+                      .upper;
+              value[a] = numeric::add(numeric::point(root.frame[a]), {-radius, radius});
+            }
+          }
+          include(value);
+        }
+      }
+      const auto contained = [&](std::array<Interval, 2> box) {
+        for (uint32_t a = 0; a < 2; ++a) {
+          if (use.periodic_shift[a]) {
+            require(trace_axis_is_periodic(source.view().carriers[carrier.value], a),
+                    ErrorCode::unsupported, "undeclared authoritative periodic profile axis");
+            box[a] = numeric::add(box[a],
+                                  numeric::scale(numeric::half_pi(),
+                                                 4. * static_cast<double>(use.periodic_shift[a])));
+          }
+          if (!numeric::valid(box[a]) || box[a].lower < profile.box[2 * a] ||
+              box[a].upper > profile.box[2 * a + 1])
+            return false;
+        }
+        return true;
+      };
+      if (!contained(hull)) {
+        try {
+          const auto precise = enclose_curve_hull_precise(*roots, curve, range, budget);
+          ++counts.exact_fallbacks;
+          require(contained({precise[0], precise[1]}), ErrorCode::unresolved,
+                  "authoritative original pcurve outside supplied carrier profile");
+        } catch (const Error &error) {
+          if (error.code == ErrorCode::unsupported)
+            throw Error(ErrorCode::unresolved,
+                        "authoritative pcurve containment in supplied carrier profile unresolved");
+          throw;
+        }
+      }
+    }
+  }
   struct KnotSelection {
     uint32_t axis, position;
   };
@@ -1186,9 +1367,11 @@ struct AdaptiveBoundarySession::Impl {
     if (!carriers) {
       auto selected = trace_carrier_requests();
       if (!selected.empty())
-        carriers = prepare_trace_source_cache(
-            source, selected, resource, {},
-            {limits.nodes, limits.control_scalars, limits.total_work}, context.budget);
+        install_carriers(
+            prepare_trace_source_cache(source, selected, resource, {},
+                                       {limits.nodes, limits.control_scalars, limits.total_work},
+                                       context.budget),
+            false);
     }
     trace_sources.clear();
     trace_site_work.clear();
@@ -1253,6 +1436,7 @@ struct AdaptiveBoundarySession::Impl {
         std::array<Rational, 2> uv{
             import_exact(context.budget, trace_values(work).view(task.uv[0])),
             import_exact(context.budget, trace_values(work).view(task.uv[1]))};
+        admit_chosen_uv(task.carrier, uv);
         OriginalRootSlot root;
         try {
           root = find_original_carrier_root(needed(carriers), task.carrier, uv);
@@ -1315,6 +1499,7 @@ struct AdaptiveBoundarySession::Impl {
           trace_interval_work[f], trace_completion_key(trace_interval_work[f]),
           std::span<const CurveNodeBounds>(trace_answers).subspan(range.first, range.count),
           context);
+      admit_authoritative_profiles(result);
       const auto fallbacks = trace_exact_fallbacks(result);
       require(fallbacks <= UINT64_MAX - counts.exact_fallbacks, ErrorCode::resource_exhausted,
               "curve fallback counter overflow");
@@ -1430,6 +1615,7 @@ struct AdaptiveBoundarySession::Impl {
     result->sites = std::move(site_rows);
     result->intervals = std::move(interval_rows);
     result->curve_source = roots;
+    result->carrier_source = carriers;
     output = std::move(result);
     phase = Phase::done;
   }
@@ -1675,6 +1861,14 @@ AdaptiveBoundarySession::AdaptiveBoundarySession(std::shared_ptr<RunResource> re
     throw;
   }
 }
+AdaptiveBoundarySession::AdaptiveBoundarySession(std::shared_ptr<RunResource> resource,
+                                                 SourceStore source, Slot<DefinitionTag> definition,
+                                                 CurveSourceCache roots, SourceCache carriers,
+                                                 CurveLimits limits, const std::stop_token &token)
+    : AdaptiveBoundarySession(std::move(resource), std::move(source), definition, std::move(roots),
+                              limits, token) {
+  impl_->install_carriers(std::move(carriers), true);
+}
 AdaptiveBoundarySession::~AdaptiveBoundarySession() {
   if (!impl_)
     return;
@@ -1780,7 +1974,7 @@ void AdaptiveBoundarySession::begin(const CurveBoundaryQuery &input) {
                    OwnerKey{OwnerKind::run, UINT32_MAX - 5, forest_tables.fetch_add(1)});
   p.phase = Impl::Phase::evaluate;
 }
-void AdaptiveBoundarySession::refine(SharedCurveSnapshot expected,
+void AdaptiveBoundarySession::refine(const SharedCurveSnapshot &expected,
                                      std::span<const BoundaryKey> keys) {
   auto &p = *impl_;
   p.stopped();
@@ -1792,8 +1986,7 @@ void AdaptiveBoundarySession::refine(SharedCurveSnapshot expected,
   require(keys.size() <= p.limits.requests, ErrorCode::resource_exhausted,
           "consumer boundary horizon exceeds request cap");
   for (std::size_t i = 0; i < keys.size(); ++i) {
-    require((!i || keys[i - 1] < keys[i]) &&
-                keys[i].interval < p.interval_nodes.size() &&
+    require((!i || keys[i - 1] < keys[i]) && keys[i].interval < p.interval_nodes.size() &&
                 p.interval_nodes[keys[i].interval] != invalid_slot,
             ErrorCode::invalid_source, "unordered or foreign consumer boundary interval");
     require(needed(p.forest).interval(keys[i]).leaf, ErrorCode::invalid_source,
