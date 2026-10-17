@@ -68,3 +68,9 @@ single run for work memory ownership; precise execution is conditional and is
 not claimed without an observed cap-specific fallback count. No duplicate run
 was launched. Scene saved outputs additionally passed independently derived
 original-cut sheet signs and authored source cap-kind checks.
+
+Runtime owner reported the coordinated optimized Release CPU4 ASan/UBSan/leak
+fixture GREEN (178 facets, radial continuation/resume). It executes actual
+source-qualified cap-work prepare/pack and full lifecycle. No assertion that
+conditional precise fallback was taken is made. This closes the pending work
+memory-ownership path without another producer or numerical cohort.
