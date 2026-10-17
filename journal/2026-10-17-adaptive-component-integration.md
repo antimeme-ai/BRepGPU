@@ -34,3 +34,19 @@ retirement extension without changing existing API layouts. Extended the SAME
 device protocol fixture. First invocation used the wrong fixture filename and
 failed source stat; corrected to the CMake-selected actual-cell source. Actual
 old-module RED is the absent retirement extension, recorded before module code.
+
+The real retirement operation now validates a healthy idle surface owner and
+monotone expected/next epoch, clears pinned point and child-control validity at
+a synchronized barrier, and retains immutable source controls/buffers/services.
+The same existing device fixture checks busy/stale refusal, actual invalidation,
+original plane formula after repopulation, source-root restrictions and healthy
+drain. Both P100 runs pass; one memcheck reports0 errors. A compile-time const
+reference to the mutable validity buffer was corrected before those runs.
+Actual-source runtime peer accepted the mechanism and requested a single checked
+aggregate work charge instead of two partial charges; that change is integrated.
+
+The independent fixed caller history found identical nested-island geometry with
+a changed source birth-horizon field on repeat. Root selected resetting semantic
+birth horizon on successful fresh begin, retaining it across boundary replacement
+and preserving operation/table counters. Runtime owner owns that same begin body;
+the actual failed history remains the RED. No reader normalization is weakened.

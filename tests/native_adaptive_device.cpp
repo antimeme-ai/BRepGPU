@@ -1,5 +1,6 @@
 #include "../native/mesher/adaptive_geometry.hpp"
 #include "../native/mesher/cuda/adaptive_api.h"
+#include "../native/mesher/cuda/adaptive_assignment_api.h"
 #include "../native/mesher/reservations.hpp"
 #include <algorithm>
 #include <array>
@@ -172,6 +173,13 @@ void exercise(const SourceCache &cache, const char *module, int32_t device) {
   require(fixture.create(fixture.config, cache.roots(), cache.original_roots(), &fixture.session) ==
               0,
           "valid device create failed");
+  const auto get_assignment = reinterpret_cast<const AssignmentCudaAPI *(*)()>(
+      ::dlsym(fixture.module, "brepgpu_adaptive_assignment_cuda_v1"));
+  require(get_assignment != nullptr, "device assignment retirement extension missing");
+  const auto *assignment = get_assignment();
+  require(assignment && assignment->abi == adaptive_assignment_cuda_abi &&
+              assignment->size == sizeof(AssignmentCudaAPI) && assignment->retire,
+          "device assignment ABI mismatch");
 
   std::vector<DeviceNode> nodes(513);
   for (uint32_t i = 0; i < nodes.size(); ++i) {
@@ -240,7 +248,39 @@ void exercise(const SourceCache &cache, const char *module, int32_t device) {
   require(fixture.api->restrict_nodes(fixture.session, &overlap, 1, &ticket, &error) != 0,
           "restriction overwrites batch parent read");
   checked(fixture.api->restrict_nodes(fixture.session, &restriction, 1, &ticket, &error), error);
+  require(assignment->retire(fixture.session, 0, 1, &error) != 0,
+          "retirement consumed outstanding device restriction");
   fixture.poll(ticket, nullptr, 0);
+  checked(fixture.api->samples(fixture.session, samples.data(), 1, &ticket, &error), error);
+  SampleResult point{};
+  fixture.poll(ticket, &point, 1);
+  require(point.status == NumericStatus::ready, "authored plane point unresolved");
+  const auto expected_point = point;
+  // Original authored fixture: S(u,v)=(2+2u+v,-1+3v,1/2), here u=v=0.
+  require(point.actual_xyz[0] == 2. && point.actual_xyz[1] == -1. && point.actual_xyz[2] == .5,
+          "original affine plane value differs from authored formula");
+  require(assignment->retire(fixture.session, 1, 2, &error) != 0 &&
+              assignment->retire(fixture.session, 0, 0, &error) != 0,
+          "stale/nonmonotone assignment retirement accepted");
+  checked(assignment->retire(fixture.session, 0, 1, &error), error);
+  auto stale_child = restriction;
+  stale_child.parent = {destination, root.controls.count};
+  stale_child.destination = destination + root.controls.count;
+  require(fixture.api->restrict_nodes(fixture.session, &stale_child, 1, &ticket, &error) != 0,
+          "retired child control range remained valid");
+  auto stale_point = nodes.front();
+  stale_point.cached = 0;
+  std::fill(std::begin(stale_point.points), std::end(stale_point.points), 0);
+  require(fixture.api->nodes(fixture.session, &stale_point, 1, &ticket, &error) != 0,
+          "retired point range remained valid");
+  checked(fixture.api->restrict_nodes(fixture.session, &restriction, 1, &ticket, &error), error);
+  fixture.poll(ticket, nullptr, 0);
+  checked(fixture.api->samples(fixture.session, samples.data(), 1, &ticket, &error), error);
+  fixture.poll(ticket, &point, 1);
+  require(point.status == NumericStatus::ready &&
+              std::ranges::equal(point.actual_xyz, expected_point.actual_xyz),
+          "source bank changed after assignment retirement");
+  checked(assignment->retire(fixture.session, 1, 2, &error), error);
   // Destroy also drains an actual outstanding point operation.
   checked(fixture.api->samples(fixture.session, samples.data(), 1, &ticket, &error), error);
   fixture.close();

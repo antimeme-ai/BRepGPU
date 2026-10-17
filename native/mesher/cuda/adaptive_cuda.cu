@@ -2,6 +2,7 @@
 #include "../adaptive_numeric.hpp"
 #include "../adaptive_trimmed_numeric.hpp"
 #include "adaptive_api.h"
+#include "adaptive_assignment_api.h"
 #include "adaptive_curve_api.h"
 #include "adaptive_trim_api.h"
 #include <algorithm>
@@ -299,10 +300,12 @@ struct DeviceSession {
   Buffer pending{};
   std::array<Buffer, 512> retired{};
   uint32_t retired_count = 0, root_count = 0, original_count = 0;
+  uint32_t immutable_controls = 0;
   cudaStream_t stream = nullptr;
   cudaEvent_t event = nullptr;
   void *owner_lease = nullptr;
   uint64_t ticket = 0, work = 0;
+  uint64_t assignment = 0;
   uint32_t count = 0, result_width = 0;
   Operation operation = Operation::none;
   bool broken = false, curve_mode = false;
@@ -489,6 +492,7 @@ int32_t create(const DeviceConfig *config, const RootDescriptor *prepared, uint3
     auto &s = create_owner(config, output, false);
     s.root_count = nr;
     s.original_count = no;
+    s.immutable_controls = nc;
     grow(s, host_roots, product(nr, sizeof(RootDescriptor)), true);
     grow(s, host_originals, product(no, sizeof(RootDescriptor)), true);
     std::memcpy(s.buffers[host_roots].pointer, prepared,
@@ -606,6 +610,8 @@ int32_t restrictions(DeviceSession *s, const DeviceRestriction *tasks, uint32_t 
                   task.parent.count == (root.degree_u + 1) * (root.degree_v + 1) * 4,
               "restriction net shape mismatch");
       control_range(*s, task.parent);
+      require(task.destination >= s->immutable_controls,
+              "restriction destination overlaps immutable source controls");
       require(task.destination <= s->config.controls &&
                   task.parent.count <= s->config.controls - task.destination,
               "restriction destination capacity");
@@ -774,6 +780,33 @@ int32_t poll(DeviceSession *s, uint64_t ticket, uint32_t *ready, void *output, u
     s->operation = Operation::none;
   });
 }
+int32_t retire_assignment(DeviceSession *s, uint64_t expected, uint64_t next, DeviceError *error) {
+  return call(s, error, [&] {
+    require(s && !s->curve_mode, "assignment retirement requires a surface session");
+    require(!s->broken && s->operation == Operation::none,
+            "assignment retirement requires a healthy drained session");
+    require(s->assignment == expected && next > expected, "stale or nonmonotone device assignment");
+    const auto &point_valid = s->buffers[host_point_valid];
+    auto &control_valid = s->buffers[host_control_valid];
+    require(control_valid.bytes >= s->immutable_controls,
+            "assignment lost immutable source control validity");
+    // Work refusal precedes any residency/epoch mutation. These are pinned HOST
+    // validity arrays; clearing them prevents all later kernels from reading
+    // retired device bytes until actual samples/restrictions overwrite them.
+    const auto child_flags = control_valid.bytes - s->immutable_controls;
+    if (child_flags > UINT64_MAX - point_valid.bytes)
+      throw Failure{2, "assignment validity work overflow"};
+    charge(*s, point_valid.bytes + child_flags);
+    idle(*s);
+    checked(cudaStreamSynchronize(s->stream));
+    if (point_valid.bytes)
+      std::memset(point_valid.pointer, 0, static_cast<size_t>(point_valid.bytes));
+    if (child_flags)
+      std::memset(data<uint8_t>(control_valid) + s->immutable_controls, 0,
+                  static_cast<size_t>(child_flags));
+    s->assignment = next;
+  });
+}
 int32_t stats(DeviceSession *s, DeviceStats *output, DeviceError *error) {
   return call(s, error, [&] {
     require(s && output, "invalid device stats output");
@@ -818,6 +851,8 @@ const AdaptiveCudaAPI api{adaptive_cuda_abi,
                           poll,
                           stats,
                           destroy};
+const AssignmentCudaAPI assignment_api{adaptive_assignment_cuda_abi, sizeof(AssignmentCudaAPI),
+                                       retire_assignment};
 } // namespace
 } // namespace bgmesh::adaptive
 extern "C" const bgmesh::adaptive::AdaptiveCudaAPI *brepgpu_adaptive_cuda_v1() {
@@ -828,4 +863,7 @@ extern "C" const bgmesh::adaptive::CurveCudaAPI *brepgpu_adaptive_curve_cuda_v1(
 }
 extern "C" const bgmesh::adaptive::TrimCudaAPI *brepgpu_adaptive_trim_cuda_v1() {
   return &bgmesh::adaptive::trim_api;
+}
+extern "C" const bgmesh::adaptive::AssignmentCudaAPI *brepgpu_adaptive_assignment_cuda_v1() {
+  return &bgmesh::adaptive::assignment_api;
 }
