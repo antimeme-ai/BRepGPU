@@ -80,3 +80,23 @@ layout/view manifest; new display timings are scene replays, separately labeled
 from cold meshing. No unnecessary remesh or physically validated disassembly
 claim. Publish large images after actual visual inspection and record the new
 layout policy rather than overwriting historical scene/timing provenance.
+
+## Explicit legacy angular baseline
+
+The first prepared25/25 attempts export all107 definitions under both heals,
+but SDK and physical checks reject one nonmanifold definition before rendering.
+Retain those failed operations, including41.147823/43.241815s attempt walls.
+An isolated same-tolerance public advancing-front control investigates that
+algorithm separately; it is not a selected production fallback.
+
+Independently run BOTH declared healing policies at the existing producer's
+legacy0/0 angular settings and.005mm chord request, using identical original
+source, preparation, inventory/physical gates and views. This is an explicitly
+named chord-only reference baseline, not an angular-quality equivalence claim.
+Select it before observing its full result and publish either outcome; do not
+pick a fastest configuration. Add benchmark forwarding for explicit angular
+values to the already supported caller. Read actual values from completed
+metadata instead of hardcoding25/25 in its outcome text. Omitted arguments keep
+existing behavior. Existing actual angular cylinder controls cover numerical
+delivery; the complete two-heal operation supplies the direct caller check.
+No dependency, source geometry or physical acceptance criterion changes.

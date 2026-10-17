@@ -20,6 +20,8 @@ COLUMNS=('config','view','scope','n','status','complete_seconds','elapsed_second
 def main(args):
     require(sys.platform=='linux','reference benchmark executes on the fleet')
     require(1<=args.workers<=24 and 1<=args.display_threads<=256,'invalid reference worker/display width')
+    require(all(x is None or 0<=x<float('inf') for x in (args.curve_angle,args.surface_angle)),
+            'reference angles must be finite and nonnegative')
     args.output.mkdir(parents=True,exist_ok=False)
     source_hash=digest(args.step)
     view_path=matched_view_path(args.matched,args.matched_query)
@@ -37,7 +39,7 @@ def main(args):
             result=subprocess.run(tuple(map(str,command)),stdout=stream,stderr=subprocess.STDOUT)
         return result.returncode,time.perf_counter()-start
     def caller(heal,dataset,mode):
-        return (sys.executable,ROOT/'examples/render_om10_nvidia.py','--step',args.step,
+        command=(sys.executable,ROOT/'examples/render_om10_nvidia.py','--step',args.step,
             '--matched',args.matched,'--output',dataset,'--heal',str(heal),'--mode',mode,
             '--workers',str(args.workers),'--chord-height','.005','--matched-query',str(args.matched_query),
             '--display-threads',str(args.display_threads),'--exporter',args.exporter,'--producer',args.producer,
@@ -45,6 +47,9 @@ def main(args):
             '--reference-preparation',args.reference_preparation,
             '--converter',args.converter,'--periodic-preparer',args.periodic_preparer,
             '--plane-helper',args.plane_helper)
+        for option,value in (('--curve-angle',args.curve_angle),('--surface-angle',args.surface_angle)):
+            if value is not None:command+= (option,str(value))
+        return command
     def admission(dataset,output):
         return (sys.executable,ROOT/'scripts/qualify_om10_nvidia.py','--dataset',dataset,
             '--owned-qualification',owned_input,'--output',output,'--matched-query',str(args.matched_query),
@@ -76,7 +81,11 @@ def main(args):
                         'unqualified completion still requires full original inventory and physical shells')
                 status,scope,value='COMPLETE_UNQUALIFIED','fresh_source_nominal_request_both_views',format(elapsed,'.17g')
                 detail=('actual complete source-to-both-images process; original inventory and physical/source-Euler PASS; '
-                        'independent distance qualification unavailable/not performed; nominal .005mm request and25/25angles; '
+                        'independent distance qualification unavailable/not performed; '
+                        f'nominal chord_mm={metadata["chord_height_mm"]}, '
+                        f'curve_angle_degrees={metadata["curve_angle_degrees"]}, '
+                        f'surface_angle_degrees={metadata["surface_angle_degrees"]}, '
+                        f'preparation={metadata["reference_preparation"]}, heal={metadata["heal"]}; '
                         'no matched-quality speedup claim')
             require(digest(args.step)==source_hash and digest(view_path)==views_hash,
                     'original source/views changed during transport attempt')
@@ -157,6 +166,7 @@ if __name__=='__main__':
     p.add_argument('--admission',choices=('finite','transport'),default='finite',
                    help='transport permits complete development images without distance qualification; never quality PASS')
     p.add_argument('--reference-preparation',choices=('none','periodic-plane'),default='none')
+    p.add_argument('--curve-angle',type=float);p.add_argument('--surface-angle',type=float)
     p.add_argument('--converter',type=Path,default=ROOT/'build/nvidia-reference-recovery/brepgpu-nvidia-convert')
     p.add_argument('--periodic-preparer',type=Path,default=ROOT/'build/reference-periodic/brepgpu-reference-periodic')
     p.add_argument('--plane-helper',type=Path,default=ROOT/'build/nvidia-reference-recovery/brepgpu-nvidia-plane-envelope')
