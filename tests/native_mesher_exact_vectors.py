@@ -49,6 +49,18 @@ def conversion(value):
             + (bytes(16) if overflow else double_word(lo) + double_word(hi)))
 
 
+def finite_binary64_words():
+    fractions = (0, 1, 2, 3, 1 << 51, (1 << 52)-1, 0x5555555555555, 0xAAAAAAAAAAAAA)
+    words = {sign | (exponent << 52) | fraction
+             for sign in (0,1 << 63) for exponent in range(2047) for fraction in fractions}
+    for sign in (0,1 << 63):
+        for exponent in (0,1,1022,1023,1074,1075,2046):
+            for bit in range(52):
+                words.add(sign | (exponent << 52) | (1 << bit))
+                words.add(sign | (exponent << 52) | ((1 << 52)-(1 << bit)))
+    return tuple(sorted(words))
+
+
 def main():
     rng = random.Random(0xB6E0AC71)
     special = [F(0), F(1), F(-1), F(3, 2), F(-7, 15), F(-(1 << 63)),
@@ -98,7 +110,8 @@ def main():
         x, y = y, x + y
         if i in (92, 511, 2047, 8191, 11999):
             integers.append((y, x))
-    payload = bytearray(b"BGEXACT1" + u32(len(pairs)) + u32(len(integers)))
+    double_inputs = finite_binary64_words()
+    payload = bytearray(b"BGEXACT2" + u32(len(pairs)) + u32(len(integers)) + u32(len(double_inputs)))
     for a, b in pairs:
         for value in (a, b, a + b, a - b, a * b, a / b if b else 0):
             payload += rational(value)
@@ -111,8 +124,15 @@ def main():
     for n, d in integers:
         for value in (n, d, n // d, n % d, math.gcd(n, d)):
             payload += rational(value)
+    for raw in double_inputs:
+        decoded = struct.unpack("<d", struct.pack("<Q", raw))[0]
+        numerator,denominator = decoded.as_integer_ratio()
+        payload += struct.pack("<Q",raw) + rational(F(numerator,denominator))
     Path(sys.argv[1]).write_bytes(payload)
-    print(f"rational_vectors={len(pairs)} integer_vectors={len(integers)} bytes={len(payload)}")
+    if len(sys.argv) == 3:
+        Path(sys.argv[2]).write_bytes(b"BGDBL001"+struct.pack("<Q",len(double_inputs))+
+                                      b"".join(struct.pack("<Q",raw) for raw in double_inputs))
+    print(f"rational_vectors={len(pairs)} integer_vectors={len(integers)} double_vectors={len(double_inputs)} bytes={len(payload)}")
 
 
 if __name__ == "__main__":
