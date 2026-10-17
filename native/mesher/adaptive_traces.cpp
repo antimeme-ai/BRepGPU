@@ -1,5 +1,5 @@
-#include "adaptive_numeric.hpp"
 #include "adaptive_traces.hpp"
+#include "adaptive_numeric.hpp"
 #include <algorithm>
 #include <bit>
 #include <charconv>
@@ -59,6 +59,56 @@ Rational map_trace_parameter(const SourceStore &source, Slot<CoedgeTag> slot, co
 }
 bool trace_axis_is_periodic(const Carrier &carrier, uint32_t axis) noexcept {
   return axis == 0 ? carrier.kind >= 2 && carrier.kind <= 5 : axis == 1 && carrier.kind == 5;
+}
+std::optional<OriginalLineImage>
+match_authoritative_line_image(const SourceStore &source, const CurveSourceCache &cache,
+                               Slot<CoedgeTag> slot, const ExactTable &table,
+                               std::span<const UseCurveSite> rows, bgfd::Budget &budget) {
+  const auto &use = original_use(source, slot);
+  if (use.reconstructed || rows.size() < 2 || use.periodic_shift[0] || use.periodic_shift[1])
+    return std::nullopt;
+  if (&source.view() != &cache.source().view())
+    invalid("foreign original pcurve line-image cache");
+  const std::array<Rational, 2> domain{import_exact(budget, table.view(rows.front().mapped_s)),
+                                       import_exact(budget, table.view(rows.back().mapped_s))};
+  const auto curve = source.view().curve_index.find(use.curve_id);
+  auto image = original_curve_line_image(cache, curve, domain, budget);
+  if (!image)
+    return std::nullopt;
+  for (uint32_t axis = 0; axis < 2; ++axis) {
+    if (import_exact(budget, table.view(rows.front().chart_xy[axis]))
+            .compare(image->endpoints[axis]) ||
+        import_exact(budget, table.view(rows.back().chart_xy[axis]))
+            .compare(image->endpoints[2 + axis]))
+      return std::nullopt;
+  }
+  const int direction = image->scalars[1].compare(image->scalars[0]),
+            parameter_direction = domain[1].compare(domain[0]);
+  if (!direction || !parameter_direction)
+    return std::nullopt;
+  auto prior = image->scalars[0], prior_parameter = domain[0];
+  const auto dx = image->endpoints[2].subtract(image->endpoints[0]),
+             dy = image->endpoints[3].subtract(image->endpoints[1]);
+  for (size_t i = 0; i < rows.size(); ++i) {
+    budget.charge(1);
+    const std::array<Rational, 2> point{import_exact(budget, table.view(rows[i].chart_xy[0])),
+                                        import_exact(budget, table.view(rows[i].chart_xy[1]))};
+    if (dx.multiply(point[1].subtract(image->endpoints[1]))
+            .subtract(dy.multiply(point[0].subtract(image->endpoints[0])))
+            .sign())
+      return std::nullopt;
+    const auto scalar =
+        image->covector[0].multiply(point[0]).add(image->covector[1].multiply(point[1]));
+    const auto parameter = import_exact(budget, table.view(rows[i].mapped_s));
+    if ((i && scalar.compare(prior) * direction <= 0) ||
+        scalar.compare(image->scalars[0]) * direction < 0 ||
+        scalar.compare(image->scalars[1]) * direction > 0 ||
+        (i && parameter.compare(prior_parameter) * parameter_direction <= 0))
+      return std::nullopt;
+    prior = scalar;
+    prior_parameter = parameter;
+  }
+  return image;
 }
 namespace {
 struct SourceSite final {
@@ -244,7 +294,7 @@ Interval period_lift(const Carrier &carrier, const Coedge &use, uint32_t axis) {
   return numeric::scale(numeric::half_pi(), static_cast<double>(use.periodic_shift[axis]) * 4.);
 }
 UV guide_point(const Carrier &carrier, const Coedge &use, const CurveSampleResult &sample,
-               bgfd::Budget &b) {
+               std::span<const double, 4> admitted_box, bgfd::Budget &b) {
   UV result{Rational(b), Rational(b)};
   for (uint32_t a = 0; a < 2; ++a) {
     const auto interval = numeric::add(sample.original_xyz[a], period_lift(carrier, use, a));
@@ -257,7 +307,7 @@ UV guide_point(const Carrier &carrier, const Coedge &use, const CurveSampleResul
     // when it lies IN the same original enclosure; all source guards and the
     // authoritative displacement bound still apply to the chosen point.
     for (uint32_t side = 0; side < 2; ++side) {
-      const auto edge = carrier.uv_bounds[2 * a + side];
+      const auto edge = admitted_box[2 * a + side];
       const auto relation = result[a].compare(Rational::from_double(b, edge));
       if ((side == 0 ? relation < 0 : relation > 0) && interval.lower <= edge &&
           interval.upper >= edge)
@@ -483,12 +533,30 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
       request.source.view().faces[request.face.value].carrier_id);
   const auto &carrier = request.source.view().carriers[carrier_slot.value];
   const FaceLocator locator(b, carrier);
+  std::array<double, 4> admitted_box{};
+  bool found_root = false;
+  for (const auto &root : request.carriers.original_roots())
+    if (root.source_slot == carrier_slot.value) {
+      b.charge(1);
+      if (!found_root) {
+        for (uint32_t axis = 0; axis < 4; ++axis)
+          admitted_box[axis] = root.original_box[axis].lower;
+        found_root = true;
+      } else
+        for (uint32_t axis = 0; axis < 2; ++axis) {
+          admitted_box[2 * axis] =
+              std::min(admitted_box[2 * axis], root.original_box[2 * axis].lower);
+          admitted_box[2 * axis + 1] =
+              std::max(admitted_box[2 * axis + 1], root.original_box[2 * axis + 1].upper);
+        }
+    }
+  require(found_root, "trace carrier has no admitted original source root");
   std::pmr::vector<UV> uv(&b);
   uv.reserve(source->sites.size());
   for (const auto &site : source->sites) {
     b.charge(1);
     const auto &use = request.source.view().coedges[site.use.value];
-    auto point = guide_point(carrier, use, samples[site.guide], b);
+    auto point = guide_point(carrier, use, samples[site.guide], admitted_box, b);
     if (use.reconstructed && carrier.kind == 1)
       point = locator.plane(target_point(request, site, source->values(), samples, b));
     else if (use.reconstructed && carrier.kind == 2) {
@@ -622,7 +690,7 @@ namespace {
 struct IntervalState final {
   UseCurveInterval row;
   std::array<Interval, 2> raw_hull{};
-  bool has_raw_hull = false, cylinder_identity = false;
+  bool has_raw_hull = false, cylinder_identity = false, whole_line_image = false;
   uint32_t physical_index = 0;
   double direct_raw_upper = 0;
 };
@@ -926,12 +994,14 @@ struct TraceIntervalWorkData final {
   std::pmr::vector<IntervalState> intervals;
   std::pmr::vector<TraceBoundTask> tasks;
   std::pmr::vector<Interval> controls;
+  std::pmr::vector<std::optional<UseCurveTrace::WholeLineImage>> whole_images;
   DomainRootIndex domain_index;
   explicit TraceIntervalWorkData(TraceSites accepted)
       : sites(std::move(accepted)), rows(sites->work->source->request.resource.get()),
         intervals(sites->work->source->request.resource.get()),
         tasks(sites->work->source->request.resource.get()),
         controls(sites->work->source->request.resource.get()),
+        whole_images(sites->work->source->request.resource.get()),
         domain_index(sites->work->source->request.resource.get()) {}
 };
 struct UseTraceResultData final {
@@ -976,12 +1046,39 @@ TraceIntervalWork prepare_trace_intervals(const TraceSites &sites, JobContext &c
   });
   const auto carrier_slot = s.carrier_index.find(s.faces[request.face.value].carrier_id);
   const auto &carrier = s.carriers[carrier_slot.value];
-  const bool authoritative =
-      std::any_of(source->uses.begin(), source->uses.end(), [&](const auto &use) {
-        b.charge(1);
-        return use.authority == CurveTraceAuthority::authoritative_original;
-      });
-  if (authoritative)
+  bool needs_domain_index = false;
+  std::pmr::vector<double> whole_diameters(&b);
+  for (const auto &use : source->uses) {
+    std::pmr::vector<UseCurveSite> chosen(&b);
+    for (uint64_t i = 0; i < use.sites.count; ++i)
+      chosen.push_back(sites->sites[use.sites.first + i].row);
+    auto image = match_authoritative_line_image(request.source, *request.curves, use.use,
+                                                sites->values(), chosen, b);
+    work->whole_images.emplace_back();
+    whole_diameters.push_back(0);
+    if (!image) {
+      needs_domain_index =
+          needs_domain_index || use.authority == CurveTraceAuthority::authoritative_original;
+      continue;
+    }
+    UseCurveTrace::WholeLineImage record;
+    record.raw_curve = s.curve_index.find(s.coedges[use.use.value].curve_id);
+    record.raw_traversal =
+        import_exact(b, sites->values().view(chosen.back().mapped_s))
+            .compare(import_exact(b, sites->values().view(chosen.front().mapped_s)));
+    for (uint32_t i = 0; i < 4; ++i)
+      record.endpoints[i] = builder.append(image->endpoints[i]);
+    for (uint32_t axis = 0; axis < 2; ++axis) {
+      record.covector[axis] = builder.append(image->covector[axis]);
+      record.scalar_endpoints[axis] = builder.append(image->scalars[axis]);
+      auto width = image->endpoints[2 + axis].subtract(image->endpoints[axis]);
+      if (width.sign() < 0)
+        width = width.negative();
+      whole_diameters.back() = std::max(whole_diameters.back(), width.bounds().upper);
+    }
+    work->whole_images.back() = record;
+  }
+  if (needs_domain_index)
     work->domain_index.build(request.carriers, carrier_slot, b);
   auto append_task = [&](uint32_t interval, TraceBoundPurpose purpose, AffineTraceBoundInput input,
                          std::span<const Interval> controls) {
@@ -1029,6 +1126,7 @@ TraceIntervalWork prepare_trace_intervals(const TraceSites &sites, JobContext &c
                 (physical.boundary_nodes[0] == nc && physical.boundary_nodes[1] == na),
             "accepted spatial bound uses different actual endpoints");
     IntervalState state;
+    state.whole_line_image = work->whole_images[original.use].has_value();
     state.physical_index = entry->second;
     state.row.boundary_key = original.key;
     state.row.sites = original.sites;
@@ -1081,7 +1179,9 @@ TraceIntervalWork prepare_trace_intervals(const TraceSites &sites, JobContext &c
         append_task(index, TraceBoundPurpose::carrier_trace, piece.bound, plan.controls);
       require(!plan.pieces.empty(), "carrier affine trace produced no source pieces");
     }
-    if (!use.reconstructed) {
+    if (state.whole_line_image)
+      state.direct_raw_upper = whole_diameters[original.use];
+    if (!use.reconstructed && !state.whole_line_image) {
       const auto pcurve = s.curve_index.find(use.curve_id);
       std::array<Rational, 2> mapped{import_exact(b, sites->values().view(a.row.mapped_s)),
                                      import_exact(b, sites->values().view(c.row.mapped_s))};
@@ -1206,7 +1306,7 @@ UseTraceResult complete_trace_intervals(const TraceIntervalWork &work,
     for (uint32_t axis = 0; axis < 2; ++axis)
       row.uv_chord_component_upper[axis] = builder.append(delta);
     Rational domain(b);
-    if (row.authority == CurveTraceAuthority::authoritative_original) {
+    if (row.authority == CurveTraceAuthority::authoritative_original && !state.whole_line_image) {
       auto transported = transported_domain(request, work->domain_index, state, delta, b);
       if (!transported) {
         ++exact_fallbacks;
@@ -1240,7 +1340,8 @@ UseTraceResult complete_trace_intervals(const TraceIntervalWork &work,
         transported = transported_domain(request, work->domain_index, precise, delta, b);
         if (!transported)
           throw Error(ErrorCode::unsupported,
-                      "original authoritative pcurve support leaves prepared carrier closure");
+                      "original authoritative pcurve support leaves prepared "
+                      "carrier closure");
       }
       domain = std::move(*transported);
       row.authoritative_domain_upper = builder.append(domain);
@@ -1286,8 +1387,26 @@ UseTraceResult complete_trace_intervals(const TraceIntervalWork &work,
     return a < c;
   });
   requests.erase(std::unique(requests.begin(), requests.end()), requests.end());
+  std::pmr::vector<UseCurveTrace> use_rows(work->sites->work->source->uses, request.resource.get());
+  for (uint32_t i = 0; i < use_rows.size(); ++i)
+    if (work->whole_images[i]) {
+      auto record = *work->whole_images[i];
+      for (auto &ref : record.endpoints) {
+        const auto old = ref;
+        static_cast<void>(copy_ref(builder, work->values(), old, b, ref));
+      }
+      for (auto &ref : record.covector) {
+        const auto old = ref;
+        static_cast<void>(copy_ref(builder, work->values(), old, b, ref));
+      }
+      for (auto &ref : record.scalar_endpoints) {
+        const auto old = ref;
+        static_cast<void>(copy_ref(builder, work->values(), old, b, ref));
+      }
+      use_rows[i].whole_line_image = record;
+    }
   auto result = retained<UseTraceResultData>(request.resource, work, builder.seal());
-  result->uses = work->sites->work->source->uses;
+  result->uses = std::move(use_rows);
   result->sites = std::move(rows);
   result->intervals = std::move(intervals);
   result->requests = std::move(requests);

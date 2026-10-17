@@ -1411,6 +1411,14 @@ struct AdaptiveBoundarySession::Impl {
       for (auto row : trace_uses(result)) {
         row.sites.first += site_offset;
         row.intervals.first += interval_offset;
+        if (row.whole_line_image) {
+          for (auto &ref : row.whole_line_image->endpoints)
+            ref = copy(ref, from);
+          for (auto &ref : row.whole_line_image->covector)
+            ref = copy(ref, from);
+          for (auto &ref : row.whole_line_image->scalar_endpoints)
+            ref = copy(ref, from);
+        }
         use_rows.push_back(row);
       }
     }
@@ -1421,6 +1429,7 @@ struct AdaptiveBoundarySession::Impl {
     result->uses = std::move(use_rows);
     result->sites = std::move(site_rows);
     result->intervals = std::move(interval_rows);
+    result->curve_source = roots;
     output = std::move(result);
     phase = Phase::done;
   }
@@ -1770,6 +1779,33 @@ void AdaptiveBoundarySession::begin(const CurveBoundaryQuery &input) {
   p.forest.emplace(p.budget, p.source, p.definition, p.resource,
                    OwnerKey{OwnerKind::run, UINT32_MAX - 5, forest_tables.fetch_add(1)});
   p.phase = Impl::Phase::evaluate;
+}
+void AdaptiveBoundarySession::refine(SharedCurveSnapshot expected,
+                                     std::span<const BoundaryKey> keys) {
+  auto &p = *impl_;
+  p.stopped();
+  require(p.phase == Impl::Phase::done && expected && expected == p.output &&
+              expected->boundary == p.snapshot && expected->query_generation == p.query &&
+              !p.ticket && !p.jobs && p.forest && p.request,
+          ErrorCode::invalid_source, "stale or incomplete consumer boundary horizon");
+  require(!keys.empty(), ErrorCode::invalid_source, "empty consumer boundary horizon");
+  require(keys.size() <= p.limits.requests, ErrorCode::resource_exhausted,
+          "consumer boundary horizon exceeds request cap");
+  for (std::size_t i = 0; i < keys.size(); ++i) {
+    require((!i || keys[i - 1] < keys[i]) &&
+                keys[i].interval < p.interval_nodes.size() &&
+                p.interval_nodes[keys[i].interval] != invalid_slot,
+            ErrorCode::invalid_source, "unordered or foreign consumer boundary interval");
+    require(needed(p.forest).interval(keys[i]).leaf, ErrorCode::invalid_source,
+            "consumer requested a retired boundary interval");
+  }
+  // All admission precedes staging. The existing commit() reserves the complete
+  // numerical/physical horizon and is the sole forest mutation mechanism.
+  p.requests.assign(keys.begin(), keys.end());
+  p.promotion_points.clear();
+  p.promotion_rows.clear();
+  p.output.reset();
+  p.phase = Impl::Phase::commit;
 }
 StepState AdaptiveBoundarySession::step(JobContext &context) {
   try {

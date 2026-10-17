@@ -56,7 +56,7 @@ class Reader:
 def read(path):
     r = Reader(path.read_bytes())
     magic, wire, numeric, definition, nn, ne, na, np, nu, ns, ni, digest = r.unpack('<8sII8Q32s')
-    assert (magic, wire, numeric) == (b'BGACRV01', 1, 1)
+    assert magic == b'BGACRV01' and wire in (1, 2) and numeric == 1
     assert max(nn, ne, na, np, nu, ns, ni) <= len(r.raw)//4
     nodes, edges, aliases, physical, uses, sites, intervals = [], [], [], [], [], [], []
     for _ in range(nn):
@@ -85,8 +85,17 @@ def read(path):
                              image=image, correspondence=correspondence, line=r.optional(r.line)))
     for _ in range(nu):
         ids, meta, ranges = r.unpack('<5Q'), r.unpack('<iIIiiI'), r.unpack('<6Q')
+        image = None
+        if wire == 2:
+            present, = r.unpack('<I')
+            assert present in (0, 1)
+            if present:
+                raw, traversal = r.unpack('<Qi')
+                assert traversal in (-1, 1)
+                image = dict(raw=raw, traversal=traversal, endpoints=r.exacts(4),
+                             covector=r.exacts(2), scalar=r.exacts(2))
         uses.append(dict(ids=ids, meta=meta, sites=ranges[:2], intervals=ranges[2:4],
-                         generations=ranges[4:]))
+                         generations=ranges[4:], whole_image=image))
     for _ in range(ns):
         node, loop, junction, *branches = r.unpack('<IQI4i')
         t, s, u, v, x, y, guard = r.exacts(7)
@@ -272,7 +281,9 @@ def check_line(record,curve,ts,trace_points,traversal):
         assert selected==sum(covector[j]*p[j] for j in range(3))
 
 
-def check(result, original, positional, node_cap, kind):
+def check(result, original, positional, node_cap, kind, carrier_value=None):
+    if carrier_value is None:
+        carrier_value=lambda use,uv: uv+(F(0),)
     assert result['definition']==200 and result['digest']==bytes.fromhex(original.source_sha256)
     assert [e['id'] for e in result['edges']]==[e.id for e in original.edges]
     assert {u['ids'][0] for u in result['uses']}=={u.id for u in original.coedges}
@@ -347,21 +358,23 @@ def check(result, original, positional, node_cap, kind):
                         expected=F(b)+(site['t']-F(a))*(F(d)-F(b))/(F(c)-F(a)); break
                 else: raise AssertionError('mapped t outside original map')
             assert site['s']==expected
-            # Plane S=(u,v,0). Compare ORIGINAL Ce to chosen UV, never Q.
+            # Compare ORIGINAL Ce to ORIGINAL S(chosenUV), never actual Q.
             curve=curves[edge['curve']]
             h=curve_h(curve,site['t'])
             p=tuple(h[i]/h[3] for i in range(3))
-            assert sum((p[i]-(site['uv']+(F(0),))[i])**2 for i in range(3))<=site['guard']**2
+            q=carrier_value(original_use,site['uv'])
+            assert sum((p[i]-q[i])**2 for i in range(3))<=site['guard']**2
         for j,interval in enumerate(result['intervals'][pi:pi+pn]):
             assert interval['sites']==(first+j,first+j+1)
             assert interval['key']==expected_physical[j]['key']
             a,b=sites[j:j+2]
             for site in (a,b):
-                p=site['uv']+(F(0),); q=nodes[site['node']]['xyz']
+                p=carrier_value(original_use,site['uv']); q=nodes[site['node']]['xyz']
                 assert sum((x-y)**2 for x,y in zip(p,q))<=interval['trace']**2
             if interval['line']:
                 check_line(interval['line'],curves[edge['curve']],(a['t'],b['t']),
-                           {a['t']:a['uv']+(F(0),),b['t']:b['uv']+(F(0),)},
+                           {a['t']:carrier_value(original_use,a['uv']),
+                            b['t']:carrier_value(original_use,b['uv'])},
                            1 if b['t']>a['t'] else -1)
             assert interval['trace']>=0 and interval['source_trace']>=0
             if interval['domain'] is not None:

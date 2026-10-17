@@ -23,6 +23,53 @@ void check(bool ok, const char *message) {
     throw Error(ErrorCode::invalid_source, message);
 }
 } // namespace
+uint32_t find_carrier_root_slot(std::span<const RootDescriptor> roots, Slot<CarrierTag> source,
+                               std::span<const Rational, 2> uv, RootBoxKind kind) {
+  const auto box = [kind](const RootDescriptor &root) {
+    return kind == RootBoxKind::original ? root.original_box : root.prepared_box;
+  };
+  auto &b = uv[0].budget();
+  check(&uv[1].budget() == &b, "foreign carrier coordinate owner");
+  size_t first = 0, last = roots.size();
+  while (first < last) {
+    b.charge(1);
+    const auto m = first + (last - first) / 2;
+    if (roots[m].source_slot < source.value ||
+        (roots[m].source_slot == source.value &&
+         Rational::from_double(b, box(roots[m])[1].lower).compare(uv[0]) < 0))
+      first = m + 1;
+    else
+      last = m;
+  }
+  check(first < roots.size() && roots[first].source_slot == source.value &&
+            Rational::from_double(b, box(roots[first])[0].lower).compare(uv[0]) <= 0,
+        "carrier point outside compiled U roots");
+  const auto row = roots[first].span_u;
+  size_t end = first;
+  // Binary search the contiguous U row's end; no all-span point scan.
+  last = roots.size();
+  while (end < last) {
+    b.charge(1);
+    const auto m = end + (last - end) / 2;
+    if (roots[m].source_slot == source.value && roots[m].span_u == row)
+      end = m + 1;
+    else
+      last = m;
+  }
+  last = end;
+  while (first < last) {
+    b.charge(1);
+    const auto m = first + (last - first) / 2;
+    if (Rational::from_double(b, box(roots[m])[3].lower).compare(uv[1]) < 0)
+      first = m + 1;
+    else
+      last = m;
+  }
+  check(first < end &&
+            Rational::from_double(b, box(roots[first])[2].lower).compare(uv[1]) <= 0,
+        "carrier point outside compiled V roots");
+  return static_cast<uint32_t>(first);
+}
 SampleResult evaluate_sample(const SourceCache &cache, const SampleInput &input) {
   admit_numeric_environment();
   check(input.original.value < cache.original_roots().size(), "foreign original root");
@@ -73,6 +120,34 @@ ActualFacetBounds bound_actual_facet(const ActualFacetInput &input) {
   for (const auto x : input.affine_xyz)
     check(numeric::valid(x), "invalid actual affine facet interval");
   return numeric::bound_actual_facet_rn64(input);
+}
+bool actual_facet_nonzero(std::span<const double, 9> xyz, bgfd::Budget &budget) {
+  admit_numeric_environment();
+  for (const auto value : xyz)
+    check(numeric::finite(value), "nonfinite actual facet coordinate");
+  for (uint32_t i = 0; i < 3; ++i) {
+    budget.charge(1);
+    const auto j = (i + 1) % 3, k = (i + 2) % 3;
+    const auto cross = numeric::sub(
+      numeric::mul(numeric::sub(numeric::point(xyz[3 + j]), numeric::point(xyz[j])),
+                    numeric::sub(numeric::point(xyz[6 + k]), numeric::point(xyz[k]))),
+      numeric::mul(numeric::sub(numeric::point(xyz[3 + k]), numeric::point(xyz[k])),
+                    numeric::sub(numeric::point(xyz[6 + j]), numeric::point(xyz[j]))));
+    if (numeric::valid(cross) && (cross.lower > 0. || cross.upper < 0.))
+      return true;
+  }
+  for (uint32_t i = 0; i < 3; ++i) {
+    const auto j = (i + 1) % 3, k = (i + 2) % 3;
+    const auto cross = Rational::from_double(budget, xyz[3 + j])
+      .subtract(Rational::from_double(budget, xyz[j]))
+      .multiply(Rational::from_double(budget, xyz[6 + k]).subtract(Rational::from_double(budget, xyz[k])))
+      .subtract(Rational::from_double(budget, xyz[3 + k])
+        .subtract(Rational::from_double(budget, xyz[k]))
+        .multiply(Rational::from_double(budget, xyz[6 + j]).subtract(Rational::from_double(budget, xyz[j]))));
+    if (cross.sign() != 0)
+      return true;
+  }
+  return false;
 }
 
 namespace {
@@ -437,7 +512,20 @@ PreciseFacetResult bound_actual_facet_precise(const ActualFacetInput &input,
                        .add(Rational::from_double(b, input.actual_corners[a]));
     twist_square = twist_square.add(d.multiply(d));
   }
-  const auto quarter_square = twist_square.divide(Rational(b, 16));
+  auto range_product = Rational(b, 1);
+  for (size_t axis = 0; axis < 2; ++axis) {
+    auto lo = uv[axis], hi = uv[axis];
+    for (size_t vertex = 1; vertex < 3; ++vertex) {
+      const auto &value = uv[vertex * 2 + axis];
+      if (value.compare(lo) < 0)
+        lo = value;
+      if (value.compare(hi) > 0)
+        hi = value;
+    }
+    range_product = range_product.multiply(hi.subtract(lo));
+  }
+  const auto quarter_square = twist_square.multiply(range_product.multiply(range_product))
+                                  .divide(Rational(b, 16));
   auto maximum = maximum_square.square_root_bounds(160).upper;
   const auto covariance = quarter_square.square_root_bounds(160).upper.add(
       diagonal_square.square_root_bounds(160).upper);
@@ -470,5 +558,13 @@ std::array<Rational,3> exact_original_surface_point(const SourceCache&cache,Orig
   check(root.family==GeometryFamily::rational_tensor,"exact homogeneous surface point requires rational source");
   const auto net=exact_original_root(cache.source(),root,b);
   return evaluate_surface(net,uv[0],uv[1]);
+}
+BezierSurface surface_detail::original_net_exact(const SourceCache &cache, OriginalRootSlot slot,
+                                                 bgfd::Budget &budget) {
+  admit_numeric_environment();
+  check(slot.value < cache.original_roots().size(), "foreign exact original surface root");
+  const auto &root = cache.original_roots()[slot.value];
+  check(root.family == GeometryFamily::rational_tensor, "exact surface root requires rational source");
+  return exact_original_root(cache.source(), root, budget);
 }
 } // namespace bgmesh::adaptive

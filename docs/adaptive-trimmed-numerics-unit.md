@@ -116,8 +116,12 @@ internal branch/classification partition per prepared source root. Each path/box
 derives from its root; each split uses both children of ONE axis, including
 children classified outside. PatchSelection contains only its NONOUTSIDE leaves,
 not all prepared-root area. The minted view binds those leaves to that admitted
-partial cover. Geometry checks actual K containment and exact clipped-area
-coverage against it; it does not build a second source-tree certificate.
+partial cover. Geometry admits the complete requested prepared-root closure for the face
+carrier once, including outside-pruned roots, and checks each actual vertex
+inside that rectangular source profile. Construction partitions the chosen
+material domain by directed CDT and packets; conservative outside pruning
+removes no material. Exact clipping therefore partitions each actual facet by
+construction, without a second fraction-area coverage certificate.
 Source-root C0 interfaces partition bounds.
 
 Full-period analytic faces use one explicit tiled-source preparation extension,
@@ -170,7 +174,7 @@ sum-of-two-norm comparison handles equality without a rounded sqrt overshoot.
 
 ### Crossing leaves and original spans
 
-Runtime's frozen leaf index enumerates closed triangle-box candidates; outward
+The work builder indexes frozen leaf boxes and enumerates closed candidates; outward
 floating filters reject only proved disjoint pairs. No all-facets/all-leaves
 loop is selected. A fully contained facet uses the existing contained kernel.
 For other pairs native exact clipping intersects K with the four leaf halfplanes.
@@ -182,9 +186,13 @@ Every virtual vertex retains ORIGINAL triangle barycentrics beta. Exact
 L(p)=sum beta_i*Q_i before outward transfer. Normalize p to the SAME exact leaf
 box; non-dyadic ratios are bound coordinates, not mesh sites. Endpoint0/1
 shortcuts prevent admission errors from padded division. No virtual crossing is
-installed in a source master chain or PointPool. The leaf index is a search aid;
-positive clipped areas must sum exactly to original area against the admitted
-disjoint selected partition. Missing source coverage is not partial success.
+installed in a source master chain or PointPool. The leaf index is a search aid. Once the complete prepared face-root closure
+and captured construction/view are admitted, the conservative partition and
+owned convex clipping construct all overlaps. Positive pieces and nonempty
+coverage remain required; no per-facet rational area sum or replacement runtime
+coverage checker is added. The SAME independent actual-work oriented-chain
+oracle directly attacks dropped/duplicated clips. Generic subset-root views
+are refused by this complete-face numerical operation.
 
 The whole-leaf four-corner B-L test was considered as an extra cross-leaf
 prefilter. The first unit does NOT add it as another batch: it can be loose for
@@ -364,3 +372,33 @@ promotions and precision, cache/anchor requests, reused work and transfers on th
 same selected fixed families. Long slivers/thin bands/many holes may expose high
 piece count or mostly-band construction. Retain failures/censors; do not hide
 quadratic traversal, repeated extraction or old exact trig under correctness.
+
+### Reviewed implementation closure: constructive coverage and failure placement
+
+The complete prepared-root closure is the CURRENT query root set, including
+outside-pruned roots, not merely roots present among retained leaves. A complete
+face request must include every prepared panel for its original carrier.
+Candidate classification carries the SAME FaceDomainClassifier lease through
+all refinement and frozen-footprint overlays; a generic arbitrary-mask view
+cannot be used for complete-face numerical work. Construction and numerical
+work retain that exact domain/view/selection identity. Each carrier cache is
+compiled from one rectangular request, so exact vertex admission also contains
+the complete positive affine facet in its source rectangle. This establishes
+clipping coverage constructively; the external actual-work chain oracle attacks
+implementation omissions. A per-facet fraction-area sum is not required.
+
+A failed BAND triangle's geometry progress is independent of the overlap
+partition: construction rounds the actual parent centroid to a dyadic whose
+three barycentrics are each at least1/6, locates one containing captured leaf,
+samples through the existing source PointPool and retains that anchor in its
+component rebuild. First-overlap-piece centroids can approach a corner as the
+numeric cache shrinks and are not selected. Direct-star area<=2/3 is a local
+statement, not a global CDT contraction theorem. Packet active-corner targets
+retain their separate declared procedure.
+
+Direct original-root-contained SAME-L source bounds before leaf clipping remain
+a strong scheduling alternative: the existing interval CPU/P100 kernel can
+accept without virtual fraction geometry, while original-span partitions are
+mandatory only across source interfaces. This alternative is deferred during
+the bounded actual progress correction; it is not secretly implemented or
+claimed in current performance results.

@@ -213,17 +213,34 @@ A numerical floor requests shared promotion, not endless geometric splitting.
 An original analytic plane uses the numerical direct affine source residual at
 the actual three vertices before any leaf clipping; source/domain/envelope
 admission still applies. Selected leaves form a disjoint NONOUTSIDE partial
-cover, while runtime retains outside branch classification internally. Each
-non-plane actual facet still requires complete positive clipped-area coverage.
+cover, while runtime retains outside branch classification internally. Complete prepared-root closure plus the identical retained domain/classifier
+lease establishes the constructive nonoutside partition; intersected pieces
+retain SAME-L barycentrics. No per-facet rational covered-area accumulator is
+needed to reprove that admitted partition.
 
 After a complete current construction-failure horizon, select by actual generator.
-A failed BAND triangle splits implicated cache leaves AND installs at least one
-new strict-interior anchor before its component CDT rebuild. Choose the canonical
-first positive triangle/child-leaf overlap piece; use its exact centroid as
-locator, then nearest dyadic grid rounding with increasing arbitrary-word
-precision until exact orientation proves strict interiority. Existing active
-sites cannot lie strictly inside a valid old facet. The common PointPool evaluates
-the exact chosen source parameter; numerical cached values may already exist.
+A failed BAND triangle installs a new CENTRAL anchor in the actual parent facet,
+independent of its numerical clipping partition. Round the parent UV centroid
+nearest-even on grids 2^-k, k=1..anchor_bits; choose the first point whose three
+exact positive barycentric numerators are each at least one sixth of the parent
+oriented double area. A strictly interior point exists with this margin because
+the centroid has barycentrics (1/3,1/3,1/3). The finite cap still gives unresolved.
+For a direct star split the three child areas are lambda_i times parent area:
+lambda_i in [1/6,2/3], so no child exceeds 2/3 parent area. The later component
+CDT may reconnect neighboring cells; this is NOT a global CDT area/diameter
+contraction theorem. Retaining the central point prevents the old facet from
+reappearing and avoids first-overlap-piece anchors converging toward one corner.
+
+Locate the anchor's source leaf using the retained positive-overlap piece leaf
+indices, testing exact closed leaf-box containment in their canonical order.
+A point on a leaf interface chooses the first containing leaf. The original-plane
+shortcut has no piece list and uses the existing metered first-containing-leaf
+scan. Split that chosen leaf once, sample through the SAME PointPool, then rebuild
+the affected component with all retained anchors. Do not split every overlap leaf
+merely because its old triangle crosses it. Numerical tightening/floor policies
+remain the numerical owner's mechanism; no evaluator or new tree is introduced.
+Existing active sites cannot lie strictly inside a valid old facet; cached
+numerical values may already exist.
 
 A failed PACKET triangle instead chooses a prepared-root-relative dyadic target
 strictly inside that triangle. For k=1..64, round both normalized centroid

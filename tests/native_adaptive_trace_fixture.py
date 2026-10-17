@@ -49,6 +49,12 @@ def main():
     speed=replace(base, vertices=tuple(Vertex(300+i,(*p,0.),0.) for i,p in enumerate(uv)),
                   carriers=(plane,*base.carriers[1:]),curves=tuple(curves))
     save('speed',speed)
+    # Same complete UV line image, a quadratic raw clock and cubic spatial
+    # clock. Whole-use image equality must avoid same-t flatten refinement.
+    authspeed=tuple(replace(c,degree=2,controls=(0.,0.,1.,0.,0.,1.,1.,0.,1.))
+                    if c.id==3000 else c for c in speed.curves)
+    save('authspeed',replace(speed,curves=authspeed,
+         coedges=tuple(replace(u,reconstructed=False) for u in speed.coedges)))
     bad=Curve(2000,3,5,ZERO_FRAME,(0.,0.),(0.,1.),1,(0.,.5,1.),(2,1,2),
               (0.,0.,0.,1., .5,0.,1.,1., 1.,0.,0.,1.))
     save('sourceguard',replace(speed,curves=(bad,*speed.curves[1:])))
@@ -96,7 +102,7 @@ def main():
                      replace(c,degree=2,controls=(0.,0.,1.,.5,1.,1.,1.,0.,1.)) if c.id==3000 else c
                      for c in speed.curves)
     save('runtime-equality',replace(speed,curves=equality))
-    print('trace_source_variants=12')
+    print('trace_source_variants=13')
 
 
 if __name__ == '__main__':

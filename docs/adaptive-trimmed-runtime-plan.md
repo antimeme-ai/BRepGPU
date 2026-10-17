@@ -51,6 +51,9 @@ public:
   SurfaceViewKey key() const;
   const SourceCache& source() const;
   shared_ptr<RunResource> resource() const;
+  span<const SurfaceClass> classes() const; // selected-leaf order
+  span<const RootSlot> prepared_roots() const; // complete current query, includes pruned outside
+  shared_ptr<const FaceDomainData> classified_domain() const;
 };
 struct CandidateBox { LeafKey key; array<ExactRef,4> box; };
 struct CandidateBoxesData {
@@ -62,6 +65,7 @@ using CandidateBoxes = shared_ptr<const CandidateBoxesData>;
 enum class SurfaceClass : uint32_t { outside, interior, band };
 struct CandidateClassification {
   CandidateBoxes candidates; pmr::vector<SurfaceClass> labels;
+  shared_ptr<const FaceDomainData> domain; // classifier provenance, null for generic selections
 };
 ```
 
@@ -203,19 +207,29 @@ it never builds a rectangle PacketMesh simply to return leaves.
 Insert complete candidate classification BEFORE point/control/bound generation.
 Store outside branch masks as part of the current query's complete internal
 partition, not geometry rows. Accepted PatchSelection is the disjoint NONOUTSIDE
-partial cover. Geometry later requires every actual facet's complete coverage.
+partial cover. The view retains the sorted complete CURRENT prepared-root closure,
+including outside-pruned branches, and query-fixed original domain provenance.
+Complete face work admits exactly that domain and all carrier roots before using
+the constructive clipping partition. A generic subset/externally labeled view
+cannot silently authorize a complete face. No repeated rational clipped-area
+sum or second coverage tree is required after this premise.
 Construction's classifier handles the whole candidate horizon. Before footprint
 settlement, classify new children; afterward inherit packet/band/outside roles.
 Initial pinch demotion precedes fixed packet union, with no later demotion.
 
-Reuse compact grid PointKey lookup. Add sparse exact-anchor index with owned
-full UV limb equality and the SAME point-tier pool. Anchor lookup first derives
-indexed compact representations where possible; a grid miss probes sparse exact
-identity before allocating while anchors exist. Install aliases both ways.
-Absolute exact anchor UV may exceed depth64; an explicit exact-bit cap applies.
-The original-root indexed lookup is extracted from the existing curve geometry
-helper, not duplicated or replaced by an all-root scan. Common samples remain
-original-root evaluations on CPU/P100; no private physical Q resampling.
+Reuse compact grid PointKey lookup and the SAME point-tier pool. Every absolute
+request first finds the indexed canonical closed PREPARED root. If BOTH exact
+root-relative coordinates are dyadic64 within the selected cap, it uses existing
+Core.point and its packed SampleInput interval DAG, even when the anchor arrives
+before that grid corner becomes active. Otherwise it uses the sparse full-limb
+exact-UV identity and outward absolute-UV interval DAG. A noncompact point cannot
+later become a finite-profile compact grid point. This source-only classification
+closes both arrival orders without allowing an arrival-dependent rounded XYZ.
+Absolute exact anchor UV may exceed depth64; construction's explicit exact-bit
+cap and the sample owner's finite byte/work caps apply. Original/prepared indexed
+lookup is rehomed from the existing curve geometry helper, never replaced by an
+all-root/all-point scan. Common samples remain original-root CPU/P100 evaluations;
+physical Q remains its separate shared boundary authority.
 
 ## Complete packet-target reservation and mutation
 
@@ -333,3 +347,23 @@ Measure avoided outside work, target DAG/point reuse, candidate/piece/source
 fallback counts, component rebuilds, transfer bytes and complete cold/prepared
 CPU/P100 costs on the fixed caller cohort. Keep unsupported/censored results;
 no watch retry or another broad certification campaign in this unit.
+
+## Coordinator cancellation and total construction work
+
+Actual source review found that coordinator cancel reached the surface service
+but not the persistent classifier's private Budget. The coordinator now owns a
+stop source; constructor and per-step caller tokens forward into it, and both
+classifier and surface service retain that token. Per-step scratch contexts use
+the remaining query construction allowance. Their work is charged to the caller
+and accumulated across construction horizons and boundary replacement. Classifier
+construction work and classify/classify_points deltas are included; each private
+classifier operation temporarily limits its SAME Budget to the remaining outer
+allowance. A failed compute step cancels the owner and cannot later publish.
+
+This follows the existing NativeTask scratch lifetime, metered Budget and
+stop-token protocol; it adds neither an evaluator nor a geometry checker.
+The existing real-work fixture reuses its original source and boundary for
+inactive-step refusal, caller/external cancellation, absent partial result and
+actual tiny construction-budget refusal. Its geometric output still goes to
+the same independent reader. Relevant source review and ASan work run close this
+seam; prior service-only cancellation checks are not substituted for it.

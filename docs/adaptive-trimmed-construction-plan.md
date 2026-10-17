@@ -137,8 +137,8 @@ no old exact refs address a new table without canonical copy/remapping.
 
 ConstructionRefinement retains input result/key and contains sorted requests:
 BoundaryKeys; failed FacetKeys; LeafKeys; BandAnchorLocator; PacketGridTarget;
-point authority promotions. BandAnchorLocator names old facet, positive overlap
-piece and exact chosen arbitrary-word UV. PacketGridTarget names old facet,
+point authority promotions. BandAnchorLocator names old facet, containing retained source leaf
+and exact chosen arbitrary-word UV. PacketGridTarget names old facet,
 prepared RootSlot and normalized Dyadic64 numerator/depth per axis. It also
 retains the original SurfaceViewKey and original source lease.
 
@@ -150,7 +150,13 @@ at a closed split-line tie. Keep companions. Stop at target corner; ordinary
 side schedules propagate hanging incidence. Require target NEW ACTIVE in rebuilt
 packet output; inactive cached numerical existence is irrelevant. No capped
 point/path gives unresolved. BAND anchors instead permit arbitrary-word exact
-UV and require strict interiority + implicated cache splits + one region rebuild.
+UV. Round the ACTUAL parent centroid and require every exact barycentric
+coordinate >=1/6. Locate one containing leaf through retained overlap-piece
+indices (plane shortcut: metered retained-leaf scan), split that leaf, sample
+the central point and rebuild its component. Do not take a first clipped-piece
+centroid or split all crossed leaves. A direct star has child area <=2/3 of
+parent; no global CDT contraction is claimed. See the DESIGN central-anchor
+amendment for the owned barycentric derivation.
 No bound-failure packet demotion or new packet triangulation API is introduced.
 
 ## Exact admission/CDT procedure
@@ -202,7 +208,7 @@ and accumulated anchors under the fixed metric. Seed/site order is canonical.
    map and unsupported profile cannot emit partial success.
 4. RED true construction progress: skinny packet triangle surviving arbitrary
    one-axis split must activate a capped strict-interior grid target; band old
-   triangle must gain strict arbitrary-word anchor. Two failures sharing target
+   triangle must gain an arbitrary-word central anchor with barycentrics >=1/6. Two failures sharing target
    or leaf reserve once and rebuild affected component once. Existing cached but
    inactive sample must become active. No target under cap returns unresolved.
    Integrate actual runtime sampling/bounds, not supplied PASS placeholders.

@@ -185,8 +185,12 @@ same actual-facet source invariant, not a separate output certificate.
    old GeometryStore/BoundRootBank dependency. Box index visits are metered;
    closed contacts remain candidates. Exact convex result has <=7 vertices;
    <=5 positive fan triangles. Carry original facet barycentrics and evaluate
-   SAME L exactly. Sum exact positive areas against the admitted disjoint
-   NONOUTSIDE cover. Missing coverage fails the actual facet, not partial PASS.
+   SAME L exactly. Admit the complete prepared face-carrier root closure once
+   (including outside-pruned roots), exact prepared-envelope vertex containment
+   and captured construction/view identity. Directed construction and
+   conservative leaf pruning make clipping a partition by construction. Keep
+   positive/nonempty clips; omit the redundant per-facet fraction-area sum. The
+   SAME external oriented-chain oracle directly checks actual clip coverage.
    Direct original planes bypass index/clipping after source-envelope and
    selected-domain admission. Counts/limbs/reservations precede publication.
 5. Implement demanded precise methods from the retained original source: exact

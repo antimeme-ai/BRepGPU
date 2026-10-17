@@ -48,6 +48,9 @@ public:
   AdaptiveBoundarySession &operator=(const AdaptiveBoundarySession &) = delete;
   void open_device(const CacheDevice &);
   void begin(const CurveBoundaryQuery &);
+  // Continue the SAME query/forest after a complete consumer request horizon.
+  // The expected retained output and every key are checked before mutation.
+  void refine(SharedCurveSnapshot expected, std::span<const BoundaryKey>);
   StepState step(JobContext &);
   [[nodiscard]] SharedCurveSnapshot result() const;
   [[nodiscard]] CurveStats stats() const noexcept;

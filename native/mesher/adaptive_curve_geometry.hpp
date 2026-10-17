@@ -5,6 +5,13 @@
 #include "geometry.hpp"
 #include <optional>
 namespace bgmesh::adaptive {
+struct OriginalLineImage final {
+  std::array<Rational, 4> endpoints;
+  std::array<Rational, 2> covector, scalars;
+};
+[[nodiscard]] std::optional<OriginalLineImage>
+original_curve_line_image(const CurveSourceCache &, Slot<CurveTag>,
+                           std::span<const Rational, 2> domain, bgfd::Budget &);
 namespace curve_detail {
 BezierCurve original_net_exact(const CurveSourceCache &, OriginalCurveRootSlot, bgfd::Budget &);
 }
