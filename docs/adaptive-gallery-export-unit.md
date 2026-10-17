@@ -53,3 +53,10 @@ poster dimensions separately. Root also selected THIS-view raster cost as the
 sum of the five disjoint native projection/setup/bin/shading/download rows;
 exclude frame/session walls from that sum. Original complete-run and additional
 both-view process walls remain separate captions.
+
+Both scheduled replays completed and their actual final images were inspected.
+All166 original labels remain;117 use visible-ID samples and49 marked projected
+mesh centers. CPU/P100 raw PNG bytes match, and before/after scene/view/label/
+tool pins close. Full original and replay stage tables and per-export times are
+retained with each gallery. The final journal records actual scopes and values;
+root owns public image/report publication. No further run was selected.
