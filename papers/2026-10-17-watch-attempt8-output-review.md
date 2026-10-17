@@ -72,7 +72,7 @@ RSS; neither peak should be summed across component rows.
 | Process wall | 875.16 | 872.50 |
 | Process user | 1,605.28 | 1,571.69 |
 | Process system | 7.24 | 8.09 |
-| Complete meshing, sum of component scopes | 847.712234 | 845.785060 |
+| Recorded complete-meshing scope | 847.712234 | 845.785060 |
 | Scene | 12.088713 | 11.836033 |
 | Assembled render total | 0.222594 | 0.046141 |
 | Exploded render total | 0.114025 | 0.042798 |

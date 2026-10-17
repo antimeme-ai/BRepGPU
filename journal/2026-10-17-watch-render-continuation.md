@@ -321,3 +321,14 @@ scenes at3840x3600 with2x supersampling through existing C++CPU/P100 display.
 Exact camera scaling preserves geometry/views; higher-resolution replay and
 PNG/SVG composition costs remain separate from the completed cold source-to-both-
 1920images operations. No new meshing run or borrowed geometry is necessary.
+
+
+Root accepted the independent publication review. It checked actual889-phase
+files, named meshing/frame scopes, cumulative counters, complete inventories,
+fresh reference statuses, source attribution and limits. Two minor findings
+were fixed: README's unrun NVIDIA statement now names only the earlier untrimmed
+benchmark, and the audit paper labels the named complete-meshing scope rather
+than calling it a literal sum of rounded component scope rows. No timing values
+changed. The public report also distinguishes component-local physical contacts
+from an assembly collision test. No new numerical test jobs were necessary for
+these wording corrections.

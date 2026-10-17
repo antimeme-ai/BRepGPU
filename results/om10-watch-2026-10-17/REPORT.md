@@ -78,15 +78,16 @@ selective acceleration of a native mesher, not a complete GPU B-rep kernel.
 No OCCT or NVIDIA reference triangles enter the owned mesher.
 
 The output inventory contains every original definition and face once. Both
-runs test 2,218,277 final contact candidates with zero forbidden pairs. Their
+runs test 2,218,277 final component-contact candidates with zero forbidden pairs.
+This is a within-component mesh check, not an assembly collision test. Their
 actual scene, view, label and face-index bytes agree. This checks inventory and
 backend compatibility; agreement alone is not an independent geometry oracle.
 The P100 records 465,553 curve device points / 420,028 curve bounds and final
 cumulative surface counters of 215,809 points / 169,649 bounds / 229 cap facets.
 CPU device counters are zero. Cumulative surface snapshots are not summed across
-components. Actual P100 host→device / device→host bytes are356,455,092 /78,020,312
-for curves, and579,874,360 /61,834,128 for surfaces. Maximum reservation-inclusive
-run peaks are8,357,302,903bytes CPU /8,752,509,773bytes P100; these are distinct
+components. Actual P100 host→device / device→host bytes are 356,455,092 / 78,020,312
+for curves, and 579,874,360 / 61,834,128 for surfaces. Maximum reservation-inclusive
+run peaks are 8,357,302,903 bytes CPU / 8,752,509,773 bytes P100; these are distinct
 from process RSS and CUDA driver/context memory.
 
 Relevant authored and original-component source/facet/chain oracles, CPU/both-P100
@@ -111,8 +112,8 @@ Earlier failures and censored runs remain in the
 
 Both fresh genuine NVIDIA USD/BRep 1.0.0 CPU preparations have now run from the
 original STEP: 12 workers, one inner thread each, both healing policies, requested
-0.005mm chord height and the completed native model's exact original placements,
-cameras and explosion. Each attempts all107 definitions and completes103.
+0.005 mm chord height and the completed native model's exact original placements,
+cameras and explosion. Each attempts all 107 definitions and completes 103.
 
 | Reference configuration | Definitions complete | Actual failed-attempt wall | Complete render time |
 |---|---:|---:|---|
@@ -120,19 +121,19 @@ cameras and explosion. Each attempts all107 definitions and completes103.
 | NVIDIA, heal1 | 103/107 | 87.466837s | unavailable; no image |
 
 Both preparations fail on the same four definitions. The official OCCT-to-USD
-bridge refuses multi-turn analytic trims requiring topology splitting on1716
-and1811. Our strict output adapter refuses nontriangle polygons on1797 and1756;
+bridge refuses multi-turn analytic trims requiring topology splitting on 1716
+and 1811. Our strict output adapter refuses nontriangle polygons on 1797 and 1756;
 its accepted polygon special case is an exact axis-extruded rectangle. These
 are failures of this pinned import/export pipeline, not a demonstrated inability
 of every NVIDIA API or a measured complete-render comparison. No owned triangles
 replace missing reference output. Independent reference qualification and display
-are not run after incomplete preparation. An orchestrator exit0 means it recorded
+are not run after incomplete preparation. An orchestrator exit 0 means it recorded
 the outcomes, not that either reference pipeline passed.
 
 [Actual reference outcomes](nvidia-reference-outcomes.tsv) ·
 [Preparation outcomes](nvidia-preparation-outcomes.tsv) ·
-[All107 heal0 definition outcomes](nvidia-heal0-definitions.tsv) ·
-[All107 heal1 definition outcomes](nvidia-heal1-definitions.tsv) ·
+[All 107 heal0 definition outcomes](nvidia-heal0-definitions.tsv) ·
+[All 107 heal1 definition outcomes](nvidia-heal1-definitions.tsv) ·
 [heal0 runtime pins](nvidia-heal0-runtime-pins.tsv) ·
 [heal1 runtime pins](nvidia-heal1-runtime-pins.tsv).
 These new attempts supersede neither earlier failed observations nor the need

@@ -67,7 +67,7 @@ accounted for. The report retains earlier timeouts and distinguishes actual
 warm remeshing from returning a cached result. These timings cover untrimmed
 patches; selected trimmed faces and a first imported component are delivered below.
 The complete OM10 assembly is now [rendered on CPU and P100](results/om10-watch-2026-10-17/REPORT.md).
-The NVIDIA CPU reference has not been run on this new scenario.
+The NVIDIA CPU reference has not been run on the untrimmed coupled-surface benchmark above.
 
 The [shared-curve operation](docs/ADAPTIVE_SHARED_CURVES.md) is now delivered too:
 one physical edge chain, every original occurrence/UV seam, and separate source,
