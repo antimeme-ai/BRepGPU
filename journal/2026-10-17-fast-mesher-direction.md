@@ -144,9 +144,11 @@ Design follows synthesis of the three; no implementation unit is selected.
   days), to learn which mechanisms help and in which combinations.
 - Ablation size: 64 configurations. Explore further in configuration space
   only around something intriguing. Eight two-level flags fit a 2^(8-2)
-  fraction (resolution VII), which separates main effects and two-way
-  interactions. Three-level flags (staged resolver) take a mixed-level
-  assignment inside the same 64 runs (my call).
+  fraction. Correction from the design review: that fraction is resolution V,
+  not VII as first written; it still separates main effects and two-way
+  interactions, but only while every flag has two levels. Staged resolution
+  therefore enters the first arena as background queue versus single pass;
+  inline and speculative variants follow if staging is intriguing (my call).
   When something intriguing appears, follow it all the way: no time box on
   that follow-up exploration.
 - Fleet topology read over SSH (nvidia-smi, numactl): two P100-PCIE-16GB.
@@ -182,3 +184,37 @@ Design follows synthesis of the three; no implementation unit is selected.
   to performance. Design defaults until answered: mesh held to ε against the
   chosen truth with source error reported alongside; governor left alone and
   frequency recorded.
+- Design draft docs/FAST_MESHER_DESIGN.md written and given a builder check
+  by a fresh reviewer. Ten questions: seven settled as marked calls in the
+  document (compared scope is the meshing stage; ingress stays on the OCCT
+  bridge, extended for the corpus; scoring when outcomes differ; corpus ε at
+  1e-3 and 1e-4 of the bounding-box diagonal; invalid-but-used inputs meshed
+  faithfully and reported; export to internal schema, STL and 3MF; the
+  resolution correction above). Three go to the operator.
+- Operator answers after the builder check:
+  - Steel-man NVIDIA. NVIDIA being invalid is never our win; it is a finding.
+    Publishable numbers start from NVIDIA at its strongest. Checked in code:
+    NVIDIA reads only .brep (OcctFileConverter.cpp), and both our readers
+    (step_source, reference_source) disable OCCT shape processing. Today's
+    references therefore fed NVIDIA unhealed input. Its arms now include OCCT's
+    default STEP processing; its time is its fastest valid arm.
+  - Do not plan around calendar time. Permutations run on the fleet as they
+    become available while delivery continues on the laptop.
+  - From this point in the source graph forward the old mesher is no longer
+    part of the system. Old artifacts remain, with a line marking them
+    historical from the previous regime.
+  - Tolerances: 1e-3/1e-4 of the diagonal were a convenient choice, not a
+    derived one. Revised (my call): absolute 0.005 and 0.025 mm for inputs with
+    trustworthy units; relative 1e-3/1e-4 of the diagonal only for
+    arbitrary-scale inputs such as ABC.
+  - Boundary-deviation question rephrased; still open.
+- Correction: manufacturing tolerance is not absolute. What people read from
+  their metrology is treated as absolute, and that interpretation is among the
+  densest sources of trouble. ε is a request; the arena spans the requests
+  people make (0.005 and 0.025 mm plus 1e-3/1e-4 of the diagonal where units
+  are real; relative only for arbitrary-scale inputs).
+- Certification removal is repository-wide. The mesher goes first; the other
+  operations follow immediately after, in an order chosen then.
+- Error is measured against the desired final position (the repaired coherent
+  solid), not against the source's starting gap. The source discrepancy is a
+  starting-condition metric, reported per edge, never charged against ε.
