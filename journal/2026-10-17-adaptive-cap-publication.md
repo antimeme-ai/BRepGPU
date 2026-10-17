@@ -86,7 +86,9 @@ implements it. No whole-watch claim or benchmark speedup from these failures.
 
 The unchanged CPU12 full-watch retry with natural-domain recovery was censored
 at600s before a complete component/image (exit124,985.43s user CPU). The P1001
-retry continues separately. Read-only live stacks show actual FaceTrim facet
+retry also reached600s without a completed component/image (exit124,991.75s
+user CPU). Neither is a completed timing or a CPU/GPU speed comparison.
+Read-only live stacks show actual FaceTrim facet
 bound preparation, including eager virtual cache-leaf clip/materialization;
 most workers were idle in the sampled horizon. A stack in Rational arithmetic
 does not establish large operands or a GCD defect. The existing return-pass
