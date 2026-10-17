@@ -5,6 +5,15 @@ On this workspace the target is `../BLACKBIRD.md`. A standalone checkout needs
 the operator's current doctrine placed beside the checkout. Do not substitute
 archived reference instructions for it.
 
+Shift sign-off: read [the 2026-10-17 handoff](docs/HANDOFF_2026-10-17.md) first
+for current merged state, complete timing comparison, failed experiments,
+artifact locations and next-shift recommendations. PR70/71 are merged; the
+whole watch and proper exploded diagrams are delivered. The owned mesher's
+846–848s construction cost, independent distance qualification and required
+README-wide NVIDIA reference backfill remain. No new compute job is running
+or new performance implementation selected at sign-off. Older pending-watch
+and active-branch wording below is historical.
+
 Latest watch checkpoint: the complete original OM10 now renders through the
 owned cached-adaptive C++/CUDA mesher on CPU12 and P1001/CPU12. All107 definitions,
 9162 original faces and166 placements finish with273978 unique triangles and
