@@ -41,7 +41,10 @@ def main(args):
             '--matched',args.matched,'--output',dataset,'--heal',str(heal),'--mode',mode,
             '--workers',str(args.workers),'--chord-height','.005','--matched-query',str(args.matched_query),
             '--display-threads',str(args.display_threads),'--exporter',args.exporter,'--producer',args.producer,
-            '--display',args.display,'--package',args.package)
+            '--display',args.display,'--package',args.package,
+            '--reference-preparation',args.reference_preparation,
+            '--converter',args.converter,'--periodic-preparer',args.periodic_preparer,
+            '--plane-helper',args.plane_helper)
     def admission(dataset,output):
         return (sys.executable,ROOT/'scripts/qualify_om10_nvidia.py','--dataset',dataset,
             '--owned-qualification',owned_input,'--output',output,'--matched-query',str(args.matched_query),
@@ -49,6 +52,37 @@ def main(args):
     def geometry_pins(dataset):
         rows=read_tsv(dataset/'geometry-pins.tsv')
         return tuple((r['source_definition_id'],r['sha256']) for r in rows)
+    if args.admission=='transport':
+        require(args.reference_preparation=='periodic-plane',
+                'development transport mode requires explicit prepared-source physical admission')
+        from brepgpu.reference_source import load_reference_source
+        outcomes=[]
+        for heal in (0,1):
+            config=f'heal{heal}';dataset=args.output/config
+            code,elapsed=execute(caller(heal,dataset,'render'),args.output/f'{config}-caller.log')
+            status,scope,value,detail='FAIL','failed_pipeline','',f'caller exit{code}; retained reports and logs'
+            if code==0:
+                metadata={r['field']:r['value'] for r in read_tsv(dataset/'metadata.tsv')}
+                source=load_reference_source(dataset/'source/source.bgocct')
+                physical=read_tsv(dataset/'physical.tsv')
+                require(source.source_sha256==source_hash and metadata['source_sha256']==source_hash
+                        and metadata['views_sha256']==views_hash,
+                        'completed transport source/camera differs')
+                require((len(source.definitions),len(source.faces),int(metadata['occurrences']))==(107,9162,166)
+                        and len(physical)==107
+                        and {int(r['definition_id']) for r in physical}=={d.id for d in source.definitions}
+                        and all(r['status']=='PASS' for r in physical)
+                        and metadata['physical_shell_source_euler']=='PASS',
+                        'unqualified completion still requires full original inventory and physical shells')
+                status,scope,value='COMPLETE_UNQUALIFIED','fresh_source_nominal_request_both_views',format(elapsed,'.17g')
+                detail=('actual complete source-to-both-images process; original inventory and physical/source-Euler PASS; '
+                        'independent distance qualification unavailable/not performed; nominal .005mm request and25/25angles; '
+                        'no matched-quality speedup claim')
+            require(digest(args.step)==source_hash and digest(view_path)==views_hash,
+                    'original source/views changed during transport attempt')
+            outcomes.append((config,'both',scope,1,status,value,format(elapsed,'.17g'),source_hash,views_hash,detail))
+            tsv(args.output/'reference-outcomes.tsv',COLUMNS,outcomes)
+        return
     preparations={};preparation_rows=[]
     # Complete BOTH nonvisual reference outcomes before any actual NV watch image.
     for heal in (0,1):
@@ -120,5 +154,11 @@ if __name__=='__main__':
     p.add_argument('--display',type=Path,default=ROOT/'build/om10-reference/brepgpu-om10-reference-display')
     p.add_argument('--package',type=Path,default=ROOT/'quarantine/nvidia-usd-brep-1.0.0-linux')
     p.add_argument('--query',type=Path,default=ROOT/'build/om10-reference-geometry/brepgpu-om10-reference-geometry')
+    p.add_argument('--admission',choices=('finite','transport'),default='finite',
+                   help='transport permits complete development images without distance qualification; never quality PASS')
+    p.add_argument('--reference-preparation',choices=('none','periodic-plane'),default='none')
+    p.add_argument('--converter',type=Path,default=ROOT/'build/nvidia-reference-recovery/brepgpu-nvidia-convert')
+    p.add_argument('--periodic-preparer',type=Path,default=ROOT/'build/reference-periodic/brepgpu-reference-periodic')
+    p.add_argument('--plane-helper',type=Path,default=ROOT/'build/nvidia-reference-recovery/brepgpu-nvidia-plane-envelope')
     try:main(p.parse_args())
     except Exception as error:print(f'NVIDIA benchmark failed: {error}',file=sys.stderr);sys.exit(1)
