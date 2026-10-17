@@ -638,8 +638,8 @@ class Cavity final {
     for (const auto &t : triangles)
       static_cast<void>(mesh_.add({boundary[t[0]], boundary[t[1]], boundary[t[2]]}));
   }
-  // Ordered new-vertex/old-apex occurrence roles in the published fan algorithm.
-  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+  // Ordered new-vertex/old-apex occurrence roles in the published fan
+  // algorithm. NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
   void fix_fan(Slot u, Slot old_apex) {
     if (old_apex == none)
       invariant("crossed fan has no farther original neighbor apex");
@@ -687,8 +687,8 @@ class Cavity final {
     }
     chew(boundary, old_apex);
   }
-  // The ordered u,v,w triangle and separate old-apex occurrence are mathematical roles.
-  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+  // The ordered u,v,w triangle and separate old-apex occurrence are
+  // mathematical roles. NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
   void insert(Slot u, Slot v, Slot w, Slot old_apex) {
     ++stats_.cavity_insertions;
     std::pmr::vector<Insert> work(&budget_);
@@ -917,7 +917,7 @@ public:
       return a < b;
     });
   }
-  [[nodiscard]] std::pmr::vector<TriangleWord> run(std::size_t holes) {
+  [[nodiscard]] std::pmr::vector<TriangleWord> run(RegionInventory inventory) {
     {
       DivideConquer initial(g_, budget_, stats_, p_.size());
       const auto triangles = initial.run();
@@ -974,10 +974,24 @@ public:
         used[point] = 1;
     }
     budget_.charge(static_cast<uint64_t>(used.size()));
-    if (holes > (std::numeric_limits<std::size_t>::max() - p_.size()) / 2 ||
-        output.size() != p_.size() + holes * 2 - 2 ||
-        std::find(used.begin(), used.end(), uint8_t{0}) != used.end())
+    const uint64_t n = p_.size();
+    if (n > UINT64_MAX / 2 || inventory.negative_cycles > UINT64_MAX / 2 ||
+        inventory.positive_cycles > UINT64_MAX / 2 || inventory.boundary_sites > n)
+      throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "direct region inventory overflow");
+    const uint64_t base = 2 * n - inventory.boundary_sites;
+    if (2 * inventory.negative_cycles > UINT64_MAX - base ||
+        base + 2 * inventory.negative_cycles < 2 * inventory.positive_cycles)
+      throw bgfd::Failure(BGFD_INVALID_DOMAIN, "invalid direct region Euler inventory");
+    const auto expected = base + 2 * inventory.negative_cycles - 2 * inventory.positive_cycles;
+    if (output.size() != expected || std::find(used.begin(), used.end(), uint8_t{0}) != used.end())
       invariant("direct output domain site/count inventory differs");
+    for (const auto &edge : constraints_) {
+      budget_.charge(1);
+      const auto left = mesh_.directed(edge[0], edge[1]);
+      const auto right = mesh_.directed(edge[1], edge[0]);
+      if (left == none || removed[left] != 0 || (right != none && removed[right] == 0))
+        invariant("direct region constraint lacks retained left/void right");
+    }
     stats_.selection_ns += elapsed(selection_start);
     return output;
   }
@@ -998,7 +1012,28 @@ std::pmr::vector<TriangleWord> solve(Predicates &predicates, bgfd::Budget &budge
                                      CoreStats &stats) {
   if (loops.empty() || predicates.size() < 3)
     throw bgfd::Failure(BGFD_INVALID_INPUT, "direct CDT requires original domain sites");
+  return solve_directed_regions(predicates, budget, slots, loops,
+                                {predicates.size(), 1, loops.size() - 1}, seed, stats);
+}
+std::pmr::vector<TriangleWord> solve_directed_regions(Predicates &predicates, bgfd::Budget &budget,
+                                                      std::span<const uint32_t> slots,
+                                                      std::span<const bgfd_loop> loops,
+                                                      RegionInventory inventory, uint64_t seed,
+                                                      CoreStats &stats) {
+  if (loops.empty() || predicates.size() < 3 || inventory.positive_cycles == 0 ||
+      inventory.positive_cycles > loops.size() ||
+      inventory.negative_cycles != loops.size() - inventory.positive_cycles)
+    throw bgfd::Failure(BGFD_INVALID_INPUT, "invalid directed region inventory");
+  uint64_t boundary = 0;
+  for (const auto &loop : loops) {
+    budget.charge(1);
+    if (loop.count > UINT64_MAX - boundary)
+      throw bgfd::Failure(BGFD_RESOURCE_EXHAUSTED, "directed boundary count overflow");
+    boundary += loop.count;
+  }
+  if (boundary != inventory.boundary_sites || boundary > predicates.size())
+    throw bgfd::Failure(BGFD_INVALID_INPUT, "directed boundary site inventory differs");
   Constructor constructor(predicates, budget, stats, seed, slots, loops);
-  return constructor.run(loops.size() - 1);
+  return constructor.run(inventory);
 }
 } // namespace bgcdt

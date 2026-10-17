@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from brepgpu.imported_oracles import qualify_domain, turn, _simple_domains
 
 
-def qualify_chain(case, triangles):
+def qualify_chain(case, triangles, *, required_sites=None, positive_cycles=1):
     """Exact positive chain/incidence on an independently admitted simple domain.
 
     Winding multiplicity proves complete nonoverlapping output coverage. Input
@@ -25,7 +25,9 @@ def qualify_chain(case, triangles):
         converted.append(tuple(points[i] for i in triangle))
         for a, b in zip(triangle, triangle[1:] + triangle[:1]):
             edges[min(a, b), max(a, b)].append((a, b))
-    if used != {i for loop in case.loops for i in loop}:
+    expected_sites = ({i for loop in case.loops for i in loop}
+                      if required_sites is None else set(required_sites))
+    if used != expected_sites:
         raise AssertionError('actual external domain omitted a source node')
     qualify_domain(boundary, converted)
     original = Counter((a, b) for loop in case.loops
@@ -38,7 +40,9 @@ def qualify_chain(case, triangles):
             raise AssertionError('actual external interior edge is not oppositely paired')
     if observed_boundary != original:
         raise AssertionError('actual external original directed source boundary differs')
-    expected_count = len(used) + 2*(len(case.loops)-1) - 2
+    boundary_count = sum(map(len, case.loops))
+    negative_cycles = len(case.loops) - positive_cycles
+    expected_count = 2*len(used) - boundary_count + 2*negative_cycles - 2*positive_cycles
     if len(triangles) != expected_count:
         raise AssertionError('actual external planar domain Euler triangle count differs')
     return converted, edges

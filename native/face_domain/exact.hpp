@@ -8,6 +8,7 @@
 #include <memory_resource>
 #include <span>
 #include <stdexcept>
+#include <stop_token>
 #include <utility>
 #include <vector>
 
@@ -21,28 +22,64 @@ struct Failure final {
 struct Limits final {
   uint64_t bytes, work;
 };
+class Cancelled final : public std::exception {
+public:
+  [[nodiscard]] const char *what() const noexcept override { return "native exact work cancelled"; }
+};
 class Budget final : public std::pmr::memory_resource {
   uint64_t limit_, live_ = 0, peak_ = 0, work_limit_, work_ = 0, max_limbs_ = 0;
+  uint64_t divisions_ = 0, quotient_corrections_ = 0, division_addbacks_ = 0, lehmer_batches_ = 0;
+  std::pmr::memory_resource *upstream_;
+  std::stop_token stop_;
   void *do_allocate(std::size_t bytes, std::size_t alignment) override {
     const auto size = static_cast<uint64_t>(bytes);
     if (size > limit_ - live_)
       throw Failure(BGFD_RESOURCE_EXHAUSTED, "native memory budget exhausted");
-    void *value = std::pmr::new_delete_resource()->allocate(bytes, alignment);
+    void *value = upstream_->allocate(bytes, alignment);
     live_ += size;
     peak_ = std::max(peak_, live_);
     return value;
   }
   void do_deallocate(void *value, std::size_t bytes, std::size_t alignment) override {
     live_ -= static_cast<uint64_t>(bytes);
-    std::pmr::new_delete_resource()->deallocate(value, bytes, alignment);
+    upstream_->deallocate(value, bytes, alignment);
   }
   bool do_is_equal(const std::pmr::memory_resource &other) const noexcept override {
     return this == &other;
   }
 
 public:
-  explicit Budget(Limits limits) : limit_(limits.bytes), work_limit_(limits.work) {}
+  // Owner-affine nested work cap; no new allocator or arithmetic ownership.
+  // Keep scopes in stack order and do not reset_work() inside a live scope.
+  class WorkScope final {
+    Budget &budget_;
+    uint64_t previous_;
+    friend class Budget;
+    WorkScope(Budget &owner, uint64_t amount) : budget_(owner), previous_(owner.work_limit_) {
+      owner.charge(0);
+      if (amount < owner.work_limit_ - owner.work_)
+        owner.work_limit_ = owner.work_ + amount;
+    }
+
+  public:
+    WorkScope(const WorkScope &) = delete;
+    WorkScope &operator=(const WorkScope &) = delete;
+    ~WorkScope() { budget_.work_limit_ = previous_; }
+  };
+  [[nodiscard]] WorkScope scoped_work(uint64_t amount) { return WorkScope(*this, amount); }
+  explicit Budget(Limits limits,
+                  std::pmr::memory_resource *upstream = std::pmr::new_delete_resource(),
+                  std::stop_token stop = {})
+      : limit_(limits.bytes), work_limit_(limits.work), upstream_(upstream),
+        stop_(std::move(stop)) {
+    if (upstream == nullptr || upstream == this)
+      throw Failure(BGFD_INVALID_INPUT, "invalid budget upstream");
+  }
+  Budget(const Budget &) = delete;
+  Budget &operator=(const Budget &) = delete;
   void charge(uint64_t amount) {
+    if (stop_.stop_requested())
+      throw Cancelled();
     if (amount > work_limit_ - work_)
       throw Failure(BGFD_RESOURCE_EXHAUSTED, "exact work budget exhausted");
     work_ += amount;
@@ -50,16 +87,41 @@ public:
   void reset_work() noexcept { work_ = 0; }
   [[nodiscard]] uint64_t work() const noexcept { return work_; }
   [[nodiscard]] uint64_t peak() const noexcept { return peak_; }
+  [[nodiscard]] uint64_t live() const noexcept { return live_; }
   void observe(std::size_t count) noexcept {
     max_limbs_ = std::max(max_limbs_, static_cast<uint64_t>(count));
   }
   [[nodiscard]] uint64_t max_limbs() const noexcept { return max_limbs_; }
+  void observe_division() {
+    charge(1);
+    ++divisions_;
+  }
+  void observe_quotient_correction() {
+    charge(1);
+    ++quotient_corrections_;
+  }
+  void observe_division_addback() {
+    charge(1);
+    ++division_addbacks_;
+  }
+  void observe_lehmer_batch() {
+    charge(1);
+    ++lehmer_batches_;
+  }
+  [[nodiscard]] uint64_t divisions() const noexcept { return divisions_; }
+  [[nodiscard]] uint64_t quotient_corrections() const noexcept { return quotient_corrections_; }
+  [[nodiscard]] uint64_t division_addbacks() const noexcept { return division_addbacks_; }
+  [[nodiscard]] uint64_t lehmer_batches() const noexcept { return lehmer_batches_; }
 };
 
 class Integer final {
   Budget *budget_;
   std::pmr::vector<uint32_t> limbs_;
   int sign_ = 0;
+  void require_same_owner(const Integer &other) const {
+    if (budget_ != other.budget_)
+      throw Failure(BGFD_INTERNAL_ERROR, "integer arithmetic allocator mismatch");
+  }
   void trim() noexcept {
     while (!limbs_.empty() && limbs_.back() == 0)
       limbs_.pop_back();
@@ -98,8 +160,8 @@ class Integer final {
   }
   [[nodiscard]] static Integer magnitude_sub(const Integer &left, const Integer &right, int sign) {
     Integer result(*left.budget_);
-    result.limbs_.resize(left.limbs_.size());
     left.budget_->charge(static_cast<uint64_t>(left.limbs_.size()));
+    result.limbs_.resize(left.limbs_.size());
     uint64_t borrow = 0;
     for (std::size_t i = 0; i < left.limbs_.size(); ++i) {
       const uint64_t a = left.limbs_[i];
@@ -115,7 +177,10 @@ class Integer final {
 public:
   explicit Integer(Budget &budget) : budget_(&budget), limbs_(&budget) {}
   Integer(const Integer &other)
-      : budget_(other.budget_), limbs_(other.limbs_, other.budget_), sign_(other.sign_) {}
+      : budget_(other.budget_), limbs_(other.budget_), sign_(other.sign_) {
+    budget_->charge(static_cast<uint64_t>(other.limbs_.size()));
+    limbs_ = other.limbs_;
+  }
   Integer(Integer &&other) noexcept
       : budget_(other.budget_), limbs_(std::move(other.limbs_), other.budget_), sign_(other.sign_) {
     other.sign_ = 0;
@@ -124,6 +189,7 @@ public:
     if (this != &other) {
       if (budget_ != other.budget_)
         throw Failure(BGFD_INTERNAL_ERROR, "integer allocator mismatch");
+      budget_->charge(static_cast<uint64_t>(other.limbs_.size()));
       limbs_ = other.limbs_;
       sign_ = other.sign_;
     }
@@ -157,9 +223,11 @@ public:
     return result;
   }
   [[nodiscard]] int sign() const noexcept { return sign_; }
+  [[nodiscard]] Budget &budget() const noexcept { return *budget_; }
   [[nodiscard]] std::size_t size() const noexcept { return limbs_.size(); }
   [[nodiscard]] std::span<const uint32_t> magnitude() const noexcept { return limbs_; }
   [[nodiscard]] int compare(const Integer &other) const {
+    require_same_owner(other);
     budget_->charge(1);
     if (sign_ != other.sign_)
       return sign_ > other.sign_ ? 1 : -1;
@@ -171,6 +239,7 @@ public:
     return result;
   }
   [[nodiscard]] Integer add(const Integer &other) const {
+    require_same_owner(other);
     if (sign_ == 0)
       return Integer(other);
     if (other.sign_ == 0)
@@ -183,8 +252,12 @@ public:
     return comparison > 0 ? magnitude_sub(*this, other, sign_)
                           : magnitude_sub(other, *this, other.sign_);
   }
-  [[nodiscard]] Integer subtract(const Integer &other) const { return add(other.negative()); }
+  [[nodiscard]] Integer subtract(const Integer &other) const {
+    require_same_owner(other);
+    return add(other.negative());
+  }
   [[nodiscard]] Integer multiply(const Integer &other) const {
+    require_same_owner(other);
     Integer result(*budget_);
     if (sign_ == 0 || other.sign_ == 0)
       return result;
@@ -210,6 +283,15 @@ public:
     result.trim();
     return result;
   }
+  [[nodiscard]] static Integer from_words(Budget &, int sign, std::span<const uint32_t>);
+  [[nodiscard]] Integer clone_into(Budget &) const;
+  [[nodiscard]] uint64_t bit_length() const;
+  [[nodiscard]] Integer shift_left(uint64_t) const;
+  [[nodiscard]] Integer shift_right_exact(uint64_t) const;
+  [[nodiscard]] static std::pair<Integer, Integer> divmod_nonnegative(const Integer &,
+                                                                      const Integer &);
+  [[nodiscard]] static Integer gcd_nonnegative(const Integer &, const Integer &);
+  [[nodiscard]] Integer divide_exact(const Integer &positive_divisor) const;
 };
 } // namespace bgfd
 #endif

@@ -485,3 +485,9 @@ fixed-width predicates when actual intermediate bit bounds permit them. Keep
 lossless source values and exact zero behavior; rounding a family to fit a fast
 path would answer a different problem. GPU CDT still needs exact-source fallback,
 P100 support, conflict ownership and complete packing/transfer/cleanup timings.
+
+# Cached adaptive mesher follow-up
+
+Construction-specific notes now live in
+[ADAPTIVE_MESHER_RETURN_PASS.md](ADAPTIVE_MESHER_RETURN_PASS.md). Complete the
+shared-curve/trim/component pass before its tuning opportunities.

@@ -264,7 +264,7 @@ int run(int argc, char **argv) {
   Error error{};
   Times init;
   if (backend == "cpu")
-    owner.api = cpu_api();
+    owner.api = scene.source_profile ? cpu_api_v2() : cpu_api();
   else {
     t = Clock::now();
     fs::path plugin =
@@ -276,10 +276,10 @@ int run(int argc, char **argv) {
       throw Failure(std::string("session_create: CUDA plugin unavailable: ") +
                     dlerror());
     auto factory = reinterpret_cast<const Api *(*)()>(
-        dlsym(owner.plugin, "brepgpu_om10_cuda_v1"));
+        dlsym(owner.plugin, scene.source_profile ? "brepgpu_om10_cuda_v2" : "brepgpu_om10_cuda_v1"));
     require(factory, "session_create: CUDA factory missing");
     owner.api = factory();
-    require(owner.api && owner.api->version == 1 &&
+    require(owner.api && owner.api->version == (scene.source_profile ? 2u : 1u) &&
                 owner.api->size == sizeof(Api),
             "session_create: CUDA plugin API mismatch");
     init.create += ms(t);

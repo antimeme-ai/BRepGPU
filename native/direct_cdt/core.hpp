@@ -18,6 +18,13 @@ struct CoreStats final {
   uint64_t order_ns = 0, initial_ns = 0, conversion_ns = 0, recovery_ns = 0, selection_ns = 0;
 };
 using TriangleWord = std::array<Slot, 3>;
+struct RegionInventory final {
+  uint64_t boundary_sites, positive_cycles, negative_cycles;
+};
+[[nodiscard]] std::pmr::vector<TriangleWord>
+solve_directed_regions(Predicates &, bgfd::Budget &, std::span<const uint32_t> slots,
+                       std::span<const bgfd_loop> loops, RegionInventory, uint64_t seed,
+                       CoreStats &);
 [[nodiscard]] std::pmr::vector<TriangleWord> solve(Predicates &predicates, bgfd::Budget &budget,
                                                    std::span<const uint32_t> slots,
                                                    std::span<const bgfd_loop> loops, uint64_t seed,
