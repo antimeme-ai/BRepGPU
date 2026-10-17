@@ -1,6 +1,7 @@
 #include "adaptive_curve_numeric.hpp"
-#include "adaptive_traces.hpp"
 #include "adaptive_curves.hpp"
+#include "adaptive_traces.hpp"
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -39,7 +40,7 @@ struct Fixture {
   DefinitionBoundarySnapshot boundary;
   PhysicalCurveBounds physical;
   explicit Fixture(const std::filesystem::path &path, bool image = false,
-                   bool force_q_plane = false)
+                   bool force_q_plane = false, bool split_first = false)
       : source(load_source(path, resource)), curves(curves_for(source, resource, budget)),
         carriers([&] {
           const auto &s = source.view();
@@ -51,10 +52,10 @@ struct Fixture {
         definition(source.view().definition_index.find(DefinitionId{200})),
         face(source.view().face_index.find(FaceId{900})) {
     DefinitionBoundaryForest forest(budget, source, definition, resource);
-    if (auto batch = forest.pending_evaluations()) {
+    auto complete = [&](const BoundaryEvaluationBatch &batch) {
       std::vector<BoundaryEvaluationResult> results;
-      for (const auto &task : batch->tasks()) {
-        auto t = import_exact(budget, batch->parameters().view(task.parameter));
+      for (const auto &task : batch.tasks()) {
+        auto t = import_exact(budget, batch.parameters().view(task.parameter));
         auto root = find_original_curve_root(curves, task.curve, t);
         auto bound = t.bounds();
         CurveSampleInput input;
@@ -67,7 +68,17 @@ struct Fixture {
           q[2] = 0.;
         results.push_back({task, 3, q});
       }
-      static_cast<void>(forest.complete_evaluations(batch->epoch(), results));
+      static_cast<void>(forest.complete_evaluations(batch.epoch(), results));
+    };
+    if (auto batch = forest.pending_evaluations())
+      complete(*batch);
+    if (split_first) {
+      const auto epoch = forest.begin_epoch();
+      const auto intervals = forest.intervals({0});
+      require(intervals.size() == 1, "analytic locator split fixture has wrong initial interval");
+      forest.request_owner_splits(epoch, intervals);
+      forest.arrive(epoch, face, forest.face_generation(face), {});
+      complete(forest.prepare_splits(epoch));
     }
     boundary = forest.freeze_definition_boundary();
     ExactBuilder builder(resource, {{OwnerKind::boundary, definition.value, 200}, 1, 900});
@@ -235,22 +246,24 @@ UseTraceResult run(Fixture &fixture, double tolerance = 1e-4) {
   require(trace_intervals(result).size() > 0, "trace interval operation returned no intervals");
   return result;
 }
-void narrow_bank_refuses(Fixture &fixture) {
+void narrow_bank_refuses(Fixture &fixture, std::array<double, 4> box = {.25, .75, 0., 1.}) {
   const auto carrier = fixture.source.view().carrier_index.find(CarrierId{9});
-  const CarrierRequest requested{carrier, {.25, .75, 0., 1.}};
-  auto bank = prepare_trace_source_cache(fixture.source, std::span(&requested, 1),
-                                          fixture.resource, {}, {}, fixture.budget);
+  const CarrierRequest requested{carrier, box};
+  auto bank = prepare_trace_source_cache(fixture.source, std::span(&requested, 1), fixture.resource,
+                                         {}, {}, fixture.budget);
   AdaptiveBoundarySession session(fixture.resource, fixture.source, fixture.definition,
                                   fixture.curves, bank, {});
   const auto request = fixture.request(1.e-4);
   session.begin({1, request.allowances, request.positional, request.node_source, {}});
   JobContext context({uint64_t{1} << 28, uint64_t{1} << 40}, fixture.resource.get(), {});
-  refuses([&] {
-    for (uint32_t i = 0; i < 1000000; ++i)
-      if (session.step(context) == StepState::done)
-        throw std::runtime_error("narrow prepared bank silently widened");
-    throw std::runtime_error("narrow prepared bank did not settle");
-  }, ErrorCode::unsupported, "natural-domain recovery clipped to narrow cache bank");
+  refuses(
+      [&] {
+        for (uint32_t i = 0; i < 1000000; ++i)
+          if (session.step(context) == StepState::done)
+            throw std::runtime_error("narrow prepared bank silently widened");
+        throw std::runtime_error("narrow prepared bank did not settle");
+      },
+      ErrorCode::unsupported, "natural-domain recovery clipped to narrow cache bank");
   session.close();
 }
 } // namespace
@@ -258,16 +271,51 @@ int main(int argc, char **argv) {
   try {
     require(argc == 3, "usage: traces source variant-directory");
     const std::filesystem::path variants = argv[2];
+    for (const auto kind : {2, 3, 4, 5}) {
+      Fixture analytic(variants / ("locator-" + std::to_string(kind) + ".bgsource"), false, false,
+                       true);
+      const auto result = run(analytic, 10.);
+      require(trace_requests(result).empty(),
+              "analytic locator trace did not pass unchanged bound");
+      bool interior = false;
+      for (const auto &site : trace_sites(result)) {
+        const auto t = import_exact(analytic.budget, trace_values(result).view(site.original_t));
+        if (t.compare(Rational::from_double(analytic.budget, .5)) != 0)
+          continue;
+        const auto u =
+            import_exact(analytic.budget, trace_values(result).view(site.chosen_original_uv[0]));
+        require(std::abs(u.to_double() - .5) < 1.e-10,
+                "analytic inverse retained inaccurate reconstructed interior clock");
+        const auto upper =
+            import_exact(analytic.budget, trace_values(result).view(site.node_source_upper));
+        require(upper.compare(Rational::from_double(analytic.budget, 1.e-7)) <= 0,
+                "analytic inverse bypassed unchanged source-node cap");
+        const auto s = import_exact(analytic.budget, trace_values(result).view(site.mapped_s));
+        require(s.compare(t) == 0, "analytic inverse changed original mapped s");
+        interior = true;
+      }
+      require(interior, "analytic locator fixture omitted real forest interior sample");
+    }
+    Fixture analytic_auth(variants / "locator-authoritative.bgsource", false, false, true);
+    refuses([&] { static_cast<void>(run(analytic_auth, 10.)); }, ErrorCode::unresolved,
+            "analytic inverse repaired an authoritative guide");
+    Fixture analytic_bad(variants / "locator-mismatch.bgsource", false, false, true);
+    refuses([&] { static_cast<void>(run(analytic_bad, 10.)); }, ErrorCode::unresolved,
+            "analytic inverse bypassed original vertex/spatial mismatch");
+    Fixture analytic_narrow(variants / "locator-3.bgsource", false, false, true);
+    narrow_bank_refuses(analytic_narrow, {.4, .6, .25, .75});
     Fixture base(argv[1]);
     auto ordinary = run(base);
     require(trace_requests(ordinary).empty(),
             "literal C0 exact boundary requested unnecessary split");
     Fixture natural(variants / "natural-proposal.bgsource");
     const auto recovered = run(natural);
-    require(trace_requests(recovered).empty(), "reconstructed guide outside natural R did not recover");
+    require(trace_requests(recovered).empty(),
+            "reconstructed guide outside natural R did not recover");
     for (const auto &site : trace_sites(recovered))
       for (uint32_t axis = 0; axis < 2; ++axis) {
-        const auto uv = import_exact(natural.budget, trace_values(recovered).view(site.chosen_original_uv[axis]));
+        const auto uv = import_exact(natural.budget,
+                                     trace_values(recovered).view(site.chosen_original_uv[axis]));
         require(uv.sign() >= 0 && uv.compare(Rational(natural.budget, 1)) <= 0,
                 "reconstructed natural-domain proposal was not inside original R");
       }

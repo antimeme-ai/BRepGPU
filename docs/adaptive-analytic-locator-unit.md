@@ -70,8 +70,11 @@ Write S=O+A(v)(cos(u)X+sin(u)Y)+B(v)Z. The original families are
 | torus | R+r cos(v) | r sin(v) |
 
 Once per face, form the exact cofactor dual of F=[X Y Z], using Rational source
-bits and the already admitted nonzero determinant. Convert its action on the
-ORIGINAL target to finite binary64 local coordinates q=(x,y,z). The target is
+bits and the already admitted nonzero determinant. Convert its nine coefficients
+once per face to finite binary64, then apply that ordinary proposal matrix to
+each ORIGINAL target to obtain q=(x,y,z). An unrepresentable coefficient or
+nonfinite action disables that recovery and retains the guide. No exact matrix
+action/normalization is repeated per node. The target is
 the existing exact original Vertex or midpoint of the original Ce enclosure,
 never constructed Q. Exact plane Gram projection remains its existing path.
 
@@ -93,7 +96,8 @@ For every trigonometric coordinate choose the nearest representative to the ORIG
 lifted guide, with its two adjacent winding candidates. Period arithmetic here
 is a binary64 proposal only, never an exact symbolic-period proof. Choose the
 nearest finite representative in the fixed original bank rectangle R; exact
-Rational comparison of final stored binary64 coordinates gates eligibility.
+ordering of finite stored binary64 coordinates gates eligibility (the floating
+comparison orders those represented rationals exactly, without subtraction).
 Sphere V also has equivalent trigonometric seeds even though a V shift is not
 an admitted periodic coedge operation; this never changes the semantic periodic
 axis flags. Do not enumerate an unbounded winding set. Keep the existing argument-range
