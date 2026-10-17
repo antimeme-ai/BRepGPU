@@ -1,0 +1,33 @@
+backend	key	value
+cpu12	backend	CPU12
+cpu12	source_sha256	c60675abe3314dca55a31da0406deef851e128e2ee8608536525f926f56d61e3
+cpu12	original_definitions	107
+cpu12	original_faces	9162
+cpu12	occurrences	166
+cpu12	native_width	3840
+cpu12	native_height	4000
+cpu12	supersample	2
+cpu12	poster_width	3840
+cpu12	poster_height	5871
+cpu12	layout	authored semantic modules; translations only; no validated disassembly
+cpu12	major_parts_without_visible_pixels	
+cpu12	actual_visible_occurrences	150
+cpu12	new_exploded_raster_and_download_seconds	0.421096643
+cpu12	new_both_view_display_process_seconds	5.14384820999112
+cpu12	original_cold_process_seconds	875.16
+p1001	backend	P1001 DISPLAY / CPU12 HOST
+p1001	source_sha256	c60675abe3314dca55a31da0406deef851e128e2ee8608536525f926f56d61e3
+p1001	original_definitions	107
+p1001	original_faces	9162
+p1001	occurrences	166
+p1001	native_width	3840
+p1001	native_height	4000
+p1001	supersample	2
+p1001	poster_width	3840
+p1001	poster_height	5871
+p1001	layout	authored semantic modules; translations only; no validated disassembly
+p1001	major_parts_without_visible_pixels	
+p1001	actual_visible_occurrences	150
+p1001	new_exploded_raster_and_download_seconds	0.19882877000000002
+p1001	new_both_view_display_process_seconds	4.026590142049827
+p1001	original_cold_process_seconds	875.16
