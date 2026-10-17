@@ -1,7 +1,7 @@
 # Reference source restoration
 
 Reference implementations are study material in ignored `quarantine/`.
-The [39-entry catalog](papers/reference-catalog.tsv) records upstream repositories,
+The [67-entry catalog](papers/reference-catalog.tsv) records upstream repositories,
 exact revisions, archive filenames and SHA-256 digests, clean destinations,
 archive roots, retained file counts and omissions. The matching
 [source bibliography](papers/reference-snapshots.bib) is public.
@@ -31,6 +31,16 @@ The destination must be new. For another catalog entry, use its repository and
 revision with GitHub's codeload ZIP endpoint and substitute its recorded paths,
 archive root and digest. If an upstream ZIP digest changes, preserve both
 archives and investigate before replacing a reference.
+
+The 2026-10-17 fast-mesher study added 28 entries, restored the same way except:
+the OCCT test dataset (`.tar.xz`, extract with `tar -xJf --strip-components 1`),
+the Mmg CI corpora and TetGen (`.tgz`/`.tar.gz`, extract with `tar -xzf`),
+Triangle (flat netlib ZIP, extract with `unzip` into a new directory), Shewchuk's
+`predicates.c` (single file) and ten selected Blender files listed in
+`quarantine/archives/blender-selected-3f4216e1bad1/SHA256SUMS`. Exact URLs and
+commands are in the Appendix A sections of
+[the CAD test-plan study](papers/2026-10-17-mesher-test-plans-cad.md) and
+[the mesh-generation test-plan study](papers/2026-10-17-mesher-test-plans-meshgen.md).
 
 The owned standard-library [importer](scripts/ingest_zip.py) preserves file bytes
 and executable bits, rejects unsafe paths and special files, and omits nested

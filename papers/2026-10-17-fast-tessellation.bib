@@ -1,0 +1,511 @@
+% Fast B-rep/trimmed-NURBS tessellation literature, 2026-10-17.
+% Synthesis: 2026-10-17-fast-tessellation-literature.md
+% Acquisition, read depth and hashes: 2026-10-17-fast-tessellation-sources.tsv
+% Entries already in older bibs (Filip 1986, Balazs 2004, Piegl-Richard 1995,
+% WATER 2025, gCDT 2026, Shewchuk 1996/1997, OCCT/SMLib sources) are cited by
+% key from those files and not repeated here.
+
+% ---------- 1. Chord-error and flatness bounds ----------
+@article{ZhengSederberg2000TessellationIntervals,
+ author={Zheng, Jianmin and Sederberg, Thomas W.},
+ title={Estimating Tessellation Parameter Intervals for Rational Curves and Surfaces},
+ journal={ACM Transactions on Graphics},year={2000},volume={19},number={1},pages={56--77},
+ doi={10.1145/343002.343034},
+ note={Read: author preprint dated 1998-10-28, https://personal.ntu.edu.sg/asjmzheng/submit.pdf}
+}
+@article{Cheng1992SubdivisionDepths,
+ author={Cheng, Fuhua},
+ title={Estimating Subdivision Depths for Rational Curves and Surfaces},
+ journal={ACM Transactions on Graphics},year={1992},volume={11},number={2},pages={140--151},
+ note={Not acquired; read through Zheng and Sederberg 2000}
+}
+@article{ShengHirsch1992Triangulation,
+ author={Sheng, Xiaolin and Hirsch, B. E.},
+ title={Triangulation of Trimmed Surfaces in Parametric Space},
+ journal={Computer-Aided Design},year={1992},volume={24},number={8},pages={437--444},
+ note={Not acquired; bound read through Piegl and Richard 1995, Eq. 7}
+}
+@article{Waldron1998LinearInterpolationSimplex,
+ author={Waldron, Shayne},
+ title={The Error in Linear Interpolation at the Vertices of a Simplex},
+ journal={SIAM Journal on Numerical Analysis},year={1998},volume={35},number={3},pages={1191--1200},
+ doi={10.1137/S0036142996313154},
+ note={Read: 1996 technical-report version, https://www.math.auckland.ac.nz/~waldron/Preprints/Triangle/triangle.pdf}
+}
+@article{NairnPetersLutterkort1999SharpBounds,
+ author={Nairn, David and Peters, J{\"o}rg and Lutterkort, David},
+ title={Sharp, Quantitative Bounds on the Distance between a Polynomial Piece and its {B}{\'e}zier Control Polygon},
+ journal={Computer Aided Geometric Design},year={1999},volume={16},number={7},pages={613--631},
+ note={Not acquired (Purdue TR 98-007 behind a bot wall); read through Shi 2026}
+}
+@article{Reif2000BestBounds,
+ author={Reif, Ulrich},
+ title={Best Bounds on the Approximation of Polynomials and Splines by their Control Structure},
+ journal={Computer Aided Geometric Design},year={2000},volume={17},number={6},pages={579--589},
+ note={Not acquired; bibliographic only}
+}
+@article{LutterkortPeters2001OptimizedEnclosures,
+ author={Lutterkort, David and Peters, J{\"o}rg},
+ title={Optimized Refinable Enclosures of Multivariate Polynomial Pieces},
+ journal={Computer Aided Geometric Design},year={2001},volume={18},number={9},pages={851--863},
+ note={Not acquired; read through Peters 2004 and Peters--Wu 2003}
+}
+@incollection{Peters2004MidStructures,
+ author={Peters, J{\"o}rg},
+ title={Mid-Structures Linking Curved and Piecewise Linear Geometry},
+ booktitle={Geometric Design and Computing (SIAM GD 2003)},publisher={Nashboro Press},year={2004},
+ url={https://www.cise.ufl.edu/research/SurfLab/pubs.shtml}
+}
+@incollection{PetersWu2003SlefeOptimality,
+ author={Peters, J{\"o}rg and Wu, Xiaobin},
+ title={On the Optimality of Piecewise Linear Max-Norm Enclosures Based on Slefes},
+ booktitle={Curve and Surface Design: Saint-Malo 2002},publisher={Nashboro Press},year={2003},pages={335--344},
+ url={https://www.cise.ufl.edu/research/SurfLab/pubs.shtml}
+}
+@misc{PetersWu2002SurfaceEnclosures,
+ author={Peters, J{\"o}rg and Wu, Xiaobin},
+ title={Optimized Refinable Surface Enclosures},
+ year={2002},howpublished={University of Florida SurfLab report; venue unverified},
+ url={https://www.cise.ufl.edu/research/SurfLab/pubs.shtml}
+}
+@inproceedings{YeoBinPeters2012PixelAccurate,
+ author={Yeo, Young In and Bin, Lihan and Peters, J{\"o}rg},
+ title={Efficient Pixel-Accurate Rendering of Curved Surfaces},
+ booktitle={Proceedings of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D)},year={2012},pages={165--174},
+ url={https://www.cise.ufl.edu/research/SurfLab/papers/1109reyes.pdf}
+}
+@misc{YeoBhandarePeters2012Animated,
+ author={Yeo, Young In and Bhandare, Sagar and Peters, J{\"o}rg},
+ title={Efficient Pixel-Accurate Rendering of Animated Curved Surfaces},
+ year={2012},howpublished={Mathematical Methods for Curves and Surfaces 2012; venue and pages unverified},
+ url={https://www.cise.ufl.edu/research/SurfLab/papers/yeo12ani.pdf}
+}
+@article{Floater1992RationalDerivatives,
+ author={Floater, Michael S.},
+ title={Derivatives of Rational {B}{\'e}zier Curves},
+ journal={Computer Aided Geometric Design},year={1992},volume={9},number={3},pages={161--174},
+ url={https://www.mn.uio.no/math/english/people/aca/michaelf/papers/bez.pdf}
+}
+@article{ZhangMa2006RationalDerivativeBounds,
+ author={Zhang, Ren-Jiang and Ma, Weiyin},
+ title={Some Improvements on the Derivative Bounds of Rational {B}{\'e}zier Curves and Surfaces},
+ journal={Computer Aided Geometric Design},year={2006},volume={23},number={7},pages={563--572},
+ note={Not acquired; result read through Shi 2026. Title from secondary citation, unverified}
+}
+@misc{Shi2026RationalDerivativeCounterexample,
+ author={Shi, Mao},
+ title={Counterexamples to a Conjecture on First Derivative Bounds of Rational {B}{\'e}zier Curves},
+ year={2026},howpublished={arXiv:2510.17300v2},url={https://arxiv.org/abs/2510.17300}
+}
+@article{GutheBalazsKlein2005GPUTrimming,
+ author={Guthe, Michael and Bal{\'a}zs, {\'A}kos and Klein, Reinhard},
+ title={{GPU}-based Trimming and Tessellation of {NURBS} and {T}-Spline Surfaces},
+ journal={ACM Transactions on Graphics},year={2005},volume={24},number={3},pages={1016--1023},
+ doi={10.1145/1073204.1073305},
+ url={https://www.mathematik.uni-marburg.de/~guthe/Publications/guthe-2005-gpu-based.pdf}
+}
+@article{GutheBalazsKlein2006Appearance,
+ author={Guthe, Michael and Bal{\'a}zs, {\'A}kos and Klein, Reinhard},
+ title={{GPU}-based Appearance Preserving Trimmed {NURBS} Rendering},
+ journal={Journal of WSCG},year={2006},volume={14},
+ url={https://www.mathematik.uni-marburg.de/~guthe/Publications/guthe-2006-gpu-based.pdf}
+}
+@misc{KhouryShewchuk2019InterpolationNormals,
+ author={Khoury, Marc and Shewchuk, Jonathan Richard},
+ title={Approximation Bounds for Interpolation and Normals on Triangulated Surfaces and Manifolds},
+ year={2019},howpublished={arXiv:1911.03424},url={https://arxiv.org/abs/1911.03424}
+}
+@article{ZhouWang2012RationalTriangular,
+ author={Zhou, Lian and Wang, Guojin},
+ title={Piecewise Linear Approximation of Rational Triangular Surfaces},
+ journal={Journal of Computer Research and Development},year={2012},volume={49},number={5},pages={1116--1122},
+ url={https://crad.ict.ac.cn/en/article/id/99},note={Abstract only}
+}
+@article{LaneRiesenfeld1980Recursive,
+ author={Lane, Jeffrey M. and Riesenfeld, Richard F.},
+ title={A Theoretical Development for the Computer Generation and Display of Piecewise Polynomial Surfaces},
+ journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},year={1980},volume={2},number={1},pages={35--46},
+ note={Not acquired; secondary only}
+}
+@article{LaneCarpenter1979Scanline,
+ author={Lane, Jeffrey M. and Carpenter, Loren C.},
+ title={A Generalized Scan Line Algorithm for the Computer Display of Parametrically Defined Surfaces},
+ journal={Computer Graphics and Image Processing},year={1979},volume={11},number={3},pages={290--297},
+ note={Not acquired; secondary only}
+}
+@misc{BaoShenWang2025TrimmedContainment,
+ author={Bao, Anchang and Shen, Enya and Wang, Jianmin},
+ title={Fast and Robust Point Containment Queries on Trimmed Surface},
+ year={2025},howpublished={arXiv:2510.25159v1},url={https://arxiv.org/abs/2510.25159}
+}
+
+% ---------- 2. GPU tessellation of trimmed NURBS / B-reps ----------
+@article{FisherEtAl2009DiagSplit,
+ author={Fisher, Matthew and Fatahalian, Kayvon and Boulos, Solomon and Akeley, Kurt and Mark, William R. and Hanrahan, Pat},
+ title={{DiagSplit}: Parallel, Crack-free, Adaptive Tessellation for Micropolygon Rendering},
+ journal={ACM Transactions on Graphics},year={2009},volume={28},number={5},pages={150:1--150:10},
+ doi={10.1145/1618452.1618496},url={https://graphics.stanford.edu/~mdfisher/Data/DiagSplit.pdf}
+}
+@inproceedings{Moreton2001WatertightForwardDifferencing,
+ author={Moreton, Henry},
+ title={Watertight Tessellation using Forward Differencing},
+ booktitle={Proceedings of the ACM SIGGRAPH/EUROGRAPHICS Workshop on Graphics Hardware},year={2001},pages={25--32},
+ doi={10.2312/EGGH/EGGH01/025-032}
+}
+@article{SchwarzStamminger2009CudaTess,
+ author={Schwarz, Michael and Stamminger, Marc},
+ title={Fast {GPU}-based Adaptive Tessellation with {CUDA}},
+ journal={Computer Graphics Forum},year={2009},volume={28},number={2},pages={365--374},
+ doi={10.1111/j.1467-8659.2009.01376.x}
+}
+@article{NiessnerLoopMeyerDeRose2012FeatureAdaptive,
+ author={Nie{\ss}ner, Matthias and Loop, Charles and Meyer, Mark and DeRose, Tony},
+ title={Feature-Adaptive {GPU} Rendering of {Catmull-Clark} Subdivision Surfaces},
+ journal={ACM Transactions on Graphics},year={2012},volume={31},number={1},pages={6:1--6:11},
+ url={https://niessnerlab.org/papers/2012/3feature/niessner2012feature.pdf},note={DOI not verified}
+}
+@article{NiessnerEtAl2016HardwareTessellationSurvey,
+ author={Nie{\ss}ner, Matthias and Keinert, Benjamin and Fisher, Matthew and Stamminger, Marc and Loop, Charles and Sch{\"a}fer, Henry},
+ title={Real-Time Rendering Techniques with Hardware Tessellation},
+ journal={Computer Graphics Forum},year={2016},volume={35},number={1},pages={113--137},
+ doi={10.1111/cgf.12714},note={Volume/pages from the Eurographics record; retained preprint header says vol. 34 (2015)}
+}
+@article{PatneyOwens2008Reyes,
+ author={Patney, Anjul and Owens, John D.},
+ title={Real-Time {Reyes}-Style Adaptive Surface Subdivision},
+ journal={ACM Transactions on Graphics},year={2008},volume={27},number={5},pages={143:1--143:8},
+ url={https://escholarship.org/uc/item/3nb470qj}
+}
+@article{SchollmeyerFroehlich2009DirectTrimming,
+ author={Schollmeyer, Andre and Fr{\"o}hlich, Bernd},
+ title={Direct Trimming of {NURBS} Surfaces on the {GPU}},
+ journal={ACM Transactions on Graphics},year={2009},volume={28},number={3},pages={47:1--47:9}
+}
+@article{SchollmeyerFroehlich2019AntiAliasedTrimming,
+ author={Schollmeyer, Andre and Froehlich, Bernd},
+ title={Efficient and Anti-Aliased Trimming for Rendering Large {NURBS} Models},
+ journal={IEEE Transactions on Visualization and Computer Graphics},year={2019},volume={25},number={3},
+ doi={10.1109/TVCG.2018.2814987}
+}
+@article{ClauxEtAl2014CrackFree,
+ author={Claux, Fr{\'e}d{\'e}ric and Barthe, Lo{\"\i}c and Vanderhaeghe, David and Jessel, Jean-Pierre and Paulin, Mathias},
+ title={Crack-free Rendering of Dynamically Tesselated {B}-Rep Models},
+ journal={Computer Graphics Forum},year={2014},volume={33},number={2},
+ doi={10.1111/cgf.12308}
+}
+@article{KrishnamurthyEtAl2009NurbsOpsGPU,
+ author={Krishnamurthy, Adarsh and Khardekar, Rahul and McMains, Sara and Haller, Kirk and Elber, Gershon},
+ title={Performing Efficient {NURBS} Modeling Operations on the {GPU}},
+ journal={IEEE Transactions on Visualization and Computer Graphics},year={2009},
+ url={https://mcmains.me.berkeley.edu/pubs/TVCG09krishnamurthyMcMainsEtAl.pdf},note={Volume and pages not verified}
+}
+@inproceedings{KrishnamurthyKhardekarMcMains2007DirectEval,
+ author={Krishnamurthy, Adarsh and Khardekar, Rahul and McMains, Sara},
+ title={Direct Evaluation of {NURBS} Curves and Surfaces on the {GPU}},
+ booktitle={Proceedings of the ACM Symposium on Solid and Physical Modeling},year={2007},
+ doi={10.1145/1236246.1236293},note={Not acquired}
+}
+@article{KrishnamurthyKhardekarMcMains2009Optimized,
+ author={Krishnamurthy, Adarsh and Khardekar, Rahul and McMains, Sara},
+ title={Optimized {GPU} Evaluation of Arbitrary Degree {NURBS} Curves and Surfaces},
+ journal={Computer-Aided Design},year={2009},volume={41},number={12},pages={971--980},
+ note={Not acquired}
+}
+@article{XiongEtAl2023ETER,
+ author={Xiong, Ruicheng and Lu, Yang and Chen, Cong and Zhu, Jiaming and Zeng, Yajun and Liu, Ligang},
+ title={{ETER}: Elastic Tessellation for Real-Time Pixel-Accurate Rendering of Large-Scale {NURBS} Models},
+ journal={ACM Transactions on Graphics},year={2023},volume={42},number={4},
+ doi={10.1145/3592419},note={Abstract and project page only}
+}
+@article{ConcheiroEtAl2014InteractiveNURBS,
+ author={Concheiro, Ra{\'u}l and Amor, Margarita and Padr{\'o}n, Emilio J. and Doggett, Michael},
+ title={Interactive Rendering of {NURBS} Surfaces},
+ journal={Computer-Aided Design},year={2014},volume={56},pages={34--44},note={Not acquired}
+}
+@inproceedings{EisenacherMeyerLoop2009ViewDependent,
+ author={Eisenacher, Christian and Meyer, Quirin and Loop, Charles},
+ title={Real-Time View-Dependent Rendering of Parametric Surfaces},
+ booktitle={Proceedings of the Symposium on Interactive 3D Graphics and Games},year={2009},pages={137--143},
+ doi={10.1145/1507149.1507172},note={Not acquired}
+}
+@misc{ZhouEtAl2026TopologyFirst,
+ author={Zhou, YunFan and Zint, Daniel and Izadyar, Nafiseh and Tao, Michael and Panozzo, Daniele and Schneider, Teseo},
+ title={Topology-First {B}-Rep Meshing},
+ year={2026},howpublished={arXiv:2604.02141v1},url={https://arxiv.org/abs/2604.02141}
+}
+
+% ---------- 3. Watertight tessellation and industrial facetters ----------
+@techreport{KumarManocha1994InteractiveTrimmed,
+ author={Kumar, Subodh and Manocha, Dinesh},
+ title={Interactive Display of Large Scale Trimmed {NURBS} Models},
+ institution={University of North Carolina at Chapel Hill},number={TR94-008},year={1994},
+ url={https://gamma-web.iacs.umd.edu/papers/documents/technicalreports/tr94008.pdf}
+}
+@article{KumarManochaLastra1996LargeNURBS,
+ author={Kumar, Subodh and Manocha, Dinesh and Lastra, Anselmo},
+ title={Interactive Display of Large {NURBS} Models},
+ journal={IEEE Transactions on Visualization and Computer Graphics},year={1996},volume={2},number={4},pages={323--336},
+ note={Read through TR94-008}
+}
+@inproceedings{KumarManochaZhangHoff1997Walkthrough,
+ author={Kumar, Subodh and Manocha, Dinesh and Zhang, Hansong and Hoff, Kenneth E.},
+ title={Accelerated Walkthrough of Large Spline Models},
+ booktitle={Proceedings of the Symposium on Interactive 3D Graphics},year={1997}
+}
+@article{SederbergEtAl2008WatertightTrimmed,
+ author={Sederberg, Thomas W. and Finnigan, G. Thomas and Li, Xin and Lin, Hongwei and Ipson, Heather},
+ title={Watertight Trimmed {NURBS}},
+ journal={ACM Transactions on Graphics},year={2008},volume={27},number={3},pages={79:1--79:8},
+ doi={10.1145/1360612.1360678}
+}
+@article{HamannTsai1996TrimmedTessellation,
+ author={Hamann, Bernd and Tsai, Po-Yu},
+ title={A Tessellation Algorithm for the Representation of Trimmed {NURBS} Surfaces with Arbitrary Trimming Curves},
+ journal={Computer-Aided Design},year={1996},volume={28},number={6--7},pages={461--472},
+ doi={10.1016/0010-4485(95)00043-7},url={https://escholarship.org/uc/item/04n8h0b9}
+}
+@inproceedings{RockwoodHeatonDavis1989TrimmedSurfaces,
+ author={Rockwood, Alyn and Heaton, Kurt and Davis, Tom},
+ title={Real-Time Rendering of Trimmed Surfaces},
+ booktitle={Computer Graphics (Proceedings of SIGGRAPH 89)},year={1989},volume={23},pages={107--116},
+ note={Not acquired; coving mechanism read through Moreton 2001 and Kumar--Manocha}
+}
+@article{CrippsParwana2011Tracing,
+ author={Cripps, Robert J. and Parwana, S. S.},
+ title={A Robust Efficient Tracing Scheme for Triangulating Trimmed Parametric Surfaces},
+ journal={Computer-Aided Design},year={2011},volume={43},number={1},pages={12--20},note={Abstract only}
+}
+@inproceedings{KahleszBalazsKlein2002Sewing,
+ author={Kahlesz, Ferenc and Bal{\'a}zs, {\'A}kos and Klein, Reinhard},
+ title={Multiresolution Rendering by Sewing Trimmed {NURBS} Surfaces},
+ booktitle={Proceedings of the ACM Symposium on Solid Modeling and Applications},year={2002},pages={281--288},note={Not acquired}
+}
+@misc{LiEtAl2026RobustTessellationJCDE,
+ author={Li, Gangyi and Luo, Zhongxuan and Feng, Yuhao and Zhang, Lingfeng and Gai, Yuqiao and Lei, Na},
+ title={Robust Tessellation of {CAD} Models Without Self-Intersections},
+ year={2026},howpublished={Journal of Computational Design and Engineering 13(1):239--258},
+ doi={10.1093/jcde/qwaf134},note={Publisher 403; not read. Author list from JCDE manuscript record JCDE-2025-394}
+}
+@misc{DassaultUS9875577B2,
+ author={{Dassault Syst{\`e}mes}},
+ title={Tessellation of a Parameterized 3D Modeled Object},
+ year={2018},howpublished={US Patent 9,875,577 B2 (priority 2012)},
+ url={https://patents.google.com/patent/US9875577B2},note={Title as lane-reported; read for shared-boundary 2D meshes and GPGPU chordal refinement}
+}
+@manual{TechSoft3DParasolidFacet,
+ author={{Tech Soft 3D}},
+ title={{HOOPS Visualize HPS}: {Parasolid} Facet and FacetTessellationKit (mapping to {PK\_TOPOL\_facet\_mesh\_o\_t})},
+ year={2026},url={https://docs.techsoft3d.com/hps/latest/api_ref/cpp/class_h_p_s_1_1_parasolid_1_1_facet_tessellation_kit.html}
+}
+@manual{TechSoft3DExchangeTessellation,
+ author={{Tech Soft 3D}},
+ title={{HOOPS Exchange}: {A3DRWParamsTessellationData}},
+ year={2026},url={https://docs.techsoft3d.com/hoops/exchange/api/c/structures/A3DRWParamsTessellationData.html}
+}
+@manual{McNeelRhino9Mesh,
+ author={{Robert McNeel \& Associates}},
+ title={Rhino 9 Help: Mesh command and mesh settings},
+ year={2026},url={https://docs.mcneel.com/rhino/9/help/en-us/commands/mesh.htm}
+}
+
+% ---------- 4. Parameter-space triangulation, anisotropy, quality ----------
+@inproceedings{Shewchuk2002GoodLinearElement,
+ author={Shewchuk, Jonathan Richard},
+ title={What Is a Good Linear Element? {Interpolation}, Conditioning, and Quality Measures},
+ booktitle={Proceedings of the 11th International Meshing Roundtable},year={2002},pages={115--126},
+ url={https://people.eecs.berkeley.edu/~jrs/papers/elem.pdf}
+}
+@article{ChenSunXu2007OptimalAnisotropic,
+ author={Chen, Long and Sun, Pengtao and Xu, Jinchao},
+ title={Optimal Anisotropic Meshes for Minimizing Interpolation Errors in {$L^p$}-norm},
+ journal={Mathematics of Computation},year={2007},volume={76},number={257},pages={179--204},
+ doi={10.1090/S0025-5718-06-01896-5}
+}
+@article{Mirebeau2010OptimalMeshes,
+ author={Mirebeau, Jean-Marie},
+ title={Optimal Meshes for Finite Elements of Arbitrary Order},
+ journal={Constructive Approximation},year={2010},volume={32},pages={339--383},
+ note={Read: arXiv:1101.0612}
+}
+@inproceedings{LabelleShewchuk2003AnisotropicVoronoi,
+ author={Labelle, Fran{\c{c}}ois and Shewchuk, Jonathan Richard},
+ title={Anisotropic {Voronoi} Diagrams and Guaranteed-Quality Anisotropic Mesh Generation},
+ booktitle={Proceedings of the 19th ACM Symposium on Computational Geometry},year={2003},pages={191--200},
+ doi={10.1145/777792.777822}
+}
+@inproceedings{MirandaMartha2002HighCurvature,
+ author={Miranda, Ant{\^o}nio C. O. and Martha, Luiz F.},
+ title={Mesh Generation on High-Curvature Surfaces Based on a Background Quadtree Structure},
+ booktitle={Proceedings of the 11th International Meshing Roundtable},year={2002}
+}
+@inproceedings{TristanoOwenCanann1998Riemannian,
+ author={Tristano, Joseph R. and Owen, Steven J. and Canann, Scott A.},
+ title={Advancing Front Surface Mesh Generation in Parametric Space Using a {Riemannian} Surface Definition},
+ booktitle={Proceedings of the 7th International Meshing Roundtable},year={1998},pages={429--445},note={Not acquired}
+}
+@article{BorouchakiLaugGeorge2000Parametric,
+ author={Borouchaki, Houman and Laug, Patrick and George, Paul-Louis},
+ title={Parametric Surface Meshing Using a Combined Advancing-Front Generalized-{Delaunay} Approach},
+ journal={International Journal for Numerical Methods in Engineering},year={2000},volume={49},pages={233--259},note={Not acquired}
+}
+@article{DAzevedoSimpson1989Optimal,
+ author={D'Azevedo, Eduardo F. and Simpson, R. Bruce},
+ title={On Optimal Interpolation Triangle Incidences},
+ journal={SIAM Journal on Scientific and Statistical Computing},year={1989},volume={10},number={6},pages={1063--1075},note={Not acquired}
+}
+@article{Rippa1992LongThin,
+ author={Rippa, Shmuel},
+ title={Long and Thin Triangles Can Be Good for Linear Interpolation},
+ journal={SIAM Journal on Numerical Analysis},year={1992},volume={29},number={1},pages={257--270},note={Not acquired}
+}
+@inproceedings{CaoNanjappaGaoTan2014gDel3D,
+ author={Cao, Thanh-Tung and Nanjappa, Ashwin and Gao, Mingcen and Tan, Tiow-Seng},
+ title={A {GPU} Accelerated Algorithm for {3D} {Delaunay} Triangulation},
+ booktitle={Proceedings of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games},year={2014},pages={47--54},
+ doi={10.1145/2556700.2556710}
+}
+@misc{Potter2011GPUAnisotropic,
+ author={Potter, M.},
+ title={Anisotropic Mesh Coarsening and Refinement on {GPU} Architecture},
+ year={2011},howpublished={MEng project report, Imperial College London}
+}
+
+% ---------- 5. Downstream manufacturing requirements ----------
+@manual{ThreeMF2025Core,
+ author={{3MF Consortium}},
+ title={{3MF} Core Specification, version 1.4.0},
+ year={2025},url={https://github.com/3MFConsortium/spec_core}
+}
+@inproceedings{HillerLipson2009STL2,
+ author={Hiller, Jonathan D. and Lipson, Hod},
+ title={{STL} 2.0: A Proposal for a Universal Multi-Material Additive Manufacturing File Format},
+ booktitle={Proceedings of the Solid Freeform Fabrication Symposium},year={2009},pages={266--278}
+}
+@inproceedings{MorvanFadel1996IVECS,
+ author={Morvan, St{\'e}phane M. and Fadel, Georges M.},
+ title={{IVECS}: An Interactive Virtual Environment for the Correction of {.STL} Files},
+ booktitle={Proceedings of the Solid Freeform Fabrication Symposium},year={1996}
+}
+@article{LeongChuaNg1996STLErrors,
+ author={Leong, K. F. and Chua, C. K. and Ng, Y. M.},
+ title={A Study of Stereolithography File Errors and Repair. {Part 1}: Generic Solution},
+ journal={International Journal of Advanced Manufacturing Technology},year={1996},volume={12},number={6},pages={407--414},
+ doi={10.1007/BF01186929},note={Abstract only}
+}
+@manual{Stratasys2015CadToStl,
+ author={{Stratasys}},
+ title={Converting {CAD} to {STL}: {FDM}/{PolyJet} Best Practice},
+ year={2015}
+}
+@misc{PrusaSlicerTriangleMeshSlicer,
+ author={{Prusa Research}},
+ title={{PrusaSlicer} source: {TriangleMeshSlicer.cpp} and {PrintConfig.cpp}},
+ year={2026},url={https://github.com/prusa3d/PrusaSlicer},note={master, read 2026-10-17}
+}
+@misc{CuraFdmPrinterDefinition,
+ author={{UltiMaker}},
+ title={{Cura} source: resources/definitions/fdmprinter.def.json},
+ year={2026},url={https://github.com/Ultimaker/Cura/blob/main/resources/definitions/fdmprinter.def.json},note={main, read 2026-10-17}
+}
+
+% ---------- 6. Throughput organisation ----------
+@inproceedings{TzengPatneyOwens2010TaskManagement,
+ author={Tzeng, Stanley and Patney, Anjul and Owens, John D.},
+ title={Task Management for Irregular-Parallel Workloads on the {GPU}},
+ booktitle={Proceedings of High Performance Graphics},year={2010},pages={29--37},
+ doi={10.2312/EGGH/HPG10/029-037},note={Slides read; paper not acquired}
+}
+@inproceedings{GuptaStuartOwens2012PersistentThreads,
+ author={Gupta, Kshitij and Stuart, Jeff A. and Owens, John D.},
+ title={A Study of Persistent Threads Style {GPU} Programming for {GPGPU} Workloads},
+ booktitle={Proceedings of Innovative Parallel Computing (InPar)},year={2012},
+ doi={10.1109/InPar.2012.6339596}
+}
+@inproceedings{AilaLaine2009RayTraversal,
+ author={Aila, Timo and Laine, Samuli},
+ title={Understanding the Efficiency of Ray Traversal on {GPUs}},
+ booktitle={Proceedings of High Performance Graphics},year={2009},pages={145--149},
+ doi={10.1145/1572769.1572792}
+}
+@article{SteinbergerEtAl2014Whippletree,
+ author={Steinberger, Markus and Kenzel, Michael and Boechat, Pedro and Kerbl, Bernhard and Dokter, Mark and Schmalstieg, Dieter},
+ title={Whippletree: Task-based Scheduling of Dynamic Workloads on the {GPU}},
+ journal={ACM Transactions on Graphics},year={2014},volume={33},number={6},pages={228:1--228:11},
+ doi={10.1145/2661229.2661250}
+}
+@inproceedings{WangYalamanchili2014DynamicParallelism,
+ author={Wang, Jin and Yalamanchili, Sudhakar},
+ title={Characterization and Analysis of Dynamic Parallelism in Unstructured {GPU} Applications},
+ booktitle={Proceedings of the IEEE International Symposium on Workload Characterization (IISWC)},year={2014}
+}
+@inproceedings{MerrillGarland2016MergeSpMV,
+ author={Merrill, Duane and Garland, Michael},
+ title={Merge-based Parallel Sparse Matrix-Vector Multiplication},
+ booktitle={Proceedings of SC16},year={2016},doi={10.1109/SC.2016.57}
+}
+@article{HaidarEtAl2015MagmaBatched,
+ author={Haidar, Azzam and Dong, Tingxing and Luszczek, Piotr and Tomov, Stanimire and Dongarra, Jack},
+ title={Batched Matrix Computations on Hardware Accelerators Based on {GPUs}},
+ journal={International Journal of High Performance Computing Applications},year={2015},volume={29},number={2},pages={193--208},
+ doi={10.1177/1094342014567546}
+}
+
+% ---------- 6b. CPU SIMD, SPMD layout and floating-point contraction ----------
+@inproceedings{BenthinEtAl2015TessellationCaching,
+ author={Benthin, Carsten and Woop, Sven and Nie{\ss}ner, Matthias and Selgrad, Kai and Wald, Ingo},
+ title={Efficient Ray Tracing of Subdivision Surfaces using Tessellation Caching},
+ booktitle={Proceedings of High-Performance Graphics},year={2015},
+ doi={10.1145/2790060.2790061},url={https://www.sci.utah.edu/~wald/Publications/2015/tess/tess.pdf}
+}
+@inproceedings{PharrMark2012ispc,
+ author={Pharr, Matt and Mark, William R.},
+ title={ispc: A {SPMD} Compiler for High-Performance {CPU} Programming},
+ booktitle={Proceedings of Innovative Parallel Computing (InPar)},year={2012},
+ url={https://www.pharr.org/matt/assets/ispc.pdf}
+}
+@techreport{WhiteheadFitFlorea2011NvidiaFloatingPoint,
+ author={Whitehead, Nathan and Fit-Florea, Alex},
+ title={Precision and Performance: Floating Point and {IEEE} 754 Compliance for {NVIDIA} {GPUs}},
+ institution={NVIDIA},number={TB-06711-001},year={2011},
+ note={Read revision v11.6, February 2022},
+ url={https://docs.nvidia.com/cuda/archive/11.6.1/pdf/Floating_Point_on_NVIDIA_GPU.pdf}
+}
+@article{JeannerodLouvetMuller2013Kahan,
+ author={Jeannerod, Claude-Pierre and Louvet, Nicolas and Muller, Jean-Michel},
+ title={Further Analysis of {Kahan}'s Algorithm for the Accurate Computation of $2\times 2$ Determinants},
+ journal={Mathematics of Computation},year={2013},volume={82},number={284},pages={2245--2264},
+ doi={10.1090/S0025-5718-2013-02679-8},note={Abstract only; HAL ensl-00649347 behind a bot wall}
+}
+@manual{Apple2026MetalShadingLanguage,
+ author={{Apple Inc.}},
+ title={Metal Shading Language Specification, Version 4.1},
+ year={2026},note={Dated 2026-06-04},
+ url={https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf}
+}
+
+% ---------- 6c. Domain decomposition (pointer only; dedicated lane owns this topic) ----------
+@article{LinardakisChrisochoides2006DelaunayDecoupling,
+ author={Linardakis, Leonidas and Chrisochoides, Nikos},
+ title={Delaunay Decoupling Method for Parallel Guaranteed Quality Planar Mesh Refinement},
+ journal={SIAM Journal on Scientific Computing},year={2006},volume={27},number={4},pages={1394--1423},
+ doi={10.1137/030602812}
+}
+@incollection{Chrisochoides2006ParallelMeshGeneration,
+ author={Chrisochoides, Nikos},
+ title={Parallel Mesh Generation},
+ booktitle={Numerical Solution of Partial Differential Equations on Parallel Computers},
+ editor={Bruaset, Are Magnus and Tveito, Aslak},
+ series={Lecture Notes in Computational Science and Engineering},volume={51},publisher={Springer},year={2006},
+ note={Retained author PDF is undated (latest internal access date March 2005); commonly cited as 2005. Page range not verified},
+ url={https://class-pages.pages.cs.odu.edu/crtcpub/assets/publications/pdf/parallel-mesh-generation-2005.pdf}
+}
+@misc{Shewchuk2002GoodLinearElementJournalDraft,
+ author={Shewchuk, Jonathan Richard},
+ title={What Is a Good Linear Finite Element? {Interpolation}, Conditioning, Anisotropy, and Quality Measures},
+ year={2002},howpublished={Unpublished journal draft},url={https://people.eecs.berkeley.edu/~jrs/papers/elemj.pdf}
+}
+@misc{OCCTBRepMeshReuse,
+ author={{Open CASCADE contributors}},
+ title={{OCCT} {BRepMesh\_ModelPreProcessor}, {BRepMesh\_EdgeDiscret} and {BRepMesh\_Deflection}: triangulation reuse},
+ year={2026},howpublished={Source read from quarantine/new-iteration/occt}
+}
