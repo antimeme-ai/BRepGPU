@@ -1,5 +1,15 @@
 # The complete original OM10 movement
 
+Latest reference follow-up: **all107 NVIDIA definitions now complete**, with
+original9,162-face/166-instance coverage and all physical/source-Euler checks
+passing. Both explicit chord-only healing policies finish fresh STEP→both
+historical views in43.673684/45.001245s. Read the
+[complete reference report](../om10-nvidia-complete-2026-10-17/REPORT.md) for
+parameters, stronger-angular-policy failures, scopes and open distance
+qualification. Historical pending-reference statements below remain records
+of earlier attempts. Proper module/plate/train explosion replaces the simple
+centroid offsets in the [new diagram delivery](https://github.com/antimeme-ai/BRepGPU/pull/71).
+
 The original Association openmovement **OM10 MAN VA01.3** now completes through
 the owned C++/CUDA cached-adaptive mesher and both native display backends:
 **107 unique solid definitions, 9,162 original faces, 166 placed parts and

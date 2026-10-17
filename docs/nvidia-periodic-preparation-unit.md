@@ -140,3 +140,59 @@ and tessellation then hit the explicitly named existing unsupported nontriangle 
 export. The optional test flag reports that capability limit separately and never
 creates a mesh or calls it a complete SDK result. Both original failing inputs fully
 export genuine SDK triangles. Root owns the complete107-definition pipeline run.
+
+## Follow-up: one-input SDK topology control
+
+Actual new107-definition SDK exports complete but1808 fails the existing closed-shell
+checker. Old omitted-angle output is closed; explicit25/25 output has exactly three
+physical edge pairs with four uses, including opposite duplicate triangles on a top
+Plane and its curved extruded wall. SDK reports12spine halfedges/outputManifoldfalse
+BEFORE raw extraction. Genuine6rectangle splits retain each parent boundary and cannot
+explain this pre-extraction report. Both heal policies show the same fault.
+
+Falsified controls:1808 original and Plane-widened USD at identical.005/25/25 produce
+byte-identical output. Every original/corrected face:trimType is general. Disabling just
+one angular constraint still reports12spines. No Plane/rectangle/transport repair selected.
+Global full-natural-curve Plane hulls are oversized but are not this observed cause.
+
+Next single bounded diagnostic: use the SAME original USD, source/quality.005/25/25,
+heal0, all1112faces, unchanged SDK and raw exporter. Invoke the documented public
+`SmBrep::ConvertToPolyBrep` with advancingFrontTRUE, retaining every other parameter
+from `SmApiTessellate`. Pinned source c9c5979 `SmApiBrep.cpp::SmApiTessellate` hardcodes
+FALSE. `SmBrep.cpp::ConvertToPolyBrep` documents TRUE as EquallySpacedPoints +
+TriangulateFaceAF; `SmTess.cpp::AddQuadBoundaries` selects AF vs ordinary triangulation.
+This is an algorithm-selection control with unchanged enabled quality constraints,
+not an angle relaxation, CAD edit, healing or downstream topology repair.
+
+An ignored private copy of the current producer changes ONLY that API call and checks
+rbFailedFacesfalse +zero face failures before extraction. It uses the same compiled
+raw library/SDK and separate output path; no production/CMake changes. Run once on
+physicalcore1 with180s cap. Read the native report and SAME physical-solid checker,
+actual source-face coverage and exported triangle inventory. Any unsupported polygon
+or topology refusal remains a failure; no welding/dropping/skipping/replacement triangles.
+Report failed/default and alternative costs/outcomes separately. Stop on failure; no
+parameter search. If it passes, propose a separate generic production policy/finite
+independent authored control for root review before integration. Root owns producermain
+and full-watch driver; this lane initially owns diagnosis only.
+
+Literal AF call, verified against SmBrep.h453–483 and SmApiBrep.cpp679–766:
+`ConvertToPolyBrep(pointer,failedFaces,lamina,chord,curveAngle,surfaceAngle,
+maxEdge,maxAspect,TRUE,FALSE,TRUE,FALSE,&failures,&report)`.
+Only advancing-front differs from the public wrapper: smoothingfalse, attribute
+propagationtrue, same input contextfalse remain. On status failure, failedFaces,
+nonempty failures or null output, SetOKBackPtrs(false) then dispose any partial poly.
+Own successful output before checking input/output manifold, zero lamina/spine, then
+use the unchanged exporter, complete face set and same physical/source-Euler checker.
+The input Brep remains alive through extraction. Parent approved this exact control.
+
+Root separately selects a full legacy chord-only0/0 baseline at the same.005mm and
+same explicit preparation/closed-shell gates. This is a separately named constraint
+policy, not a successful repair or qualification of the failed25/25 setting. No retry
+implementation or additional algorithm search is authorized by this diagnostic unit.
+
+AF control outcome: the single180s-limited call produced no completed SDK definition
+report or mesh before external censor. No AF production retry is selected. The timer
+was inside the timeout's terminated process group, so exact CPU/wall measurements and
+timeout exit status were not retained; the shell's subsequent successful cat commands
+must not be called a native success. Record the configured180s censor/no completed
+result, with ignored source/executable/logs retained. No additional algorithm search.
