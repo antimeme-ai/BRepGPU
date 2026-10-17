@@ -53,7 +53,7 @@ struct Options final {
   int32_t device = 0;
   double node_source = 0;
   std::vector<double> positional;
-  bool p100 = false, mesh_only = false, help = false;
+  bool p100 = false, mesh_only = false, trace_progress = false, help = false;
 };
 Options options(int argc, char **argv) {
   Options out;
@@ -61,6 +61,10 @@ Options options(int argc, char **argv) {
     const std::string_view key(argv[i]);
     if (key == "--help") {
       out.help = true;
+      continue;
+    }
+    if (key == "--trace-progress") {
+      out.trace_progress = true;
       continue;
     }
     if (key == "--mesh-only") {
@@ -311,6 +315,7 @@ void run(const Options &o, std::string_view &stage) {
   surface.host_bytes = surface.device_bytes = bytes;
   surface.child_bytes = scratch_bytes;
   limits.face.construction_work = o.construction_work;
+  limits.face.trace_progress = o.trace_progress;
   auto &physical = limits.curves;
   physical.nodes = physical.frontier = physical.requests = o.max_nodes;
   physical.points = o.max_nodes * 4;
@@ -556,7 +561,7 @@ int main(int argc, char **argv) {
              "[--face-owners N --memory-mib N --scratch-mib N --max-nodes N --max-depth N "
              "--construction-work N] "
              "[--backend p100 --cuda-module LIBRARY --display-module LIBRARY --device N] "
-             "[--width N --height N --explosion VALUE --mesh-only]\n";
+             "[--width N --height N --explosion VALUE --mesh-only --trace-progress]\n";
       return 0;
     }
     run(o, stage);

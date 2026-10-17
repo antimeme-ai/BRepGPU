@@ -1,5 +1,6 @@
 #include "adaptive_trimmed.hpp"
 #include "adaptive_regions.hpp"
+#include "adaptive_trace.hpp"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -56,6 +57,8 @@ struct FaceTrimSession::Impl final {
   uint64_t session, last_query = 0, operation = 0, horizon = 0;
   enum class AssignmentMode { unset, legacy, pooled };
   AssignmentMode assignment_mode = AssignmentMode::unset;
+  Phase trace_phase = Phase::idle;
+  uint64_t trace_span = 0, trace_failed = 0;
   uint64_t last_assignment = 0;
   uint64_t construction_work_used = 0;
   uint32_t table_ordinal = 0;
@@ -82,6 +85,7 @@ struct FaceTrimSession::Impl final {
   SurfacePointResult sampled_anchors;
   bool surface_started = false;
   bool recheck_failed = false;
+  bool trace_open = false;
   Clock::time_point operation_started{};
   TrimFaceStats counts;
 
@@ -99,7 +103,43 @@ struct FaceTrimSession::Impl final {
             "invalid trimmed-face source owner or limits");
     external_cancel.emplace(token, ForwardStop{&cancel_source});
   }
+  static const char *phase_name(Phase value) noexcept {
+    constexpr const char *names[]{"idle",     "domain",    "start", "select",    "anchors",
+                                  "cuts",     "construct", "bound", "cap_bound", "promotions",
+                                  "boundary", "complete",  "closed"};
+    return names[static_cast<uint32_t>(value)];
+  }
+  diagnostic::Context trace_context() const noexcept {
+    diagnostic::Context result;
+    if (query) {
+      result.face = source.source().view().faces[query->face.value].id.value;
+      result.query = query->generation;
+      result.assignment = query->assignment;
+    }
+    result.span = trace_span;
+    result.horizon = horizon;
+    result.revision = key.construction_revision;
+    result.source_sites = domain ? domain->sites.size() : 0;
+    result.sites = construction ? construction->sites.size() : 0;
+    result.facets = construction ? construction->facets.size() : 0;
+    result.pending = pending_facets.size();
+    result.failed = trace_failed;
+    result.anchors = anchors.size();
+    result.leaves = view ? view.selection()->leaves.size() : 0;
+    result.cumulative_work = construction_work_used;
+    return result;
+  }
+  void trace_early_failure() noexcept {
+    if (!limits.trace_progress || !trace_open)
+      return;
+    const auto captured = trace_context();
+    diagnostic::Scope scope(&captured);
+    diagnostic::emit({.event = "phase_failure", .phase = phase_name(trace_phase)});
+    trace_open = false;
+  }
   void release_face_state() {
+    trace_open = false;
+    trace_span = trace_failed = 0;
     surface_started = false;
     output.reset();
     bounds.reset();
@@ -368,6 +408,7 @@ struct FaceTrimSession::Impl final {
   TrimFaceProgress finish_horizon(JobContext &context) {
     const auto tau = import_exact(context.budget, query->values.view(query->positional));
     bool all = true, cap_failed = false;
+    trace_failed = 0;
     if (!ordinary_facets.empty()) {
       require(bounds && bounds->work.key().construction == construction->key &&
                   bounds->work.key().surface == view.key() &&
@@ -381,8 +422,11 @@ struct FaceTrimSession::Impl final {
                       import_exact(context.budget, bounds->values.view(*answer.positional_upper))
                               .compare(tau) <= 0,
                   "accepted ordinary upper exceeds original exact allowance");
-        else
+        else {
           all = false;
+          if (limits.trace_progress)
+            ++trace_failed;
+        }
       }
     }
     auto angular = Rational(context.budget), radial = Rational(context.budget);
@@ -402,6 +446,8 @@ struct FaceTrimSession::Impl final {
         } else {
           all = false;
           cap_failed = true;
+          if (limits.trace_progress)
+            ++trace_failed;
           if (!answer.bounds)
             throw Error(ErrorCode::unresolved, "mapped cap numerical bound unresolved");
           angular = angular.add(
@@ -630,6 +676,8 @@ void FaceTrimSession::begin(const TrimFaceQuery &query) {
   }
   p.query = query;
   p.horizon = 0; // semantic anchor births restart only on a fresh query/assignment
+  p.trace_open = false;
+  p.trace_span = p.trace_failed = 0;
   if (query.generation > p.last_query)
     p.table_ordinal = 0;
   p.assignment_mode = pooled ? Impl::AssignmentMode::pooled : Impl::AssignmentMode::legacy;
@@ -643,7 +691,12 @@ void FaceTrimSession::begin(const TrimFaceQuery &query) {
 }
 TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
   auto &p = *impl_;
-  p.stopped();
+  try {
+    p.stopped();
+  } catch (...) {
+    p.trace_early_failure();
+    throw;
+  }
   require(p.query.has_value(), "no trimmed-face query");
   require(p.construction_work_used <= p.limits.construction_work,
           "trimmed construction work accounting");
@@ -651,6 +704,18 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
   JobContext context(
       {p.limits.surface.child_bytes, p.limits.construction_work - p.construction_work_used},
       resource_.get(), p.stop);
+  auto trace_context = p.trace_context();
+  diagnostic::Scope trace_scope(p.limits.trace_progress ? &trace_context : nullptr);
+  if (p.limits.trace_progress && !p.trace_open) {
+    p.trace_phase = p.phase;
+    p.trace_open = true;
+    ++p.trace_span;
+    trace_context.span = p.trace_span;
+    diagnostic::emit({.event = "phase_begin",
+                      .phase = Impl::phase_name(p.trace_phase),
+                      .byte_limit = p.limits.surface.child_bytes,
+                      .work_limit = p.limits.construction_work - p.construction_work_used});
+  }
   const auto advance = [&]() -> TrimFaceProgress {
     context.budget.charge(0);
     using Phase = Impl::Phase;
@@ -906,6 +971,18 @@ TrimFaceProgress FaceTrimSession::step(JobContext &caller) {
   } catch (...) {
     if (!failure)
       failure = std::current_exception();
+  }
+  if (p.limits.trace_progress && (failure || p.phase != p.trace_phase ||
+                                  (progress && (*progress == TrimFaceProgress::complete ||
+                                                *progress == TrimFaceProgress::needs_boundary)))) {
+    trace_context = p.trace_context();
+    diagnostic::emit({.event = failure ? "phase_failure" : "phase_end",
+                      .phase = Impl::phase_name(p.trace_phase),
+                      .work = context.budget.work(),
+                      .peak = context.budget.peak(),
+                      .byte_limit = p.limits.surface.child_bytes,
+                      .work_limit = p.limits.construction_work});
+    p.trace_open = false;
   }
   if (failure) {
     cancel();

@@ -2,6 +2,7 @@
 #include "adaptive_cache_detail.hpp"
 #include "adaptive_cap_numeric.hpp"
 #include "adaptive_regions.hpp"
+#include "adaptive_trace.hpp"
 #include "cuda/adaptive_assignment_api.h"
 #include "cuda/adaptive_cap_api.h"
 #include "cuda/adaptive_trim_api.h"
@@ -115,6 +116,7 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
   }
   enum class FacetPhase { none, prepare, packet_base, direct, base, source, complete };
   FacetPhase facet_phase = FacetPhase::none;
+  FacetPhase trace_facet_phase = FacetPhase::none;
   std::optional<SurfaceFacetRequest> facet_request;
   std::optional<TrimFacetWork> facet_work;
   SurfaceFacetResult facet_output;
@@ -200,6 +202,31 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
     JobContext context(
         {limits.child_bytes, std::min(limits.child_work, request.limits.work - facet_work_spent)},
         resource.get(), stop);
+    const uint64_t trace_work_limit =
+        std::min(limits.child_work, request.limits.work - facet_work_spent);
+    constexpr const char *trace_names[]{"none", "prepare", "packet_base", "direct",
+                                        "base", "source",  "complete"};
+    diagnostic::BudgetScope trace(context.budget,
+                                  {.phase = trace_names[static_cast<uint32_t>(facet_phase)],
+                                   .byte_limit = limits.child_bytes,
+                                   .work_limit = trace_work_limit,
+                                   .spent = facet_work_spent});
+    const auto trace_phase = [&] {
+      if (!diagnostic::current)
+        return;
+      trace.phase(trace_names[static_cast<uint32_t>(facet_phase)]);
+      if (trace_facet_phase == facet_phase)
+        return;
+      trace_facet_phase = facet_phase;
+      diagnostic::emit({.event = "surface_phase",
+                        .phase = trace_names[static_cast<uint32_t>(facet_phase)],
+                        .work = context.budget.work(),
+                        .peak = context.budget.peak(),
+                        .byte_limit = limits.child_bytes,
+                        .work_limit = trace_work_limit,
+                        .spent = facet_work_spent});
+    };
+    trace_phase();
     const auto finish = [&](SurfaceProgress state) {
       facet_work_spent += context.budget.work();
       budget.charge(context.budget.work());
@@ -262,6 +289,7 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
       bound_at += bound_count;
     }
     for (;;) {
+      trace_phase();
       const auto &queue = facet_phase == FacetPhase::direct ? parent_queue : piece_queue;
       if (bound_at < queue.size()) {
         bound_count = static_cast<uint32_t>(
@@ -310,6 +338,14 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
           break;
         check(table_ordinal < UINT32_MAX, ErrorCode::resource_exhausted,
               "surface fallback table ordinal exhausted");
+        trace.phase("materialize");
+        diagnostic::emit({.event = "surface_phase",
+                          .phase = "materialize",
+                          .work = context.budget.work(),
+                          .peak = context.budget.peak(),
+                          .byte_limit = limits.child_bytes,
+                          .work_limit = trace_work_limit,
+                          .spent = facet_work_spent});
         auto materialized = materialize_trim_facet_fallback(
             context, facet_work.value(), fallback,
             {{OwnerKind::run, UINT32_MAX - 2, serial}, query, ++table_ordinal});
@@ -451,6 +487,12 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
     JobContext context(
         {limits.child_bytes, std::min(limits.child_work, request.limits.work - cap_work_spent)},
         resource.get(), stop);
+    const uint64_t trace_work_limit =
+        std::min(limits.child_work, request.limits.work - cap_work_spent);
+    diagnostic::BudgetScope trace(context.budget, {.phase = "mapped_caps",
+                                                   .byte_limit = limits.child_bytes,
+                                                   .work_limit = trace_work_limit,
+                                                   .spent = cap_work_spent});
     const auto finish = [&](SurfaceProgress state) {
       cap_work_spent += context.budget.work();
       budget.charge(context.budget.work());
@@ -1512,6 +1554,7 @@ void SurfaceCacheSession::bound(const SurfaceFacetRequest &request) {
   p.facet_request->selected_facets = p.selected_facets;
   p.precise_count = 0;
   p.facet_work_spent = 0;
+  p.trace_facet_phase = Impl::FacetPhase::none;
   p.bound_pending = false;
   p.facet_phase = Impl::FacetPhase::prepare;
 }

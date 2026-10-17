@@ -1,6 +1,7 @@
 #include "adaptive_regions.hpp"
 #include "adaptive_curve_geometry.hpp"
 #include "adaptive_region_cdt.hpp"
+#include "adaptive_trace.hpp"
 #include "adaptive_traces.hpp"
 #include "exact_metric.hpp"
 #include <algorithm>
@@ -58,8 +59,9 @@ void validate_domain_request(const DomainRequest &request) {
   if (request.caps) {
     const auto &key = request.caps.key();
     require(request.caps.curves() == request.curves && request.caps.resource() == curves.resource &&
-                key.source_generation == request.key.source_generation && key.query == request.key.query &&
-                key.definition == request.key.definition && key.face == request.key.face &&
+                key.source_generation == request.key.source_generation &&
+                key.query == request.key.query && key.definition == request.key.definition &&
+                key.face == request.key.face &&
                 key.boundary_generation == request.key.boundary_generation &&
                 key.face_generation == effective_face_generation(request.key) &&
                 key.domain_revision == request.key.domain_revision &&
@@ -82,8 +84,8 @@ void require_domain_key(const FaceDomainLease &domain, const FaceConstructionKey
               domain->key.profile_revision == key.profile_revision &&
               domain->key.assignment_epoch == key.assignment_epoch &&
               effective_face_generation(domain->key) == effective_face_generation(key) &&
-              domain->key.domain_revision == key.domain_revision &&
-              domain->key.face == key.face && domain->key.definition == key.definition,
+              domain->key.domain_revision == key.domain_revision && domain->key.face == key.face &&
+              domain->key.definition == key.definition,
           "stale source face domain lease");
 }
 std::pmr::vector<BoundaryKey> coarse_requests(const SharedCurveSnapshot &curves,
@@ -410,8 +412,8 @@ struct FaceDomainClassifier::Impl final {
       if (quad.box[2 * axis + 1].compare(box[2 * axis]) < 0 ||
           quad.box[2 * axis].compare(box[2 * axis + 1]) > 0)
         return false;
-    const std::array<UV, 4> corners{{{box[0], box[2]}, {box[1], box[2]},
-                                     {box[1], box[3]}, {box[0], box[3]}}};
+    const std::array<UV, 4> corners{
+        {{box[0], box[2]}, {box[1], box[2]}, {box[1], box[3]}, {box[0], box[3]}}};
     for (uint32_t edge = 0; edge < 4; ++edge) {
       bool separated = true;
       for (const auto &corner : corners)
@@ -423,17 +425,18 @@ struct FaceDomainClassifier::Impl final {
     return true;
   }
   bool entirely_pole_side(const std::array<Rational, 4> &box) {
-    require(domain->caps && domain->caps.caps().size() == 1, "cap classifier source partition absent");
+    require(domain->caps && domain->caps.caps().size() == 1,
+            "cap classifier source partition absent");
     const auto pieces = domain->caps.pieces();
     const auto &a = pieces.front(), &b = pieces.back();
     const auto &values = domain->caps.values();
     const UV left{import_exact(budget, values.view(a.cut_uv[0])),
-                    import_exact(budget, values.view(a.cut_uv[1]))};
+                  import_exact(budget, values.view(a.cut_uv[1]))};
     const UV right{import_exact(budget, values.view(b.cut_uv[2])),
-                     import_exact(budget, values.view(b.cut_uv[3]))};
+                   import_exact(budget, values.view(b.cut_uv[3]))};
     const auto side = left[1].subtract(import_exact(budget, values.view(a.finite_v[0]))).sign();
-    for (const auto &point : std::array<UV, 4>{{{box[0], box[2]}, {box[1], box[2]},
-                                                {box[1], box[3]}, {box[0], box[3]}}})
+    for (const auto &point : std::array<UV, 4>{
+             {{box[0], box[2]}, {box[1], box[2]}, {box[1], box[3]}, {box[0], box[3]}}})
       if (cross(left, right, point).sign() * side > 0)
         return false;
     return true;
@@ -552,9 +555,9 @@ FaceDomainClassifier::classify_points(const ExactTable &values,
             const auto pieces = impl_->domain->caps.pieces();
             const auto &from = impl_->domain->caps.values();
             const UV a{import_exact(budget, from.view(pieces.front().cut_uv[0])),
-                         import_exact(budget, from.view(pieces.front().cut_uv[1]))};
+                       import_exact(budget, from.view(pieces.front().cut_uv[1]))};
             const UV c{import_exact(budget, from.view(pieces.back().cut_uv[2])),
-                         import_exact(budget, from.view(pieces.back().cut_uv[3]))};
+                       import_exact(budget, from.view(pieces.back().cut_uv[3]))};
             label = cross(a, c, point).sign() == 0 ? SurfaceClass::band : SurfaceClass::mapped_cap;
             break;
           }
@@ -766,7 +769,8 @@ std::array<Rational, 4> face_metric(const RegionInput &input, bgfd::Budget &budg
   }
   if (input.domain->caps && input.domain->caps.control() &&
       input.domain->caps.control().fixed_metric_factor()) {
-    std::array<Rational, 4> factor{Rational(budget), Rational(budget), Rational(budget), Rational(budget)};
+    std::array<Rational, 4> factor{Rational(budget), Rational(budget), Rational(budget),
+                                   Rational(budget)};
     const auto &control = input.domain->caps.control();
     for (uint32_t i = 0; i < 4; ++i)
       factor[i] = import_exact(budget, control.values().view((*control.fixed_metric_factor())[i]));
@@ -891,9 +895,11 @@ class RegionBuilder final {
           const auto &node = boundary.nodes[from.boundary_node];
           budget.charge(1);
           if (node.key == physical->expected_key && node.original_parameter &&
-              import_exact(budget, boundary.parameters.view(*node.original_parameter)).compare(t) == 0 &&
+              import_exact(budget, boundary.parameters.view(*node.original_parameter)).compare(t) ==
+                  0 &&
               equal_uv(points[j], uv)) {
-            require(binding.construction_site == none, "cap physical endpoint has multiple chart bindings");
+            require(binding.construction_site == none,
+                    "cap physical endpoint has multiple chart bindings");
             binding.construction_site = j;
           }
         }
@@ -908,9 +914,12 @@ class RegionBuilder final {
                     equal_uv(uv, read_uv(budget, input.cut_points->values, point.original_uv)) &&
                     equal_uv(uv, read_uv(budget, input.cut_points->values, point.chart_xy)),
                 "cap interior cut source/UV differs from plan");
-        binding.construction_site = append(
-            uv, ConstructionSite{{}, point.actual_xyz, point.key.constructed_generation,
-              SurfaceSiteSource{point.key.original, point.key.stage, false, 0, point.departure_upper}});
+        binding.construction_site =
+            append(uv, ConstructionSite{{},
+                                        point.actual_xyz,
+                                        point.key.constructed_generation,
+                                        SurfaceSiteSource{point.key.original, point.key.stage,
+                                                          false, 0, point.departure_upper}});
       }
     }
     cap_poles.resize(caps.caps().size(), none);
@@ -923,7 +932,8 @@ class RegionBuilder final {
                   "cap wedge source-sector binding differs");
           const auto site = binding.construction_site;
           require(std::holds_alternative<BoundarySiteSource>(sites[site].source) &&
-                      std::get<BoundarySiteSource>(sites[site].source).boundary_node == cap.pole_boundary_node,
+                      std::get<BoundarySiteSource>(sites[site].source).boundary_node ==
+                          cap.pole_boundary_node,
                   "mapped pole is not captured original physical vertex");
           if (cap_poles[i] == none)
             cap_poles[i] = site;
@@ -941,10 +951,11 @@ class RegionBuilder final {
     const auto pieces = caps.pieces();
     const auto &from = caps.values();
     const UV left{import_exact(budget, from.view(pieces.front().cut_uv[0])),
-                    import_exact(budget, from.view(pieces.front().cut_uv[1]))};
+                  import_exact(budget, from.view(pieces.front().cut_uv[1]))};
     const UV right{import_exact(budget, from.view(pieces.back().cut_uv[2])),
-                     import_exact(budget, from.view(pieces.back().cut_uv[3]))};
-    const auto sign = left[1].subtract(import_exact(budget, from.view(pieces.front().finite_v[0]))).sign();
+                   import_exact(budget, from.view(pieces.back().cut_uv[3]))};
+    const auto sign =
+        left[1].subtract(import_exact(budget, from.view(pieces.front().finite_v[0]))).sign();
     std::pmr::vector<ProtectedRegionEdge> kept(&budget);
     for (uint64_t j = 0; j < row.edges.count; ++j) {
       const auto &edge = input.domain->edges[row.edges.first + j];
@@ -974,12 +985,14 @@ class RegionBuilder final {
             "ordinary remainder cut endpoints differ from current master cuts");
     if (last == low)
       for (uint32_t j = 0; j < pieces.size(); ++j)
-        loop.edges.push_back({{cap_bindings[j].construction_site, cap_bindings[j + 1].construction_site},
-                               pieces[j].cut_key});
+        loop.edges.push_back(
+            {{cap_bindings[j].construction_site, cap_bindings[j + 1].construction_site},
+             pieces[j].cut_key});
     else
       for (uint32_t j = word(pieces.size()); j > 0; --j)
-        loop.edges.push_back({{cap_bindings[j].construction_site, cap_bindings[j - 1].construction_site},
-                               pieces[j - 1].cut_key});
+        loop.edges.push_back(
+            {{cap_bindings[j].construction_site, cap_bindings[j - 1].construction_site},
+             pieces[j - 1].cut_key});
     for (const auto &edge : loop.edges)
       loop.sites.push_back(edge.sites[0]);
   }
@@ -1027,18 +1040,19 @@ class RegionBuilder final {
     const auto &caps = input.domain->caps;
     std::pmr::vector<uint32_t> previous_piece(caps.pieces().size(), none, &budget);
     if (input.previous && input.previous->domain == input.domain) {
-      const auto begin = std::lower_bound(input.previous->facets.begin(), input.previous->facets.end(),
-          FacetGenerator::mapped_cap,
+      const auto begin = std::lower_bound(
+          input.previous->facets.begin(), input.previous->facets.end(), FacetGenerator::mapped_cap,
           [](const auto &facet, auto generator) { return facet.key.generator < generator; });
       for (auto at = begin; at != input.previous->facets.end(); ++at)
         if (at->mapped && at->mapped->piece < previous_piece.size())
-          previous_piece[at->mapped->piece] = word(static_cast<size_t>(at - input.previous->facets.begin()));
+          previous_piece[at->mapped->piece] =
+              word(static_cast<size_t>(at - input.previous->facets.begin()));
     }
     for (uint32_t i = 0; i < caps.pieces().size(); ++i) {
       const auto &piece = caps.pieces()[i];
       const auto &cap = caps.caps()[piece.cap];
-      const std::array<uint32_t, 3> source_sites{cap_poles[piece.cap],
-          cap_bindings[piece.cut_points[0]].construction_site,
+      const std::array<uint32_t, 3> source_sites{
+          cap_poles[piece.cap], cap_bindings[piece.cut_points[0]].construction_site,
           cap_bindings[piece.cut_points[1]].construction_site};
       std::array<uint32_t, 3> actual{}, inverse{};
       for (uint32_t role = 0; role < 3; ++role) {
@@ -1046,23 +1060,30 @@ class RegionBuilder final {
         actual[role] = source_sites[piece.positive_chart_roles[role]];
         inverse[piece.positive_chart_roles[role]] = role;
       }
-      RegionFacet facet{{FacetGenerator::mapped_cap, piece.cap, input.key.construction_revision, i},
-                          actual, none, none,
-                          MappedCapFacet{piece.cap, i, inverse,
-                            {caps.wedges()[cap.wedge].kind, piece.regular_sheet_sign,
-                              {exact.append(import_exact(budget, caps.values().view(piece.cut_uv[0]))),
-                               exact.append(import_exact(budget, caps.values().view(piece.cut_uv[2])))}}}};
+      RegionFacet facet{
+          {FacetGenerator::mapped_cap, piece.cap, input.key.construction_revision, i},
+          actual,
+          none,
+          none,
+          MappedCapFacet{
+              piece.cap,
+              i,
+              inverse,
+              {caps.wedges()[cap.wedge].kind,
+               piece.regular_sheet_sign,
+               {exact.append(import_exact(budget, caps.values().view(piece.cut_uv[0]))),
+                exact.append(import_exact(budget, caps.values().view(piece.cut_uv[2])))}}}};
       bool unchanged = false;
       if (previous_piece[i] != none) {
-            const auto &old = input.previous->facets[previous_piece[i]];
-            unchanged = true;
-            for (uint32_t j = 0; j < 3; ++j)
-              if (!equal_uv(points[actual[j]], read_uv(budget, input.previous->values,
-                                                       input.previous->sites[old.sites[j]].uv)) ||
-                  !same_actual(sites[actual[j]], input.previous->sites[old.sites[j]]))
-                unchanged = false;
-            if (unchanged)
-              facet.key = old.key;
+        const auto &old = input.previous->facets[previous_piece[i]];
+        unchanged = true;
+        for (uint32_t j = 0; j < 3; ++j)
+          if (!equal_uv(points[actual[j]], read_uv(budget, input.previous->values,
+                                                   input.previous->sites[old.sites[j]].uv)) ||
+              !same_actual(sites[actual[j]], input.previous->sites[old.sites[j]]))
+            unchanged = false;
+        if (unchanged)
+          facet.key = old.key;
       }
       if (!unchanged)
         changed_keys.push_back(facet.key);
@@ -1367,6 +1388,19 @@ class RegionBuilder final {
     std::pmr::vector<RegionCycleView> cycle_views(&budget);
     for (const auto &cycle : cycle_sites)
       cycle_views.push_back({cycle});
+    uint64_t trace_boundary = 0;
+    if (diagnostic::current)
+      for (const auto &cycle : cycle_sites)
+        trace_boundary += cycle.size();
+    diagnostic::BudgetScope trace(budget,
+                                  {.event = "cdt_begin",
+                                   .phase = "region_cdt",
+                                   .component = component,
+                                   .n = local.size(),
+                                   .boundary = trace_boundary,
+                                   .work = budget.work(),
+                                   .peak = budget.peak()},
+                                  true);
     auto result =
         construct_region_cdt(budget, local, cycle_views, metric, 0x243f6a8885a308d3ULL, discover);
     if (discover) {
@@ -1575,7 +1609,8 @@ public:
       budget.charge(1);
       if (!used[i]) {
         const auto *sample = std::get_if<SurfaceSiteSource>(&sites[i].source);
-        require(std::find(inactive_poles.begin(), inactive_poles.end(), i) != inactive_poles.end() ||
+        require(std::find(inactive_poles.begin(), inactive_poles.end(), i) !=
+                        inactive_poles.end() ||
                     (!input.previous && sample && sample->anchor),
                 "construction retained an unused numerical/source site");
         continue;
@@ -1619,11 +1654,10 @@ public:
         require(cap.pieces.count != 0, "mapped cap has no radial-edge roles");
         const auto &first = input.domain->caps.pieces()[cap.pieces.first];
         const auto &last = input.domain->caps.pieces()[cap.pieces.first + cap.pieces.count - 1];
-        const std::array<uint32_t, 2> cut_sites{
-            cap_bindings[first.cut_points[0]].construction_site,
-            cap_bindings[last.cut_points[1]].construction_site};
-        const bool source_roles_positive = first.positive_chart_roles ==
-                                          std::array<uint32_t, 3>{0, 1, 2};
+        const std::array<uint32_t, 2> cut_sites{cap_bindings[first.cut_points[0]].construction_site,
+                                                cap_bindings[last.cut_points[1]].construction_site};
+        const bool source_roles_positive =
+            first.positive_chart_roles == std::array<uint32_t, 3>{0, 1, 2};
         for (uint32_t side = 0; side < 2; ++side) {
           const auto key = cap.meridian_intervals[cap.angular_to_sector[side]];
           require(key.kind == BoundaryOwnerKind::source_edge,
