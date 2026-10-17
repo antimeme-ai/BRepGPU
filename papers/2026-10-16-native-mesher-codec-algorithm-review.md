@@ -1,0 +1,9 @@
+# Native mesh codec: scoped independent review
+
+Read `native/mesher/mesh_io.cpp`, `mesh_walk.hpp` and the relevant schema/builder seams. This review concerns streaming bounds, typed forward references, exact-value ownership/canonical interning and resource limits. It does not qualify geometric correctness or add a competing geometry checker. The implementation owner ran the existing strict, sanitizer and independent wire-reader fixtures; this reviewer did not launch another campaign.
+
+Two findings were sent to the owner. Initially the encoder counted section rows/limbs but omitted inline list items, whereas decoding imposed an independent list cap; a valid write could therefore fail its own same-limit read, and two separate counters did not implement an aggregate row limit. The corrected collector counts every inline item, the writer includes those items in its total and the decoder initializes its item count with section rows. The owner recorded an actual combined-cap RED before the fix.
+
+Initially the decoder's final builder validation escaped the caller's work limit through a new unbounded budget. The corrected `seal(Budget&)` uses the remaining caller budget, including cancellation; the standalone convenience has a finite default cap. Read the actual revised code and accepted these resolutions.
+
+No further blocking defect was found in this scoped review. The section/row-end arithmetic uses checked sums/products and bounded streams; the decoder preallocates typed row tables for forward references, validates variants/list extents, rejects unreduced/noncanonical rational words and verifies exact reachability/semantic order. Retained exact views remain qualified by retained tables. This acceptance is scoped to those inspected mechanisms and does not claim completeness of the mesher or its numerical/source-domain proof.

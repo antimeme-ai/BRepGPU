@@ -1,0 +1,3 @@
+run	qualifier	status	faces	mesh_vertices	triangles	construction_seconds	qualification_seconds	qualification_censor_seconds	construction_peak_rss_kib	qualified_process_peak_rss_kib
+v1	all-pairs	TIMEOUT_CENSORED	438	95766	191688	209.60783167101908		300	515184	
+v2	ranked-sweep	COMPLETE_PART_QUALIFIED	438	95766	191688	208.25795411597937	169.98492623807397		514976	776424

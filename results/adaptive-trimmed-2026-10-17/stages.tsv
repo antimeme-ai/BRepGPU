@@ -1,0 +1,477 @@
+process_id	family	mode	backend	threads	device	observation	row	query	scope_kind	scope	seconds	native_timing_path
+plane-cpu1	plane	cpu1	cpu	1		1	0		native_stage	source.decode	0.00017660899999999999	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.00087579800000000001	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	3.5546000000000002e-05	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	3		native_stage	session.create	2.8583000000000001e-05	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	4		native_stage	device.open	1.9500000000000001e-07	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	5	0	native_stage	query.prepare	1.5580999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.0050819960000000001	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.0027431019999999999	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.000173616	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	6.6087000000000006e-05	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	10	1	native_stage	query.prepare	1.1173e-05	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.0042811979999999999	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	0.002423578	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.000146828	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	5.9939000000000003e-05	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	15		native_stage	session.close	6.2500000000000005e-07	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu1	plane	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	0.01646541	context/adaptive-trimmed-2026-10-17/plane-cpu1/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	0		native_stage	source.decode	0.00019056499999999999	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.00079885999999999998	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	3.9681999999999997e-05	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	3		native_stage	session.create	0.00052270300000000001	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	4		native_stage	device.open	1.4100000000000001e-07	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	5	0	native_stage	query.prepare	1.8354000000000001e-05	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.0049541669999999998	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.0027686880000000001	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.00017990700000000001	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	6.8156000000000003e-05	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	10	1	native_stage	query.prepare	1.0202e-05	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.0042763990000000002	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	0.0023847019999999998	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00015637100000000001	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	5.7204000000000003e-05	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	15		native_stage	session.close	0.00032365399999999999	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-cpu4	plane	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	0.017099889	context/adaptive-trimmed-2026-10-17/plane-cpu4/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	0		native_stage	source.decode	0.000153573	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.00071708700000000004	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	2.7484999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	3		native_stage	session.create	3.2820000000000001e-05	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	4		native_stage	device.open	0.25005134000000001	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	5	0	native_stage	query.prepare	2.5060999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.0065444309999999999	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.003635321	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00025863900000000002	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	6.9575999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	10	1	native_stage	query.prepare	9.2059999999999996e-06	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.0037881630000000002	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	0.0022306299999999999	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.00012044099999999999	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	5.3702999999999997e-05	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	15		native_stage	session.close	0.034107444000000001	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1000	plane	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	0.30215120600000001	context/adaptive-trimmed-2026-10-17/plane-p1000/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	0		native_stage	source.decode	0.000164943	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.00088276700000000001	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	2.4533999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	3		native_stage	session.create	5.6586999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	4		native_stage	device.open	0.22676007000000001	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	5	0	native_stage	query.prepare	1.8131e-05	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.0062327219999999996	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.003562235	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00050866300000000002	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	0.00014627299999999999	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	10	1	native_stage	query.prepare	2.5290999999999999e-05	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.010296724	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	0.0061221679999999999	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.000336046	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	0.000146503	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	15		native_stage	session.close	0.049272362	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane-p1001	plane	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	0.30503440900000001	context/adaptive-trimmed-2026-10-17/plane-p1001/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	0		native_stage	source.decode	0.00047089099999999997	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.0067960750000000004	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	3.1541999999999997e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	3		native_stage	session.create	4.7101999999999997e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	4		native_stage	device.open	1.6500000000000001e-07	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	5	0	native_stage	query.prepare	1.3043e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.036741946999999997	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.027444590000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.00070087700000000003	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	0.000141039	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	10	1	native_stage	query.prepare	1.2152e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.034780297000000002	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	0.0262779	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.00060588099999999995	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	0.00015472000000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	15		native_stage	session.close	9.5999999999999991e-07	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu1	plane_many_holes	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	0.13461340799999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu1/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	0		native_stage	source.decode	0.00043368699999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.0071373560000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	3.8188000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	3		native_stage	session.create	0.00046036699999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	4		native_stage	device.open	1.43e-07	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	5	0	native_stage	query.prepare	1.3124e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.038754546000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.028512953000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.00071413599999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	0.00013846	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	10	1	native_stage	query.prepare	9.9709999999999999e-06	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.036323751000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	0.027324550999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00071780599999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	0.00015113799999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	15		native_stage	session.close	0.00032814399999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-cpu4	plane_many_holes	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	0.14143245700000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-cpu4/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	0		native_stage	source.decode	0.000548194	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.0086285340000000002	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	4.9546999999999998e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	3		native_stage	session.create	4.4437000000000002e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	4		native_stage	device.open	0.25299478199999997	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	5	0	native_stage	query.prepare	3.5450000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.041557776999999997	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.029318619000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00078991	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	0.00015756599999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	10	1	native_stage	query.prepare	1.2019e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.036341884999999997	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	0.027983808999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.00071347499999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	0.000166403	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	15		native_stage	session.close	0.035216103999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1000	plane_many_holes	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	0.43501636500000002	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1000/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	0		native_stage	source.decode	0.00050846099999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.0087364450000000007	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	3.9932999999999999e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	3		native_stage	session.create	3.7271000000000003e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	4		native_stage	device.open	0.235583036	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	5	0	native_stage	query.prepare	2.4239e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.044217579999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.031122770000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00080828599999999997	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	0.000164325	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	10	1	native_stage	query.prepare	1.2850999999999999e-05	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.033500619000000002	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	0.025022649000000001	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.00075104000000000002	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	0.00014327599999999999	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	15		native_stage	session.close	0.033287723999999998	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_many_holes-p1001	plane_many_holes	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	0.414465945	context/adaptive-trimmed-2026-10-17/plane_many_holes-p1001/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	0		native_stage	source.decode	0.000152046	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.00080763199999999997	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	3.0419000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	3		native_stage	session.create	3.1612000000000002e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	4		native_stage	device.open	3.3099999999999999e-07	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	5	0	native_stage	query.prepare	1.0256e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.0041874520000000004	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.0022900619999999998	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.000140412	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	5.2012000000000003e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	10	1	native_stage	query.prepare	8.7430000000000008e-06	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.0036587170000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	0.0021632029999999998	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.00015486300000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	6.6625000000000007e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	15		native_stage	session.close	7.7100000000000001e-07	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu1	plane_reversed	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	0.014025161	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu1/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	0		native_stage	source.decode	0.00018403500000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.00071896999999999998	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	2.6329000000000002e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	3		native_stage	session.create	0.00054712599999999999	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	4		native_stage	device.open	1.2499999999999999e-07	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	5	0	native_stage	query.prepare	1.8261999999999999e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.0049133639999999999	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.0027568060000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.000183494	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	7.8978000000000002e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	10	1	native_stage	query.prepare	8.969e-06	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.0040422740000000002	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	0.002267037	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00012768499999999999	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	9.9510000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	15		native_stage	session.close	0.00029095100000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-cpu4	plane_reversed	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	0.016594421000000002	context/adaptive-trimmed-2026-10-17/plane_reversed-cpu4/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	0		native_stage	source.decode	0.000154174	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.000722304	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	2.9865e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	3		native_stage	session.create	2.6908999999999999e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	4		native_stage	device.open	0.19908625099999999	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	5	0	native_stage	query.prepare	1.8527000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.0063490079999999997	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.0036082689999999999	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00026133999999999999	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	7.0043999999999995e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	10	1	native_stage	query.prepare	1.0358e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.0058553870000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	0.0026759750000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.000273787	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	6.0859999999999997e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	15		native_stage	session.close	0.035423575999999998	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1000	plane_reversed	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	0.25496012600000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1000/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	0		native_stage	source.decode	0.000153907	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.00093325899999999998	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	3.1099000000000002e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	3		native_stage	session.create	2.6412000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	4		native_stage	device.open	0.28610823800000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	5	0	native_stage	query.prepare	3.9344999999999997e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.016967280000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.0066516370000000002	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00027074500000000002	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	8.3153999999999997e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	10	1	native_stage	query.prepare	1.2563e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.005200606	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	0.0031259439999999999	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.00015662900000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	8.2620999999999994e-05	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	15		native_stage	session.close	0.035032948000000001	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_reversed-p1001	plane_reversed	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	0.35532190499999999	context/adaptive-trimmed-2026-10-17/plane_reversed-p1001/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	0		native_stage	source.decode	0.000150817	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.00098605799999999994	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	3.8308e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	3		native_stage	session.create	3.1971999999999998e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	4		native_stage	device.open	1.61e-07	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	5	0	native_stage	query.prepare	1.4944e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.0054681160000000003	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.0029906450000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.00018903	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	7.0833000000000004e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	10	1	native_stage	query.prepare	1.1062e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.0045133009999999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	0.0026036449999999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.00014185700000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	5.9627999999999999e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	15		native_stage	session.close	4.8299999999999997e-07	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu1	plane_authoritative	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	0.017595449999999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu1/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	0		native_stage	source.decode	0.00022146500000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.0010105820000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	3.4449999999999997e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	3		native_stage	session.create	0.00063686400000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	4		native_stage	device.open	1.98e-07	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	5	0	native_stage	query.prepare	1.6277e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.0063694110000000002	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.0034243770000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.000185541	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	7.2738999999999996e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	10	1	native_stage	query.prepare	1.1615e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.0051370449999999998	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	0.0029969369999999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00014595999999999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	6.1113999999999998e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	15		native_stage	session.close	0.00033578500000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-cpu4	plane_authoritative	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	0.021045028	context/adaptive-trimmed-2026-10-17/plane_authoritative-cpu4/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	0		native_stage	source.decode	0.00016686500000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.00085912499999999997	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	2.9895000000000001e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	3		native_stage	session.create	3.7654999999999998e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	4		native_stage	device.open	0.237620303	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	5	0	native_stage	query.prepare	3.2790000000000003e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.0072384199999999998	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.0041541599999999996	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00020173700000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	6.1002000000000003e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	10	1	native_stage	query.prepare	2.3989e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.0043413230000000002	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	0.002578533	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.00017643300000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	5.5921999999999998e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	15		native_stage	session.close	0.033724301999999998	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1000	plane_authoritative	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	0.29167285399999998	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1000/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	0		native_stage	source.decode	0.000203706	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.0010058370000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	4.1644999999999999e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	3		native_stage	session.create	4.9413000000000003e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	4		native_stage	device.open	0.322493009	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	5	0	native_stage	query.prepare	8.6514999999999994e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.017495613	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.010078313	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00048526	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	0.000150173	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	10	1	native_stage	query.prepare	2.5537999999999998e-05	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.011024808000000001	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	0.0067115430000000004	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.000334383	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	0.00014923599999999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	15		native_stage	session.close	0.064674639000000006	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+plane_authoritative-p1001	plane_authoritative	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	0.43553413099999999	context/adaptive-trimmed-2026-10-17/plane_authoritative-p1001/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	0		native_stage	source.decode	0.00022787099999999999	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.00062087100000000005	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	5.41e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	3		native_stage	session.create	6.0726000000000001e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	4		native_stage	device.open	1.7100000000000001e-07	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	5	0	native_stage	query.prepare	2.7464999999999999e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.012045256000000001	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.13027233899999999	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.00027094499999999997	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	0.00016986099999999999	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	10	1	native_stage	query.prepare	1.0088999999999999e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.011618081000000001	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	0.257150606	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.0002944	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	0.00029389100000000001	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	15		native_stage	session.close	1.8509999999999999e-06	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu1	bowl	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	0.41360969600000003	context/adaptive-trimmed-2026-10-17/bowl-cpu1/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	0		native_stage	source.decode	0.000234658	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.00048379899999999998	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	4.7079000000000001e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	3		native_stage	session.create	0.00043764900000000002	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	4		native_stage	device.open	1.66e-07	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	5	0	native_stage	query.prepare	1.349e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.011561755	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.13523747899999999	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.00028529100000000002	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	0.00016889100000000001	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	10	1	native_stage	query.prepare	1.0818999999999999e-05	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.013144654	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	0.26658972800000003	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00034883899999999999	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	0.00033390900000000002	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	15		native_stage	session.close	0.00032851199999999999	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-cpu4	bowl	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	0.42976873500000001	context/adaptive-trimmed-2026-10-17/bowl-cpu4/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	0		native_stage	source.decode	0.00020289700000000001	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.00054712300000000005	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	5.8359000000000001e-05	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	3		native_stage	session.create	4.9716000000000003e-05	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	4		native_stage	device.open	0.260622839	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	5	0	native_stage	query.prepare	3.0704000000000003e-05	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.017831559	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.18875123699999999	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00024711500000000001	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	0.00016772099999999999	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	10	1	native_stage	query.prepare	9.8430000000000005e-06	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.014520656999999999	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	0.29263621499999998	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.00029227399999999997	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	0.00029451800000000002	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	15		native_stage	session.close	0.035398741999999997	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1000	bowl	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	0.81213174600000004	context/adaptive-trimmed-2026-10-17/bowl-p1000/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	0		native_stage	source.decode	0.00020343600000000001	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.00049878200000000002	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	4.1984999999999999e-05	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	3		native_stage	session.create	5.0980999999999999e-05	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	4		native_stage	device.open	0.23930775200000001	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	5	0	native_stage	query.prepare	2.4216e-05	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.014342419	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.140194129	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00025083199999999999	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	0.000200356	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	10	1	native_stage	query.prepare	1.0604e-05	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.013015931999999999	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	0.266924932	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.00033646300000000001	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	0.00029787500000000002	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	15		native_stage	session.close	0.039095289999999998	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+bowl-p1001	bowl	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	0.71519889000000003	context/adaptive-trimmed-2026-10-17/bowl-p1001/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	0		native_stage	source.decode	0.00019502199999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.00029933599999999998	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	5.6138999999999999e-05	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	3		native_stage	session.create	4.0933000000000003e-05	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	4		native_stage	device.open	1.1999999999999999e-07	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	5	0	native_stage	query.prepare	1.2118e-05	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.011787766	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.66382939699999999	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.00026269200000000003	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	9.5544999999999994e-05	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	10	1	native_stage	query.prepare	9.5100000000000004e-06	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.014807918999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	2.6553217939999998	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.00036031399999999998	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	0.00018281600000000001	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	15		native_stage	session.close	1.5200000000000001e-06	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu1	weighted	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	3.3476867430000001	context/adaptive-trimmed-2026-10-17/weighted-cpu1/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	0		native_stage	source.decode	0.00017451899999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.00037861500000000001	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	9.6487e-05	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	3		native_stage	session.create	0.00048179899999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	4		native_stage	device.open	1.5300000000000001e-07	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	5	0	native_stage	query.prepare	2.3229000000000001e-05	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.012798411000000001	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.66630151199999998	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.00031571799999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	0.000124401	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	10	1	native_stage	query.prepare	9.4849999999999998e-06	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.016665559999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	2.6281950639999998	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00030812500000000002	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	0.00017972299999999999	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	15		native_stage	session.close	0.00025136100000000002	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-cpu4	weighted	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	3.3267887109999998	context/adaptive-trimmed-2026-10-17/weighted-cpu4/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	0		native_stage	source.decode	0.000179715	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.00038330500000000002	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	6.7354999999999995e-05	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	3		native_stage	session.create	5.5498000000000003e-05	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	4		native_stage	device.open	0.24053664599999999	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	5	0	native_stage	query.prepare	2.3555000000000001e-05	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.016135987000000001	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.69962387400000003	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00034373800000000001	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	0.000122051	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	10	1	native_stage	query.prepare	1.0393e-05	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.01609967	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	2.6247842239999999	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.00037428199999999998	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	0.000151891	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	15		native_stage	session.close	0.036923276999999997	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1000	weighted	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	3.6362542430000002	context/adaptive-trimmed-2026-10-17/weighted-p1000/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	0		native_stage	source.decode	0.00018811699999999999	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.00033855099999999998	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	6.7312999999999997e-05	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	3		native_stage	session.create	4.9067999999999998e-05	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	4		native_stage	device.open	0.233952195	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	5	0	native_stage	query.prepare	3.7024999999999999e-05	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.016097009999999998	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.65760444399999995	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00031853099999999999	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	0.000108278	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	10	1	native_stage	query.prepare	1.0857e-05	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.016640595000000001	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	2.6187868870000002	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.00039346500000000001	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	0.00017745599999999999	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	15		native_stage	session.close	0.036997478	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+weighted-p1001	weighted	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	3.5825900339999999	context/adaptive-trimmed-2026-10-17/weighted-p1001/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	0		native_stage	source.decode	0.00017558999999999999	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	1		native_stage	source.compile_original_curves	0.00035423900000000001	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	2		native_stage	source.compile_regular_surface	8.0776e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	3		native_stage	session.create	4.9280999999999998e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	4		native_stage	device.open	2.9200000000000002e-07	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	5	0	native_stage	query.prepare	1.1649e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	6	0	native_stage	query.construct_shared_boundary	0.001937147	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	7	0	native_stage	query.construct_complete_face	0.39796825299999999	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	8	0	native_stage	output.shared_boundary	0.00019648499999999999	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	9	0	native_stage	output.trimmed_face	0.000122485	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	10	1	native_stage	query.prepare	1.0206e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	11	1	native_stage	query.construct_shared_boundary	0.0015666079999999999	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	12	1	native_stage	query.construct_complete_face	0.56381819799999999	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	13	1	native_stage	output.shared_boundary	0.000202623	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	14	1	native_stage	output.trimmed_face	0.00020630400000000001	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	15		native_stage	session.close	1.6950000000000001e-06	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu1	saddle	cpu1	cpu	1		1	16		cumulative_horizon	through_session_close	0.96713964799999996	context/adaptive-trimmed-2026-10-17/saddle-cpu1/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	0		native_stage	source.decode	0.00017310399999999999	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	1		native_stage	source.compile_original_curves	0.00032814900000000002	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	2		native_stage	source.compile_regular_surface	8.1519000000000003e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	3		native_stage	session.create	0.00051732799999999995	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	4		native_stage	device.open	1.4000000000000001e-07	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	5	0	native_stage	query.prepare	1.5184000000000001e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	6	0	native_stage	query.construct_shared_boundary	0.0025668650000000002	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	7	0	native_stage	query.construct_complete_face	0.401826181	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	8	0	native_stage	output.shared_boundary	0.00016861999999999999	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	9	0	native_stage	output.trimmed_face	0.00015330000000000001	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	10	1	native_stage	query.prepare	1.9641e-05	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	11	1	native_stage	query.construct_shared_boundary	0.0020998760000000001	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	12	1	native_stage	query.construct_complete_face	0.58756314499999995	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	13	1	native_stage	output.shared_boundary	0.00015309199999999999	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	14	1	native_stage	output.trimmed_face	0.00026675400000000001	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	15		native_stage	session.close	0.00033068000000000003	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-cpu4	saddle	cpu4	cpu	4		1	16		cumulative_horizon	through_session_close	0.996761024	context/adaptive-trimmed-2026-10-17/saddle-cpu4/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	0		native_stage	source.decode	0.00019342599999999999	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	1		native_stage	source.compile_original_curves	0.00031656000000000002	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	2		native_stage	source.compile_regular_surface	7.9931000000000004e-05	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	3		native_stage	session.create	4.4474000000000001e-05	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	4		native_stage	device.open	0.253231716	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	5	0	native_stage	query.prepare	3.2861999999999998e-05	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	6	0	native_stage	query.construct_shared_boundary	0.0049216939999999999	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	7	0	native_stage	query.construct_complete_face	0.424502149	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	8	0	native_stage	output.shared_boundary	0.00016187299999999999	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	9	0	native_stage	output.trimmed_face	0.000118906	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	10	1	native_stage	query.prepare	9.4159999999999993e-06	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	11	1	native_stage	query.construct_shared_boundary	0.0020821390000000002	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	12	1	native_stage	query.construct_complete_face	0.60594048599999994	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	13	1	native_stage	output.shared_boundary	0.000208369	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	14	1	native_stage	output.trimmed_face	0.000242396	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	15		native_stage	session.close	0.037407415999999999	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1000	saddle	p1000	p100	1	0	1	16		cumulative_horizon	through_session_close	1.3299141969999999	context/adaptive-trimmed-2026-10-17/saddle-p1000/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	0		native_stage	source.decode	0.00020478	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	1		native_stage	source.compile_original_curves	0.00031398599999999999	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	2		native_stage	source.compile_regular_surface	8.0499000000000003e-05	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	3		native_stage	session.create	3.6208999999999998e-05	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	4		native_stage	device.open	0.24357452199999999	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	5	0	native_stage	query.prepare	2.247e-05	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	6	0	native_stage	query.construct_shared_boundary	0.0047261509999999996	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	7	0	native_stage	query.construct_complete_face	0.422096992	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	8	0	native_stage	output.shared_boundary	0.00018866400000000001	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	9	0	native_stage	output.trimmed_face	0.000136601	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	10	1	native_stage	query.prepare	1.0463e-05	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	11	1	native_stage	query.construct_shared_boundary	0.002002312	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	12	1	native_stage	query.construct_complete_face	0.591085109	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	13	1	native_stage	output.shared_boundary	0.00022091600000000001	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	14	1	native_stage	output.trimmed_face	0.00021432800000000001	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	15		native_stage	session.close	0.036425468000000003	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv
+saddle-p1001	saddle	p1001	p100	1	1	1	16		cumulative_horizon	through_session_close	1.301784115	context/adaptive-trimmed-2026-10-17/saddle-p1001/native/timings.tsv

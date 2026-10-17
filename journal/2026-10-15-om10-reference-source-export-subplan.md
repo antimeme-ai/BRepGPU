@@ -1,0 +1,104 @@
+# Reference source export subplan
+
+2026-10-15, design/research only. Root requires the NVIDIA CPU baseline on the
+complete supplied watch. Geometry lane owns faithful fresh source export;
+independent lane owns the official bridge/tessellation, and native lane owns
+the common raw-mesh display. V3 is running and all its pinned files/binaries
+remain unchanged.
+
+Read the existing source adapter and assembly reader, pinned OCCT BinTools and
+ASCII serialization implementations, and the pinned official NVIDIA bridge
+parser/source interfaces. The bridge has no direct STEP input. Selected binary
+BinTools V4 with triangles/normals disabled: official reader supports V4, while
+OCCT's ASCII topology/location writer forces 15 digits despite 17-digit curve
+and surface tables. Binary preserves the translated double payloads. Oracle
+owner confirmed this format choice; native owner confirmed stable definition/
+occurrence IDs, actual source matrices, shared authored explosion offsets and
+opaque NVIDIA face ordinals when exact source-face correspondence is absent.
+
+Written design:
+`papers/2026-10-15-om10-reference-source-export-study.md`.
+
+Proposed files after parent acceptance and meaningful red:
+
+- `native/reference_source/main.cpp` and `CMakeLists.txt`: standalone
+  reference-only fresh read/transfer/graph/export path, using the same pinned
+  public OCCT settings. Existing product source/reader/binary pins stay unchanged.
+- `python/brepgpu/reference_source.py`: strict immutable binary manifest reader;
+  reuse existing typed product/usage/style and assembly machinery.
+- `tests/test_reference_source.py`: authored source geometry/identity/placement,
+  actual V4/no-mesh output, selected direct rejection paths.
+
+Sequence: parent design/plan review → actual absent-mode fleet red → minimal
+implementation → authored export and official one-definition bridge probe →
+one full source export/identity/placement
+check with the existing independent raw-source oracle → adversarial review →
+root baseline integration. No new product dependency, source archive change,
+geometry repair, cached-as-fresh benchmark or product mesh substitution.
+
+Timing: the new reference-only executable avoids unused owned carrier/span
+conversion work and parses STEP once. It is the only STEP exporter invoked in
+each fresh external baseline. Existing reviewed source and the independent raw
+STEP mechanism are out-of-timing comparators, never cached-as-fresh imports.
+Complete external wall includes fresh source import,
+official conversion/import/tessellation/export, common CPU24 display, both
+assembled/exploded presentations and exit. Phase timings attribute the actual
+cost rather than inserting a second STEP parse.
+
+Independent owner reviewed the full design/subplan: ACCEPT. Header arithmetic,
+single-solid V4/no-mesh path, graph/source-face fields and separate target fit.
+Recorded original `ADVANCED_FACE.SameSense` versus actual translated orientation
+checks separately, and limited full-manifest qualification to original ID/graph
+mechanisms because it intentionally carries no full surface tables. Parent
+review remains pending. No implementation yet.
+
+Root identified post-PASS source pin provenance as a design requirement. The
+current product adapter is a monolithic main with no reusable session API;
+selected a proper new target rather than changing its pins, including private
+cpp files or inventing macros. The small reference import/graph path uses the
+same authorized OCCT calls but is checked independently through original entity
+and serialized geometry/placement output. This keeps V3, its unchanged source
+adapter and later pilot checks valid without a gratuitous owned full-mesh rerun.
+
+Root accepted the complete design/subplan and checkpointed it. Genuine authored
+fleet red used the two-definition box/cylinder STEP before exporter code. New
+standalone target and immutable native manifest reader are implemented; four
+direct methods check actual V4 readback coordinates, original/reversed face
+orientation, absent triangulation/edge polygons, graph/hash identity and bounded
+malformed/path/unit/write failures. Independent NVIDIA producer also consumes
+that authored source directly, retaining genuine binary64 corner output.
+
+The actual-solid face orientation review exposed the old pre-read processing
+flag bug shared with the product adapter. The separately reviewed correction is
+recorded in `2026-10-15-step-shape-processing-subplan.md`. Actual after-read
+no-processing source export now passes every original/direct/solid orientation
+gate and complete original107/9,162/166 ID/graph/placement checks. Root and
+independent code reviews ACCEPT; reference direct4 GREEN0.321s after correction.
+Fresh original reference inputs are `context/reference-source-no-processing-v1`;
+7,380,140bytes total, largest1,200,332bytes, no compound or skipped definition.
+Full qualification details and finite placement grades are in the correction
+journal. No actual watch raster or benchmark. The fresh owned snapshot remains
+blocked on missing foreign pcurves; this source export's success is not a claim
+that owned full qualification or the whole watch delivery is complete.
+
+Follow-up NVIDIA input-contract study establishes that absent pcurves are an
+intended bridge input, including general NURBS: explicit source loops survive,
+and NVIDIA/SMLib constructs its UV trims from original 3D edges. The raw
+no-processing neutral remains the selected NVIDIA input; do not add unrelated
+owned projection work to its fresh wall. Its absence is not by itself a kernel
+failure or evidence that NVIDIA ignores trims. Actual output still requires
+finite geometry/physical admission. A separate owned/query-only UV preparation
+unit is being designed for the source extractor and OCCT boundary queries.
+
+The official bridge's unmeasurable-pcurve outer-wire fallback uses index0.
+Static original source metadata check finds375 multi-loop faces with981 loops;
+all have exactly one original FaceOuterBound and it is index0, no exceptions.
+Pinned no-processing TranslateFace adds bound wires in original order and
+BinTools preserves child order, so no source wire reordering is needed for
+that fallback on the supplied watch. This is a source-order check, not a new
+render or whole geometry qualification campaign.
+
+Root design/plan review ACCEPT after reading the complete source/serialization,
+manifest and single-import design. Implementation may proceed after meaningful
+fleet red. Distinguish source identity from embedded run timings and keep all
+old source/helper/binary pins unchanged.

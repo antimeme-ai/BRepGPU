@@ -1,0 +1,3 @@
+work	source_url	retained_file	sha256	read_scope	status
+MaHewitt2002	https://diglib.eg.org/bitstreams/3faf6a3d-6dc3-454a-b654-b01cd65ab1f2/download	papers/native-adaptive-subdivision/ma-hewitt-2002.pdf	5d4c32a367db55ba6baef163cbfa78d0f0621b4bb2df700ad36712292545d708	Full acquired paper, all sections/algorithms/figures text read 2026-10-16	Publisher download succeeded with curl after web tool403; original PDF intact
+KumarManocha1995	https://www.cse.iitd.ernet.in/~subodh/research/abs.trim.html	-	-	Author abstract only; primary full-text link requested	Linked https://www.cs.jhu.edu/~subodh/papers/trim.cad.ps.gz returns404; no full-text theorem or source-bound assumption inherited

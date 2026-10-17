@@ -1,0 +1,24 @@
+key	value
+backend	cpu12
+source_profile	1
+definitions	107
+original_faces	9162
+placements	166
+unique_facets	273978
+native_width	3840
+native_height	3600
+supersample	2
+poster_width	3840
+poster_height	4200
+native_image_y_in_poster	240
+internal_width	7680
+internal_height	7200
+camera	saved camera scaled exactly2; unchanged basis/center/alpha
+geometry	completed immutable scene; no remesh or bitmap enlargement
+original_complete_1920_process_seconds	875.16
+additional_4k_display_process_seconds	5.1633524630451575
+assembled_4k_raster_including_download_seconds	1.813797081
+exploded_4k_raster_including_download_seconds	0.712075446
+callouts	all166 original IDs; visible ID sample or explicitly marked projected stored-mesh center
+timings	original-native-timings.tsv + native/timings.tsv + timings.tsv; nested stages not additive
+source_attribution	Association openmovement OM10 MAN VA01.3; CC BY-SA3.0; BRepGPU visualization

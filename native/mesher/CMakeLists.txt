@@ -1,0 +1,1035 @@
+cmake_minimum_required(VERSION 3.28)
+project(brepgpu_native_mesher LANGUAGES CXX)
+include(../../tooling/native_cpu_rigor.cmake)
+include(CTest)
+find_package(Threads REQUIRED)
+option(BREPGPU_MESHER_ENABLE_CUDA "Build optional native sm60 bounds and display modules" OFF)
+option(BREPGPU_MESHER_BUILD_BENCHMARKS "Build direct complete-operation native benchmarks" OFF)
+
+add_library(brepgpu_mesher_source STATIC source.cpp)
+target_include_directories(brepgpu_mesher_source PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+brepgpu_native_cpu_rigor(brepgpu_mesher_source)
+add_executable(brepgpu_source_inspect source_inspect.cpp)
+target_link_libraries(brepgpu_source_inspect PRIVATE brepgpu_mesher_source)
+brepgpu_native_cpu_rigor(brepgpu_source_inspect)
+
+add_library(brepgpu_mesher_exact STATIC exact.cpp exact_store.cpp exact_metric.cpp)
+target_include_directories(brepgpu_mesher_exact PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+brepgpu_native_cpu_rigor(brepgpu_mesher_exact)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assembly.cpp")
+  add_library(brepgpu_mesher_assembly STATIC assembly.cpp)
+  target_link_libraries(brepgpu_mesher_assembly PUBLIC brepgpu_mesher_source brepgpu_mesher_exact)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_assembly)
+  add_library(brepgpu_mesher_adaptive_assembly STATIC adaptive_assembly.cpp)
+  target_link_libraries(brepgpu_mesher_adaptive_assembly PUBLIC brepgpu_mesher_assembly)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_assembly)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cpp")
+  add_library(brepgpu_mesher_scheduler STATIC scheduler.cpp)
+  target_link_libraries(brepgpu_mesher_scheduler PUBLIC brepgpu_mesher_exact Threads::Threads)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_scheduler)
+endif()
+foreach(unit geometry topology contact)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${unit}.cpp")
+    add_library(brepgpu_mesher_${unit} STATIC ${unit}.cpp)
+    target_link_libraries(brepgpu_mesher_${unit} PUBLIC brepgpu_mesher_exact)
+    brepgpu_native_cpu_rigor(brepgpu_mesher_${unit})
+  endif()
+endforeach()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/boundary.cpp")
+  add_library(brepgpu_mesher_boundary STATIC boundary.cpp)
+  target_link_libraries(brepgpu_mesher_boundary PUBLIC brepgpu_mesher_topology brepgpu_mesher_source)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_boundary)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/domain.cpp")
+  add_library(brepgpu_mesher_direct_cdt STATIC ../direct_cdt/core.cpp ../direct_cdt/predicates.cpp)
+  target_link_libraries(brepgpu_mesher_direct_cdt PUBLIC brepgpu_mesher_exact)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_direct_cdt)
+  add_library(brepgpu_mesher_domain_index STATIC domain_index.cpp)
+  target_link_libraries(brepgpu_mesher_domain_index PUBLIC brepgpu_mesher_exact)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_domain_index)
+  add_library(brepgpu_mesher_domain STATIC domain.cpp)
+  target_link_libraries(brepgpu_mesher_domain PUBLIC brepgpu_mesher_topology
+    brepgpu_mesher_direct_cdt brepgpu_mesher_domain_index)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_domain)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/boundary_evaluation.cpp")
+  add_library(brepgpu_mesher_boundary_evaluation STATIC boundary_evaluation.cpp)
+  target_link_libraries(brepgpu_mesher_boundary_evaluation PUBLIC brepgpu_mesher_boundary
+    brepgpu_mesher_geometry brepgpu_mesher_scheduler)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_boundary_evaluation)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/geometry_store.cpp")
+  target_sources(brepgpu_mesher_geometry PRIVATE geometry_store.cpp)
+  target_link_libraries(brepgpu_mesher_geometry PUBLIC brepgpu_mesher_source)
+  target_link_libraries(brepgpu_source_inspect PRIVATE brepgpu_mesher_geometry)
+  target_compile_definitions(brepgpu_source_inspect PRIVATE BREPGPU_SOURCE_GEOMETRY=1)
+endif()
+target_sources(brepgpu_mesher_geometry PRIVATE point_trig.cpp)
+foreach(unit analytic jets envelopes charts boundary correspondence inverse poles domain)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/geometry_${unit}.cpp")
+    target_sources(brepgpu_mesher_geometry PRIVATE geometry_${unit}.cpp)
+  endif()
+endforeach()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bound_tasks.cpp")
+  add_library(brepgpu_mesher_bounds STATIC bound_tasks.cpp)
+  target_link_libraries(brepgpu_mesher_bounds PUBLIC brepgpu_mesher_geometry)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_bounds)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/metrics.cpp")
+  add_library(brepgpu_mesher_metrics STATIC metrics.cpp)
+  target_link_libraries(brepgpu_mesher_metrics PUBLIC brepgpu_mesher_geometry brepgpu_mesher_topology)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_metrics)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bound_runtime.cpp")
+  add_library(brepgpu_mesher_bound_runtime STATIC bound_runtime.cpp)
+  target_link_libraries(brepgpu_mesher_bound_runtime PUBLIC brepgpu_mesher_bounds ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_mesher_bound_runtime)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cell_bounds.cpp")
+  add_library(brepgpu_mesher_cell_bounds STATIC cell_bounds.cpp plane_cell_bounds.cpp)
+  target_link_libraries(brepgpu_mesher_cell_bounds PUBLIC brepgpu_mesher_bound_runtime)
+  brepgpu_native_cpu_rigor(brepgpu_mesher_cell_bounds)
+endif()
+add_library(brepgpu_mesher_face_frontier STATIC face_frontier.cpp)
+target_link_libraries(brepgpu_mesher_face_frontier PUBLIC brepgpu_mesher_topology)
+brepgpu_native_cpu_rigor(brepgpu_mesher_face_frontier)
+add_library(brepgpu_mesher_face_engine STATIC face_engine.cpp)
+target_link_libraries(brepgpu_mesher_face_engine PUBLIC brepgpu_mesher_face_frontier
+  brepgpu_mesher_domain brepgpu_mesher_metrics brepgpu_mesher_cell_bounds brepgpu_mesher_contact_epoch)
+brepgpu_native_cpu_rigor(brepgpu_mesher_face_engine)
+add_library(brepgpu_mesher_face_job STATIC face_job.cpp)
+target_link_libraries(brepgpu_mesher_face_job PUBLIC brepgpu_mesher_face_engine brepgpu_mesher_scheduler)
+brepgpu_native_cpu_rigor(brepgpu_mesher_face_job)
+add_library(brepgpu_mesher_contact_epoch STATIC contact_epoch.cpp)
+target_link_libraries(brepgpu_mesher_contact_epoch PUBLIC brepgpu_mesher_contact brepgpu_mesher_face_frontier brepgpu_mesher_source)
+brepgpu_native_cpu_rigor(brepgpu_mesher_contact_epoch)
+add_library(brepgpu_mesher_numerical_service STATIC numerical_service.cpp)
+target_link_libraries(brepgpu_mesher_numerical_service PUBLIC brepgpu_mesher_face_engine brepgpu_mesher_scheduler)
+brepgpu_native_cpu_rigor(brepgpu_mesher_numerical_service)
+add_library(brepgpu_mesher_face_preparation STATIC face_preparation.cpp geometry_protection.cpp geometry_candidate.cpp)
+target_link_libraries(brepgpu_mesher_face_preparation PUBLIC brepgpu_mesher_geometry brepgpu_mesher_boundary brepgpu_mesher_bound_runtime brepgpu_mesher_metrics)
+brepgpu_native_cpu_rigor(brepgpu_mesher_face_preparation)
+add_library(brepgpu_mesher_face_preparation_job STATIC face_preparation_job.cpp)
+target_link_libraries(brepgpu_mesher_face_preparation_job PUBLIC brepgpu_mesher_face_preparation brepgpu_mesher_face_job brepgpu_mesher_run_preparation)
+brepgpu_native_cpu_rigor(brepgpu_mesher_face_preparation_job)
+add_library(brepgpu_mesher_run_preparation STATIC run_preparation.cpp)
+target_link_libraries(brepgpu_mesher_run_preparation PUBLIC brepgpu_mesher_assembly brepgpu_mesher_bound_runtime brepgpu_mesher_scheduler)
+brepgpu_native_cpu_rigor(brepgpu_mesher_run_preparation)
+add_library(brepgpu_mesher_mesh STATIC mesh.cpp mesh_io.cpp snapshot_digest.cpp)
+target_link_libraries(brepgpu_mesher_mesh PUBLIC brepgpu_mesher_source brepgpu_mesher_exact)
+brepgpu_native_cpu_rigor(brepgpu_mesher_mesh)
+add_library(brepgpu_mesher_mesh_publish STATIC mesh_publish.cpp)
+target_link_libraries(brepgpu_mesher_mesh_publish PUBLIC brepgpu_mesher_mesh brepgpu_mesher_run_preparation brepgpu_mesher_face_engine brepgpu_mesher_boundary)
+brepgpu_native_cpu_rigor(brepgpu_mesher_mesh_publish)
+add_library(brepgpu_mesher_run STATIC meshing_run.cpp)
+target_link_libraries(brepgpu_mesher_run PUBLIC brepgpu_mesher_face_preparation_job brepgpu_mesher_numerical_service brepgpu_mesher_boundary_evaluation)
+brepgpu_native_cpu_rigor(brepgpu_mesher_run)
+add_library(brepgpu_mesher_scene STATIC scene_view.cpp)
+target_include_directories(brepgpu_mesher_scene PUBLIC ../../include)
+target_link_libraries(brepgpu_mesher_scene PUBLIC brepgpu_mesher_mesh brepgpu_mesher_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_scene)
+add_library(brepgpu_mesher_presentation STATIC presentation.cpp)
+target_link_libraries(brepgpu_mesher_presentation PUBLIC brepgpu_mesher_scene)
+brepgpu_native_cpu_rigor(brepgpu_mesher_presentation)
+add_library(brepgpu_mesher_display_cpu STATIC ../om10/cpu.cpp)
+target_include_directories(brepgpu_mesher_display_cpu PRIVATE ../../include)
+target_compile_features(brepgpu_mesher_display_cpu PRIVATE cxx_std_17)
+set_target_properties(brepgpu_mesher_display_cpu PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+target_compile_options(brepgpu_mesher_display_cpu PRIVATE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off)
+target_link_libraries(brepgpu_mesher_display_cpu PRIVATE Threads::Threads)
+if(BREPGPU_NATIVE_INSTRUMENTATION STREQUAL "address")
+  target_compile_options(brepgpu_mesher_display_cpu PRIVATE -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+  target_link_options(brepgpu_mesher_display_cpu PRIVATE -fsanitize=address,undefined)
+elseif(BREPGPU_NATIVE_INSTRUMENTATION STREQUAL "thread")
+  target_compile_options(brepgpu_mesher_display_cpu PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
+  target_link_options(brepgpu_mesher_display_cpu PRIVATE -fsanitize=thread)
+endif()
+add_library(brepgpu_mesher_native_display STATIC native_display.cpp)
+target_link_libraries(brepgpu_mesher_native_display PUBLIC
+  brepgpu_mesher_presentation brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_native_display)
+add_executable(brepgpu-mesh main.cpp)
+target_link_libraries(brepgpu-mesh PRIVATE brepgpu_mesher_run brepgpu_mesher_mesh_publish brepgpu_mesher_scene brepgpu_mesher_presentation brepgpu_mesher_native_display Threads::Threads ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu-mesh)
+if(BREPGPU_MESHER_ENABLE_CUDA)
+  enable_language(CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  add_library(brepgpu_mesher_bound_cuda SHARED cuda/bound_cuda.cu)
+  target_link_libraries(brepgpu_mesher_bound_cuda PRIVATE CUDA::cudart)
+  set_target_properties(brepgpu_mesher_bound_cuda PROPERTIES
+    CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON CUDA_ARCHITECTURES 60-real
+    CUDA_RUNTIME_LIBRARY Shared BUILD_RPATH "$<TARGET_FILE_DIR:CUDA::cudart>")
+  target_compile_options(brepgpu_mesher_bound_cuda PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;--Werror=all-warnings;-Wno-deprecated-gpu-targets;-Xcompiler=-fno-fast-math,-ffp-contract=off>)
+  add_library(brepgpu_mesher_display_cuda SHARED ../om10/cuda.cu)
+  target_include_directories(brepgpu_mesher_display_cuda PRIVATE ../../include)
+  target_link_libraries(brepgpu_mesher_display_cuda PRIVATE CUDA::cudart)
+  set_target_properties(brepgpu_mesher_display_cuda PROPERTIES
+    OUTPUT_NAME brepgpu_om10_cuda CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 60-real CUDA_RUNTIME_LIBRARY Shared BUILD_RPATH "$<TARGET_FILE_DIR:CUDA::cudart>")
+  target_compile_options(brepgpu_mesher_display_cuda PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;-Wno-deprecated-gpu-targets;-Xcompiler=-fno-fast-math,-ffp-contract=off>)
+
+endif()
+
+if(BREPGPU_MESHER_BUILD_BENCHMARKS)
+  foreach(unit points point_filters)
+    add_executable(brepgpu_mesher_bench_${unit} ../../benchmarks/native_mesher/${unit}.cpp)
+    target_link_libraries(brepgpu_mesher_bench_${unit} PRIVATE brepgpu_mesher_geometry)
+    brepgpu_native_cpu_rigor(brepgpu_mesher_bench_${unit})
+  endforeach()
+endif()
+
+if(BUILD_TESTING)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_executable(brepgpu_native_mesher_presentation ../../tests/native_mesher_presentation.cpp)
+  target_link_libraries(brepgpu_native_mesher_presentation PRIVATE brepgpu_mesher_presentation)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_presentation)
+  add_test(NAME native_mesher_png COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_png.py"
+    $<TARGET_FILE:brepgpu_native_mesher_presentation> "${CMAKE_CURRENT_BINARY_DIR}/primary-colors.png")
+  if(TARGET brepgpu_mesher_assembly)
+    set(ASSEMBLY_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/original-assembly.bgsource")
+    add_custom_command(OUTPUT "${ASSEMBLY_FIXTURE}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_assembly_fixture.py" "${ASSEMBLY_FIXTURE}"
+      DEPENDS ../../tests/native_mesher_assembly_fixture.py ../../tests/native_mesher_boundary_fixture.py
+        ../../python/brepgpu/imported_source.py VERBATIM)
+    add_custom_target(brepgpu_native_mesher_assembly_fixture DEPENDS "${ASSEMBLY_FIXTURE}")
+    add_executable(brepgpu_native_mesher_assembly ../../tests/native_mesher_assembly.cpp)
+    target_link_libraries(brepgpu_native_mesher_assembly PRIVATE brepgpu_mesher_assembly)
+    add_dependencies(brepgpu_native_mesher_assembly brepgpu_native_mesher_assembly_fixture)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_assembly)
+    add_test(NAME native_mesher_assembly COMMAND brepgpu_native_mesher_assembly "${ASSEMBLY_FIXTURE}")
+  endif()
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_resources.cpp")
+    add_executable(brepgpu_native_mesher_resources ../../tests/native_mesher_resources.cpp)
+    target_link_libraries(brepgpu_native_mesher_resources PRIVATE brepgpu_mesher_exact Threads::Threads)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_resources)
+    add_test(NAME native_mesher_resources COMMAND brepgpu_native_mesher_resources)
+  endif()
+  set(SOURCE_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/all-sections.bgsource")
+  add_custom_command(OUTPUT "${SOURCE_FIXTURE}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_source_fixture.py" "${SOURCE_FIXTURE}"
+    DEPENDS ../../tests/native_mesher_source_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_mesher_source_fixture DEPENDS "${SOURCE_FIXTURE}")
+  add_executable(brepgpu_native_mesher_source ../../tests/native_mesher_source.cpp)
+  add_dependencies(brepgpu_native_mesher_source brepgpu_native_mesher_source_fixture)
+  target_link_libraries(brepgpu_native_mesher_source PRIVATE brepgpu_mesher_source)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_source)
+  add_test(NAME native_mesher_source COMMAND brepgpu_native_mesher_source "${SOURCE_FIXTURE}")
+
+  set(EXACT_VECTORS "${CMAKE_CURRENT_BINARY_DIR}/exact-vectors.bin")
+  add_custom_command(OUTPUT "${EXACT_VECTORS}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_exact_vectors.py" "${EXACT_VECTORS}"
+    DEPENDS ../../tests/native_mesher_exact_vectors.py VERBATIM)
+  add_custom_target(brepgpu_native_mesher_exact_vectors DEPENDS "${EXACT_VECTORS}")
+  add_executable(brepgpu_native_mesher_exact ../../tests/exact_test.cpp)
+  add_dependencies(brepgpu_native_mesher_exact brepgpu_native_mesher_exact_vectors)
+  target_link_libraries(brepgpu_native_mesher_exact PRIVATE brepgpu_mesher_exact)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_exact)
+  add_test(NAME native_mesher_exact COMMAND brepgpu_native_mesher_exact "${EXACT_VECTORS}")
+
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_sqrt.cpp")
+    set(SQRT_VECTORS "${CMAKE_CURRENT_BINARY_DIR}/sqrt-vectors.bin")
+    add_custom_command(OUTPUT "${SQRT_VECTORS}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_sqrt_vectors.py" "${SQRT_VECTORS}"
+      DEPENDS ../../tests/native_mesher_sqrt_vectors.py VERBATIM)
+    add_custom_target(brepgpu_native_mesher_sqrt_vectors DEPENDS "${SQRT_VECTORS}")
+    add_executable(brepgpu_native_mesher_sqrt ../../tests/native_mesher_sqrt.cpp)
+    add_dependencies(brepgpu_native_mesher_sqrt brepgpu_native_mesher_sqrt_vectors)
+    target_link_libraries(brepgpu_native_mesher_sqrt PRIVATE brepgpu_mesher_exact)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_sqrt)
+    add_test(NAME native_mesher_sqrt COMMAND brepgpu_native_mesher_sqrt "${SQRT_VECTORS}")
+  endif()
+
+  if(TARGET brepgpu_mesher_boundary)
+    set(BOUNDARY_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/shared-boundary.bgsource")
+    set(BOUNDARY_QUOTIENT_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/boundary-quotient.bgsource")
+    add_custom_command(OUTPUT "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_boundary_fixture.py" "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}"
+      DEPENDS ../../tests/native_mesher_boundary_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+    add_custom_target(brepgpu_native_mesher_boundary_fixture DEPENDS "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}")
+    add_executable(brepgpu_native_mesher_boundary ../../tests/native_mesher_boundary.cpp)
+    add_dependencies(brepgpu_native_mesher_boundary brepgpu_native_mesher_boundary_fixture)
+    target_link_libraries(brepgpu_native_mesher_boundary PRIVATE brepgpu_mesher_boundary)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_boundary)
+    add_test(NAME native_mesher_boundary COMMAND brepgpu_native_mesher_boundary "${BOUNDARY_FIXTURE}" "${BOUNDARY_QUOTIENT_FIXTURE}")
+    if(TARGET brepgpu_mesher_boundary_evaluation)
+      add_executable(brepgpu_native_mesher_boundary_points ../../tests/native_mesher_boundary_points.cpp)
+      target_link_libraries(brepgpu_native_mesher_boundary_points PRIVATE brepgpu_mesher_boundary_evaluation)
+      add_dependencies(brepgpu_native_mesher_boundary_points brepgpu_native_mesher_boundary_fixture)
+      brepgpu_native_cpu_rigor(brepgpu_native_mesher_boundary_points)
+      add_test(NAME native_mesher_boundary_points COMMAND brepgpu_native_mesher_boundary_points "${BOUNDARY_FIXTURE}")
+    endif()
+  endif()
+
+  foreach(unit exact_store geometry topology contact domain scheduler)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_${unit}.cpp")
+      add_executable(brepgpu_native_mesher_${unit} ../../tests/native_mesher_${unit}.cpp)
+      if(unit STREQUAL "exact_store")
+        target_link_libraries(brepgpu_native_mesher_${unit} PRIVATE brepgpu_mesher_exact)
+      else()
+        target_link_libraries(brepgpu_native_mesher_${unit} PRIVATE brepgpu_mesher_${unit})
+      endif()
+      brepgpu_native_cpu_rigor(brepgpu_native_mesher_${unit})
+      if(unit STREQUAL "geometry")
+        set(GEOMETRY_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/original-geometry.bgsource")
+        add_custom_command(OUTPUT "${GEOMETRY_FIXTURE}"
+          COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_geometry_fixture.py" "${GEOMETRY_FIXTURE}"
+          DEPENDS ../../tests/native_mesher_geometry_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+        add_custom_target(brepgpu_native_mesher_geometry_fixture DEPENDS "${GEOMETRY_FIXTURE}")
+        add_dependencies(brepgpu_native_mesher_geometry brepgpu_native_mesher_geometry_fixture)
+        add_test(NAME native_mesher_geometry COMMAND brepgpu_native_mesher_geometry "${GEOMETRY_FIXTURE}")
+      elseif(unit STREQUAL "domain")
+        add_test(NAME native_mesher_domain COMMAND "${Python3_EXECUTABLE}" -B
+          "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_domain_oracle.py"
+          --fixture "$<TARGET_FILE:brepgpu_native_mesher_domain>")
+      else()
+        add_test(NAME native_mesher_${unit} COMMAND brepgpu_native_mesher_${unit})
+      endif()
+    endif()
+  endforeach()
+  add_executable(brepgpu_native_mesher_frontier ../../tests/native_mesher_frontier.cpp)
+  target_link_libraries(brepgpu_native_mesher_frontier PRIVATE brepgpu_mesher_face_frontier)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_frontier)
+  add_test(NAME native_mesher_frontier COMMAND brepgpu_native_mesher_frontier)
+  set(CHART_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/chart-fixtures")
+  set(CHART_FIXTURE_STAMP "${CHART_FIXTURE_DIR}/complete.stamp")
+  add_custom_command(OUTPUT "${CHART_FIXTURE_STAMP}"
+    COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+      "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_chart_fixture.py"
+      "${CHART_FIXTURE_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_run_fixture.py" "${CHART_FIXTURE_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CHART_FIXTURE_STAMP}"
+    DEPENDS ../../tests/native_mesher_chart_fixture.py ../../tests/native_mesher_geometry_fixture.py
+      ../../tests/native_mesher_run_fixture.py
+      ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_mesher_chart_fixture DEPENDS "${CHART_FIXTURE_STAMP}")
+  add_dependencies(brepgpu-mesh brepgpu_native_mesher_chart_fixture)
+  set(CLI_DEVICE_ARGS)
+  if(BREPGPU_MESHER_ENABLE_CUDA)
+    list(APPEND CLI_DEVICE_ARGS --bound-module $<TARGET_FILE:brepgpu_mesher_bound_cuda>
+      --display-module $<TARGET_FILE:brepgpu_mesher_display_cuda>)
+  endif()
+  add_test(NAME native_mesher_cli COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_cli.py" $<TARGET_FILE:brepgpu-mesh>
+    "${CHART_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/cli-fixture" ${CLI_DEVICE_ARGS})
+  foreach(unit envelopes charts recovery traces inverse)
+    add_executable(brepgpu_native_mesher_${unit} ../../tests/native_mesher_${unit}.cpp)
+    target_link_libraries(brepgpu_native_mesher_${unit} PRIVATE brepgpu_mesher_geometry)
+    add_dependencies(brepgpu_native_mesher_${unit} brepgpu_native_mesher_chart_fixture)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_${unit})
+    if(unit STREQUAL "charts")
+      add_test(NAME native_mesher_charts COMMAND brepgpu_native_mesher_charts
+        "${CHART_FIXTURE_DIR}/warped-plane.bgsource" "${CHART_FIXTURE_DIR}/interior-bubble.bgsource"
+        "${CHART_FIXTURE_DIR}/interior-fold.bgsource" "${CHART_FIXTURE_DIR}/curved-projection-boundary.bgsource")
+    else()
+      add_test(NAME native_mesher_${unit} COMMAND brepgpu_native_mesher_${unit} "${CHART_FIXTURE_DIR}")
+    endif()
+  endforeach()
+  add_executable(brepgpu_native_mesher_face ../../tests/native_mesher_face.cpp)
+  add_executable(brepgpu_native_mesher_face_preparation ../../tests/native_mesher_face_preparation.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_preparation PRIVATE brepgpu_mesher_face_preparation brepgpu_mesher_face_engine)
+  add_dependencies(brepgpu_native_mesher_face_preparation brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_preparation)
+  add_test(NAME native_mesher_face_preparation COMMAND brepgpu_native_mesher_face_preparation "${CHART_FIXTURE_DIR}")
+  add_executable(brepgpu_native_mesher_face_preparation_job ../../tests/native_mesher_face_preparation_job.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_preparation_job PRIVATE brepgpu_mesher_face_preparation_job brepgpu_mesher_numerical_service brepgpu_mesher_boundary_evaluation)
+  add_dependencies(brepgpu_native_mesher_face_preparation_job brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_preparation_job)
+  add_test(NAME native_mesher_face_preparation_job COMMAND brepgpu_native_mesher_face_preparation_job "${CHART_FIXTURE_DIR}")
+  add_executable(brepgpu_native_mesher_poles ../../tests/native_mesher_poles.cpp)
+  target_link_libraries(brepgpu_native_mesher_poles PRIVATE brepgpu_mesher_geometry)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_poles)
+  add_test(NAME native_mesher_poles COMMAND brepgpu_native_mesher_poles)
+  add_executable(brepgpu_native_mesher_domain_maps ../../tests/native_mesher_domain_maps.cpp)
+  target_link_libraries(brepgpu_native_mesher_domain_maps PRIVATE brepgpu_mesher_geometry)
+  add_dependencies(brepgpu_native_mesher_domain_maps brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_domain_maps)
+  add_test(NAME native_mesher_domain_maps COMMAND brepgpu_native_mesher_domain_maps "${CHART_FIXTURE_DIR}")
+  set(POLE_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/pole-fixtures")
+  set(POLE_FIXTURE_STAMP "${POLE_FIXTURE_DIR}/complete.stamp")
+  add_custom_command(OUTPUT "${POLE_FIXTURE_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_pole_fixture.py" "${POLE_FIXTURE_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${POLE_FIXTURE_STAMP}"
+    DEPENDS ../../tests/native_mesher_pole_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_mesher_pole_fixture DEPENDS "${POLE_FIXTURE_STAMP}")
+  add_executable(brepgpu_native_mesher_face_poles ../../tests/native_mesher_face_poles.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_poles PRIVATE brepgpu_mesher_face_engine brepgpu_mesher_boundary brepgpu_mesher_geometry)
+  add_dependencies(brepgpu_native_mesher_face_poles brepgpu_native_mesher_pole_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_poles)
+  add_test(NAME native_mesher_face_poles COMMAND brepgpu_native_mesher_face_poles "${POLE_FIXTURE_DIR}/north.bgsource")
+  add_test(NAME native_mesher_face_poles_south COMMAND brepgpu_native_mesher_face_poles "${POLE_FIXTURE_DIR}/south.bgsource")
+  add_test(NAME native_mesher_face_poles_cone COMMAND brepgpu_native_mesher_face_poles "${POLE_FIXTURE_DIR}/cone.bgsource")
+  add_executable(brepgpu_native_mesher_pole_preparation ../../tests/native_mesher_pole_preparation.cpp)
+  target_link_libraries(brepgpu_native_mesher_pole_preparation PRIVATE brepgpu_mesher_face_preparation brepgpu_mesher_face_engine)
+  add_dependencies(brepgpu_native_mesher_pole_preparation brepgpu_native_mesher_pole_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_pole_preparation)
+  add_test(NAME native_mesher_pole_preparation COMMAND brepgpu_native_mesher_pole_preparation "${POLE_FIXTURE_DIR}")
+  add_executable(brepgpu_native_mesher_pole_publish ../../tests/native_mesher_pole_publish.cpp)
+  target_link_libraries(brepgpu_native_mesher_pole_publish PRIVATE brepgpu_mesher_run brepgpu_mesher_mesh_publish brepgpu_mesher_scene brepgpu_mesher_face_engine brepgpu_mesher_face_preparation brepgpu_mesher_numerical_service brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
+  add_dependencies(brepgpu_native_mesher_pole_publish brepgpu_native_mesher_pole_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_pole_publish)
+  add_test(NAME native_mesher_pole_publish COMMAND brepgpu_native_mesher_pole_publish "${POLE_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/pole-publish-fixture")
+  add_executable(brepgpu_native_mesher_face_plane ../../tests/native_mesher_face_plane.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_plane PRIVATE brepgpu_mesher_face_preparation brepgpu_mesher_face_engine brepgpu_mesher_numerical_service)
+  add_dependencies(brepgpu_native_mesher_face_plane brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_plane)
+  add_test(NAME native_mesher_face_plane COMMAND brepgpu_native_mesher_face_plane "${CHART_FIXTURE_DIR}")
+  add_executable(brepgpu_native_mesher_face_domain ../../tests/native_mesher_face_domain.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_domain PRIVATE brepgpu_mesher_face_preparation brepgpu_mesher_face_engine brepgpu_mesher_numerical_service)
+  add_dependencies(brepgpu_native_mesher_face_domain brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_domain)
+  add_test(NAME native_mesher_face_domain COMMAND brepgpu_native_mesher_face_domain "${CHART_FIXTURE_DIR}")
+  add_executable(brepgpu_native_mesher_plane_cells ../../tests/native_mesher_plane_cells.cpp)
+  target_link_libraries(brepgpu_native_mesher_plane_cells PRIVATE brepgpu_mesher_numerical_service brepgpu_mesher_face_preparation)
+  add_dependencies(brepgpu_native_mesher_plane_cells brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_plane_cells)
+  add_test(NAME native_mesher_plane_cells COMMAND brepgpu_native_mesher_plane_cells "${CHART_FIXTURE_DIR}")
+  if(BREPGPU_MESHER_ENABLE_CUDA)
+    add_test(NAME native_mesher_plane_cells_p100 COMMAND brepgpu_native_mesher_plane_cells "${CHART_FIXTURE_DIR}" "$<TARGET_FILE:brepgpu_mesher_bound_cuda>")
+  endif()
+  target_link_libraries(brepgpu_native_mesher_face PRIVATE brepgpu_mesher_face_engine)
+  add_dependencies(brepgpu_native_mesher_face brepgpu_native_mesher_geometry_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face)
+  add_test(NAME native_mesher_face COMMAND brepgpu_native_mesher_face "${GEOMETRY_FIXTURE}")
+  add_executable(brepgpu_native_mesher_face_job ../../tests/native_mesher_face_job.cpp)
+  target_link_libraries(brepgpu_native_mesher_face_job PRIVATE brepgpu_mesher_face_job)
+  add_dependencies(brepgpu_native_mesher_face_job brepgpu_native_mesher_geometry_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_face_job)
+  add_test(NAME native_mesher_face_job COMMAND brepgpu_native_mesher_face_job "${GEOMETRY_FIXTURE}")
+  add_executable(brepgpu_native_mesher_run_preparation ../../tests/native_mesher_run_preparation.cpp)
+  target_link_libraries(brepgpu_native_mesher_run_preparation PRIVATE brepgpu_mesher_run_preparation)
+  add_dependencies(brepgpu_native_mesher_run_preparation brepgpu_native_mesher_geometry_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_run_preparation)
+  add_test(NAME native_mesher_run_preparation COMMAND brepgpu_native_mesher_run_preparation "${GEOMETRY_FIXTURE}")
+  add_executable(brepgpu_native_mesher_mesh_io ../../tests/native_mesher_mesh_io.cpp)
+  target_link_libraries(brepgpu_native_mesher_mesh_io PRIVATE brepgpu_mesher_mesh)
+  add_dependencies(brepgpu_native_mesher_mesh_io brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_mesh_io)
+  add_test(NAME native_mesher_mesh_io COMMAND brepgpu_native_mesher_mesh_io
+    "${CHART_FIXTURE_DIR}/warped-plane.bgsource" "${CMAKE_CURRENT_BINARY_DIR}/mesh-io-fixture")
+  add_test(NAME native_mesher_mesh_wire COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_mesh_wire.py"
+    "${CMAKE_CURRENT_BINARY_DIR}/mesh-io-fixture/a.bgnmesh")
+  set_tests_properties(native_mesher_mesh_wire PROPERTIES DEPENDS native_mesher_mesh_io)
+  add_executable(brepgpu_native_mesher_mesh_publish ../../tests/native_mesher_mesh_publish.cpp)
+  target_link_libraries(brepgpu_native_mesher_mesh_publish PRIVATE brepgpu_mesher_mesh_publish brepgpu_mesher_face_preparation brepgpu_mesher_numerical_service)
+  add_dependencies(brepgpu_native_mesher_mesh_publish brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_mesh_publish)
+  add_test(NAME native_mesher_mesh_publish COMMAND brepgpu_native_mesher_mesh_publish "${CHART_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/mesh-publish-fixture")
+  add_executable(brepgpu_native_mesher_run ../../tests/native_mesher_run.cpp)
+  target_link_libraries(brepgpu_native_mesher_run PRIVATE brepgpu_mesher_run brepgpu_mesher_mesh_publish)
+  add_dependencies(brepgpu_native_mesher_run brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_run)
+  add_test(NAME native_mesher_run COMMAND brepgpu_native_mesher_run "${CHART_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/whole-run-fixture")
+  add_executable(brepgpu_native_mesher_scene ../../tests/native_mesher_scene.cpp)
+  target_link_libraries(brepgpu_native_mesher_scene PRIVATE brepgpu_mesher_scene)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_scene)
+  add_test(NAME native_mesher_scene COMMAND brepgpu_native_mesher_scene "${CMAKE_CURRENT_BINARY_DIR}/mesh-io-fixture/a.bgnmesh" "${CMAKE_CURRENT_BINARY_DIR}/source-scene-fixture")
+  set_tests_properties(native_mesher_scene PROPERTIES DEPENDS native_mesher_mesh_io)
+  add_executable(brepgpu_native_mesher_contact_epoch ../../tests/native_mesher_contact_epoch.cpp)
+  target_link_libraries(brepgpu_native_mesher_contact_epoch PRIVATE brepgpu_mesher_contact_epoch)
+  add_dependencies(brepgpu_native_mesher_contact_epoch brepgpu_native_mesher_boundary_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_contact_epoch)
+  add_test(NAME native_mesher_contact_epoch COMMAND brepgpu_native_mesher_contact_epoch "${BOUNDARY_FIXTURE}")
+  if(TARGET brepgpu_mesher_bound_runtime)
+    add_executable(brepgpu_native_mesher_bound_runtime ../../tests/native_mesher_bound_runtime.cpp)
+    target_link_libraries(brepgpu_native_mesher_bound_runtime PRIVATE brepgpu_mesher_bound_runtime)
+    add_dependencies(brepgpu_native_mesher_bound_runtime brepgpu_native_mesher_geometry_fixture)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_bound_runtime)
+    add_test(NAME native_mesher_bound_runtime COMMAND brepgpu_native_mesher_bound_runtime "${GEOMETRY_FIXTURE}")
+    if(BREPGPU_MESHER_ENABLE_CUDA)
+      add_test(NAME native_mesher_bound_runtime_p100 COMMAND brepgpu_native_mesher_bound_runtime
+        "${GEOMETRY_FIXTURE}" "$<TARGET_FILE:brepgpu_mesher_bound_cuda>")
+    endif()
+  endif()
+  if(TARGET brepgpu_mesher_cell_bounds)
+    set(CELL_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/actual-cell.bgsource")
+    set(CELL_ORACLE "${CMAKE_CURRENT_BINARY_DIR}/actual-cell-oracle.bin")
+    add_custom_command(OUTPUT "${CELL_FIXTURE}" "${CELL_ORACLE}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_cell_fixture.py"
+        "${CELL_FIXTURE}" "${CELL_ORACLE}"
+      DEPENDS ../../tests/native_mesher_cell_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+    add_custom_target(brepgpu_native_mesher_cell_fixture DEPENDS "${CELL_FIXTURE}" "${CELL_ORACLE}")
+    add_executable(brepgpu_native_mesher_cell_bounds ../../tests/native_mesher_cell_bounds.cpp)
+    target_link_libraries(brepgpu_native_mesher_cell_bounds PRIVATE brepgpu_mesher_cell_bounds)
+    add_dependencies(brepgpu_native_mesher_cell_bounds brepgpu_native_mesher_cell_fixture)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_cell_bounds)
+    add_test(NAME native_mesher_cell_bounds COMMAND brepgpu_native_mesher_cell_bounds
+      "${CELL_FIXTURE}" "${CELL_ORACLE}")
+    if(BREPGPU_MESHER_ENABLE_CUDA)
+      add_test(NAME native_mesher_cell_bounds_p100 COMMAND brepgpu_native_mesher_cell_bounds
+        "${CELL_FIXTURE}" "${CELL_ORACLE}" "$<TARGET_FILE:brepgpu_mesher_bound_cuda>")
+    endif()
+    add_executable(brepgpu_native_mesher_numerical_service ../../tests/native_mesher_numerical_service.cpp)
+    target_link_libraries(brepgpu_native_mesher_numerical_service PRIVATE brepgpu_mesher_numerical_service)
+    add_dependencies(brepgpu_native_mesher_numerical_service brepgpu_native_mesher_cell_fixture)
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_numerical_service)
+    add_test(NAME native_mesher_numerical_service COMMAND brepgpu_native_mesher_numerical_service "${CELL_FIXTURE}")
+    if(BREPGPU_MESHER_ENABLE_CUDA)
+      add_test(NAME native_mesher_numerical_service_p100 COMMAND brepgpu_native_mesher_numerical_service
+        "${CELL_FIXTURE}" "$<TARGET_FILE:brepgpu_mesher_bound_cuda>")
+    endif()
+  endif()
+  foreach(unit analytic jets point_jets metrics)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_${unit}.cpp")
+      add_executable(brepgpu_native_mesher_${unit} ../../tests/native_mesher_${unit}.cpp)
+      if(unit STREQUAL "metrics")
+        target_link_libraries(brepgpu_native_mesher_${unit} PRIVATE brepgpu_mesher_metrics)
+      else()
+        target_link_libraries(brepgpu_native_mesher_${unit} PRIVATE brepgpu_mesher_geometry)
+      endif()
+      add_dependencies(brepgpu_native_mesher_${unit} brepgpu_native_mesher_geometry_fixture)
+      brepgpu_native_cpu_rigor(brepgpu_native_mesher_${unit})
+      add_test(NAME native_mesher_${unit} COMMAND brepgpu_native_mesher_${unit} "${GEOMETRY_FIXTURE}")
+    endif()
+  endforeach()
+  set(POINT_TRIG_VECTORS "${CMAKE_CURRENT_BINARY_DIR}/point-trig-vectors.bin")
+  add_custom_command(OUTPUT "${POINT_TRIG_VECTORS}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_point_trig_vectors.py" vectors "${POINT_TRIG_VECTORS}"
+    DEPENDS ../../tests/native_mesher_point_trig_vectors.py VERBATIM)
+  add_custom_target(brepgpu_native_mesher_point_trig_vectors DEPENDS "${POINT_TRIG_VECTORS}")
+  add_executable(brepgpu_native_mesher_point_trig ../../tests/native_mesher_point_trig.cpp)
+  target_link_libraries(brepgpu_native_mesher_point_trig PRIVATE brepgpu_mesher_geometry)
+  add_dependencies(brepgpu_native_mesher_point_trig brepgpu_native_mesher_point_trig_vectors)
+  brepgpu_native_cpu_rigor(brepgpu_native_mesher_point_trig)
+  add_test(NAME native_mesher_point_trig COMMAND brepgpu_native_mesher_point_trig "${POINT_TRIG_VECTORS}")
+  if(TARGET brepgpu_mesher_bounds)
+    set(BOUND_VECTORS "${CMAKE_CURRENT_BINARY_DIR}/bound-vectors.bin")
+    add_custom_command(OUTPUT "${BOUND_VECTORS}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_mesher_bound_vectors.py" "${BOUND_VECTORS}"
+      DEPENDS ../../tests/native_mesher_bound_vectors.py VERBATIM)
+    add_custom_target(brepgpu_native_mesher_bound_vectors DEPENDS "${BOUND_VECTORS}")
+    add_executable(brepgpu_native_mesher_bounds ../../tests/native_mesher_bounds.cpp)
+    add_dependencies(brepgpu_native_mesher_bounds brepgpu_native_mesher_bound_vectors)
+    target_link_libraries(brepgpu_native_mesher_bounds PRIVATE brepgpu_mesher_bounds ${CMAKE_DL_LIBS})
+    brepgpu_native_cpu_rigor(brepgpu_native_mesher_bounds)
+    add_test(NAME native_mesher_bounds COMMAND brepgpu_native_mesher_bounds "${BOUND_VECTORS}")
+    if(BREPGPU_MESHER_ENABLE_CUDA)
+      add_test(NAME native_mesher_bounds_p100 COMMAND brepgpu_native_mesher_bounds
+        "${BOUND_VECTORS}" "$<TARGET_FILE:brepgpu_mesher_bound_cuda>")
+    endif()
+  endif()
+endif()
+
+# The adaptive constructor owns a separate original-source patch operation.
+add_library(brepgpu_mesher_adaptive_geometry STATIC source_cache.cpp adaptive_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_geometry PUBLIC
+  brepgpu_mesher_source brepgpu_mesher_geometry brepgpu_mesher_exact)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_geometry)
+add_library(brepgpu_mesher_adaptive_cap_geometry STATIC adaptive_cap_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cap_geometry PUBLIC brepgpu_mesher_adaptive_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cap_geometry)
+add_library(brepgpu_mesher_adaptive_packets STATIC adaptive_packets.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_packets PUBLIC brepgpu_mesher_adaptive_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_packets)
+add_library(brepgpu_mesher_adaptive_cache STATIC adaptive_cache.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cache PUBLIC brepgpu_mesher_adaptive_packets
+  brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cache)
+add_executable(brepgpu-adaptive-patch adaptive_main.cpp)
+target_link_libraries(brepgpu-adaptive-patch PRIVATE brepgpu_mesher_adaptive_cache)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-patch)
+add_library(brepgpu_mesher_adaptive_curve_geometry STATIC curve_source_cache.cpp adaptive_curve_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_curve_geometry PUBLIC brepgpu_mesher_adaptive_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_curve_geometry)
+add_library(brepgpu_mesher_adaptive_cap_domain STATIC adaptive_cap_domain.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cap_domain PUBLIC
+  brepgpu_mesher_adaptive_cap_geometry brepgpu_mesher_adaptive_curve_geometry
+  brepgpu_mesher_source brepgpu_mesher_exact)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cap_domain)
+add_library(brepgpu_mesher_adaptive_traces STATIC adaptive_traces.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_traces PUBLIC brepgpu_mesher_adaptive_curve_geometry
+  brepgpu_mesher_boundary)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_traces)
+add_library(brepgpu_mesher_adaptive_curves STATIC adaptive_curves.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_curves PUBLIC brepgpu_mesher_adaptive_traces
+  brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_curves)
+add_library(brepgpu_mesher_adaptive_caller_io STATIC adaptive_caller_io.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_caller_io PUBLIC brepgpu_mesher_adaptive_curves)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_caller_io)
+add_library(brepgpu_mesher_adaptive_trimmed_geometry STATIC adaptive_trimmed_geometry.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_trimmed_geometry PUBLIC
+  brepgpu_mesher_adaptive_geometry brepgpu_mesher_adaptive_curve_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_trimmed_geometry)
+add_library(brepgpu_mesher_adaptive_surface_cache STATIC adaptive_surface_cache.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_surface_cache PUBLIC
+  brepgpu_mesher_adaptive_cache brepgpu_mesher_adaptive_trimmed_geometry
+  brepgpu_mesher_adaptive_cap_work
+  brepgpu_mesher_scheduler Threads::Threads ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_surface_cache)
+add_library(brepgpu_mesher_adaptive_regions STATIC adaptive_region_cdt.cpp adaptive_regions.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_regions PUBLIC brepgpu_mesher_exact
+  brepgpu_mesher_domain_index brepgpu_mesher_direct_cdt brepgpu_mesher_adaptive_packets
+  brepgpu_mesher_adaptive_traces brepgpu_mesher_adaptive_trimmed_geometry
+  brepgpu_mesher_adaptive_cap_domain)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_regions)
+add_library(brepgpu_mesher_adaptive_cap_work STATIC adaptive_cap_work.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_cap_work PUBLIC
+  brepgpu_mesher_adaptive_regions brepgpu_mesher_adaptive_cap_geometry)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_cap_work)
+add_library(brepgpu_mesher_adaptive_trimmed STATIC adaptive_trimmed.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_trimmed PUBLIC
+  brepgpu_mesher_adaptive_regions brepgpu_mesher_adaptive_surface_cache
+  brepgpu_mesher_adaptive_curves)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_trimmed)
+add_library(brepgpu_mesher_adaptive_component STATIC adaptive_component.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_component PUBLIC
+  brepgpu_mesher_adaptive_trimmed brepgpu_mesher_contact_epoch)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_component)
+add_library(brepgpu_mesher_adaptive_scene STATIC adaptive_scene.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_scene PUBLIC
+  brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_geometry
+  brepgpu_mesher_scene brepgpu_mesher_presentation)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_scene)
+add_library(brepgpu_mesher_adaptive_component_io STATIC adaptive_component_io.cpp adaptive_trimmed_io.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_component_io PUBLIC
+  brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_caller_io)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_component_io)
+add_executable(brepgpu-adaptive-component adaptive_component_main.cpp)
+target_link_libraries(brepgpu-adaptive-component PRIVATE
+  brepgpu_mesher_adaptive_component_io brepgpu_mesher_adaptive_assembly
+  brepgpu_mesher_adaptive_caller_io)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-component)
+add_executable(brepgpu-adaptive-model adaptive_model_main.cpp)
+target_link_libraries(brepgpu-adaptive-model PRIVATE
+  brepgpu_mesher_adaptive_component_io brepgpu_mesher_adaptive_assembly
+  brepgpu_mesher_adaptive_scene brepgpu_mesher_native_display)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-model)
+add_executable(brepgpu-adaptive-trimmed adaptive_trimmed_main.cpp adaptive_trimmed_io.cpp)
+target_link_libraries(brepgpu-adaptive-trimmed PRIVATE
+  brepgpu_mesher_adaptive_trimmed brepgpu_mesher_adaptive_caller_io)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-trimmed)
+add_executable(brepgpu-adaptive-curves adaptive_curves_main.cpp)
+target_link_libraries(brepgpu-adaptive-curves PRIVATE brepgpu_mesher_adaptive_caller_io)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-curves)
+if(BREPGPU_MESHER_ENABLE_CUDA)
+  enable_language(CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  add_library(brepgpu_mesher_adaptive_cuda SHARED cuda/adaptive_cuda.cu)
+  target_link_libraries(brepgpu_mesher_adaptive_cuda PRIVATE CUDA::cudart)
+  set_target_properties(brepgpu_mesher_adaptive_cuda PROPERTIES
+    CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON CUDA_ARCHITECTURES 60-real
+    CUDA_RUNTIME_LIBRARY Shared BUILD_RPATH "$<TARGET_FILE_DIR:CUDA::cudart>")
+  target_compile_options(brepgpu_mesher_adaptive_cuda PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;--Werror=all-warnings;-Wno-deprecated-gpu-targets;-Xcompiler=-fno-fast-math,-ffp-contract=off>)
+endif()
+
+if(BUILD_TESTING)
+  foreach(threads 1 4)
+    set(model_ports)
+    if(threads EQUAL 1)
+      set(model_ports --ports)
+    endif()
+    add_test(NAME native_adaptive_model_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_model.py"
+      --executable "$<TARGET_FILE:brepgpu-adaptive-model>" --threads "${threads}" ${model_ports})
+    set_tests_properties(native_adaptive_model_cpu${threads} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 150)
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda AND TARGET brepgpu_mesher_display_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_model_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_model.py"
+        --executable "$<TARGET_FILE:brepgpu-adaptive-model>" --threads 4
+        --module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>"
+        --display-module "$<TARGET_FILE:brepgpu_mesher_display_cuda>" --device "${device}")
+      set_tests_properties(native_adaptive_model_p100_${device} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 150)
+    endforeach()
+  endif()
+  add_executable(brepgpu_native_adaptive_component
+    ../../tests/native_adaptive_component.cpp adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_component PRIVATE
+    brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_assembly
+    brepgpu_mesher_adaptive_caller_io)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_component)
+  add_executable(brepgpu_native_adaptive_scene ../../tests/native_adaptive_scene.cpp
+    adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_scene PRIVATE
+    brepgpu_mesher_adaptive_scene brepgpu_mesher_adaptive_assembly
+    brepgpu_mesher_adaptive_caller_io brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_scene)
+  add_executable(brepgpu_native_adaptive_cap_geometry ../../tests/native_adaptive_cap_geometry.cpp)
+  target_link_libraries(brepgpu_native_adaptive_cap_geometry PRIVATE
+    brepgpu_mesher_adaptive_cap_geometry ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_geometry)
+  add_executable(brepgpu_native_adaptive_cap_construction
+    ../../tests/native_adaptive_cap_construction.cpp ../../tests/native_adaptive_cap_work.cpp)
+  target_link_libraries(brepgpu_native_adaptive_cap_construction PRIVATE
+    brepgpu_mesher_adaptive_curves brepgpu_mesher_adaptive_cap_domain
+    brepgpu_mesher_adaptive_regions brepgpu_mesher_adaptive_surface_cache
+    brepgpu_mesher_adaptive_cap_work)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_construction)
+  add_executable(brepgpu_native_adaptive_cap_runtime
+    ../../tests/native_adaptive_cap_runtime.cpp adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_cap_runtime PRIVATE
+    brepgpu_mesher_adaptive_trimmed brepgpu_mesher_adaptive_caller_io ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_cap_runtime)
+  add_test(NAME native_adaptive_cap_sources COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_cap_fixture.py"
+    "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture")
+  set_tests_properties(native_adaptive_cap_sources PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+    FIXTURES_SETUP adaptive_cap_sources TIMEOUT 30)
+  foreach(family north south cone north-warped south-warped cone-warped)
+    add_test(NAME native_adaptive_cap_${family}_cpu COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py"
+      --cap-fixture "$<TARGET_FILE:brepgpu_native_adaptive_cap_geometry>"
+      --source "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture/${family}.bgsource")
+    set_tests_properties(native_adaptive_cap_${family}_cpu PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+      FIXTURES_REQUIRED adaptive_cap_sources TIMEOUT 130)
+    if(TARGET brepgpu_mesher_adaptive_cuda)
+      foreach(device 0 1)
+        add_test(NAME native_adaptive_cap_${family}_p100_${device}
+          COMMAND "${Python3_EXECUTABLE}" -B
+          "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py"
+          --cap-fixture "$<TARGET_FILE:brepgpu_native_adaptive_cap_geometry>"
+          --source "${CMAKE_CURRENT_BINARY_DIR}/adaptive-cap-fixture/${family}.bgsource"
+          --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+        set_tests_properties(native_adaptive_cap_${family}_p100_${device} PROPERTIES
+          ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python"
+          FIXTURES_REQUIRED adaptive_cap_sources TIMEOUT 130)
+      endforeach()
+    endif()
+  endforeach()
+  foreach(family box cylinder weighted c0 styled)
+    add_test(NAME native_adaptive_scene_${family} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_scene.py"
+      --executable "$<TARGET_FILE:brepgpu_native_adaptive_scene>" --family "${family}")
+    set_tests_properties(native_adaptive_scene_${family} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  endforeach()
+  foreach(family box cylinder needs_boundary)
+    foreach(threads 1 4)
+      add_test(NAME native_adaptive_component_${family}_cpu${threads}
+        COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_component.py"
+        --executable "$<TARGET_FILE:brepgpu_native_adaptive_component>"
+        --family "${family}" --threads "${threads}")
+      set_tests_properties(native_adaptive_component_${family}_cpu${threads} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+    endforeach()
+    if(TARGET brepgpu_mesher_adaptive_cuda)
+      foreach(device 0 1)
+        add_test(NAME native_adaptive_component_${family}_p100_${device}
+          COMMAND "${Python3_EXECUTABLE}" -B
+          "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_component.py"
+          --executable "$<TARGET_FILE:brepgpu_native_adaptive_component>"
+          --family "${family}" --threads 4
+          --module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+        set_tests_properties(native_adaptive_component_${family}_p100_${device} PROPERTIES
+          ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+      endforeach()
+    endif()
+  endforeach()
+  add_test(NAME native_adaptive_component_coincident COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_component.py"
+    --executable "$<TARGET_FILE:brepgpu_native_adaptive_component>" --family coincident)
+  set_tests_properties(native_adaptive_component_coincident PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  foreach(family box cylinder needs_boundary coincident)
+    add_test(NAME native_adaptive_component_caller_${family} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_component.py"
+      --caller --executable "$<TARGET_FILE:brepgpu-adaptive-component>" --family "${family}")
+    set_tests_properties(native_adaptive_component_caller_${family} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  endforeach()
+  add_test(NAME native_adaptive_component_caller_box_cpu4 COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_component.py"
+    --caller --executable "$<TARGET_FILE:brepgpu-adaptive-component>" --family box --threads 4)
+  set_tests_properties(native_adaptive_component_caller_box_cpu4 PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_component_caller_box_p100_${device}
+        COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_component.py"
+        --caller --executable "$<TARGET_FILE:brepgpu-adaptive-component>" --family box
+        --module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+      set_tests_properties(native_adaptive_component_caller_box_p100_${device} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+    endforeach()
+  endif()
+  add_executable(brepgpu_native_adaptive_assembly ../../tests/native_adaptive_assembly.cpp)
+  target_link_libraries(brepgpu_native_adaptive_assembly PRIVATE brepgpu_mesher_adaptive_assembly)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_assembly)
+  add_test(NAME native_adaptive_assembly COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_assembly.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_assembly>")
+  set_tests_properties(native_adaptive_assembly PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  add_executable(brepgpu_native_adaptive_face_assignments
+    ../../tests/native_adaptive_face_assignments.cpp adaptive_trimmed_io.cpp)
+  target_link_libraries(brepgpu_native_adaptive_face_assignments PRIVATE
+    brepgpu_mesher_adaptive_trimmed brepgpu_mesher_adaptive_caller_io)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_face_assignments)
+  foreach(threads 1 4)
+    add_test(NAME native_adaptive_face_assignments_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_face_assignments.py"
+      --executable "$<TARGET_FILE:brepgpu_native_adaptive_face_assignments>" --threads "${threads}")
+    set_tests_properties(native_adaptive_face_assignments_cpu${threads} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_face_assignments_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_face_assignments.py"
+        --executable "$<TARGET_FILE:brepgpu_native_adaptive_face_assignments>" --threads 1
+        --module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+      set_tests_properties(native_adaptive_face_assignments_p100_${device} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+    endforeach()
+  endif()
+  add_executable(brepgpu_native_adaptive_trim_source ../../tests/native_adaptive_trim_source.cpp)
+  target_link_libraries(brepgpu_native_adaptive_trim_source PRIVATE brepgpu_mesher_adaptive_geometry)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_trim_source)
+  add_executable(brepgpu_native_adaptive_surface_cache ../../tests/native_adaptive_surface_cache.cpp)
+  target_link_libraries(brepgpu_native_adaptive_surface_cache PRIVATE brepgpu_mesher_adaptive_surface_cache)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_surface_cache)
+  add_executable(brepgpu_native_adaptive_regions ../../tests/native_adaptive_regions.cpp)
+  target_link_libraries(brepgpu_native_adaptive_regions PRIVATE brepgpu_mesher_adaptive_regions
+    brepgpu_mesher_adaptive_curves brepgpu_mesher_adaptive_surface_cache)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_regions)
+  add_test(NAME native_adaptive_regions COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_regions_oracle.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_regions>")
+  set_tests_properties(native_adaptive_regions PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python")
+  add_executable(brepgpu_native_adaptive_trimmed_geometry ../../tests/native_adaptive_trimmed_geometry.cpp)
+  target_link_libraries(brepgpu_native_adaptive_trimmed_geometry PRIVATE
+    brepgpu_mesher_adaptive_trimmed_geometry ${CMAKE_DL_LIBS})
+  add_dependencies(brepgpu_native_adaptive_trimmed_geometry brepgpu_native_mesher_geometry_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_trimmed_geometry)
+  add_executable(brepgpu_native_adaptive_trimmed_work ../../tests/native_adaptive_trimmed_work.cpp)
+  target_link_libraries(brepgpu_native_adaptive_trimmed_work PRIVATE
+    brepgpu_mesher_adaptive_trimmed
+    brepgpu_mesher_adaptive_curves)
+  add_dependencies(brepgpu_native_adaptive_trimmed_work brepgpu_native_mesher_geometry_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_trimmed_work)
+  add_executable(brepgpu_native_adaptive_curves_geometry ../../tests/native_adaptive_curves_geometry.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curves_geometry PRIVATE brepgpu_mesher_adaptive_curve_geometry
+    ${CMAKE_DL_LIBS})
+  set(ADAPTIVE_CURVE_FIXTURE "${CMAKE_CURRENT_BINARY_DIR}/original-adaptive-curves.bgsource")
+  add_custom_command(OUTPUT "${ADAPTIVE_CURVE_FIXTURE}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_curve_fixture.py"
+      "${GEOMETRY_FIXTURE}" "${ADAPTIVE_CURVE_FIXTURE}"
+    DEPENDS "${GEOMETRY_FIXTURE}" ../../tests/native_adaptive_curve_fixture.py
+      ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_curve_fixture DEPENDS "${ADAPTIVE_CURVE_FIXTURE}")
+  add_dependencies(brepgpu_native_adaptive_curves_geometry brepgpu_native_adaptive_curve_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curves_geometry)
+  set(ADAPTIVE_CURVE_ORACLE "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_curves_oracle.py")
+  add_test(NAME native_adaptive_curves_geometry COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_CURVE_ORACLE}"
+    "$<TARGET_FILE:brepgpu_native_adaptive_curves_geometry>" "${ADAPTIVE_CURVE_FIXTURE}")
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_curves_geometry_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+        "${ADAPTIVE_CURVE_ORACLE}" "$<TARGET_FILE:brepgpu_native_adaptive_curves_geometry>"
+        "${ADAPTIVE_CURVE_FIXTURE}" "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+    endforeach()
+  endif()
+  add_executable(brepgpu_native_adaptive_curve_forest ../../tests/native_adaptive_curve_forest.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curve_forest PRIVATE brepgpu_mesher_boundary)
+  add_dependencies(brepgpu_native_adaptive_curve_forest brepgpu_native_mesher_boundary_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curve_forest)
+  add_test(NAME native_adaptive_curve_forest COMMAND brepgpu_native_adaptive_curve_forest
+    "${BOUNDARY_FIXTURE}")
+  set(TRACE_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/adaptive-trace-sources")
+  add_custom_command(OUTPUT "${TRACE_FIXTURE_DIR}/maps.bgsource"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trace_fixture.py"
+      "${CELL_FIXTURE}" "${TRACE_FIXTURE_DIR}"
+    DEPENDS "${CELL_FIXTURE}" ../../tests/native_adaptive_trace_fixture.py
+      ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_trace_fixture DEPENDS "${TRACE_FIXTURE_DIR}/maps.bgsource")
+  add_executable(brepgpu_native_adaptive_traces ../../tests/native_adaptive_traces.cpp)
+  target_link_libraries(brepgpu_native_adaptive_traces PRIVATE
+    brepgpu_mesher_adaptive_traces brepgpu_mesher_adaptive_curves)
+  add_dependencies(brepgpu_native_adaptive_traces brepgpu_native_adaptive_trace_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_traces)
+  add_test(NAME native_adaptive_traces COMMAND brepgpu_native_adaptive_traces
+    "${CELL_FIXTURE}" "${TRACE_FIXTURE_DIR}")
+  add_executable(brepgpu_native_adaptive_curves_runtime ../../tests/native_adaptive_curves_runtime.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curves_runtime PRIVATE brepgpu_mesher_adaptive_curves)
+  add_dependencies(brepgpu_native_adaptive_curves_runtime brepgpu_native_adaptive_trace_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curves_runtime)
+  add_test(NAME native_adaptive_boundary_profile COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_boundary_profile.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_curves_runtime>"
+    --source "${TRACE_FIXTURE_DIR}/speed.bgsource")
+  set_tests_properties(native_adaptive_boundary_profile PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  foreach(threads 1 4)
+    add_test(NAME native_adaptive_curves_runtime_cpu${threads} COMMAND brepgpu_native_adaptive_curves_runtime
+      "${TRACE_FIXTURE_DIR}/speed.bgsource" "${threads}")
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_curves_runtime_p100_${device} COMMAND brepgpu_native_adaptive_curves_runtime
+        "${TRACE_FIXTURE_DIR}/speed.bgsource" 4 "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+    endforeach()
+  endif()
+  add_executable(brepgpu_native_adaptive_geometry ../../tests/native_adaptive_geometry.cpp)
+  target_link_libraries(brepgpu_native_adaptive_geometry PRIVATE brepgpu_mesher_adaptive_geometry ${CMAKE_DL_LIBS})
+  add_dependencies(brepgpu_native_adaptive_geometry brepgpu_native_mesher_geometry_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_geometry)
+  set(ADAPTIVE_GEOMETRY_FIXTURES "${CMAKE_CURRENT_BINARY_DIR}/adaptive-source-fixtures")
+  set(ADAPTIVE_GEOMETRY_STAMP "${ADAPTIVE_GEOMETRY_FIXTURES}/complete.stamp")
+  add_custom_command(OUTPUT "${ADAPTIVE_GEOMETRY_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_fixture.py"
+      "${ADAPTIVE_GEOMETRY_FIXTURES}"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${ADAPTIVE_GEOMETRY_STAMP}"
+    DEPENDS ../../tests/native_adaptive_geometry_fixture.py ../../tests/native_mesher_geometry_fixture.py
+      ../../tests/native_mesher_run_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_geometry_fixture DEPENDS "${ADAPTIVE_GEOMETRY_STAMP}")
+  add_dependencies(brepgpu_native_adaptive_trim_source brepgpu_native_adaptive_geometry_fixture)
+  foreach(kind 2 3 4 5)
+    add_test(NAME native_adaptive_trim_source_${kind} COMMAND brepgpu_native_adaptive_trim_source
+      "${ADAPTIVE_GEOMETRY_FIXTURES}/analytic-${kind}.bgsource")
+  endforeach()
+  add_dependencies(brepgpu_native_adaptive_geometry brepgpu_native_adaptive_geometry_fixture)
+  set(ADAPTIVE_GEOMETRY_ORACLE "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py")
+  set(ADAPTIVE_TRIMMED_P3_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/original-trimmed-p3q3.bgsource")
+  add_custom_command(OUTPUT "${ADAPTIVE_TRIMMED_P3_SOURCE}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_fixture.py"
+      "${GEOMETRY_FIXTURE}" "${ADAPTIVE_TRIMMED_P3_SOURCE}"
+    DEPENDS "${GEOMETRY_FIXTURE}" ../../tests/native_adaptive_trimmed_fixture.py
+      ../../python/brepgpu/imported_source.py VERBATIM)
+  add_custom_target(brepgpu_native_adaptive_trimmed_fixture DEPENDS "${ADAPTIVE_TRIMMED_P3_SOURCE}")
+  add_dependencies(brepgpu_native_adaptive_trimmed_geometry brepgpu_native_adaptive_trimmed_fixture
+    brepgpu_native_adaptive_geometry_fixture)
+  foreach(kind p1 p3 1 2 3 4 5 6 7)
+    if(kind STREQUAL "p1")
+      set(TRIMMED_CASE_SOURCE "${GEOMETRY_FIXTURE}")
+    elseif(kind STREQUAL "p3")
+      set(TRIMMED_CASE_SOURCE "${ADAPTIVE_TRIMMED_P3_SOURCE}")
+    else()
+      set(TRIMMED_CASE_SOURCE "${ADAPTIVE_GEOMETRY_FIXTURES}/analytic-${kind}.bgsource")
+    endif()
+    add_test(NAME native_adaptive_trim_geometry_${kind} COMMAND "${Python3_EXECUTABLE}" -B
+      "${ADAPTIVE_GEOMETRY_ORACLE}" --trimmed-fixture "$<TARGET_FILE:brepgpu_native_adaptive_trimmed_geometry>"
+      --source "${TRIMMED_CASE_SOURCE}")
+    if(TARGET brepgpu_mesher_adaptive_cuda)
+      foreach(device 0 1)
+        add_test(NAME native_adaptive_trim_geometry_${kind}_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+          "${ADAPTIVE_GEOMETRY_ORACLE}" --trimmed-fixture "$<TARGET_FILE:brepgpu_native_adaptive_trimmed_geometry>"
+          --source "${TRIMMED_CASE_SOURCE}" --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>"
+          --device "${device}")
+      endforeach()
+    endif()
+  endforeach()
+  add_test(NAME native_adaptive_trimmed_work COMMAND "${Python3_EXECUTABLE}" -B
+    "${ADAPTIVE_GEOMETRY_ORACLE}" --trimmed-fixture "$<TARGET_FILE:brepgpu_native_adaptive_trimmed_work>"
+    --source "${GEOMETRY_FIXTURE}")
+  add_dependencies(brepgpu_native_adaptive_surface_cache brepgpu_native_mesher_chart_fixture)
+  add_test(NAME native_adaptive_surface_cache COMMAND brepgpu_native_adaptive_surface_cache
+    "${CHART_FIXTURE_DIR}/interior-bubble.bgsource")
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_surface_cache_p100_${device} COMMAND brepgpu_native_adaptive_surface_cache
+        "${CHART_FIXTURE_DIR}/interior-bubble.bgsource" "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+    endforeach()
+  endif()
+  add_test(NAME native_adaptive_geometry COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_GEOMETRY_ORACLE}"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_geometry>" --source "${GEOMETRY_FIXTURE}"
+    --analytic-fixtures "${ADAPTIVE_GEOMETRY_FIXTURES}")
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_geometry_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_GEOMETRY_ORACLE}"
+        --fixture "$<TARGET_FILE:brepgpu_native_adaptive_geometry>" --source "${GEOMETRY_FIXTURE}"
+        --analytic-fixtures "${ADAPTIVE_GEOMETRY_FIXTURES}" --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>"
+        --device "${device}")
+    endforeach()
+  endif()
+endif()
+if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_packets ../../tests/native_adaptive_packets.cpp)
+  target_link_libraries(brepgpu_native_adaptive_packets PRIVATE brepgpu_mesher_adaptive_packets)
+  add_dependencies(brepgpu_native_adaptive_packets brepgpu_native_mesher_cell_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_packets)
+  add_test(NAME native_adaptive_packets COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_packets_oracle.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_packets>" --source "${CELL_FIXTURE}")
+endif()
+if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_runtime ../../tests/native_adaptive_runtime.cpp)
+  target_link_libraries(brepgpu_native_adaptive_runtime PRIVATE brepgpu_mesher_adaptive_cache)
+  add_dependencies(brepgpu_native_adaptive_runtime brepgpu_native_mesher_chart_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_runtime)
+  add_test(NAME native_adaptive_runtime COMMAND brepgpu_native_adaptive_runtime
+    "${CHART_FIXTURE_DIR}/interior-bubble.bgsource")
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_runtime_p100_${device} COMMAND brepgpu_native_adaptive_runtime
+        "${CHART_FIXTURE_DIR}/interior-bubble.bgsource" "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+    endforeach()
+  endif()
+  set(ADAPTIVE_CALLER_DEVICE_ARGS)
+  add_test(NAME native_adaptive_trimmed_failures COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_failures.py"
+    --executable "$<TARGET_FILE:brepgpu-adaptive-trimmed>")
+  set_tests_properties(native_adaptive_trimmed_failures PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+  foreach(family plane plane_many_holes plane_reversed plane_authoritative bowl weighted saddle
+      c0_hanging nested_island cylinder_seam)
+    set(ADAPTIVE_TRIMMED_QUERY_ARGS --positional-mm .01 --positional-mm .005)
+    if(family MATCHES "^(c0_hanging|nested_island|cylinder_seam)$")
+      set(ADAPTIVE_TRIMMED_QUERY_ARGS --history-check)
+    endif()
+    foreach(threads 1 4)
+      add_test(NAME native_adaptive_trimmed_${family}_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_caller.py"
+        "$<TARGET_FILE:brepgpu-adaptive-trimmed>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-trimmed-caller"
+        --temporary-output --family "${family}" --threads "${threads}"
+        ${ADAPTIVE_TRIMMED_QUERY_ARGS})
+      set_tests_properties(native_adaptive_trimmed_${family}_cpu${threads} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+    endforeach()
+    if(TARGET brepgpu_mesher_adaptive_cuda)
+      foreach(device 0 1)
+        add_test(NAME native_adaptive_trimmed_${family}_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+          "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_trimmed_caller.py"
+          "$<TARGET_FILE:brepgpu-adaptive-trimmed>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-trimmed-caller"
+          --temporary-output --family "${family}" --threads 4
+          ${ADAPTIVE_TRIMMED_QUERY_ARGS}
+          --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" --device "${device}")
+        set_tests_properties(native_adaptive_trimmed_${family}_p100_${device} PROPERTIES
+          ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
+      endforeach()
+    endif()
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda)
+    list(APPEND ADAPTIVE_CALLER_DEVICE_ARGS --cuda-module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>")
+  endif()
+  add_test(NAME native_adaptive_curves_caller COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_curves_caller.py"
+    "$<TARGET_FILE:brepgpu-adaptive-curves>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-curves-caller"
+    --trace-fixtures "${TRACE_FIXTURE_DIR}" ${ADAPTIVE_CALLER_DEVICE_ARGS})
+  add_test(NAME native_adaptive_caller COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_caller.py"
+    "$<TARGET_FILE:brepgpu-adaptive-patch>" "${CMAKE_CURRENT_BINARY_DIR}/adaptive-caller"
+    ${ADAPTIVE_CALLER_DEVICE_ARGS})
+endif()
+
+if(BUILD_TESTING AND TARGET brepgpu_mesher_adaptive_cuda)
+  add_executable(brepgpu_native_adaptive_curve_device ../../tests/native_adaptive_curve_device.cpp)
+  target_link_libraries(brepgpu_native_adaptive_curve_device PRIVATE ${CMAKE_DL_LIBS})
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curve_device)
+  foreach(device 0 1)
+    add_test(NAME native_adaptive_curve_device_${device} COMMAND brepgpu_native_adaptive_curve_device
+      "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+  endforeach()
+  add_executable(brepgpu_native_adaptive_device ../../tests/native_adaptive_device.cpp)
+  target_link_libraries(brepgpu_native_adaptive_device PRIVATE brepgpu_mesher_adaptive_geometry ${CMAKE_DL_LIBS})
+  add_dependencies(brepgpu_native_adaptive_device brepgpu_native_mesher_cell_fixture)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_device)
+  foreach(device 0 1)
+    add_test(NAME native_adaptive_device_${device} COMMAND brepgpu_native_adaptive_device
+      "${CELL_FIXTURE}" "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>" "${device}")
+  endforeach()
+endif()
