@@ -9,6 +9,8 @@ from dataclasses import replace
 from fractions import Fraction as F
 from pathlib import Path
 import argparse
+import csv
+from functools import lru_cache
 import math
 import subprocess
 import sys
@@ -20,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from native_adaptive_curves_caller import source as curve_source, read as read_curves
 from native_adaptive_curves_caller import write_source, Vertex, Curve, Edge, Coedge, Loop, ZERO_FRAME
 from native_adaptive_curves_caller import Reader, check as check_plane_curves
+from native_adaptive_curves_caller import check_seam
 from face_domain_oracle import qualify_chain
 from brepgpu.imported_source import Carrier, SurfaceSpan
 
@@ -56,6 +59,18 @@ def plane_source(holes=(((F(251,512), F(251,512)),
 
 
 def source_case(family):
+    if family == 'c0_hanging':
+        return c0_source(), 'c0_hanging'
+    if family == 'nested_island':
+        outer_hole = ((F(3,16),F(3,16)), (F(3,16),F(13,16)),
+                      (F(13,16),F(13,16)), (F(13,16),F(3,16)))
+        island = ((F(5,16),F(5,16)), (F(11,16),F(5,16)),
+                  (F(11,16),F(11,16)), (F(5,16),F(11,16)))
+        src = curved_source('bowl', (outer_hole,island))
+        return replace(src, source_sha256='c1'*32,
+                       loops=(*src.loops[:2],replace(src.loops[2],outer=True))), 'bowl'
+    if family == 'cylinder_seam':
+        return cylinder_source(), 'cylinder'
     if family == 'plane_authoritative':
         src = plane_source()
         curves = tuple(replace(curve,degree=3,controls=(0.,0.,0.,1.)*3+(1.,0.,0.,1.))
@@ -108,6 +123,16 @@ def mul(a,b):
 def source_power(kind, u, v):
     """Authored ORIGINAL power model, independent of native restricted nets."""
     one = {(0,0):F(1)}
+    if kind in ('c0_left','c0_right'):
+        vv = mul(v,v)
+        if kind == 'c0_left':
+            z = add(scale(u,F(1,4)),scale(vv,F(1,8)))
+        else:
+            offset = add(u,{(0,0):F(-1,2)})
+            z = add(add(scale(add(one,scale(u,-1)),F(1,4)),
+                        scale(mul(offset,offset),2)),
+                    mul(add({(0,0):F(1,8)},scale(offset,4)),vv))
+        return (u,v,z),one
     if kind == 'weighted':
         w = add(one,v)
         return (mul(u,w),scale(v,2),scale(mul(u,v),2)),w
@@ -119,6 +144,8 @@ def source_power(kind, u, v):
 
 
 def source_value(kind,u,v):
+    if kind == 'c0_hanging':
+        kind = 'c0_left' if u <= F(1,2) else 'c0_right'
     n,w = source_power(kind,{(0,0):u},{(0,0):v})
     return tuple(axis.get((0,0),F(0))/w[(0,0)] for axis in n)
 
@@ -136,6 +163,28 @@ def bernstein(poly, degree):
 
 
 def prove_facet(kind, uv, xyz, upper, depth=0):
+    if kind == 'c0_hanging':
+        # Partition ONLY at the authored ORIGINAL knot. Every virtual point
+        # keeps the same emitted affine XYZ map; no source resampling.
+        for side in ('c0_left','c0_right'):
+            polygon = list(zip(uv,xyz))
+            result = []
+            for a,b in zip(polygon,polygon[1:]+polygon[:1]):
+                inside_a = a[0][0] <= F(1,2) if side == 'c0_left' else a[0][0] >= F(1,2)
+                inside_b = b[0][0] <= F(1,2) if side == 'c0_left' else b[0][0] >= F(1,2)
+                if inside_a:
+                    result.append(a)
+                if inside_a != inside_b:
+                    t = (F(1,2)-a[0][0])/(b[0][0]-a[0][0])
+                    result.append(tuple(tuple(x+t*(y-x) for x,y in zip(p,q))
+                                        for p,q in zip(a,b)))
+            for j in range(1,len(result)-1):
+                piece = (result[0],result[j],result[j+1])
+                if orient(*(p[0] for p in piece)) > 0:
+                    prove_facet(side,[p[0] for p in piece],[p[1] for p in piece],upper,depth)
+        return
+    if kind == 'cylinder':
+        return prove_cylinder(uv,xyz,upper,depth)
     u,v = ({(0,0):uv[0][axis], (1,0):uv[1][axis]-uv[0][axis],
             (0,1):uv[2][axis]-uv[0][axis]} for axis in range(2))
     n,w = source_power(kind,u,v)
@@ -207,6 +256,125 @@ def curved_source(kind='bowl', holes=()):
     vertices = tuple(replace(vertex,xyz=tuple(map(float,source_value(kind,*map(F,vertex.xyz[:2])))))
                      for vertex in src.vertices)
     return replace(src,carriers=(carrier,),curves=tuple(curves),vertices=vertices)
+
+
+def c0_source():
+    """Two exact original spans; right V curvature exceeds left by >16x."""
+    src = plane_source()
+    nets = []
+    for side,lo,hi in (('c0_left',F(0),F(1,2)),('c0_right',F(1,2),F(1))):
+        n,w = source_power(side,{(0,0):lo,(1,0):hi-lo},{(0,1):F(1)})
+        net = []
+        for i in range(3):
+            for j in range(3):
+                for poly in (*n,w):
+                    coefficient = sum(value*F(math.comb(i,a)*math.comb(j,b),
+                                               math.comb(2,a)*math.comb(2,b))
+                                      for (a,b),value in poly.items() if a <= i and b <= j)
+                    net.append(float(coefficient))
+        nets.append(tuple(net))
+    assert nets[0][-12:] == nets[1][:12], 'authored C0 shared row differs'
+    controls = nets[0]+nets[1][12:]
+    carrier = Carrier(9,6,ZERO_FRAME,(0.,0.),(0.,1.,0.,1.),(2,2),
+        (0.,.5,1.),(3,2,3),(0.,1.),(3,3),(5,3),controls,
+        tuple(SurfaceSpan((float(lo),float(hi),0.,1.),(2,2),net)
+              for lo,hi,net in ((0,F(1,2),nets[0]),(F(1,2),1,nets[1]))))
+    originals = {c.id:c for c in src.curves}
+    curves = []
+    for edge in src.edges:
+        use = next(use for use in src.coedges if use.edge_id == edge.id)
+        guide = originals[use.curve_id]
+        a,b = tuple(map(F,guide.controls[:2])),tuple(map(F,guide.controls[3:5]))
+        cuts = [F(0),F(1)]
+        if min(a[0],b[0]) < F(1,2) < max(a[0],b[0]):
+            cuts.insert(1,(F(1,2)-a[0])/(b[0]-a[0]))
+        rows = []
+        for lo,hi in zip(cuts,cuts[1:]):
+            points = [source_value('c0_hanging',
+                       a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]))
+                      for t in (lo,(lo+hi)/2,hi)]
+            local = [points[0],tuple(2*m-(x+y)/2 for x,m,y in zip(*points)),points[2]]
+            rows.extend(local if not rows else local[1:])
+        h = tuple(float(x) for point in rows for x in (*point,F(1)))
+        curve = originals[edge.curve_id]
+        curves.append(replace(curve,kind=5 if len(cuts)>2 else 4,degree=2,
+            knots=tuple(map(float,cuts)) if len(cuts)>2 else (),
+            multiplicities=(3,2,3) if len(cuts)>2 else (),controls=h))
+    curves.extend(c for c in src.curves if c.dimension == 2)
+    vertices = tuple(replace(vertex,xyz=tuple(map(float,
+        source_value('c0_hanging',*map(F,vertex.xyz[:2]))))) for vertex in src.vertices)
+    return replace(src,source_sha256='c0'*32,carriers=(carrier,),curves=tuple(curves),
+                   vertices=vertices)
+
+
+def cylinder_source():
+    """Existing literal seam fixture as original source, without file generation."""
+    src = curve_source('plain')
+    tau = 6.283185307179586
+    unit = (0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
+    edges = (Edge(400,(300,300),2000,(0.,tau),True,True,False,0.),
+             Edge(401,(301,301),2001,(0.,tau),True,True,False,0.),
+             Edge(402,(300,301),2002,(0.,1.),False,True,False,0.))
+    def circle(identifier,z):
+        return Curve(identifier,3,2,(0.,0.,z,1.,0.,0.,0.,1.,0.,0.,0.,1.),
+                     (1.,1.),(0.,tau))
+    def guide(identifier,o,x,domain):
+        return Curve(identifier,2,1,(*o,0.,*x,0.,0.,0.,0.,0.,0.,0.),(0.,0.),domain)
+    curves = (circle(2000,0.),circle(2001,1.),
+        Curve(2002,3,1,(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.),(0.,0.),(0.,1.)),
+        guide(3000,(0.,0.),(1.,0.),(0.,tau)),guide(3001,(tau,0.),(0.,1.),(0.,1.)),
+        guide(3002,(0.,1.),(1.,0.),(0.,tau)),guide(3003,(0.,0.),(0.,1.),(0.,1.)))
+    uses = (Coedge(500,400,800,1,3000,(0.,tau)),Coedge(501,402,800,1,3001,(0.,1.)),
+            Coedge(502,401,800,-1,3002,(0.,tau)),Coedge(503,402,800,-1,3003,(0.,1.)))
+    return replace(src,source_sha256='c2'*32,vertices=(Vertex(300,(1.,0.,0.),0.),
+        Vertex(301,(1.,0.,1.),0.)),edges=edges,coedges=uses,curves=curves,
+        carriers=(Carrier(9,2,unit,(1.,0.),(0.,tau,0.,1.)),),
+        definitions=(replace(src.definitions[0],edge_ids=(400,401,402),vertex_ids=(300,301)),))
+
+
+@lru_cache(maxsize=None)
+def cylinder_trig(u):
+    """Exact Taylor intervals; tail is alternating and decreasing after term32."""
+    assert abs(u) <= 7
+    sine,cosine,st,ct = F(0),F(0),u,F(1)
+    for k in range(32):
+        sine += st
+        cosine += ct
+        st *= -u*u/F((2*k+2)*(2*k+3))
+        ct *= -u*u/F((2*k+1)*(2*k+2))
+    # For k>=32 the term ratio is <49/(64*65)<1. Each convergent
+    # alternating tail is enclosed by its first omitted term. Every sum and
+    # tail bound above is rational, with no libm/Decimal rounding assumption.
+    return (sine-abs(st),sine+abs(st)),(cosine-abs(ct),cosine+abs(ct))
+
+
+def prove_cylinder(uv,xyz,upper,depth):
+    geometric = (max(p[0] for p in uv)-min(p[0] for p in uv))**2/8
+    remaining = upper-geometric
+    squares = []
+    for p,q in zip(uv,xyz):
+        sine,cosine = cylinder_trig(p[0])
+        squares.append(sum(max(abs(lo-value),abs(hi-value))**2
+                           for (lo,hi),value in zip((cosine,sine,(p[1],p[1])),q)))
+    # Unit original S_uu has norm1; variance(U)<=range(U)^2/4. Nodal
+    # departure enters once by convex interpolation of the SAME emitted L.
+    if remaining >= 0 and max(squares) <= remaining**2:
+        return
+    center = tuple(sum(p[a] for p in uv)/3 for a in range(2))
+    actual = tuple(sum(q[a] for q in xyz)/3 for a in range(3))
+    sine,cosine = cylinder_trig(center[0])
+    lower = sum((lo-value if value < lo else value-hi if value > hi else F(0))**2
+                for (lo,hi),value in zip((cosine,sine,(center[1],center[1])),actual))
+    assert lower <= upper**2, 'original whole-cylinder-facet counterexample'
+    assert depth < 18, 'independent original cylinder bound unresolved'
+    p = [*uv,tuple((uv[0][a]+uv[1][a])/2 for a in range(2)),
+         tuple((uv[1][a]+uv[2][a])/2 for a in range(2)),
+         tuple((uv[2][a]+uv[0][a])/2 for a in range(2))]
+    q = [*xyz,tuple((xyz[0][a]+xyz[1][a])/2 for a in range(3)),
+         tuple((xyz[1][a]+xyz[2][a])/2 for a in range(3)),
+         tuple((xyz[2][a]+xyz[0][a])/2 for a in range(3))]
+    for ids in ((0,3,5),(3,1,4),(5,4,2),(3,4,5)):
+        prove_cylinder([p[i] for i in ids],[q[i] for i in ids],upper,depth+1)
 
 
 def original_boundary(src, boundary, bindings, chart):
@@ -345,7 +513,7 @@ def read_face(path):
     return dict(profile=profile, digest=digest, key=keys, orientation=orientation, policy=policy,
         metric=metric, upper=upper, node_source=node_source, roots=roots, sites=sites,
         bindings=bindings, loop_sites=loop_sites, edges=edges, loops=loops,
-        components=components, facets=facets, uses=uses)
+        components=components, facets=facets, uses=uses, packets=packets)
 
 
 def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane'):
@@ -388,6 +556,9 @@ def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane'):
     valid_keys = {row['key'] for row in boundary['physical']}
     assert all(e['key'] in valid_keys for e in mesh['edges'] if e['kind'] == 1)
     carrier = next(c for c in src.carriers if c.id == face.carrier_id)
+    if kind == 'cylinder':
+        assert carrier.kind == 2 and carrier.radii[0] == 1
+        assert carrier.frame == (0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,0.,1.)
     for facet in mesh['facets']:
         points = [sites[i] for i in facet['sites']]
         a = tuple(points[1]['xyz'][j]-points[0]['xyz'][j] for j in range(3))
@@ -423,6 +594,133 @@ def invoke(executable, src, output, *, backend=(), qualities=(0.01,), timeout=12
     return elapsed
 
 
+def packet_hanging_intervals(mesh):
+    """Observe unequal adjacent packet boxes; atomic-chain checks own conformity."""
+    sides = {}
+    for packet in mesh['packets'].values():
+        box = packet['box']
+        for axis in (0,1):
+            interval = box[2*(1-axis):2*(1-axis)+2]
+            for side in (0,1):
+                pair = sides.setdefault((axis,box[2*axis+side]),[[],[]])
+                pair[side].append(interval)
+    count = 0
+    for lower,upper in sides.values():
+        lower.sort(); upper.sort()
+        i = j = 0
+        while i < len(lower) and j < len(upper):
+            a,b = lower[i],upper[j]
+            if max(a[0],b[0]) < min(a[1],b[1]) and a[1]-a[0] != b[1]-b[0]:
+                count += 1
+            if a[1] <= b[1]:
+                i += 1
+            if b[1] <= a[1]:
+                j += 1
+    return count
+
+
+def observed_features(family,src,boundary,mesh):
+    result = dict(packet_facets=sum(f['key'][0] == 1 for f in mesh['facets']),
+                  band_facets=sum(f['key'][0] == 2 for f in mesh['facets']),
+                  unequal_packet_interfaces=packet_hanging_intervals(mesh))
+    if family == 'c0_hanging':
+        assert {root['box'] for root in mesh['roots']} == {
+            (F(0),F(1,2),F(0),F(1)),(F(1,2),F(1),F(0),F(1))}
+        result['packet_original_spans'] = len({mesh['roots'][p['original']]['span'][0]
+                                               for p in mesh['packets'].values()})
+        result['band_cross_original_knot'] = sum(
+            min(mesh['sites'][i]['uv'][0] for i in f['sites']) < F(1,2) <
+            max(mesh['sites'][i]['uv'][0] for i in f['sites'])
+            for f in mesh['facets'] if f['key'][0] == 2)
+    if family == 'nested_island':
+        assert sum(loop.outer for loop in src.loops) == 2 and len(src.loops) == 3
+        result['island_packet_facets'] = sum(
+            all(F(5,16) < sum(mesh['sites'][i]['uv'][a] for i in f['sites'])/3 < F(11,16)
+                for a in (0,1)) for f in mesh['facets'] if f['key'][0] == 1)
+    if family == 'cylinder_seam':
+        right,left = [next(use for use in boundary['uses'] if use['ids'][0] == identifier)
+                      for identifier in (501,503)]
+        r = boundary['sites'][right['sites'][0]:sum(right['sites'])]
+        l = boundary['sites'][left['sites'][0]:sum(left['sites'])]
+        assert [p['node'] for p in r] == [p['node'] for p in reversed(l)]
+        assert all(p['uv'][0] == F(6.283185307179586) for p in r)
+        assert all(p['uv'][0] == 0 for p in l)
+        bindings = dict(mesh['bindings'])
+        right_sites = {bindings[i] for i in range(right['sites'][0],sum(right['sites']))}
+        left_sites = {bindings[i] for i in range(left['sites'][0],sum(left['sites']))}
+        assert right_sites.isdisjoint(left_sites), 'physical seam welded chart occurrences'
+        result['seam_chart_sites'] = len(right_sites)+len(left_sites)
+        result['seam_physical_keys'] = len({boundary['nodes'][p['node']]['key'] for p in r})
+        assert result['seam_chart_sites'] == 2*result['seam_physical_keys']
+    return result
+
+
+def face_semantics(mesh):
+    # Query and cumulative cover revision route immutable envelopes, not mesh
+    # geometry. Retain every other exact source/topology/point/profile field.
+    result = dict(mesh)
+    key = list(mesh['key'])
+    key[1] = key[5] = 0
+    result['key'] = tuple(key)
+    return result
+
+
+def check_outputs(src,kind,family,output,qualities,boundary_only=False,placement=None):
+    meshes, boundary_bytes = [], []
+    callback = None if kind == 'plane' else lambda use,uv: source_value(kind,*uv)
+    for query,quality in enumerate(qualities):
+        boundary_bytes.append((output / f'query-{query}.bgacrv').read_bytes())
+        boundary = read_curves(output / f'query-{query}.bgacrv')
+        if kind == 'cylinder':
+            check_seam(boundary,src,F(quality),F(1e-10))
+        else:
+            check_plane_curves(boundary, src, F(quality), F(1e-10), 'plain', callback)
+        if family == 'plane_authoritative':
+            use = next(use for use in boundary['uses'] if use['ids'][0] == 500)
+            assert use['sites'][1] == 2 and use['intervals'][1] == 1, 'clock-only subdivision'
+            image = use['whole_image']
+            assert image and image['raw'] == 3000 and image['traversal'] == 1
+            assert image['endpoints'] == (F(0),F(0),F(1),F(0))
+            assert image['scalar'] == (F(0),image['covector'][0])
+            # Independently authored images are [0,1]x{0}: t^3 and s^2 are
+            # continuous monotone surjections although their clocks differ.
+            interval = boundary['intervals'][use['intervals'][0]]
+            assert interval['domain'] is None, 'whole image relabeled as a per-parameter bound'
+        if not boundary_only:
+            mesh = qualify_face(src, boundary, read_face(output / f'query-{query}.bgatrm'),
+                                quality, 1e-10, kind)
+            meshes.append(mesh)
+            features = observed_features(family,src,boundary,mesh)
+            if family == 'nested_island' and quality <= .005:
+                assert features['island_packet_facets'] > 0, 'material island has no packet'
+            if family == 'c0_hanging' and quality <= .005:
+                assert features['unequal_packet_interfaces'] > 0, 'hanging packet route not exercised'
+                assert features['band_cross_original_knot'] > 0, 'no actual cross-original-span band facet'
+            print('features\t'+str(query)+'\t'+'\t'.join(f'{k}={v}' for k,v in features.items()))
+    if not boundary_only:
+        with (output/'queries.tsv').open() as stream:
+            rows = list(csv.DictReader(stream,delimiter='\t'))
+        assert len(rows) == len(qualities)
+        previous_targets = 0
+        for query,(quality,row) in enumerate(zip(qualities,rows)):
+            assert int(row['query']) == query and float(row['positional_mm']) == quality
+            assert row['source_digest'] == src.source_sha256 and row['numeric_profile'] == '1'
+            assert float(row['source_units_mm']) == src.units_mm
+            if placement is not None:
+                assert (row['backend'],int(row['threads'])) == placement
+                if placement[0] == 'p100':
+                    assert int(row['surface_device_points_cumulative']) > 0
+                    assert int(row['surface_device_bounds_cumulative']) > 0
+            targets = int(row['packet_targets_cumulative'])
+            assert targets >= previous_targets
+            if family == 'c0_hanging' and quality <= .005:
+                assert targets > previous_targets, 'real full-caller packet target route missing'
+            previous_targets = targets
+            print('routes\t'+row['query']+'\t'+'\t'.join(f'{key}={row[key]}' for key in
+                    ('packet_targets_cumulative','band_anchors_cumulative','bound_pieces_cumulative')))
+    return meshes,boundary_bytes
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('executable', type=Path)
@@ -431,8 +729,11 @@ def main():
     parser.add_argument('--temporary-output', action='store_true',
                         help='run in a fresh temporary child of OUTPUT for repeatable CTest use')
     parser.add_argument('--family', choices=('plane','plane_many_holes','plane_reversed','plane_authoritative',
-                                            'bowl','weighted','saddle'), default='plane')
+                                            'bowl','weighted','saddle','c0_hanging',
+                                            'nested_island','cylinder_seam'), default='plane')
     parser.add_argument('--boundary-only', action='store_true')
+    parser.add_argument('--history-check', action='store_true',
+        help='fixed fine/coarse/fine/repeat plus an independently fresh coarse process')
     parser.add_argument('--threads', type=int, default=1)
     parser.add_argument('--cuda-module', type=Path)
     parser.add_argument('--device', type=int, default=0)
@@ -451,29 +752,28 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     # Output must be new. The harness owns only this explicit test directory.
     assert not args.output.exists(), 'test output already exists'
-    qualities = args.positional_mm or (.01,)
+    if args.history_check:
+        assert not args.boundary_only and args.positional_mm is None
+    qualities = (.005,.02,.005,.005) if args.history_check else args.positional_mm or (.01,)
     backend = [] if args.cuda_module is None else ['--backend','p100','--cuda-module',
                                                    str(args.cuda_module),'--device',str(args.device)]
     elapsed = invoke(args.executable, src, args.output, backend=backend, qualities=qualities,
                      threads=args.threads, boundary_only=args.boundary_only)
-    callback = None if kind == 'plane' else lambda use,uv: source_value(kind,*uv)
-    for query,quality in enumerate(qualities):
-        boundary = read_curves(args.output / f'query-{query}.bgacrv')
-        check_plane_curves(boundary, src, F(quality), F(1e-10), 'plain', callback)
-        if args.family == 'plane_authoritative':
-            use = next(use for use in boundary['uses'] if use['ids'][0] == 500)
-            assert use['sites'][1] == 2 and use['intervals'][1] == 1, 'clock-only subdivision'
-            image = use['whole_image']
-            assert image and image['raw'] == 3000 and image['traversal'] == 1
-            assert image['endpoints'] == (F(0),F(0),F(1),F(0))
-            assert image['scalar'] == (F(0),image['covector'][0])
-            # Independently authored images are [0,1]x{0}: t^3 and s^2 are
-            # continuous monotone surjections although their clocks differ.
-            interval = boundary['intervals'][use['intervals'][0]]
-            assert interval['domain'] is None, 'whole image relabeled as a per-parameter bound'
-        if not args.boundary_only:
-            qualify_face(src, boundary, read_face(args.output / f'query-{query}.bgatrm'),
-                         quality, 1e-10, kind)
+    placement = ('p100' if args.cuda_module else 'cpu',args.threads)
+    meshes,boundaries = check_outputs(src,kind,args.family,args.output,qualities,
+                                     args.boundary_only,placement)
+    if args.history_check:
+        assert len(meshes) == 4
+        semantic = list(map(face_semantics,meshes))
+        assert semantic[0] == semantic[2] == semantic[3], 'fine/repeat mesh changed with cache history'
+        assert boundaries[0] == boundaries[2] == boundaries[3], 'fine physical/source chains changed with history'
+        cold = args.output.with_name(args.output.name+'-fresh-coarse')
+        assert not cold.exists(), 'fresh coarse output already exists'
+        cold_elapsed = invoke(args.executable,src,cold,backend=backend,qualities=(.02,),threads=args.threads)
+        cold_mesh,cold_boundary = check_outputs(src,kind,args.family,cold,(.02,),placement=placement)
+        assert face_semantics(cold_mesh[0]) == semantic[1], 'prior fine query changed coarse mesh semantics'
+        assert cold_boundary[0] == boundaries[1], 'prior fine query changed coarse source chains'
+        print(f'fresh_coarse_process_seconds\t{cold_elapsed:.17g}')
     scope = 'boundary_prerequisite' if args.boundary_only else 'complete_face'
     print(f'{scope}_seconds\t{elapsed:.17g}')
 
