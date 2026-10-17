@@ -411,6 +411,7 @@ void FaceTrimSession::begin(const TrimFaceQuery &query) {
       resource_.get(), p.stop);
   const auto key = p.admit_boundary(query, query.boundary, budget);
   p.query = query;
+  p.horizon = 0; // semantic anchor births restart only on a fresh query/assignment
   p.table_ordinal = 0;
   p.key = key;
   p.construction_work_used = budget.work();
