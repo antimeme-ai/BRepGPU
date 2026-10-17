@@ -29,4 +29,23 @@ therefore requires typed unresolved at the common packing helper and explicitly
 does not promise automatic precise recovery. Finite nonaccept retains existing
 execution; interval width never establishes an actual source-point floor.
 
-Actual implementation review remains pending the owner's coherent source group.
+Actual implementation verdict: ACCEPT. Read the coherent
+adaptive_trimmed_geometry.hpp/.cpp and existing C++/Python work-fixture changes.
+Preparation seals lambda triples in the previous nine-scalar slot. Base and
+source packs share piece_xyz_intervals; canonical corner-order outward arithmetic
+encloses each component without exact XYZ dot construction. Parent lookup uses
+the remapped current work row and the retained immutable construction. Only
+compare_trim_piece_precise calls piece_xyz_exact, with the exact same lambda/Q
+expression and requesting Budget. Whole-parent pieces use direct point(Q).
+Invalid interval sums throw ErrorCode::unresolved before kernel admission.
+
+The existing Fraction reader computes weights from exact piece/parent UV
+determinants independently of stored lambdas, reconstructs parent L, compares the
+test-only exact expression export, and checks both base/source packed endpoint
+pairs enclose that truth. Its signed original-source translation requires actual
+cancelling terms. This attacks enclosure and capture directly; it is not a
+regression-only comparison or a claim that the old exact geometry was wrong.
+The fixture invokes the real precise piece route without supplying a numerical
+answer. No acceptance theorem, kernel, device ABI, authority lease or complete
+result ordering changed. No additional execution was requested by this review;
+the owner records the bounded direct fixture outcome separately.

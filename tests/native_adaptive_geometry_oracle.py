@@ -8,7 +8,7 @@ from math import comb,isqrt
 from collections import defaultdict,Counter
 
 
-def trimmed_check(source_path, output):
+def trimmed_check(source_path, output, require_cancellation=False):
     """Original Cox values + exact nodal interpolation, not tensor blossom."""
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'python'))
@@ -90,7 +90,7 @@ def trimmed_check(source_path, output):
         return tuple(sum(bu[i]*bv[j]*F(carrier.controls[(i*nv+j)*4+a])
                          for i in range(nu) for j in range(nv)) for a in range(4))
 
-    count=0;precise_count=0;parents={};chains=defaultdict(lambda:defaultdict(Counter));piece_counts=Counter()
+    count=0;precise_count=0;parents={};chains=defaultdict(lambda:defaultdict(Counter));piece_counts=Counter();cancellation=False
     def field(x):
         if x.startswith('r:'):
             n,d=x[2:].split('/');return F(int(n,16),int(d,16))
@@ -118,13 +118,21 @@ def trimmed_check(source_path, output):
         if kind=='trim-work-piece':
             parent=int(fields[1]);int(fields[2]);upper=field(fields[3]);values=list(map(field,fields[4:]))
             uv=list(zip(values[:6:2],values[1:6:2]));actual=[values[6+i*3:9+i*3] for i in range(3)]
-            assert len(values)==15 and parent in parents and determinant(*uv)>0
+            assert len(values)==51 and parent in parents and determinant(*uv)>0
+            packed=values[15:]
             pu,pq=parents[parent];area=determinant(*pu)
-            for p,q in zip(uv,actual):
+            for vertex,(p,q) in enumerate(zip(uv,actual)):
                 weights=[determinant(pu[1],pu[2],p)/area,determinant(pu[2],pu[0],p)/area,
                          determinant(pu[0],pu[1],p)/area]
                 assert min(weights)>=0 and sum(weights)==1
                 assert all(q[a]==sum(weights[i]*pq[i][a] for i in range(3)) for a in range(3)), 'virtual point changed SAME actual L'
+                for axis in range(3):
+                    terms=[weights[i]*pq[i][axis] for i in range(3)]
+                    truth=sum(terms)
+                    cancellation=cancellation or min(terms)<0<max(terms)
+                    for route in range(2):
+                        at=route*18+vertex*6+axis*2
+                        assert packed[at]<=truth<=packed[at+1],('packed SAME-L interval misses original parent affine map',route,parent,vertex,axis)
             add_chain(parent,uv,1);piece_counts[parent]+=1
             xs=None
         else:xs=list(map(field,fields[1:]))
@@ -188,6 +196,7 @@ def trimmed_check(source_path, output):
         assert set(piece_counts)==set(parents)
         assert max(piece_counts.values())>1,'no cross-leaf actual facet'
         assert all(not delta for line in chains.values() for events in line.values() for delta in events.values()), 'virtual positive-piece chain does not equal original facet'
+        if require_cancellation:assert cancellation,'signed original source did not exercise cancelling SAME-L terms'
     else:assert count==4+precise_count,count
     return count
 from native_mesher_point_trig_vectors import original_oracle,plus,times
@@ -407,6 +416,36 @@ def main():
         trimmed=subprocess.run([str(a.trimmed_fixture),str(a.source),*backend],check=True,capture_output=True,text=True)
         n=trimmed_check(a.source,trimmed.stdout)
         print('original-trimmed-geometry-reader\tPASS\t'+str(n))
+        if 'trim-work-parent\t' in trimmed.stdout:
+            # SAME work fixture/oracle, original source translated before native
+            # decode. Negative parent Q and cancelling affine terms are real
+            # source geometry, not a forged view or numerical packet.
+            from dataclasses import replace
+            import tempfile
+            from brepgpu.imported_source import load_source,write_source
+            original=load_source(a.source)
+            shift=(-.5,-.5,-.5)
+            def controls(values):
+                result=list(values)
+                for at in range(0,len(result),4):
+                    for axis in range(3):result[at+axis]+=shift[axis]*result[at+3]
+                return tuple(result)
+            def curve(c):
+                if c.dimension!=3:return c
+                if c.kind in (4,5):return replace(c,controls=controls(c.controls))
+                frame=list(c.frame)
+                for axis in range(3):frame[axis]+=shift[axis]
+                return replace(c,frame=tuple(frame))
+            signed=replace(original,
+                vertices=tuple(replace(v,xyz=tuple(v.xyz[a]+shift[a] for a in range(3))) for v in original.vertices),
+                curves=tuple(curve(c) for c in original.curves),
+                carriers=tuple(replace(c,controls=controls(c.controls)) if c.kind==6 else c for c in original.carriers))
+            with tempfile.TemporaryDirectory(prefix='adaptive-work-signed-') as directory:
+                signed_path=Path(directory)/'signed.bgsource'
+                write_source(signed,signed_path)
+                captured=subprocess.run([str(a.trimmed_fixture),str(signed_path)],check=True,capture_output=True,text=True)
+                n=trimmed_check(signed_path,captured.stdout,require_cancellation=True)
+                print('original-trimmed-signed-work-reader\tPASS\t'+str(n))
     if not a.fixture:
         return
     completed=subprocess.run([str(a.fixture),str(a.source),*backend],check=True,capture_output=True,text=True)

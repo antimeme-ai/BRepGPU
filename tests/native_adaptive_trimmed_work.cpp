@@ -33,6 +33,10 @@ void print_exact(const Rational &value) {
   words(value.denominator().magnitude());
   std::cout << std::dec << std::setfill(' ');
 }
+void print_intervals(std::span<const Interval, 9> coordinates) {
+  for (const auto &coordinate : coordinates)
+    std::cout << '\t' << coordinate.lower << '\t' << coordinate.upper;
+}
 } // namespace
 int main(int argc, char **argv) {
   try {
@@ -139,7 +143,7 @@ int main(int argc, char **argv) {
         require(parent.pieces.count == 1, "packet did not retain one known-leaf piece");
         const auto &piece = candidates.pieces()[parent.pieces.first];
         require(piece.geometry == TrimPieceGeometry::whole_parent && piece.leaf == facet.leaf &&
-                    piece.original_uv.count == 0 && piece.affine_xyz.count == 0,
+                    piece.original_uv.count == 0 && piece.barycentric.count == 0,
                 "packet direct piece was clipped or copied virtual coordinates");
         const std::array piece_ids{static_cast<uint32_t>(parent.pieces.first)};
         const auto packed = pack_base_pieces(context, candidates, piece_ids);
@@ -233,6 +237,24 @@ int main(int argc, char **argv) {
                                               facets, {{OwnerKind::face, 0, 900}, 1, 99});
     require(work.facets().size() == facets.size() && !facets.empty(),
             "actual facet work is incomplete");
+    // Selected staging contract: clipped rows retain exact parent barycentric
+    // triples, rather than eagerly evaluated virtual XYZ. The previous payload
+    // is valid geometry but does not satisfy this new representation contract.
+    for (const auto &piece : work.pieces()) {
+      require(piece.barycentric.count == 9, "clipped barycentric payload has wrong shape");
+      for (uint32_t vertex = 0; vertex < 3; ++vertex) {
+        auto sum = Rational(budget);
+        for (uint32_t corner = 0; corner < 3; ++corner) {
+          const auto lambda = import_exact(
+              budget, work.values().view(
+                          {work.values().key(), piece.barycentric.first + 3 * vertex + corner}));
+          require(lambda.sign() >= 0, "selected clipped barycentric weight is negative");
+          sum = sum.add(lambda);
+        }
+        require(sum.compare(Rational(budget, 1)) == 0,
+                "selected clipped payload is not exact barycentric triples");
+      }
+    }
     bool crosses = false;
     std::cout << std::hexfloat;
     for (uint32_t i = 0; i < work.facets().size(); ++i) {
@@ -261,11 +283,30 @@ int main(int argc, char **argv) {
       for (uint64_t at = piece.original_uv.first;
            at < piece.original_uv.first + piece.original_uv.count; ++at)
         print_exact(import_exact(budget, work.values().view({work.values().key(), at})));
-      for (uint64_t at = piece.affine_xyz.first;
-           at < piece.affine_xyz.first + piece.affine_xyz.count; ++at)
-        print_exact(import_exact(budget, work.values().view({work.values().key(), at})));
+      const auto &parent = work.facets()[piece.parent];
+      const auto &actual_facet = mesh->facets[parent.construction_facet];
+      for (uint32_t vertex = 0; vertex < 3; ++vertex)
+        for (uint32_t axis = 0; axis < 3; ++axis) {
+          auto value = Rational(budget);
+          for (uint32_t corner = 0; corner < 3; ++corner) {
+            const auto lambda = import_exact(
+                budget, work.values().view(
+                            {work.values().key(), piece.barycentric.first + 3 * vertex + corner}));
+            value = value.add(lambda.multiply(Rational::from_double(
+                budget, mesh->sites[actual_facet.sites[corner]].actual_xyz[axis])));
+          }
+          print_exact(value); // Test-only exact expression export; reader derives L independently.
+        }
+      const auto base = pack_base_pieces(context, work, ids);
+      print_intervals(base.inputs[0].affine_xyz);
+      print_intervals(packet.inputs[0].affine_xyz);
       std::cout << '\n';
     }
+    require(!work.pieces().empty(), "precise virtual piece fixture is empty");
+    const auto precise =
+        compare_trim_piece_precise(context, work, 0, TrimBoundMethod::original_source);
+    require(precise.bounds.status == NumericStatus::ready,
+            "existing precise virtual piece route did not materialize exact SAME-L");
     // Exercise the actual persistent runtime executor on this SAME source,
     // minted cover and construction. No authored numerical decisions.
     auto reversed = facets;
