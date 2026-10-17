@@ -50,6 +50,20 @@ All required faces and both required frames complete before no-replace atomic
 publication. Failure emits its stage/error and removes the temporary output.
 Memory/work limits bound the actual operation; no failing source face is skipped.
 
+`--memory-mib` bounds the run's metered allocations and prepaid reservations.
+`--scratch-mib` explicitly bounds each child exact job; when omitted it retains
+the original min(run allowance,64MiB). An explicit allowance must be positive,
+representable, no greater than the run allowance and compatible with mandatory
+worker reservations. It is never silently clamped. Both values and the selected
+policy are written to `model.tsv`.
+
+For example, `--threads 12 --memory-mib 32768 --scratch-mib 256` reserves3GiB
+for scheduler workers and another3GiB for physical-curve workers while that pool
+exists. Retained source/cache/output and directly backed nested jobs also count
+against the SAME32GiB run limit. Valid options do not guarantee that an arbitrary
+model fits the remaining capacity; exhaustion still refuses and removes temporary
+output. This configuration changes resource admission, not source or quality.
+
 The finite authored cohort covers two distinct complete definitions, three
 styled placements including a proper quarter-turn, source face style, and
 fine/coarse/fine on CPU1/CPU4/both P100s: twelve assembly queries,24 complete

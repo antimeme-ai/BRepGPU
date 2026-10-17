@@ -118,3 +118,22 @@ before retained source/cache and direct nested scratch. The global limit still
 may refuse a workload;256MiB is a deliberate run configuration, not a universal
 working-set bound or a geometry/performance fix. Source/core/quality/work limits
 remain unchanged.
+
+## Full explicit-scratch render attempts
+
+The caller-only policy unit passed its actual authored implicit/explicit output
+reader and byte comparison, invalid/overflow/impossible-reservation refusals,
+actual globally backed service-construction resource refusal, strict build,
+product clang-tidy and root/peer source reviews. It changes no numerical or
+topological algorithm. Root pinned v9 SHA256
+f460f284c15c3d47fb99f500289b3fdbfd543f3d59c3dddd37f7e70f63a95a6e.
+
+Complete CPU12 and P1001/CPU12 assembled+exploded operations now run concurrently
+on separate physical CPU sockets. Both explicitly select256MiB child scratch,
+32GiB global, unchanged0.005/0.001mm,1920×1800 and explosion2. Source bytes and
+the cap/display CUDA modules are unchanged. They are single development
+observations with concurrent load, not isolated best-width performance claims.
+The previous full CPU v8 operation was terminated by signal15/shell143 at895.24s;
+GNU time printed exit=0 after that signal, which is not a success. Its peak was
+2,766,088KiB. Both new operations require all107 definitions and both frames
+before final publication; no final image exists at launch.
