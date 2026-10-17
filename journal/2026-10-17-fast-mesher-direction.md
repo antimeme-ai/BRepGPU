@@ -282,3 +282,18 @@ attachments with unstated licences, non-public OCCT fixtures).
   Corrections to the healing paper: OCCT's neighbour-intersection gap fix is
   off by default; SMLib's Fix_BadGaps is an empty TODO. Unobtainable items
   merged into SHOPPING_LIST.md.
+- M1 returned (papers/2026-10-17-geometry-lifecycle-map.md, 171 sources): 25
+  lifecycle stages mapped to design, papers and code; 16 contradictions; 18
+  research gaps and 15 operator decisions as stub briefs. Headline findings:
+  the OCCT bridge alters geometry even with shape processing off (planar
+  pcurves discarded and recomputed, master_representation ignored, vertices
+  merged, mirrored placements read as rotations), so the "unprocessed" NVIDIA
+  arm is not unprocessed; mature meshers re-split shared edges on face failure
+  (the design freezes chains); export to float32 and normal-less formats
+  undoes FP64 and shading guarantees unless export is its own stage; instancing
+  is only safe for rigid and mirrored placements; no published rule ties chord
+  tolerance to GD&T, and 1e-3 of the diagonal exceeds a NIST part's whole
+  tolerance band. Four code defects found by reading (BREP_WITH_VOIDS voids
+  dropped, invented straight-line t→s map, plane-angle unit unchecked, display
+  accepting scaled instances the mesher refuses). Shopping items merged. Next:
+  gate G1, operator triage.

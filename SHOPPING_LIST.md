@@ -106,3 +106,61 @@ Highest value first:
 - Parasolid internals for `PK_FACE_grow_auto_c` and automatic loop healing.
 - Already listed above: Barequet & Kumar 1997; Xiao et al. 2021 full PDF;
   ACIS "Tightening Gaps".
+
+## From M1 (lifecycle map)
+
+
+**Standards (paywalled).**
+- ASME Y14.5-2018, Y14.41-2019; ISO 1101:2017, ISO 8015:2011, ISO 14405-1,
+  ISO 2768-1, ISO 22081:2021, ISO 286-1; ISO 14253-1:2017 and ASME B89.7.3.1
+  (decision rules) — tolerance semantics (S2).
+- ISO 10303-42 current and ISO 10303-21:2016 normative text; ISO 10303-46 (style
+  and visibility); ISO 10303-242 Ed.2/3 tessellated entities and accuracy
+  parameters; ISO 10303-55/-108/-111 — reading (S3).
+- ISO 14306:2017 (JT); ISO/ASTM 52915 (AMF) — export (S13).
+- EN 9300-1xx (LOTAR validation properties and archiving) — validation (S4).
+
+**Papers (paywalled or bot-walled).**
+- Graham 1969 (LPT bound); Topcuoglu–Hariri–Wu 2002 (HEFT); Kasik et al. 2005
+  "Ten CAD Challenges"; Yoon–Gobbetti–Kasik–Manocha 2008 monograph; Isenburg–
+  Lindstrom 2005 "Streaming Meshes" (author URL 404); author copies of
+  Blumofe–Leiserson 1999, Arora–Blumofe–Plaxton 1998, Mytkowicz 2009 (read from
+  course-hosted copies, not stored) — scale (S18).
+- Kripac 1995/1997; Marcheix–Pierra 2002; Farjana–Han 2018 (open access, but
+  scripted download blocked; fetch in a browser); Wu–Sarma 2001/2004;
+  François–Cuillière 2000; Cuillière et al. 2009/2011; Zhu et al. 2012;
+  Raghothama–Shapiro 1997/1998 — incremental remeshing (S16).
+- Thakur–Banerjee–Gupta 2009; Lee et al. 2005; White–Saigal–Owen 2005;
+  Gopalakrishnan–Suresh defeaturing-error papers; Jun–Kim–Park 2002 (polyhedral
+  machining, the closest CAM-from-STL source found); HAL copies blocked by bot
+  protection (Foucault 2008, Hamri et al. 2005/2010, Danglade–Pernot–Véron 2014)
+  — simplification (S6).
+- Shakarji–Phillips 2015 full text; Lipman–Lubell 2015 (CAD 66); Srinivasan 2008;
+  Heysiattalab–Morse (ASME/ISO differences) — metrology (S2).
+- Bi et al. 2023 (parallel STEP parsing, J. CAD&CG) — reading performance (S3).
+- Chiang–Li–Burley 2019 and Hanika 2021 (shadow terminator) — shading (S12).
+
+**Too large to fetch under the lane's 30 MB cap.**
+- Foucault 2007 PhD thesis, ÉTS, 80.3 MB (open):
+  https://espace.etsmtl.ca/id/eprint/242/1/FOUCAULT_Gilles.pdf
+
+**Vendor and member-only documentation.**
+- CAx-IF CAESAR round results and statistics (member login); CAx-IF AP242
+  assembly-structure recommended practice (scaled and mirrored placements).
+- Spatial ACIS faceter, `api_check_entity`/insanity list, history/roll and SAT
+  procedural-surface documentation (login).
+- Parasolid PK reference for `PK_BODY_check_o_t` returns levels and facet fault
+  tokens; Parasolid incremental-faceting example code (licensee).
+- CADfix and CADIQ user manuals; PolyWorks, ZEISS INSPECT and Calypso CAD-import
+  tessellation documentation; Ansys Mechanical associativity help; Mastercam and
+  Fusion surface-triangulation tolerance definitions.
+- Siemens JT 10.x current reference (account); CAD Exchanger SDK STEP
+  documentation (moved).
+- OCCT Mantis tickets 22238, 28025, 30087, 32127, 32141, 33543 (tracker
+  unreachable); the Autodesk forum thread on Fusion STEP export quality (HTTP
+  403), needed before the "Fusion exports have no pcurves" premise is cited as
+  established; L2 found no primary source for it.
+
+**Corrections to read.**
+- Petersson–Chand 2001 (held) has a font-encoded body; it needs OCR before its
+  claims can be re-checked.
