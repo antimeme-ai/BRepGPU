@@ -40,6 +40,15 @@ unresolved. Failing band facets receive central points in their actual parent
 triangle, independent of the numerical clipping partition. Failed packet facets
 force an interior grid target into the same adaptive cache.
 
+Preparation now uses a packet's known leaf directly. A boundary-band triangle
+contained in one original source span first runs the existing CPU/P100 source
+bound on its whole actual triangle. Only unresolved or cross-span bands pay for
+exact virtual cache-leaf clipping; failed facets retain those pieces for the
+same floor and refinement paths. The [scheduling plan](adaptive-trimmed-lazy-work-plan.md)
+and [journal](../journal/2026-10-17-adaptive-trimmed-lazy-work-plan.md) record the
+finite source-reader and CPU/P100 checks. No whole-watch speedup follows from
+those checks.
+
 The current face profile uses original UV as the construction chart. It admits
 reconstructed selected boundaries and authoritative raw line images whose
 complete chosen chain has the same exact image. Different parameter clocks can

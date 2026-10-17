@@ -113,13 +113,13 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
     absolute_index.emplace(hash, id);
     return id;
   }
-  enum class FacetPhase { none, prepare, base, source, plane, complete };
+  enum class FacetPhase { none, prepare, packet_base, direct, base, source, complete };
   FacetPhase facet_phase = FacetPhase::none;
   std::optional<SurfaceFacetRequest> facet_request;
   std::optional<TrimFacetWork> facet_work;
   SurfaceFacetResult facet_output;
-  std::pmr::vector<uint32_t> selected_facets, piece_queue, plane_queue, batch_indices;
-  std::pmr::vector<uint8_t> piece_accepted, plane_accepted;
+  std::pmr::vector<uint32_t> selected_facets, piece_queue, parent_queue, batch_indices;
+  std::pmr::vector<uint8_t> piece_accepted, parent_accepted;
   std::pmr::vector<SourceTriangleInput> source_inputs;
   std::pmr::vector<SourceTriangleBounds> source_answers;
   uint32_t bound_at = 0, bound_count = 0, precise_count = 0;
@@ -137,10 +137,7 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
         context.budget.charge(16384);
         if (owner->cancelled.load(std::memory_order_relaxed) || owner->stop.stop_requested())
           throw Error(ErrorCode::cancelled, "surface source batch cancelled");
-        owner->source_answers[i] =
-            owner->facet_phase == FacetPhase::plane
-                ? bound_original_plane(owner->source, owner->source_inputs[i])
-                : bound_source_triangle(owner->source, owner->source_inputs[i]);
+        owner->source_answers[i] = bound_source_triangle(owner->source, owner->source_inputs[i]);
       }
       return StepState::done;
     }
@@ -213,24 +210,21 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
     if (facet_phase == FacetPhase::prepare) {
       check(table_ordinal < UINT32_MAX, ErrorCode::resource_exhausted,
             "surface bound table ordinal exhausted");
-      facet_work = prepare_trim_facet_work(
+      facet_work = prepare_trim_facet_candidates(
           context, request.view, request.construction, request.domain, request.allowances,
           selected_facets, {{OwnerKind::run, UINT32_MAX - 2, serial}, query, ++table_ordinal},
           request.limits);
       piece_accepted.assign(facet_work.value().pieces().size(), uint8_t{0});
-      plane_accepted.assign(facet_work.value().facets().size(), uint8_t{0});
+      parent_accepted.assign(facet_work.value().facets().size(), uint8_t{0});
       piece_queue.clear();
-      plane_queue.clear();
+      parent_queue.clear();
       for (uint32_t i = 0; i < facet_work.value().pieces().size(); ++i)
         piece_queue.push_back(i);
-      for (uint32_t i = 0; i < facet_work.value().facets().size(); ++i)
-        if (facet_work.value().facets()[i].original_plane)
-          plane_queue.push_back(i);
-      facet_phase = FacetPhase::base;
+      facet_phase = FacetPhase::packet_base;
       bound_at = 0;
     }
     if (bound_pending) {
-      const bool base = facet_phase == FacetPhase::base;
+      const bool base = facet_phase == FacetPhase::base || facet_phase == FacetPhase::packet_base;
       if (!ready(base ? static_cast<void *>(facet_answers.data())
                       : static_cast<void *>(source_answers.data()),
                  bound_count))
@@ -250,14 +244,16 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
                   "surface precise bound horizon cap");
             ++precise_count;
             ++counts.exact_fallbacks;
-            auto exact = facet_phase == FacetPhase::plane
-                             ? compare_trim_plane_precise(context, facet_work.value(), index)
-                             : compare_trim_piece_precise(context, facet_work.value(), index,
-                                                          TrimBoundMethod::original_source);
+            const auto exact =
+                facet_phase == FacetPhase::direct
+                    ? compare_trim_original_facet_precise(context, facet_work.value(), index)
+                    : compare_trim_piece_precise(context, facet_work.value(), index,
+                                                 TrimBoundMethod::original_source);
             accepted = exact.certified;
           }
-          if (facet_phase == FacetPhase::plane)
-            plane_accepted[index] = static_cast<uint8_t>(accepted);
+          if (facet_phase == FacetPhase::direct)
+            parent_accepted[index] = static_cast<uint8_t>(
+                accepted && facet_work.value().facets()[index].physical_nonzero);
           else
             piece_accepted[index] = static_cast<uint8_t>(accepted);
         }
@@ -266,42 +262,77 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
       bound_at += bound_count;
     }
     for (;;) {
-      const auto &queue = facet_phase == FacetPhase::plane ? plane_queue : piece_queue;
+      const auto &queue = facet_phase == FacetPhase::direct ? parent_queue : piece_queue;
       if (bound_at < queue.size()) {
         bound_count = static_cast<uint32_t>(
             std::min<uint64_t>(request.limits.batch_records, queue.size() - bound_at));
         batch_indices.assign(queue.begin() + bound_at, queue.begin() + bound_at + bound_count);
-        if (facet_phase == FacetPhase::base) {
-          auto batch = pack_base_pieces(context, facet_work.value(), batch_indices);
+        if (facet_phase == FacetPhase::base || facet_phase == FacetPhase::packet_base) {
+          const auto batch = pack_base_pieces(context, facet_work.value(), batch_indices);
           facet_tasks.assign(batch.inputs.begin(), batch.inputs.end());
           facet_answers.resize(bound_count);
           submit(Operation::facets, bound_count);
         } else {
-          if (facet_phase == FacetPhase::plane) {
-            auto batch = pack_plane_facets(context, facet_work.value(), batch_indices);
-            source_inputs.assign(batch.inputs.begin(), batch.inputs.end());
-          } else {
-            auto batch = pack_source_pieces(context, facet_work.value(), batch_indices);
-            source_inputs.assign(batch.inputs.begin(), batch.inputs.end());
-          }
+          const auto batch = facet_phase == FacetPhase::direct
+                                 ? pack_original_facets(context, facet_work.value(), batch_indices)
+                                 : pack_source_pieces(context, facet_work.value(), batch_indices);
+          source_inputs.assign(batch.inputs.begin(), batch.inputs.end());
           submit_source();
         }
         counts.actual_facet_tests += bound_count;
-        if (facet_phase != FacetPhase::base)
+        if (facet_phase == FacetPhase::direct || facet_phase == FacetPhase::source)
           counts.source_triangle_tests += bound_count;
         bound_pending = true;
         return finish(SurfaceProgress::pending);
       }
-      if (facet_phase == FacetPhase::base) {
+      if (facet_phase == FacetPhase::packet_base) {
+        for (uint32_t i = 0; i < facet_work.value().pieces().size(); ++i)
+          if (piece_accepted[i])
+            parent_accepted[facet_work.value().pieces()[i].parent] = 1;
+        parent_queue.clear();
+        for (uint32_t i = 0; i < facet_work.value().facets().size(); ++i) {
+          const auto &parent = facet_work.value().facets()[i];
+          if (!parent_accepted[i] && (parent.original_plane || parent.whole_original))
+            parent_queue.push_back(i);
+        }
+        facet_phase = FacetPhase::direct;
+        bound_at = 0;
+      } else if (facet_phase == FacetPhase::direct) {
+        check(!ticket && !jobs && !bound_pending, ErrorCode::internal_error,
+              "direct facet horizon has not drained");
+        std::pmr::vector<uint32_t> fallback(&budget);
+        for (uint32_t i = 0; i < facet_work.value().facets().size(); ++i) {
+          const auto &parent = facet_work.value().facets()[i];
+          if (!parent_accepted[i] && !parent.original_plane && parent.pieces.count == 0)
+            fallback.push_back(i);
+        }
+        if (fallback.empty())
+          break;
+        check(table_ordinal < UINT32_MAX, ErrorCode::resource_exhausted,
+              "surface fallback table ordinal exhausted");
+        auto materialized = materialize_trim_facet_fallback(
+            context, facet_work.value(), fallback,
+            {{OwnerKind::run, UINT32_MAX - 2, serial}, query, ++table_ordinal});
+        facet_work = std::move(materialized);
+        piece_accepted.assign(facet_work.value().pieces().size(), uint8_t{0});
+        piece_queue.clear();
+        for (auto parent_index : fallback) {
+          const auto &parent = facet_work.value().facets()[parent_index];
+          check(parent.pieces.count, ErrorCode::internal_error,
+                "failed band has no fallback pieces");
+          for (uint64_t at = parent.pieces.first; at < parent.pieces.first + parent.pieces.count;
+               ++at)
+            piece_queue.push_back(static_cast<uint32_t>(at));
+        }
+        facet_phase = FacetPhase::base;
+        bound_at = 0;
+      } else if (facet_phase == FacetPhase::base) {
         uint32_t keep = 0;
         for (auto index : piece_queue)
           if (!piece_accepted[index])
             piece_queue[keep++] = index;
         piece_queue.resize(keep);
         facet_phase = FacetPhase::source;
-        bound_at = 0;
-      } else if (facet_phase == FacetPhase::source) {
-        facet_phase = FacetPhase::plane;
         bound_at = 0;
       } else
         break;
@@ -317,12 +348,15 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
     std::pmr::vector<uint32_t> failed(&budget);
     for (uint32_t i = 0; i < facet_work.value().facets().size(); ++i) {
       const auto &row = facet_work.value().facets()[i];
-      bool accepted = row.physical_nonzero;
-      if (row.original_plane)
-        accepted = accepted && plane_accepted[i];
-      else
+      bool bounded = parent_accepted[i] != 0;
+      if (!bounded && !row.original_plane) {
+        check(row.pieces.count != 0, ErrorCode::internal_error,
+              "unaccepted nonplane facet has no canonical pieces");
+        bounded = true;
         for (uint64_t at = row.pieces.first; at < row.pieces.first + row.pieces.count; ++at)
-          accepted = accepted && piece_accepted[at];
+          bounded = bounded && piece_accepted[at];
+      }
+      const bool accepted = row.physical_nonzero && bounded;
       result->facets.push_back({row.construction_facet,
                                 accepted ? std::optional<ExactRef>(upper) : std::nullopt,
                                 accepted});
@@ -528,10 +562,10 @@ struct SurfaceCacheSession::Impl final : SurfaceCacheCore {
         control_nodes(&budget), node_classes(&budget), node_cap_coverage(&budget),
         mapped_nodes(&budget), required_targets(&budget), query_roots(&budget),
         requested_points(&budget), absolute_index(&budget), selected_facets(&budget),
-        piece_queue(&budget), plane_queue(&budget), batch_indices(&budget), piece_accepted(&budget),
-        plane_accepted(&budget), source_inputs(&budget), source_answers(&budget),
-        selected_caps(&budget), cap_indices(&budget), cap_rows(&budget), cap_inputs(&budget),
-        cap_answers(&budget) {
+        piece_queue(&budget), parent_queue(&budget), batch_indices(&budget),
+        piece_accepted(&budget), parent_accepted(&budget), source_inputs(&budget),
+        source_answers(&budget), selected_caps(&budget), cap_indices(&budget), cap_rows(&budget),
+        cap_inputs(&budget), cap_answers(&budget) {
     selection_only = true;
   }
   CandidateBoxes make_candidates() {
@@ -1570,10 +1604,10 @@ void SurfaceCacheSession::retire_assignment() {
   p.requested_points.clear();
   p.selected_facets.clear();
   p.piece_queue.clear();
-  p.plane_queue.clear();
+  p.parent_queue.clear();
   p.batch_indices.clear();
   p.piece_accepted.clear();
-  p.plane_accepted.clear();
+  p.parent_accepted.clear();
   p.source_inputs.clear();
   p.source_answers.clear();
   p.selected_caps.clear();

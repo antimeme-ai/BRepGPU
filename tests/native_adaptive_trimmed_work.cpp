@@ -38,8 +38,7 @@ int main(int argc, char **argv) {
   try {
     require(argc == 2, "original source required");
     auto resource = std::make_shared<RunResource>(uint64_t{1} << 31);
-    JobContext context({uint64_t{1} << 28, uint64_t{1} << 42}, resource.get(),
-                       {});
+    JobContext context({uint64_t{1} << 28, uint64_t{1} << 42}, resource.get(), {});
     auto &budget = context.budget;
     const auto source = load_source(argv[1], resource);
     const auto &original = source.view();
@@ -47,13 +46,11 @@ int main(int argc, char **argv) {
     std::vector<CurveRequest> requests;
     for (uint32_t i = 0; i < original.curves.size(); ++i)
       requests.push_back({{i}, original.curves[i].parameter_range});
-    const auto curves =
-        prepare_curve_source_cache(source, requests, resource, {}, {}, budget);
+    const auto curves = prepare_curve_source_cache(source, requests, resource, {}, {}, budget);
     CurveLimits curve_limits;
     curve_limits.cpu_threads = 4;
     curve_limits.host_bytes = uint64_t{1} << 28;
-    AdaptiveBoundarySession boundary(resource, source, {0}, curves,
-                                     curve_limits);
+    AdaptiveBoundarySession boundary(resource, source, {0}, curves, curve_limits);
     ExactBuilder quality(resource, {{OwnerKind::run, 811, 1}, 1, 1});
     const auto tau = quality.append(Rational::from_double(budget, .05));
     const auto delta = quality.append(Rational::from_double(budget, 1.e-8));
@@ -67,13 +64,11 @@ int main(int argc, char **argv) {
       }
       std::this_thread::yield();
     }
-    require(static_cast<bool>(chains),
-            "shared source boundary did not complete");
-    const auto carrier =
-        original.carrier_index.find(original.faces[0].carrier_id);
+    require(static_cast<bool>(chains), "shared source boundary did not complete");
+    const auto carrier = original.carrier_index.find(original.faces[0].carrier_id);
     const CarrierRequest request{carrier, {0., 1., 0., 1.}};
-    const auto cache = prepare_trim_source_cache(source, std::span(&request, 1),
-                                                 resource, {}, {}, budget);
+    const auto cache =
+        prepare_trim_source_cache(source, std::span(&request, 1), resource, {}, {}, budget);
     const FaceConstructionKey identity{cache.generation(),
                                        1,
                                        chains->uses.front().boundary_generation,
@@ -82,10 +77,9 @@ int main(int argc, char **argv) {
                                        1,
                                        {0},
                                        {0}};
-    const auto domain = prepare_face_domain(
-        {chains, identity, {{OwnerKind::face, 0, 900}, 1, 1}}, context);
-    require(domain.domain && domain.requests.empty(),
-            "source domain did not admit");
+    const auto domain =
+        prepare_face_domain({chains, identity, {{OwnerKind::face, 0, 900}, 1, 1}}, context);
+    require(domain.domain && domain.requests.empty(), "source domain did not admit");
     FaceDomainClassifier classifier(resource, domain.domain, {});
     CacheLimits limits;
     limits.cpu_threads = 4;
@@ -94,12 +88,16 @@ int main(int argc, char **argv) {
     std::vector<RootAllowance> root_allowances;
     for (uint32_t i = 0; i < cache.roots().size(); ++i)
       root_allowances.push_back({{i}, tau});
-    surface.begin(
-        {1,
-         {{0}, {0}, cache.generation(), identity.boundary_generation, 1, 1},
-         cache,
-         values,
-         root_allowances});
+    surface.begin({1,
+                   {{0},
+                    {0},
+                    cache.generation(),
+                    identity.boundary_generation,
+                    effective_face_generation(identity),
+                    1},
+                   cache,
+                   values,
+                   root_allowances});
     bool selected = false;
     for (uint32_t step = 0; step < 1000000; ++step) {
       const auto progress = surface.step(context);
@@ -112,8 +110,7 @@ int main(int argc, char **argv) {
     }
     require(selected, "real surface source cover did not complete");
     const auto view = surface.selection();
-    const auto packets =
-        build_packet_mesh(budget, resource, view.selection(), {});
+    const auto packets = build_packet_mesh(budget, resource, view.selection(), {});
     const auto mesh = build_face_regions({domain.domain,
                                           view,
                                           packets,
@@ -127,9 +124,113 @@ int main(int argc, char **argv) {
                                          context);
     std::vector<uint32_t> facets(mesh->facets.size());
     std::iota(facets.begin(), facets.end(), 0U);
-    const auto work = prepare_trim_facet_work(
-        context, view, mesh, domain.domain, {values, tau}, facets,
-        {{OwnerKind::face, 0, 900}, 1, 99});
+    const auto candidates =
+        prepare_trim_facet_candidates(context, view, mesh, domain.domain, {values, tau}, facets,
+                                      {{OwnerKind::face, 0, 900}, 1, 98});
+    require(candidates.facets().size() == facets.size(), "candidate parent inventory differs");
+    require(candidates.stats().clip_vertices == 0 && candidates.stats().candidate_visits == 0,
+            "candidate preparation eagerly materialized leaf clips");
+    std::vector<uint32_t> band_rows;
+    uint32_t direct_passes = 0;
+    for (uint32_t i = 0; i < candidates.facets().size(); ++i) {
+      const auto &parent = candidates.facets()[i];
+      const auto &facet = mesh->facets[parent.construction_facet];
+      if (facet.key.generator == FacetGenerator::packet) {
+        require(parent.pieces.count == 1, "packet did not retain one known-leaf piece");
+        const auto &piece = candidates.pieces()[parent.pieces.first];
+        require(piece.geometry == TrimPieceGeometry::whole_parent && piece.leaf == facet.leaf &&
+                    piece.original_uv.count == 0 && piece.affine_xyz.count == 0,
+                "packet direct piece was clipped or copied virtual coordinates");
+        const std::array piece_ids{static_cast<uint32_t>(parent.pieces.first)};
+        const auto packed = pack_base_pieces(context, candidates, piece_ids);
+        for (uint32_t j = 0; j < 3; ++j)
+          for (uint32_t axis = 0; axis < 3; ++axis) {
+            const auto actual = mesh->sites[facet.sites[j]].actual_xyz[axis];
+            const auto value = packed.inputs[0].affine_xyz[3 * j + axis];
+            require(value.lower == actual && value.upper == actual,
+                    "packet filter changed actual Q");
+          }
+      } else if (!parent.original_plane) {
+        require(parent.pieces.count == 0, "candidate Band already has numerical leaf pieces");
+        band_rows.push_back(i);
+        if (parent.whole_original) {
+          const std::array parent_ids{i};
+          const auto packed = pack_original_facets(context, candidates, parent_ids);
+          const auto answer = bound_source_triangle(cache, packed.inputs[0]);
+          direct_passes += answer.status == NumericStatus::ready &&
+                           Rational::from_double(budget, answer.position_upper)
+                                   .compare(import_exact(budget, values.view(tau))) <= 0;
+        }
+      }
+    }
+    require(!band_rows.empty(), "real candidate work omitted Band parents");
+    const auto fallback = materialize_trim_facet_fallback(context, candidates, band_rows,
+                                                          {{OwnerKind::face, 0, 900}, 1, 97});
+    require(fallback.facets().size() == candidates.facets().size(),
+            "fallback discarded direct parent rows");
+    for (uint32_t i = 0; i < fallback.facets().size(); ++i)
+      require(fallback.facets()[i].construction_facet == candidates.facets()[i].construction_facet,
+              "fallback reordered captured parent rows");
+    for (auto i : band_rows)
+      require(fallback.facets()[i].pieces.count != 0,
+              "unaccepted Band omitted canonical fallback pieces");
+    // The initial boundary-only CDT is deliberately coarse and may have no
+    // passing whole-source Band. Obtain the accepted construction at the SAME
+    // requested quality through the actual face owner, rather than widening tau.
+    TrimFaceLimits accepted_limits;
+    accepted_limits.surface = limits;
+    FaceTrimSession face_owner(resource, cache, accepted_limits);
+    face_owner.begin({1, {0}, {0}, chains, values, tau, delta});
+    bool face_complete = false;
+    for (uint32_t step = 0; step < 1000000; ++step) {
+      const auto state = face_owner.step(context);
+      if (state == TrimFaceProgress::complete) {
+        face_complete = true;
+        break;
+      }
+      if (state == TrimFaceProgress::needs_boundary) {
+        boundary.refine(chains, face_owner.boundary_requests());
+        bool settled = false;
+        for (uint32_t child = 0; child < 1000000; ++child)
+          if (boundary.step(context) == StepState::done) {
+            settled = true;
+            break;
+          }
+        require(settled, "accepted construction physical horizon did not settle");
+        chains = boundary.result();
+        face_owner.replace_boundary(chains);
+      }
+    }
+    require(face_complete, "same-quality accepted construction did not complete");
+    const auto accepted_face = face_owner.result();
+    std::vector<uint32_t> accepted_ids(accepted_face->construction->facets.size());
+    std::iota(accepted_ids.begin(), accepted_ids.end(), 0U);
+    const auto accepted_candidates =
+        prepare_trim_facet_candidates(context, accepted_face->surface, accepted_face->construction,
+                                      accepted_face->construction->domain, {values, tau},
+                                      accepted_ids, {{OwnerKind::face, 0, 900}, 1, 96});
+    require(accepted_candidates.stats().clip_vertices == 0 &&
+                accepted_candidates.stats().candidate_visits == 0,
+            "accepted candidate pass eagerly clipped numerical leaves");
+    direct_passes = 0;
+    for (uint32_t i = 0; i < accepted_candidates.facets().size(); ++i) {
+      const auto &parent = accepted_candidates.facets()[i];
+      if (accepted_face->construction->facets[parent.construction_facet].key.generator !=
+              FacetGenerator::band ||
+          !parent.whole_original)
+        continue;
+      require(parent.pieces.count == 0, "accepted Band candidate materialized pieces");
+      const std::array ids{i};
+      const auto packed = pack_original_facets(context, accepted_candidates, ids);
+      const auto answer = bound_source_triangle(cache, packed.inputs[0]);
+      direct_passes += answer.status == NumericStatus::ready &&
+                       Rational::from_double(budget, answer.position_upper)
+                               .compare(import_exact(budget, values.view(tau))) <= 0;
+    }
+    require(direct_passes != 0, "actual accepted Band did not exercise whole-original filter");
+    face_owner.close();
+    const auto work = prepare_trim_facet_work(context, view, mesh, domain.domain, {values, tau},
+                                              facets, {{OwnerKind::face, 0, 900}, 1, 99});
     require(work.facets().size() == facets.size() && !facets.empty(),
             "actual facet work is incomplete");
     bool crosses = false;
@@ -155,16 +256,14 @@ int main(int argc, char **argv) {
       const auto result = bound_source_triangle(cache, packet.inputs[0]);
       require(result.status == NumericStatus::ready,
               "actual virtual source-piece bound unavailable");
-      std::cout << "trim-work-piece\t" << piece.parent << '\t' << piece.leaf
-                << '\t' << result.position_upper;
+      std::cout << "trim-work-piece\t" << piece.parent << '\t' << piece.leaf << '\t'
+                << result.position_upper;
       for (uint64_t at = piece.original_uv.first;
            at < piece.original_uv.first + piece.original_uv.count; ++at)
-        print_exact(import_exact(
-            budget, work.values().view({work.values().key(), at})));
+        print_exact(import_exact(budget, work.values().view({work.values().key(), at})));
       for (uint64_t at = piece.affine_xyz.first;
            at < piece.affine_xyz.first + piece.affine_xyz.count; ++at)
-        print_exact(import_exact(
-            budget, work.values().view({work.values().key(), at})));
+        print_exact(import_exact(budget, work.values().view({work.values().key(), at})));
       std::cout << '\n';
     }
     // Exercise the actual persistent runtime executor on this SAME source,
@@ -179,29 +278,24 @@ int main(int argc, char **argv) {
         complete = true;
         break;
       }
-      require(state == SurfaceProgress::pending ||
-                  state == SurfaceProgress::progressed,
+      require(state == SurfaceProgress::pending || state == SurfaceProgress::progressed,
               "bound executor entered an unrelated operation");
       std::this_thread::yield();
     }
     require(complete, "whole actual-facet horizon did not complete");
     const auto completed = surface.facet_result();
     require(completed->work.key().surface == view.key() &&
-                completed->work.key().construction == mesh->key &&
-                completed->ordinal == 1 &&
+                completed->work.key().construction == mesh->key && completed->ordinal == 1 &&
                 completed->facets.size() == reversed.size(),
             "bound executor lost operation identity or subset");
     for (uint32_t i = 0; i < reversed.size(); ++i) {
       const auto &answer = completed->facets[i];
-      require(answer.facet == reversed[i],
-              "bound executor reordered captured subset");
+      require(answer.facet == reversed[i], "bound executor reordered captured subset");
       if (answer.accepted) {
-        require(
-            answer.positional_upper &&
-                import_exact(budget,
-                             completed->values.view(*answer.positional_upper))
-                        .compare(import_exact(budget, values.view(tau))) <= 0,
-            "bound executor accepted beyond the exact requested allowance");
+        require(answer.positional_upper &&
+                    import_exact(budget, completed->values.view(*answer.positional_upper))
+                            .compare(import_exact(budget, values.view(tau))) <= 0,
+                "bound executor accepted beyond the exact requested allowance");
       }
     }
     surface.release_operation();
@@ -220,23 +314,15 @@ int main(int argc, char **argv) {
     require(selected, "refined source view did not complete");
     bool stale_rejected = false;
     try {
-      (void)prepare_trim_facet_work(context, surface.selection(), mesh,
-                                    domain.domain, {values, tau}, facets,
-                                    {{OwnerKind::face, 0, 900}, 1, 100});
+      (void)prepare_trim_facet_work(context, surface.selection(), mesh, domain.domain,
+                                    {values, tau}, facets, {{OwnerKind::face, 0, 900}, 1, 100});
     } catch (const Error &error) {
       stale_rejected = error.code == ErrorCode::invalid_source;
     }
-    require(stale_rejected,
-            "new source cover relabeled stale construction facets");
+    require(stale_rejected, "new source cover relabeled stale construction facets");
     bool stale_runtime = false;
     try {
-      surface.bound({surface.selection(),
-                     mesh,
-                     domain.domain,
-                     {values, tau},
-                     facets,
-                     2,
-                     {}});
+      surface.bound({surface.selection(), mesh, domain.domain, {values, tau}, facets, 2, {}});
     } catch (const Error &error) {
       stale_runtime = error.code == ErrorCode::invalid_source;
     }
@@ -245,13 +331,7 @@ int main(int argc, char **argv) {
     surface.cancel();
     bool cancelled = false;
     try {
-      surface.bound({surface.selection(),
-                     mesh,
-                     domain.domain,
-                     {values, tau},
-                     facets,
-                     3,
-                     {}});
+      surface.bound({surface.selection(), mesh, domain.domain, {values, tau}, facets, 3, {}});
     } catch (const Error &error) {
       cancelled = error.code == ErrorCode::cancelled;
     }
@@ -271,13 +351,11 @@ int main(int argc, char **argv) {
         inactive = error.code == ErrorCode::invalid_source;
       }
       require(inactive, "inactive face step did not refuse");
-      face_session.begin(
-          face_query); // preflight refusal did not mutate query state
-      (void)face_session.step(
-          context); // install the real persistent classifier
+      face_session.begin(face_query);   // preflight refusal did not mutate query state
+      (void)face_session.step(context); // install the real persistent classifier
       std::stop_source caller_stop;
-      JobContext stopped_context({uint64_t{1} << 26, uint64_t{1} << 40},
-                                 resource.get(), caller_stop.get_token());
+      JobContext stopped_context({uint64_t{1} << 26, uint64_t{1} << 40}, resource.get(),
+                                 caller_stop.get_token());
       caller_stop.request_stop();
       bool interrupted = false;
       try {
@@ -306,8 +384,7 @@ int main(int argc, char **argv) {
     }
     {
       std::stop_source external_stop;
-      FaceTrimSession face_session(resource, cache, face_limits,
-                                   external_stop.get_token());
+      FaceTrimSession face_session(resource, cache, face_limits, external_stop.get_token());
       external_stop.request_stop();
       bool interrupted = false;
       try {
