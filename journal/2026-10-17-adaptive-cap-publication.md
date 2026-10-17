@@ -83,3 +83,15 @@ candidate generation must preserve natural R, narrow supplied-bank refusal,
 raw guide bytes and all original node/whole-trace guards. Root and independent
 source peer accepted that finite amendment before its body; construction owner
 implements it. No whole-watch claim or benchmark speedup from these failures.
+
+The unchanged CPU12 full-watch retry with natural-domain recovery was censored
+at600s before a complete component/image (exit124,985.43s user CPU). The P1001
+retry continues separately. Read-only live stacks show actual FaceTrim facet
+bound preparation, including eager virtual cache-leaf clip/materialization;
+most workers were idle in the sampled horizon. A stack in Rational arithmetic
+does not establish large operands or a GCD defect. The existing return-pass
+source-first contender now has a concrete workload: test a whole actual Band
+facet against its original span before paying for artificial cache partitions;
+Packet facets can use their already known leaf directly. A finite source/work-
+scheduling plan is being reviewed before code. Original numerical kernels,
+geometry guards and quality remain unchanged. The complete watch is not rendered.
