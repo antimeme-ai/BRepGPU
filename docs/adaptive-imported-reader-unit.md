@@ -158,3 +158,19 @@ still take substantially longer than display, especially near bounds. Retain
 explicit proof node/depth and optional elapsed limits; an exhausted reader
 reports UNRESOLVED with checked counts. No claim of cheap complete-watch
 qualification precedes an actual observation.
+
+## Implemented reader profile and finite closure
+
+The saved component/model adapter currently admits reconstructed-selected uses
+with zero periodic shift and the existing nondegenerate source-edge inventory.
+It refuses authoritative uses, nonzero lifts and declared quotient aliases
+explicitly; existing authored authoritative readers are unchanged. Mapped seam
+wedges without invented degenerate coedges use the existing finite source-quad
+reader. This is the actual imported source profile, not a claim of every future
+SourceStore disposition.
+
+The coefficient service and adapters are implemented. The retained-output
+checks and their measured scope are recorded in
+papers/2026-10-17-adaptive-imported-reader-closure.md. No completed full-watch
+qualification has been observed. Source decode and exact qualification remain
+separate from native completion and image generation.

@@ -208,12 +208,8 @@ def curve_h(curve,t):
 
 def curve_local(curve,a,b):
     if curve.kind==4: return restrict(homogeneous(curve),a,b)
-    assert curve.degree in (1,2)
-    assert not any(min(a,b)<F(k)<max(a,b) for k in curve.knots), 'physical chord crosses original knot'
-    first,last=curve_h(curve,a),curve_h(curve,b)
-    if curve.degree==1: return [first,last]
-    middle=curve_h(curve,(a+b)/2)
-    return [first,tuple(2*m-(x+y)/2 for x,m,y in zip(first,middle,last)),last]
+    from native_adaptive_original_source import original_curve_net
+    return original_curve_net(curve,a,b)
 
 
 def homogeneous(curve):
