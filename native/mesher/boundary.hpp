@@ -55,6 +55,13 @@ public:
 struct BoundarySampleView final {
   PhysicalNodeKey key;
   Vec3 xyz;
+  uint64_t constructed_revision = 0;
+};
+struct BoundaryPointRevision final {
+  BoundarySampleSlot sample;
+  PhysicalNodeKey expected_key;
+  uint64_t expected_constructed_revision;
+  Vec3 xyz;
 };
 struct BoundaryIntervalView final {
   Slot<EdgeTag> edge;
@@ -67,11 +74,11 @@ struct FaceBoundaryGeneration final {
 };
 struct BoundaryUpdate final {
   std::pmr::vector<FaceBoundaryGeneration> changed_faces;
-  std::pmr::vector<BoundarySampleSlot> new_samples;
+  std::pmr::vector<BoundarySampleSlot> new_samples, revised_samples;
   std::pmr::vector<BoundaryKey> removed_intervals, inserted_intervals;
   explicit BoundaryUpdate(std::pmr::memory_resource *resource)
-      : changed_faces(resource), new_samples(resource), removed_intervals(resource),
-        inserted_intervals(resource) {}
+      : changed_faces(resource), new_samples(resource), revised_samples(resource),
+        removed_intervals(resource), inserted_intervals(resource) {}
 };
 struct SourceBoundaryEdge final {
   Slot<EdgeTag> edge;
@@ -100,6 +107,7 @@ struct DefinitionBoundarySnapshotData {
   ExactTable parameters;
   std::pmr::vector<SourceBoundaryEdge> edges;
   std::pmr::vector<PhysicalNode> nodes;
+  std::pmr::vector<uint64_t> constructed_revisions;
   std::pmr::vector<BoundaryKey> intervals;
   // One range per nodes row. Directions are literal root first/second child,
   // from that original root to the interval whose midpoint created the sample.
@@ -113,7 +121,8 @@ struct DefinitionBoundarySnapshotData {
                                  ExactTable table)
       : resource(std::move(owner)), source(std::move(original)), definition(definition_slot),
         epoch(identity), parameters(std::move(table)), edges(resource.get()), nodes(resource.get()),
-        intervals(resource.get()), sample_paths(resource.get()), path_bits(resource.get()) {}
+        constructed_revisions(resource.get()), intervals(resource.get()),
+        sample_paths(resource.get()), path_bits(resource.get()) {}
   DefinitionBoundarySnapshotData(const DefinitionBoundarySnapshotData &) = delete;
   DefinitionBoundarySnapshotData &operator=(const DefinitionBoundarySnapshotData &) = delete;
   DefinitionBoundarySnapshotData(DefinitionBoundarySnapshotData &&) = default;
@@ -144,7 +153,7 @@ class DefinitionBoundaryForest final {
 
 public:
   DefinitionBoundaryForest(bgfd::Budget &, SourceStore, Slot<DefinitionTag>,
-                           std::shared_ptr<RunResource>);
+                           std::shared_ptr<RunResource>, std::optional<OwnerKey> table_owner = {});
   ~DefinitionBoundaryForest();
   DefinitionBoundaryForest(const DefinitionBoundaryForest &) = delete;
   DefinitionBoundaryForest &operator=(const DefinitionBoundaryForest &) = delete;
@@ -154,6 +163,10 @@ public:
   [[nodiscard]] BoundaryEpoch begin_epoch();
   void arrive(BoundaryEpoch, Slot<FaceTag>, uint64_t generation,
               std::span<const BoundaryKey> requests);
+  // Owner-origin failures also cover wires; every current face still arrives.
+  void request_owner_splits(BoundaryEpoch, std::span<const BoundaryKey>);
+  // Staged only. The same complete_evaluations commits revisions plus splits.
+  void stage_owner_promotions(BoundaryEpoch, std::span<const BoundaryPointRevision>);
   [[nodiscard]] bool horizon_complete(BoundaryEpoch) const;
   [[nodiscard]] BoundaryEvaluationBatch prepare_splits(BoundaryEpoch);
   [[nodiscard]] uint64_t face_generation(Slot<FaceTag>) const;

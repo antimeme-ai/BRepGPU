@@ -116,7 +116,8 @@ def write_source_witnesses(scene_path, output_directory, definitions):
     data=Path(scene_path).read_bytes()
     require(len(data)>=80,'owned witness scene header truncated')
     h=struct.unpack_from('<8sII8Q',data)
-    require(h[:3]==(b'BGMESH01',1,0) and h[-1]==0,'owned witness scene header invalid')
+    require(h[0]==b'BGMESH01' and h[1]==1 and h[2] in (0,1) and h[-1]==0,
+            'owned witness scene header/profile invalid')
     nd,ni,nv,nt,nc,nm,nh=h[3:10]
     require(len(data)==80+40*nd+136*ni+56*nv+24*nt+192*nc+32*nm+32*nh,
             'owned witness scene lengths differ')
@@ -156,3 +157,138 @@ def write_source_witnesses(scene_path, output_directory, definitions):
         counts.append((id,len(chosen)))
     require((previous_v,previous_t)==(nv,nt),'owned witness geometry unowned')
     return tuple(counts)
+
+
+@dataclass(frozen=True)
+class NativeModelMatch:
+    source: object
+    scene_path: Path
+    views_path: Path
+    labels_path: Path
+    assembly: object
+    offsets: tuple
+
+
+def load_native_model_match(directory, query, tolerance, *, source_sha256=None, reference_source=None):
+    """Admit current published model transport; this is not geometry qualification."""
+    import csv
+    from dataclasses import replace
+    from fractions import Fraction as F
+    from .imported_source import load_source
+    from .imported_assembly import assemble
+    directory = Path(directory)
+    def rows(path):
+        with path.open(newline='', encoding='utf-8') as stream:
+            return tuple(csv.DictReader(stream, delimiter='\t'))
+    def confined(name):
+        path = directory / name
+        require(not Path(name).is_absolute() and path.resolve().is_relative_to(directory.resolve())
+                and path.is_file(), 'native model artifact missing or outside model root')
+        return path
+    fields = rows(directory/'model.tsv')
+    metadata = {r['key']:r['value'] for r in fields}
+    require(len(metadata) == len(fields) and metadata.get('scope') == 'complete_assembly',
+            'reference requires complete native model assembly')
+    source = load_source(directory/'source.bgsource')
+    require(metadata.get('source_digest') == source.source_sha256 and
+            (source_sha256 is None or source.source_sha256 == source_sha256),
+            'native model original source digest differs')
+    if reference_source is not None:
+        require(source.products == reference_source.products and source.usages == reference_source.usages
+                and source.styles == reference_source.styles and
+                source.root_product_id == reference_source.root_product_id,
+                'fresh reference and native original graph/styles differ')
+        require({(d.id,d.product_id,tuple(sorted(d.face_ids))) for d in source.definitions} ==
+                {(d.id,d.product_id,tuple(sorted(d.face_ids))) for d in reference_source.definitions},
+                'fresh reference and native original definition/face inventory differs')
+    definitions = sorted(source.definitions, key=lambda d:d.id)
+    assembly = assemble(source)
+    require(int(metadata['selected_definitions']) == int(metadata['source_definitions']) == len(definitions)
+            and int(metadata['source_faces']) == len(source.faces)
+            and int(metadata['source_placements']) == len(assembly.occurrences),
+            'native model complete inventory metadata differs')
+    queries = rows(directory/'queries.tsv')
+    word = [(int(r['query']),int(r['definition'])) for r in queries]
+    nq = max((q for q,_ in word),default=-1)+1
+    require(type(query) is int and 0 <= query < nq and
+            len(word) == nq*len(definitions) and word == [(q,d.id) for q in range(nq) for d in definitions],
+            'native model query definition inventory differs')
+    selected = [r for r in queries if int(r['query']) == query]
+    require(all(float(r['requested_positional_mm']) == tolerance and
+                math.isfinite(float(r['requested_node_mm'])) and float(r['requested_node_mm']) > 0
+                for r in selected), 'native model requested quality differs')
+    faces = rows(directory/'faces.tsv')
+    require([(int(r['query']),int(r['definition']),int(r['face'])) for r in faces] ==
+            [(q,d.id,f) for q in range(nq) for d in definitions for f in sorted(d.face_ids)],
+            'native model complete face index differs')
+    for row in faces:
+        confined(row['mesh']); confined(row['boundary'])
+    scene_path = confined(f'query-{query}/scene.bgscene')
+    views_path = confined(f'query-{query}/views.bgview')
+    labels_path = confined(f'query-{query}/labels.tsv')
+    data = scene_path.read_bytes()
+    require(len(data) >= 80, 'native model scene header truncated')
+    h = struct.unpack_from('<8sII8Q',data)
+    require(h[:3] == (b'BGMESH01',1,1) and h[-1] == 0,
+            'native model scene requires explicit source geometry profile1')
+    nd,ni,nv,nt,nc,nm,nh = h[3:10]
+    require(len(data) == 80+40*nd+136*ni+56*nv+24*nt+192*nc+32*nm+32*nh,
+            'native model scene section sizes differ')
+    scene_definitions = tuple(struct.unpack_from('<5Q',data,80+40*i) for i in range(nd))
+    require([r[0] for r in scene_definitions] == [d.id for d in definitions]
+            and ni == len(assembly.occurrences), 'native model scene inventory differs')
+    vertex_start = 80+40*nd+136*ni
+    triangle_start = vertex_start+56*nv
+    previous_v=previous_t=0
+    for d,(_,fv,vc,ft,tc) in zip(definitions,scene_definitions):
+        require((fv,ft) == (previous_v,previous_t) and vc > 0 and tc > 0
+                and fv+vc <= nv and ft+tc <= nt, 'native model scene partitions differ')
+        seen=set()
+        for at in range(ft,ft+tc):
+            a,b,c,material,face=struct.unpack_from('<4IQ',data,triangle_start+24*at)
+            require(len({a,b,c}) == 3 and max(a,b,c) < vc and (material < nm or material == 0xffffffff),
+                    'native model witness triangle index/material invalid')
+            seen.add(face)
+        require(seen == set(d.face_ids), 'native model scene omitted original face')
+        previous_v,previous_t=fv+vc,ft+tc
+    require((previous_v,previous_t) == (nv,nt), 'native model scene has unowned geometry')
+    if reference_source is not None:
+        expected_faces={f.id:f for f in reference_source.faces}
+        require(all(f.id in expected_faces and
+                    (f.carrier_id,f.orientation,f.style_id) ==
+                    (expected_faces[f.id].carrier_id,expected_faces[f.id].orientation,expected_faces[f.id].style_id)
+                    for f in source.faces), 'fresh reference original face metadata differs')
+    uses = {u.id:u for u in source.usages}
+    identity = tuple(F(int(i//4 == i%4)) if i%4 != 3 else F(0) for i in range(12))
+    def exact_transform(path):
+        matrix=identity
+        for identifier in path:
+            rhs=tuple(map(F,uses[identifier].transform))
+            matrix=tuple(sum((matrix[4*r+k]*rhs[4*k+c] for k in range(3)),F(0))+
+                         (matrix[4*r+3] if c == 3 else 0)
+                         for r in range(3) for c in range(4))
+        return tuple(map(float,matrix))
+    actual=[]; offsets=[]
+    for i,occurrence in enumerate(assembly.occurrences):
+        row=struct.unpack_from('<QII15d',data,80+40*nd+136*i)
+        require(row[0] == occurrence.id and row[1] < nd and
+                scene_definitions[row[1]][0] == occurrence.definition_id and row[2] <= nm
+                and all(map(math.isfinite,row[3:])), 'native model original instance differs')
+        matrix=row[3:15]
+        require(struct.pack('<12d',*matrix) == struct.pack('<12d',*exact_transform(occurrence.path)),
+                'native model placement differs from exact original composition')
+        actual.append(replace(occurrence,transform=matrix)); offsets.append(row[15:18])
+    labels=rows(labels_path)
+    def escaped(text):
+        return text.replace('\\','\\\\').replace('\t','\\t').replace('\n','\\n').replace('\r','\\r')
+    products={p.id:p for p in source.products}
+    require(len(labels) == len(actual), 'native model label inventory differs')
+    for i,(row,occurrence) in enumerate(zip(labels,actual)):
+        require((int(row['label']),int(row['occurrence']),int(row['definition']),int(row['product_id'])) ==
+                (i+1,occurrence.id,occurrence.definition_id,occurrence.product_id)
+                and row['usage_ids'] == '/'.join(map(str,occurrence.path))
+                and row['product_name'] == escaped(products[occurrence.product_id].name)
+                and row['usage_names'] == '/'.join(escaped(uses[u].name) for u in occurrence.path),
+                'native model label/source path differs')
+    return NativeModelMatch(source,scene_path,views_path,labels_path,
+                            replace(assembly,occurrences=tuple(actual)),tuple(offsets))

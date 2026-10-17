@@ -1,7 +1,9 @@
 #include "mesh_io.hpp"
+#include "output_directory.hpp"
 #include "mesh_publish.hpp"
 #include "meshing_run.hpp"
 #include "presentation.hpp"
+#include "native_display.hpp"
 #include <algorithm>
 #include <cerrno>
 #include <charconv>
@@ -122,39 +124,6 @@ Options options(int argc, char **argv) {
   out.output = std::filesystem::absolute(out.output).lexically_normal();
   return out;
 }
-class OutputDirectory final {
-  std::filesystem::path final_, temporary_;
-  bool published_ = false;
-
-public:
-  explicit OutputDirectory(const std::filesystem::path &target) : final_(target) {
-    if (std::filesystem::exists(std::filesystem::symlink_status(final_)))
-      throw Error(ErrorCode::io_failure, "output already exists; publication never replaces it");
-    if (!std::filesystem::is_directory(final_.parent_path()))
-      throw Error(ErrorCode::io_failure, "output parent must be an existing directory");
-    auto pattern = (final_.parent_path() / (final_.filename().string() + ".tmp-XXXXXX")).string();
-    if (!::mkdtemp(pattern.data()))
-      throw Error(ErrorCode::io_failure,
-                  "cannot create temporary output: " + std::string(std::strerror(errno)));
-    temporary_ = pattern;
-  }
-  ~OutputDirectory() {
-    if (published_ || temporary_.empty())
-      return;
-    std::error_code failure;
-    std::filesystem::remove_all(temporary_, failure);
-    if (failure)
-      std::cerr << "cleanup\ttemporary_output\t" << failure.message() << '\n';
-  }
-  const std::filesystem::path &path() const { return temporary_; }
-  void publish() {
-    if (::syscall(SYS_renameat2, AT_FDCWD, temporary_.c_str(), AT_FDCWD, final_.c_str(),
-                  RENAME_NOREPLACE) != 0)
-      throw Error(ErrorCode::io_failure,
-                  "no-replace publication failed: " + std::string(std::strerror(errno)));
-    published_ = true;
-  }
-};
 struct Stage final {
   std::string_view name;
   double value;
@@ -217,131 +186,6 @@ void labels(const std::filesystem::path &path, const NativeMesh &mesh, bgfd::Bud
   }
   checked_close(out);
 }
-struct DisplayModule final {
-  void *handle = nullptr;
-  const bgom10::Api *api = nullptr;
-  explicit DisplayModule(const Options &o) {
-    if (!o.p100) {
-      api = bgom10::cpu_api_v2();
-      return;
-    }
-    handle = ::dlopen(o.display_module.c_str(), RTLD_NOW | RTLD_LOCAL);
-    if (!handle)
-      throw Error(ErrorCode::device_failure,
-                  "cannot load display module: " + std::string(::dlerror()));
-    const auto factory =
-        reinterpret_cast<const bgom10::Api *(*)()>(::dlsym(handle, "brepgpu_om10_cuda_v2"));
-    if (factory)
-      api = factory();
-    if (!api || api->version != 2 || api->size < sizeof(bgom10::Api) || !api->create ||
-        !api->evaluate || !api->render || !api->close) {
-      ::dlclose(handle);
-      handle = nullptr;
-      throw Error(ErrorCode::device_failure, "display module has no complete v2 source API");
-    }
-  }
-  ~DisplayModule() {
-    if (handle && ::dlclose(handle) != 0)
-      std::cerr << "cleanup\tdisplay_module\tdlclose failed\n";
-  }
-};
-void display_check(bool ok, const bgom10::Error &error) {
-  if (!ok)
-    throw Error(ErrorCode::device_failure, std::string(error.stage) + ": " + error.message +
-                                               " row=" + std::to_string(error.row));
-}
-struct DisplayState final {
-  std::shared_ptr<RunResource> resource;
-  std::shared_ptr<DisplayModule> module;
-  NativeScene source;
-  std::pmr::vector<bgom10::Instance> instances;
-  std::pmr::vector<uint8_t> rgba;
-  std::pmr::vector<double> depth;
-  std::pmr::vector<uint64_t> primitive, occurrence;
-  bgom10::SceneView view{};
-  void *token = nullptr;
-  // Pre-existing record self-retains only if final device close fails. No
-  // allocation occurs on that teardown path; module/input/output stay alive.
-  std::shared_ptr<DisplayState> poisoned_keepalive;
-  DisplayState *poisoned_next = nullptr;
-  DisplayState(const std::shared_ptr<RunResource> &r, std::shared_ptr<DisplayModule> m,
-               NativeScene s)
-      : resource(r), module(std::move(m)), source(std::move(s)), instances(r.get()), rgba(r.get()),
-        depth(r.get()), primitive(r.get()), occurrence(r.get()) {}
-};
-class Display final {
-  std::shared_ptr<DisplayState> state_;
-  static DisplayState *poisoned_;
-  bool close_raw(bgom10::Error &error, bgom10::Times &times) {
-    if (!state_->token)
-      return true;
-    void *token = state_->token;
-    state_->token = nullptr;
-    const bool ok = state_->module->api->close(token, &error, &times);
-    if (!ok) {
-      state_->poisoned_keepalive = state_;
-      state_->poisoned_next = poisoned_;
-      poisoned_ = state_.get();
-      std::cerr
-          << "cleanup\tdisplay_owner\tretained poisoned module/input/output until process exit\n";
-    }
-    return ok;
-  }
-
-public:
-  Display(const std::shared_ptr<RunResource> &resource, std::shared_ptr<DisplayModule> module,
-          NativeScene source, const NativePresentation &presentation)
-      : state_(std::allocate_shared<DisplayState>(RunAllocator<DisplayState>(resource), resource,
-                                                  std::move(module), std::move(source))) {
-    state_->instances = state_->source->instances;
-    for (std::size_t i = 0; i < state_->instances.size(); ++i)
-      std::copy(presentation.explosion[i].begin(), presentation.explosion[i].end(),
-                state_->instances[i].explosion);
-    state_->view = state_->source->view();
-    state_->view.instances = state_->instances.data();
-    const uint64_t pixels = uint64_t{presentation.views[0].width} * presentation.views[0].height;
-    state_->rgba.resize(static_cast<std::size_t>(pixels * 4));
-    state_->depth.resize(static_cast<std::size_t>(pixels));
-    state_->primitive.resize(static_cast<std::size_t>(pixels));
-    state_->occurrence.resize(static_cast<std::size_t>(pixels));
-  }
-  ~Display() {
-    if (state_->token) {
-      bgom10::Error error{};
-      bgom10::Times times{};
-      if (!close_raw(error, times))
-        std::cerr << "cleanup\t" << error.stage << '\t' << error.message << '\n';
-    }
-  }
-  const bgom10::SceneView &view() const { return state_->view; }
-  void open(const Options &o, bgom10::Times &times) {
-    bgom10::Error error{};
-    display_check(state_->module->api->create(&state_->view, o.threads, o.device, &state_->token,
-                                              &error, &times),
-                  error);
-  }
-  void evaluate(bgom10::Times &times) {
-    bgom10::Error error{};
-    display_check(state_->module->api->evaluate(state_->token, nullptr, &error, &times), error);
-  }
-  void render(const bgom10::Request &request, bgom10::Times &times) {
-    bgom10::FrameOutput output{state_->rgba.data(),
-                               state_->depth.data(),
-                               state_->primitive.data(),
-                               state_->occurrence.data(),
-                               nullptr,
-                               nullptr};
-    bgom10::Error error{};
-    display_check(state_->module->api->render(state_->token, &request, &output, &error, &times),
-                  error);
-  }
-  std::span<uint8_t> pixels() { return state_->rgba; }
-  void close(bgom10::Times &times) {
-    bgom10::Error error{};
-    display_check(close_raw(error, times), error);
-  }
-};
-DisplayState *Display::poisoned_ = nullptr;
 void render_stages(Ledger &ledger, const bgom10::Times &t, bool exploded) {
   const std::array<std::string_view, 6> a{"assembled.project",  "assembled.setup",
                                           "assembled.bins",     "assembled.shading",
@@ -366,9 +210,10 @@ Report run(const Options &o, Time full, std::string_view &stage) {
     Ledger ledger(&budget);
     stage = "backend_load";
     auto tick = Clock::now();
-    std::shared_ptr<DisplayModule> display_module;
+    std::shared_ptr<NativeDisplayModule> display_module;
     if (!o.mesh_only)
-      display_module = std::make_shared<DisplayModule>(o);
+      display_module = std::make_shared<NativeDisplayModule>(
+          o.p100 ? std::optional(o.display_module) : std::nullopt);
     std::optional<BoundCudaModule> bound;
     if (o.p100)
       bound = load_bound_cuda(resource, o.bound_module);
@@ -445,7 +290,7 @@ Report run(const Options &o, Time full, std::string_view &stage) {
       tick = Clock::now();
       const auto presentation = make_presentation(budget, scene, o.width, o.height, o.explosion);
       ledger.add("output.presentation", seconds(tick));
-      Display display(resource, display_module, scene, presentation);
+      NativeDisplay display(resource, display_module, scene, presentation);
       stage = "display_files";
       tick = Clock::now();
       write_scene(output.path() / "scene.bgscene", display.view(), budget);
@@ -454,7 +299,7 @@ Report run(const Options &o, Time full, std::string_view &stage) {
       stage = "display_create";
       bgom10::Times startup{};
       tick = Clock::now();
-      display.open(o, startup);
+      display.open(o.threads, o.device, startup);
       ledger.add("display.create", startup.create / 1000.);
       ledger.add("display.upload", startup.upload / 1000.);
       stage = "display_evaluate";

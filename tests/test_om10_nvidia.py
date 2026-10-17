@@ -228,12 +228,68 @@ class ReferenceMeshTests(unittest.TestCase):
             scene=directory/'qualified.bgmesh';scene.write_bytes(data)
             definitions=(SimpleNamespace(id=41,face_ids=(901,)),)
             self.assertEqual(write_source_witnesses(scene,directory/'probes',definitions),((41,1),))
+            current=bytearray(data);struct.pack_into('<I',current,12,1)
+            scene.write_bytes(current)
+            self.assertEqual(write_source_witnesses(scene,directory/'current-probes',definitions),((41,1),))
+            self.assertEqual((directory/'current-probes/definition-41.bgprobe').read_bytes(),
+                             (directory/'probes/definition-41.bgprobe').read_bytes())
+            scene.write_bytes(data)
             raw=(directory/'probes/definition-41.bgprobe').read_bytes()
             self.assertEqual(raw[:16],struct.pack('<8sQ',b'BGRPROB1',1))
             self.assertEqual(struct.unpack_from('<QQ3d',raw,16),(901,0,2.,4.,3.))
             bad=bytearray(data);struct.pack_into('<Q',bad,120+3*56+16,902);scene.write_bytes(bad)
             with self.assertRaisesRegex(ValueError,'source face absent'):
                 write_source_witnesses(scene,directory/'bad',definitions)
+
+    def test_current_native_model_match_retains_exact_transport_and_rejects_extra_rows(self):
+        from dataclasses import replace
+        from brepgpu.nvidia_reference import load_native_model_match
+        from brepgpu.imported_source import Product,Usage,write_source
+        from brepgpu.imported_assembly import assemble
+        import sys
+        root=Path(__file__).resolve().parents[1]
+        sys.path.insert(0,str(root/'tests'))
+        from native_adaptive_model import model_source,IDENTITY
+        src=model_source()
+        def translate(x):
+            out=list(IDENTITY);out[3]=x;return tuple(out)
+        uses=tuple(replace(u,parent_product_id=104,
+                          transform=translate(.3) if i == 0 else u.transform)
+                   for i,u in enumerate(src.usages))
+        src=replace(src,products=(*src.products,Product(103,'middle',''),Product(104,'inner','')),
+                    usages=(Usage(700,100,103,'outer',translate(.1)),
+                            Usage(701,103,104,'inner',translate(.2)),*uses))
+        executable=Path(os.environ.get('BREPGPU_NATIVE_MODEL',
+            root/'build/adaptive-curves-root-cuda/brepgpu-adaptive-model'))
+        with tempfile.TemporaryDirectory() as temporary:
+            directory=Path(temporary);source=directory/'source.bgsource';write_source(src,source)
+            output=directory/'model'
+            result=subprocess.run([str(executable),'--source',str(source),'--output',str(output),
+                '--positional-mm','.005','--node-source-mm','1e-8','--threads','1',
+                '--width','320','--height','240'],capture_output=True,text=True,timeout=120)
+            self.assertEqual(result.returncode,0,result.stderr)
+            match=load_native_model_match(output,0,.005,source_sha256=src.source_sha256,
+                                          reference_source=src)
+            self.assertEqual(len(match.assembly.occurrences),3)
+            legacy=assemble(src).occurrences[0].transform
+            actual=match.assembly.occurrences[0].transform
+            self.assertNotEqual(legacy[3],actual[3])
+            self.assertEqual(actual[3],.6)
+            data=match.scene_path.read_bytes();nd=struct.unpack_from('<Q',data,16)[0]
+            bad=bytearray(data);struct.pack_into('<d',bad,80+40*nd+40,legacy[3])
+            match.scene_path.write_bytes(bad)
+            with self.assertRaisesRegex(ValueError,'exact original composition'):
+                load_native_model_match(output,0,.005)
+            match.scene_path.write_bytes(data)
+            index=output/'faces.tsv';before=index.read_text()
+            index.write_text(before+before.splitlines()[1]+'\n')
+            with self.assertRaisesRegex(ValueError,'face index'):
+                load_native_model_match(output,0,.005)
+            index.write_text(before)
+            with self.assertRaisesRegex(ValueError,'quality'):
+                load_native_model_match(output,0,.01)
+            with self.assertRaisesRegex(ValueError,'digest'):
+                load_native_model_match(output,0,.005,source_sha256='0'*64)
 
     def test_definition_reader_retains_exact_supplied_corners_and_keys(self):
         from brepgpu.nvidia_reference import load_definition

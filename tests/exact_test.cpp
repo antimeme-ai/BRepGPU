@@ -1,6 +1,7 @@
 #include "../native/mesher/exact.hpp"
 #include <bit>
 #include <cfenv>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include <limits>
 #include <memory_resource>
 #include <string>
+#include <string_view>
 #if defined(__x86_64__)
 #include <xmmintrin.h>
 #endif
@@ -82,6 +84,54 @@ public:
   std::size_t live = 0;
   bool reject = false;
 };
+void budget_scopes() {
+  bgfd::Budget budget({10000, 100});
+  budget.charge(7);
+  {
+    auto outer = budget.scoped_work(5);
+    budget.charge(2);
+    {
+      auto inner = budget.scoped_work(1);
+      budget.charge(1);
+      failure([&] { budget.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+              "nested work cap applies at individual operation");
+    }
+    budget.charge(2);
+    failure([&] { budget.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+            "inner scope restores outer remaining cap");
+  }
+  require(budget.work() == 12, "scoped cap erased cumulative charged work");
+  budget.charge(88);
+  failure([&] { budget.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+          "scope did not preserve original run cap");
+  bgfd::Budget exceptional({10000, 32});
+  exceptional.charge(3);
+  failure(
+      [&] {
+        auto scope = exceptional.scoped_work(0);
+        exceptional.charge(1);
+      },
+      BGFD_RESOURCE_EXHAUSTED, "zero scoped cap stops before work");
+  exceptional.charge(29);
+  require(exceptional.work() == 32, "exception did not restore prior work cap");
+  bgfd::Budget overflow({10000, 100});
+  overflow.charge(9);
+  {
+    auto scope = overflow.scoped_work(UINT64_MAX);
+    overflow.charge(91);
+    failure([&] { overflow.charge(1); }, BGFD_RESOURCE_EXHAUSTED,
+            "overflow-sized scope cannot widen parent cap");
+  }
+  bgfd::Budget owner({10000, 10000});
+  const bgmesh::Rational held(owner, 17);
+  failure(
+      [&] {
+        auto scope = owner.scoped_work(0);
+        (void)held.add(held);
+      },
+      BGFD_RESOURCE_EXHAUSTED, "same-owner rational respects scoped cap");
+  require(held.to_double() == 17., "scope changed exact owner/value lifetime");
+}
 void basic() {
   bgfd::Budget budget({1ULL << 24, 1ULL << 30});
   using bgmesh::Rational;
@@ -99,6 +149,10 @@ void basic() {
         static_cast<void>(Rational::from_double(budget, std::numeric_limits<double>::quiet_NaN()));
       },
       BGFD_INVALID_INPUT, "NaN rejected");
+  for (uint64_t raw : {uint64_t{0x7FF0000000000000}, uint64_t{0xFFF0000000000000},
+                       uint64_t{0x7FF0000000000001}, uint64_t{0xFFF8000000000001}})
+    failure([&] { static_cast<void>(Rational::from_double(budget, std::bit_cast<double>(raw))); },
+            BGFD_INVALID_INPUT, "all nonfinite binary64 classes rejected");
   failure([&] { static_cast<void>(Rational(budget, 1).divide(Rational(budget, 0))); },
           BGFD_INVALID_INPUT, "zero divisor rejected");
   failure([&] { static_cast<void>(Rational::from_words(budget, {1, {2}, {4}})); },
@@ -160,9 +214,10 @@ void vectors(const char *path) {
   std::ifstream in(path, std::ios::binary);
   std::string magic(8, '\0');
   in.read(magic.data(), 8);
-  require(magic == "BGEXACT1", "wrong exact vector magic");
-  const auto count = word(in), integer_count = word(in);
-  require(count < 10000 && integer_count < 10000, "oversized exact vectors");
+  require(magic == "BGEXACT2", "wrong exact vector magic");
+  const auto count = word(in), integer_count = word(in), double_count = word(in);
+  require(count < 10000 && integer_count < 10000 && double_count < 100000,
+          "oversized exact vectors");
   bgfd::Budget budget({1ULL << 28, 1ULL << 36});
   for (uint32_t row = 0; row < count; ++row) {
     auto a = bgmesh::Rational::from_words(budget, words(in));
@@ -216,6 +271,16 @@ void vectors(const char *path) {
              std::move(gcd), bgfd::Integer::from_words(budget, 1, std::vector<uint32_t>{1})),
          g, "Python integer gcd");
   }
+  bgfd::Budget decoding({1ULL << 24, 1ULL << 36});
+  for (uint32_t row = 0; row < double_count; ++row) {
+    const auto raw = wide(in);
+    same(bgmesh::Rational::from_double(decoding, std::bit_cast<double>(raw)), words(in),
+         "all exponent/sign integer-ratio words");
+  }
+  std::cout << "binary64_vectors=" << double_count << " work=" << decoding.work()
+            << " divisions=" << decoding.divisions() << " peak_bytes=" << decoding.peak()
+            << std::endl;
+  require(decoding.divisions() == 0, "binary64 dyadic construction must avoid arbitrary divisions");
   require(in.get() == std::char_traits<char>::eof(), "extra exact vector bytes");
   require(budget.quotient_corrections() > 0, "Algorithm D trial correction exercised");
   require(budget.division_addbacks() > 0, "Algorithm D addback exercised");
@@ -227,8 +292,63 @@ void vectors(const char *path) {
             << " addbacks=" << budget.division_addbacks()
             << " lehmer_batches=" << budget.lehmer_batches() << '\n';
 }
+void dyadic_cost(const char *path, std::string_view repeat_text) {
+  std::ifstream in(path, std::ios::binary);
+  std::string magic(8, '\0');
+  in.read(magic.data(), 8);
+  require(magic == "BGDBL001", "wrong binary64 cost input magic");
+  const auto count = wide(in);
+  std::size_t used = 0;
+  const auto repeats = std::stoull(std::string(repeat_text), &used);
+  require(used == repeat_text.size() && count && count <= 1000000 && repeats && repeats <= 1000 &&
+              repeats <= 10000000 / count,
+          "bounded binary64 cost count/repeats required");
+  std::vector<uint64_t> inputs;
+  inputs.reserve(static_cast<std::size_t>(count));
+  for (uint64_t i = 0; i < count; ++i) {
+    const auto raw = wide(in);
+    require(((raw >> 52) & 2047) != 2047, "nonfinite binary64 cost input");
+    inputs.push_back(raw);
+  }
+  require(in.get() == std::char_traits<char>::eof(), "extra binary64 cost bytes");
+  {
+    bgfd::Budget warmup({1ULL << 24, 1ULL << 36});
+    for (std::size_t i = 0; i < std::min(inputs.size(), std::size_t{4096}); ++i)
+      static_cast<void>(bgmesh::Rational::from_double(warmup, std::bit_cast<double>(inputs[i])));
+  }
+  bgfd::Budget budget({1ULL << 24, 1ULL << 44});
+  uint64_t checksum = 14695981039346656037ULL;
+  const auto start = std::chrono::steady_clock::now();
+  for (uint64_t repeat = 0; repeat < repeats; ++repeat)
+    for (auto raw : inputs) {
+      const auto value = bgmesh::Rational::from_double(budget, std::bit_cast<double>(raw));
+      checksum = (checksum ^ static_cast<uint64_t>(value.sign() + 1)) * 1099511628211ULL;
+      for (auto limb : value.numerator().magnitude())
+        checksum = (checksum ^ limb) * 1099511628211ULL;
+      checksum = (checksum ^ 0xFFFFFFFFu) * 1099511628211ULL;
+      for (auto limb : value.denominator().magnitude())
+        checksum = (checksum ^ limb) * 1099511628211ULL;
+    }
+  const auto seconds =
+      std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+  std::cout << "values=" << count << " repeats=" << repeats << " operations=" << count * repeats
+            << " seconds=" << seconds << " work=" << budget.work()
+            << " divisions=" << budget.divisions() << " peak_bytes=" << budget.peak()
+            << " max_limbs=" << budget.max_limbs() << " checksum=" << checksum << '\n';
+}
 } // namespace
 int main(int argc, char **argv) {
+  if (argc == 4 && std::string_view(argv[1]) == "--from-double-cost") {
+    dyadic_cost(argv[2], argv[3]);
+    return 0;
+  }
+
+  if (argc == 2 && std::string_view(argv[1]) == "--budget-only") {
+    budget_scopes();
+    std::cout << "scoped exact budget PASS\n";
+    return 0;
+  }
+  budget_scopes();
   require(argc == 2, "usage: exact_test vector-file");
   basic();
   const int rounding = std::fegetround();

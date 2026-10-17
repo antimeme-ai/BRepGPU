@@ -1,6 +1,7 @@
 #ifndef BREPGPU_MESHER_DOMAIN_HPP
 #define BREPGPU_MESHER_DOMAIN_HPP
 #include "../direct_cdt/core.hpp"
+#include "domain_index.hpp"
 #include "topology.hpp"
 #include <span>
 
@@ -10,9 +11,7 @@ struct DomainLoopView final {
   std::span<const SiteSlot> sites;
   std::span<const BoundaryKey> constraints;
 };
-struct DomainStats final {
-  uint64_t bvh_visits = 0, segment_candidates = 0, ray_candidates = 0, ray_queries = 0;
-  uint64_t winding_aggregates = 0, event_entries = 0;
+struct DomainStats final : DomainIndexStats {
   bgcdt::CoreStats cdt;
 };
 enum class DomainFailureMode { reject, report_geometry };
@@ -20,10 +19,6 @@ enum class DomainFailureMode { reject, report_geometry };
 // The same topology owner may then append finite mapped cells before one seal.
 enum class DomainInitialSeal { complete, deferred };
 enum class DomainIssueKind { too_few_sites, zero_area, boundary_contact, hole_placement };
-struct DomainSegmentLocation final {
-  uint32_t loop;
-  uint64_t segment;
-};
 // Locations address the ORIGINAL occurrence order supplied by DomainLoopView,
 // never the normalized cycle or an inferred original-curve parameter.
 struct DomainIssue final {

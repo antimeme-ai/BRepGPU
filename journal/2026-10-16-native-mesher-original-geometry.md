@@ -585,3 +585,162 @@ public helper seam in the existing ordinary face-preparation fixture. Root's
 coordinator guard also avoids unnecessary cap math for ordinary source events.
 No cap arithmetic or completed source-case results changed. Root owns the final
 affected ordinary fixture rerun; no additional geometry campaign is started.
+
+### Adaptive cached-subdivision research checkpoint
+
+Operator selected cached adaptive subdivision as primary mesher. Research only:
+read actual pinned SMLib curve/surface caches and trim-embedding/remaining-polygon
+path, current owned geometry/store/residual/interval/point interfaces, and primary
+Filip1986 interpolation bounds plus Balazs2004 original source trim treatment.
+Saved concrete proposal `papers/native-adaptive-subdivision-geometry.md` for
+root/peer review. It selects original analytic harmonic/Gram directional bounds
+rather than universally approximating analytic carriers, cached rational
+Bernstein subdivision, one original S→actual bilinear B→SAME actual facet L error,
+common RN/outward CPU/P100 point/bound profile with charged departures, and
+compiled source harmonic cancellation. No old full preparation startup, new
+dependency, product code or geometry execution. Remaining finite numerical
+primitive/profile decisions are explicit before revised plan acceptance.
+
+Reviewed integrated ADAPTIVE_MESHER_DESIGN/PLAN and saved scoped geometry ACCEPT
+in papers/native-adaptive-subdivision-geometry-review.md. One wording correction
+sent to root: an inactive axis is proved affine-separable approximation
+independence (pure/mixed second derivatives zero), not literal S_v=0; cylinders
+have nonzero linear S_v but need no V curvature splitting. The RN-first finite
+runtime profile was independently read and accepted; heuristic axis comparisons
+do not escalate to exact trig. Typed first geometry-unit plan follows; no code.
+
+Saved finite first geometry/numeric unit plan docs/adaptive-geometry-unit.md for
+root/runtime peer review. It selects actual header/SourceCache/POD names,
+original evaluator vs prepared root identity, scaled RN sqrt/norm, requested-only
+Cox/Bernstein roots, shared analytic formulas and explicit six-coefficient
+B−SAME-L actual-facet procedure. No product code or execution yet. Root caller
+must integrate actual cached subdivisions/packets; geometry tests are not a
+standalone mesher completion claim.
+
+Peer-reviewed actual runtime and packet unit plans; scoped ACCEPT recorded in
+papers/native-adaptive-subdivision-unit-peer-review.md. Sent runtime two narrow
+completion-gate clarifications: actual physical noncollapse, and exact allowance
+comparison via downward conversion/precise ambiguity. Packets retains chart-only
+construction scope and runtime owns actual-facet completion. No geometry run.
+
+First adaptive geometry missing-operation RED observed on isolated new fleet:
+`c++ -std=c++20 -I native context/adaptive-geometry-red.o native/mesher/source.cpp
+-o context/adaptive-geometry-red`; existing actual SourceStore source is linked.
+`context/adaptive-geometry-red.log` reports precisely missing prepare_source_cache,
+evaluate_sample and bound_actual_facet (exit1). Headers and real fixture preceded
+all bodies. Runtime and algorithm peer reviews ACCEPT; numerical owner required
+exact original parameters in fallback seam, now explicit Rational spans in
+adaptive_geometry.hpp rather than inferring truth from interval endpoints.
+
+Adaptive geometry initial strict Clang18 Release GREEN, independent actual-output
+reader GREEN213 observations: original rational grid/precise parameters,
+source→actualB dense sample inequalities, actualL threshold equality,129
+original-argument trig inputs and subnormal multiplication. Extended the SAME
+reader through7 original analytic-source families: plane/cylinder/cone/sphere/
+torus with nonorthogonal frames and finite1e200/1e-200 plane frames;25 original
+points/family plus source→actualB inequalities all GREEN. First matching
+ASan/UBSan/leak path GREEN. These are numerical-unit results, not complete
+adaptive patch/wholecomponent publication. Full source→cache→triangles caller
+remains runtime integration.
+
+Root numerical source review caught radius-sum nearest rounding on torus,
+invalidinterval propagation before min/max and unscaled frame Gram. Fixed all
+in the common DAG/preparation. Public precise methods now admit RN environment;
+profilepromotedQ uses the SAME RN midpoint of returned outward64 endpoints.
+Finite analytic regularity checks reject singular input charts; rational node
+bounds prove local immersion from differenced homogeneous control nets in the
+SAME adaptive cache, never through another subdivision tree. Root/runtime
+agreed actualphysical noncollapse remains a separate final gate and local
+immersion does not claim global embedding.
+
+Canonical original knot point ownership now precomputed once using metered
+ordered endpoint/corner maps; prepared sample_owners[9] is O(1) at points.
+Evaluator-only touching neighbor roots preserve lower-original-span ownership
+when a requested rectangle begins on a source knot. No repeated root scan.
+Tidy found only three same-type helper argument groups and unnecessary factory
+value copies; changed to finite coefficient request records/UVPair and borrowed
+constrefs while SourceCache retains owned leases. No suppression added.
+
+Adaptive geometry final expanded Release and ASan/UBSan/leak source reader
+GREEN214 main observations +7 analytic families; same reader additionally
+checks three weighted extrusion bounds and selected original-coefficient
+extreme-weight fallback. Owned-source clang-tidy GREEN, no suppressions. Saved
+public-safe results/adaptive-geometry-2026-10-16/REPORT.md and TSV. No wholepatch
+or performance claim follows from numerical-unit checks.
+
+Root actual CUDA module strict NVCC needed HD infinity constructed from its IEEE
+word rather than host numeric_limits constexpr; common numerical header changed
+without changing the represented value. Scoped actual module review found
+short rational net admission, missing node source-box containment and ineffective
+all-affine failed-bound split action. Root fixed each before final integration;
+review saved papers/native-adaptive-device-geometry-review.md.
+
+Actual same independent reader on both P100s GREEN:
+`python3 -B tests/native_adaptive_geometry_oracle.py --fixture
+build/adaptive-geometry-release/brepgpu_native_adaptive_geometry --source
+build/adaptive-geometry-release/original-geometry.bgsource --analytic-fixtures
+context/adaptive-analytic-fixtures --cuda-module
+build/adaptive-root-cuda/libbrepgpu_mesher_adaptive_cuda.so --device 0`
+(and device1). Logs context/adaptive-geometry-p100-0.log and -1.log. Actual device
+source sample/node/child restriction/facet operations consumed; scalar trig
+stress and selected exact fallback remain explicitly host checks. Module
+observed SHA4dc828ac7f701c84c10ce3fec024cb534e456ef87aeb38d300f8f2330d9f11d1.
+Stop this bounded numerical qualification cohort; parent owns integrated cache
+mesh/caller closure and coherent commits.
+
+Postpacket transfer review found six degree-two residual hull gives twist/2 on
+an ordinary half rectangle even when the selected leaf packet bound guarantees
+twist/4. Recorded finite closure in docs/adaptive-geometry-unit.md before code;
+root/numeric owner approved same-facet covariance bound. Added two hand-derived
+same-fixture cases B=(u,v,uv), L=(u,v,v+shift), shift0/1/8, true maximum1/4+shift,
+plus precise equality/insufficient allowances and independent Fraction sampling.
+Old body genuine RED context/adaptive-facet-transfer-red.log: 'actual quarter-twist
+transfer retains displaced-L error' (exit1).
+
+Common HD now returns min(sixcoeff upper, ||D||/4+max nodal residual). Precise path
+also compares exact squared-sum criterion r>=0,s=r²-A-B>=0,s²>=4AB; this includes
+zero-nodal D²<=16r² and general shifted equality without sqrt-padding ambiguity.
+Numeric owner actual-source scoped ACCEPT. Same-source Release reader GREEN216
+main observations +7analytic families; affected ASan/UBSan/leaks GREEN216 and
+tidy GREEN. Logs context/adaptive-facet-transfer-{green,asan,tidy}.log. No new
+subdivision/checker/corpus. Root holding old module/CLI pair through its bounded
+8-process cohort; new header/body are stable, pending one affected rebuilt GPU
+reader pair after that cohort, not a repeat deep workload campaign.
+
+Root completed the pinned old-revision 2D cohort and now owns the single affected
+CMake/CTest closure after rebuilding module+CLI with the covariance transfer.
+The registered SAME independent geometry reader now includes both P100s and
+analytic fixture generation, so no duplicate device rerun from geometry lane.
+Root actual-source covariance/slack review ACCEPT. Geometry code stable and
+ready for coherent commit; final rebuilt module hash/device rows will be added
+from that registered run rather than conflated with the earlier214 observations.
+
+Shared-curves checkpoint research only: reread actual pinned NVIDIA
+SmCurveCache span allocation/restriction/ComputeConstants/Tessellate and
+SmCurveTessDriver, original source/curve/trace/forest modules, accepted adaptive
+spec/plan. Saved actionable papers/native-adaptive-curves-geometry.md including
+literal typed numerical/cache/service proposal, original node-vs-positional
+contracts, polynomial-time p<=32 extraction, paired O(p²) restriction and actual
+chord residuals. Acquired intact Floater1992, Karavelas/Kaklis/Kostas2004 and
+Bez/Bez2013 author PDFs with URL/hash/read scope in papers/native-adaptive-curves/.
+Purdue Nairn full download403 recorded; no full-text claim. No product/test edits,
+builds, geometry execution or dependency adoption in this research unit.
+
+Runtime/construction peers reviewed actual report numerical scope ACCEPT with
+one valid shared finding: generic dampedNewton would exceed first finite
+plane/cylinder-locator+generic-guideguard scope. Amended actual report to defer
+general inverse and type guide failures explicitly. Root selected same module
+versioned CurveCudaAPI with dedicated typed curve pools. Exact cylinder profile
+now literal CylinderAffineIdentityRecord/source algebra, not a phantom general
+ArcOrder tag. Affine trace service restricts directly across indexed original
+spans and SAME actual chord, never creates per-use PatchSession or old eager
+GeometryStore. Root actual finite unit plan reviewed; remaining API/schema
+integration belongs to plan closure before RED/code.
+
+Cross-read actual adaptive-shared-curves-unit.md, adaptive-curves-caller-unit.md
+and runtime/construction reports. Scoped source/error/shared-occurrence/complete
+boundary result ACCEPT. Sent two literal runtime schema alignments before header
+freeze: retain carrier_trace_to_actual_chord_upper separately, and replace the
+old unimplemented cylinder_arc_order name with the finite implemented identity
+payload/tag or keep it nonemittable. No code/runtime changes from this lane;
+parent integrates finite plan and owns next implementation authorization.

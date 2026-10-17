@@ -6,7 +6,7 @@ from brepgpu.imported_source import (ImportedSource,Product,SolidDefinition,Usag
     Edge,Coedge,Loop,Face,Carrier,Curve,SurfaceSpan,ZERO_FRAME,IDENTITY,write_source)
 
 
-def make(path,kind,count):
+def make(path,kind,count,*,hint=None,units_mm=1.):
     vertices=[];edges=[];uses=[];loops=[];faces=[];carriers=[];curves=[]
     for index in range(count):
         shift=10000*index
@@ -25,7 +25,7 @@ def make(path,kind,count):
                 tuple(v for k in (i,i+1) for y in (0.,1.) for v in (us[k]+dx,y+dy,zs[k],1.))) for i in range(2))
         else:
             spans=(SurfaceSpan((0.,1.,0.,1.),(degree,1),net),)
-        carriers.append(Carrier(9+shift,6,ZERO_FRAME,(0.,0.),(0.,1.,0.,1.),
+        carriers.append(Carrier(9+shift,6,ZERO_FRAME,(0.,0.),hint or (0.,1.,0.,1.),
             (degree,1),knots,multiplicities,(0.,1.),(2,2),(3,2),net,spans))
         points=tuple(tuple(net[i:i+4]) for i in range(0,len(net),4))
         boundary=(tuple(points[i] for i in (0,2,4)),tuple(points[i] for i in (4,5)),
@@ -49,7 +49,7 @@ def make(path,kind,count):
         loops.append(Loop(800+shift,900+shift,True,tuple(500+shift+i for i in range(4))))
         faces.append(Face(900+shift,200,9+shift,1,(800+shift,),0.))
     translated=list(IDENTITY);translated[3]=16.;translated[11]=2.
-    model=ImportedSource('ac'*32,1.,0.,100,'independent native whole-operation family',
+    model=ImportedSource('ac'*32,units_mm,0.,100,'independent native whole-operation family',
         (Product(100,'authored assembly','root'),Product(101,kind,'part',200)),
         (SolidDefinition(200,101,tuple(f.id for f in faces),tuple(e.id for e in edges),tuple(v.id for v in vertices)),),
         (Usage(201,100,101,'original',IDENTITY),Usage(202,100,101,'translated',tuple(translated))),
