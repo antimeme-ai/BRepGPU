@@ -11,11 +11,11 @@ import tempfile
 
 from native_adaptive_curves_caller import (
     source as plane_source, read as read_curves, check as check_curves,
-    check_seam, curve_h, curve_local, whole_chord)
+    check_seam, curve_h, curve_local, whole_chord, check_line)
 from native_adaptive_trimmed_caller import (
     read_face, qualify_face, original_boundary, cylinder_source, cylinder_trig,
     observed_features, face_semantics)
-from brepgpu.imported_source import Vertex, Edge, Coedge, Loop, Face, Curve, Carrier, ZERO_FRAME, write_source
+from brepgpu.imported_source import Vertex, Edge, Coedge, Loop, Face, Curve, Carrier, ZERO_FRAME, write_source, load_source
 
 
 def box_source():
@@ -121,18 +121,7 @@ def analytic_point_box(curve, t):
     if curve.kind in (4,5):
         h = curve_h(curve,t)
         return tuple((h[a]/h[3],)*2 for a in range(3))
-    if curve.kind == 1:
-        return tuple((F(curve.frame[a])+t*F(curve.frame[3+a]),)*2 for a in range(3))
-    assert curve.kind == 2 and curve.radii == (1.,1.)
-    sine, cosine = cylinder_trig(t)
-    result = []
-    for a in range(3):
-        lo = hi = F(curve.frame[a])
-        for scale, interval in ((F(curve.frame[3+a]),cosine),(F(curve.frame[6+a]),sine)):
-            ends = tuple(scale*x for x in interval)
-            lo += min(ends); hi += max(ends)
-        result.append((lo,hi))
-    return tuple(result)
+    return expression_box((1,curve_terms(curve,t)))
 
 
 def departure_squared(box, point):
@@ -218,14 +207,17 @@ def incident_chains(src, face, captured, final):
         assert chains[0] == chains[1], 'retained face uses stale INCIDENT physical chain'
 
 
-def check_output(src, family, output, positional, lines=None, final_path=None):
+def check_output(src, family, output, positional, lines=None, final_path=None,
+                 definition=None, node_cap=F(1e-8), boundary_check=None, facet_proof=None):
     if lines is None:
         lines = [line.split('\t') for line in (output/'faces.tsv').read_text().splitlines()]
-    definition = src.definitions[0]
+    definition = src.definitions[0] if definition is None else definition
     assert [int(row[0]) for row in lines] == sorted(definition.face_ids)
     assert all(len(row) == 3 for row in lines)
     final = read_curves(final_path or output/'final.bgacrv')
-    if family == 'cylinder':
+    if boundary_check is not None:
+        boundary_check(final)
+    elif family == 'cylinder':
         check_seam(final,src,positional,F(1e-8))
     elif family == 'needs_boundary':
         check_closed_plane_boundary(final,src,positional,F(1e-8))
@@ -233,11 +225,15 @@ def check_output(src, family, output, positional, lines=None, final_path=None):
         check_curves(final,src,positional,F(1e-8),'plain',lambda use,uv:plane_value(src,use,uv))
     frontier = Counter()
     total = 0
+    checked_boundaries = {final_path}
     for identifier,curve_path,face_path in lines:
         face = next(face for face in src.faces if face.id == int(identifier))
         boundary,mesh = read_curves(output/curve_path),read_face(output/face_path)
-        kind = 'cylinder' if family == 'cylinder' else 'plane'
-        qualify_face(src,boundary,mesh,positional,F(1e-8),kind,face=face)
+        if boundary_check is not None and output/curve_path not in checked_boundaries:
+            boundary_check(boundary)
+            checked_boundaries.add(output/curve_path)
+        kind = 'original' if facet_proof else 'cylinder' if family == 'cylinder' else 'plane'
+        qualify_face(src,boundary,mesh,positional,node_cap,kind,face=face,facet_proof=facet_proof)
         assert {r['carrier'] for r in mesh['roots']} == {face.carrier_id}, 'other carrier leaked into face roots'
         assert len(mesh['roots']) == 1, 'incomplete/duplicate original analytic root closure'
         incident_chains(src,face,boundary,final)
@@ -262,23 +258,303 @@ def check_output(src, family, output, positional, lines=None, final_path=None):
             result[min(a,b),max(a,b)] += count if a < b else -count
         return +result, +Counter({key:-value for key,value in result.items()})
     expected_frontier = Counter()
-    incidence = Counter(use.edge_id for use in src.coedges)
+    face_ids = set(definition.face_ids)
+    source_loops = {loop.id:loop for loop in src.loops if loop.face_id in face_ids}
+    source_uses = {use.id:use for use in src.coedges if use.loop_id in source_loops}
+    incidence = Counter(use.edge_id for use in source_uses.values())
     if family == 'box':
         assert set(incidence.values()) == {2} and len(incidence) == 12
         assert any(f.orientation == -1 for f in src.faces)
     else:
-        assert all(face.orientation == 1 for face in src.faces)
-        for use in src.coedges:
-            if incidence[use.edge_id] != 1:
+        if boundary_check is None:
+            assert all(face.orientation == 1 for face in src.faces)
+        directions = {}
+        if boundary_check is not None:
+            actual_uses = {row['ids'][0]:row for row in final['uses']}
+            original_faces = {f.id:f for f in src.faces}
+            for loop in source_loops.values():
+                polygon = []
+                for identifier in loop.coedge_ids:
+                    first,count = actual_uses[identifier]['sites']
+                    polygon.extend(s['uv'] for s in final['sites'][first:first+count-1])
+                area = sum(a[0]*b[1]-a[1]*b[0] for a,b in zip(polygon,polygon[1:]+polygon[:1]))
+                assert area != 0
+                normalization = 1 if (area > 0) == loop.outer else -1
+                for identifier in loop.coedge_ids:
+                    directions[identifier] = normalization*original_faces[loop.face_id].orientation
+        for use in source_uses.values():
+            if boundary_check is None and incidence[use.edge_id] != 1:
                 continue
             edge = next(edge for edge in final['edges'] if edge['id'] == use.edge_id)
             first,count = edge['nodes']
             chain = [node['key'] for node in final['nodes'][first:first+count]]
-            if use.sense < 0:
+            if use.sense*directions.get(use.id,1) < 0:
                 chain.reverse()
             expected_frontier.update(zip(chain,chain[1:]))
     assert signed(frontier) == signed(expected_frontier), 'wrong complete physical source frontier'
     return total
+
+
+def original_terms(frame, dimension=3, constant=None, harmonics=()):
+    return (tuple(F(frame[a]) if constant is None else constant[a] for a in range(dimension)),
+            tuple(harmonics))
+
+
+def curve_terms(curve, t):
+    assert curve.dimension == 3 and curve.kind in (1,2,3), 'original curve oracle unsupported'
+    frame = tuple(map(F,curve.frame))
+    if curve.kind == 1:
+        return original_terms(frame,constant=tuple(frame[a]+t*frame[3+a] for a in range(3)))
+    return original_terms(frame,harmonics=(
+        (t,0,tuple(F(curve.radii[0])*frame[3+a] for a in range(3))),
+        (t,1,tuple(F(curve.radii[1])*frame[6+a] for a in range(3)))))
+
+
+def carrier_terms(carrier, uv):
+    frame = tuple(map(F,carrier.frame)); u,v = uv
+    assert carrier.kind in (1,2), 'original carrier oracle unsupported'
+    if carrier.kind == 1:
+        return original_terms(frame,constant=tuple(frame[a]+u*frame[3+a]+v*frame[6+a] for a in range(3)))
+    return original_terms(frame,constant=tuple(frame[a]+v*frame[9+a] for a in range(3)),harmonics=(
+        (u,0,tuple(F(carrier.radii[0])*frame[3+a] for a in range(3))),
+        (u,1,tuple(F(carrier.radii[0])*frame[6+a] for a in range(3)))))
+
+
+def expression_box(*weighted):
+    """Combine identical ORIGINAL arguments before enclosing their sin/cos."""
+    constant = [F(0)]*3; terms = {}
+    for sign,(base,harmonics) in weighted:
+        for a in range(3):
+            constant[a] += sign*base[a]
+        for t,kind,coefficients in harmonics:
+            row = terms.setdefault((t,kind),[F(0)]*3)
+            for a in range(3):
+                row[a] += sign*coefficients[a]
+    lo,hi = list(constant),list(constant)
+    for (t,kind),row in terms.items():
+        if not any(row):
+            continue
+        if t == 0:
+            interval = (F(1-kind),)*2
+        else:
+            sine,cosine = cylinder_trig(t)
+            interval = cosine if kind == 0 else sine
+        for a in range(3):
+            ends = [row[a]*value for value in interval]
+            lo[a] += min(ends); hi[a] += max(ends)
+    return tuple(zip(lo,hi))
+
+
+def exact_point(point):
+    return tuple(point),()
+
+
+def residual_upper(box):
+    return sum(max(abs(a),abs(b))**2 for a,b in box)
+
+
+def residual_lower(box):
+    return sum((a if a>0 else b if b<0 else F(0))**2 for a,b in box)
+
+
+def original_facet(carrier, uv, xyz, upper, depth=0):
+    assert upper >= 0
+    curvature = (F(0) if carrier.kind == 1 else
+        abs(F(carrier.radii[0]))*sum(abs(F(x)) for x in carrier.frame[3:9])*
+        (max(p[0] for p in uv)-min(p[0] for p in uv))**2/8)
+    remainder = upper-curvature
+    errors = [expression_box((1,carrier_terms(carrier,p)),(-1,exact_point(q)))
+              for p,q in zip(uv,xyz)]
+    if remainder >= 0 and max(map(residual_upper,errors)) <= remainder**2:
+        return
+    center = tuple(sum(p[a] for p in uv)/3 for a in range(2))
+    actual = tuple(sum(p[a] for p in xyz)/3 for a in range(3))
+    error = expression_box((1,carrier_terms(carrier,center)),(-1,exact_point(actual)))
+    assert residual_lower(error) <= upper**2, 'original analytic facet counterexample'
+    assert depth < 20, 'original analytic facet oracle unresolved at subdivision cap'
+    p = [*uv,*(tuple((uv[i][a]+uv[j][a])/2 for a in range(2)) for i,j in ((0,1),(1,2),(2,0)))]
+    q = [*xyz,*(tuple((xyz[i][a]+xyz[j][a])/2 for a in range(3)) for i,j in ((0,1),(1,2),(2,0)))]
+    for indices in ((0,3,5),(3,1,4),(5,4,2),(3,4,5)):
+        original_facet(carrier,[p[i] for i in indices],[q[i] for i in indices],upper,depth+1)
+
+
+def original_chord(evaluate, curvature, ts, qa, qb, upper, depth=0):
+    a,b = ts
+    remaining = upper-curvature
+    boxes = [expression_box((1,evaluate(t)),(-1,exact_point(q))) for t,q in ((a,qa),(b,qb))]
+    if remaining >= 0 and max(map(residual_upper,boxes)) <= remaining**2:
+        return
+    middle = (a+b)/2; actual = tuple((x+y)/2 for x,y in zip(qa,qb))
+    error = expression_box((1,evaluate(middle)),(-1,exact_point(actual)))
+    assert residual_lower(error) <= upper**2, 'original analytic chord counterexample'
+    assert depth < 20, 'original analytic chord oracle unresolved at subdivision cap'
+    original_chord(evaluate,curvature/4,(a,middle),qa,actual,upper,depth+1)
+    original_chord(evaluate,curvature/4,(middle,b),actual,qb,upper,depth+1)
+
+
+def original_boundary_checker(src, definition, positional, node_cap):
+    edges = {e.id:e for e in src.edges if e.id in definition.edge_ids}
+    vertices = {v.id:tuple(map(F,v.xyz)) for v in src.vertices if v.id in definition.vertex_ids}
+    curves = {c.id:c for c in src.curves}
+    faces = {f.id:f for f in src.faces if f.id in definition.face_ids}
+    loops = {l.id:l for l in src.loops if l.face_id in faces}
+    uses = {u.id:u for u in src.coedges if u.loop_id in loops}
+    carriers = {c.id:c for c in src.carriers}
+    def check(boundary):
+        assert boundary['definition'] == definition.id
+        assert boundary['digest'] == bytes.fromhex(src.source_sha256)
+        assert [e['id'] for e in boundary['edges']] == sorted(edges)
+        assert {u['ids'][0] for u in boundary['uses']} == set(uses)
+        assert not boundary['aliases'] and not any(e.degenerate for e in edges.values()), \
+            'declared source quotient aliases are outside this analytic reader profile'
+        key_values = {}; actual_edges = {e['id']:e for e in boundary['edges']}
+        for node in boundary['nodes']:
+            assert key_values.setdefault(node['key'],(node['revision'],node['xyz'])) == (node['revision'],node['xyz'])
+        for identifier,edge in actual_edges.items():
+            original = edges[identifier]; curve = curves[original.curve_id]
+            assert edge['curve'] == original.curve_id and edge['vertices'] == original.vertex_ids
+            assert edge['t'] == tuple(map(F,original.parameter_range))
+            first,count = edge['nodes']; pfirst,pcount = edge['intervals']
+            chain = boundary['nodes'][first:first+count]
+            assert len(chain) == count >= 2 and pcount == count-1
+            assert (chain[0]['t'],chain[-1]['t']) == edge['t']
+            assert (chain[0]['xyz'],chain[-1]['xyz']) == tuple(vertices[v] for v in edge['vertices'])
+            # Original V/Ce admission also applies to wire edges with no face use.
+            for endpoint,t in enumerate(edge['t']):
+                error = expression_box((1,curve_terms(curve,t)),
+                                       (-1,exact_point(vertices[edge['vertices'][endpoint]])))
+                assert residual_upper(error) <= node_cap**2
+            direction = 1 if edge['t'][1]>edge['t'][0] else -1
+            assert all(direction*(b['t']-a['t'])>0 for a,b in zip(chain,chain[1:]))
+            # BoundaryForest roots are original spatial knots and original map-t
+            # breakpoints. Exported paths locate MIDPOINT samples within a root;
+            # initial-root endpoints legitimately have an empty path too.
+            low,high = sorted(edge['t'])
+            assert low < high, 'zero-range original edge oracle unsupported'
+            cuts = {low,high}
+            cuts.update(F(t) for t in curve.knots if low < F(t) < high)
+            for use in uses.values():
+                if use.edge_id == identifier and use.parameter_map_kind != 1:
+                    cuts.update(F(t) for t,_ in use.parameter_map if low < F(t) < high)
+            cuts = sorted(cuts,reverse=direction<0)
+            assert len({node['key'] for node in chain[1:-1]}) == count-2
+            for endpoint,node in ((0,chain[0]),(1,chain[-1])):
+                assert node['key'] == (0,edge['vertices'][endpoint],0,0), \
+                    'original endpoint key lost source VertexID authority'
+                assert not node['path']
+            for node in chain[1:-1]:
+                generator,source_id,generation,ordinal = node['key']
+                assert (generator,source_id,generation) == (1,identifier,0) and ordinal > 0, \
+                    'interior key lost original EdgeID authority'
+                if node['t'] in cuts:
+                    assert not node['path']
+                    continue
+                for left,right in zip(cuts,cuts[1:]):
+                    if min(left,right) < node['t'] < max(left,right):
+                        break
+                else:
+                    raise AssertionError('original midpoint outside source roots')
+                for child in node['path']:
+                    middle = (left+right)/2
+                    if child == 0:
+                        right = middle
+                    else:
+                        left = middle
+                assert node['t'] == (left+right)/2, 'source t disagrees with original midpoint path'
+            for node in chain:
+                error = expression_box((1,curve_terms(curve,node['t'])),(-1,exact_point(node['xyz'])))
+                assert residual_upper(error) <= positional**2
+            for offset,(interval,a,b) in enumerate(zip(boundary['physical'][pfirst:pfirst+pcount],chain,chain[1:])):
+                assert interval['key'][0] == identifier and interval['t'] == (a['t'],b['t'])
+                assert interval['nodes'] == (first+offset,first+offset+1)
+                second = (F(0) if curve.kind == 1 else
+                    sum(abs(F(curve.radii[0])*F(x)) for x in curve.frame[3:6])+
+                    sum(abs(F(curve.radii[1])*F(x)) for x in curve.frame[6:9]))
+                original_chord(lambda t:curve_terms(curve,t),second*(b['t']-a['t'])**2/8,
+                               interval['t'],a['xyz'],b['xyz'],interval['parameter'])
+                if interval['correspondence'] == 0:
+                    assert interval['parameter'] <= positional
+                else:
+                    assert interval['correspondence'] == 1 and curve.kind == 1
+                    assert interval['image'] is not None and interval['image'] <= positional
+                    original_chord(lambda t:curve_terms(curve,t),F(0),interval['t'],
+                                   a['xyz'],b['xyz'],interval['image'])
+                    check_line(interval['line'],curve,interval['t'],
+                               {a['t']:a['xyz'],b['t']:b['xyz']},direction,
+                               lambda t:curve_terms(curve,t)[0])
+        for row in boundary['uses']:
+            use = uses[row['ids'][0]]; edge = actual_edges[use.edge_id]
+            face = faces[loops[use.loop_id].face_id]; carrier = carriers[face.carrier_id]
+            assert row['ids'] == (use.id,face.id,use.edge_id,face.carrier_id,use.loop_id)
+            assert row['meta'][:5] == (use.sense,use.reconstructed,use.parameter_map_kind,*use.periodic_shift)
+            first,count = row['sites']; pfirst,pcount = row['intervals']
+            sites = boundary['sites'][first:first+count]
+            ef,en = edge['nodes']; ei,ec = edge['intervals']
+            order = list(range(ef,ef+en)); physical = boundary['physical'][ei:ei+ec]
+            if use.sense < 0:
+                order.reverse(); physical = list(reversed(physical))
+            assert [site['node'] for site in sites] == order and count == en and pcount == ec
+            curve = curves[edge['curve']]
+            for site in sites:
+                node = boundary['nodes'][site['node']]
+                assert site['loop'] == use.loop_id and site['t'] == node['t']
+                assert site['branches'][:2] == use.periodic_shift
+                if use.parameter_map_kind == 1:
+                    expected = site['t']
+                else:
+                    assert use.parameter_map_kind == 2, 'original parameter map oracle unsupported'
+                    pairs = use.parameter_map
+                    for (t0,s0),(t1,s1) in zip(pairs,pairs[1:]):
+                        if min(F(t0),F(t1)) <= site['t'] <= max(F(t0),F(t1)):
+                            expected = F(s0)+(site['t']-F(t0))*(F(s1)-F(s0))/(F(t1)-F(t0)); break
+                    else:
+                        raise AssertionError('source t outside original map')
+                assert site['s'] == expected and site['guard'] <= node_cap
+                source_point = curve_terms(curve,site['t']); surface_point = carrier_terms(carrier,site['uv'])
+                assert residual_upper(expression_box((1,source_point),(-1,surface_point))) <= site['guard']**2
+                for endpoint,t in enumerate(edge['t']):
+                    if site['t'] == t:
+                        vertex = exact_point(vertices[edge['vertices'][endpoint]])
+                        assert residual_upper(expression_box((1,vertex),(-1,source_point))) <= site['guard']**2
+                        assert residual_upper(expression_box((1,vertex),(-1,surface_point))) <= site['guard']**2
+            for j,interval in enumerate(boundary['intervals'][pfirst:pfirst+pcount]):
+                assert interval['sites'] == (first+j,first+j+1) and interval['key'] == physical[j]['key']
+                assert interval['trace'] <= positional
+                a,b = sites[j:j+2]; qa,qb = [boundary['nodes'][s['node']]['xyz'] for s in (a,b)]
+                du = b['uv'][0]-a['uv'][0]
+                curvature = (F(0) if carrier.kind == 1 else
+                    abs(F(carrier.radii[0]))*sum(abs(F(x)) for x in carrier.frame[3:9])*du**2/8)
+                def evaluate(t):
+                    uv = tuple(a['uv'][axis]+t*(b['uv'][axis]-a['uv'][axis]) for axis in range(2))
+                    return carrier_terms(carrier,uv)
+                original_chord(evaluate,curvature,(F(0),F(1)),qa,qb,interval['trace'])
+                assert interval['authority'] == 1 and use.reconstructed and interval['domain'] is None
+    return check
+
+
+def check_saved(options):
+    output = options.saved_output.resolve()
+    assert options.definition and options.source_file, 'saved reader requires original source file and definition'
+    assert options.source_file.read_bytes() == (output/'source.bgsource').read_bytes(), 'retained original source bytes changed'
+    src = load_source(options.source_file)
+    definition = next(d for d in src.definitions if d.id == options.definition)
+    rows = read_tsv(output/'queries.tsv'); index = read_tsv(output/'faces.tsv')
+    for row in rows:
+        q = int(row['query']); positional = exact_metadata(row['local_positional_exact'])
+        node_cap = exact_metadata(row['local_node_exact'])
+        selected = [r for r in index if int(r['query']) == q]
+        for face in selected:
+            assert int(face['definition']) == definition.id and int(face['boundary_epoch']) >= 0
+            assert int(face['face_boundary_generation']) == read_face(output/face['mesh'])['key'][2]
+        final = read_tsv(output/f'query-{q}'/'final-boundary.tsv')[0]
+        count = check_output(src,'original',output,positional,
+            [(r['face'],r['boundary'],r['mesh']) for r in selected],
+            output/f'query-{q}'/final['snapshot'],definition,node_cap,
+            original_boundary_checker(src,definition,positional,node_cap),original_facet)
+        assert count == int(row['facets']) and len(selected) == int(row['faces'])
+        assert int(row['contact_facets']) == count and int(row['contact_forbidden_pairs']) == 0
+        print(f'original analytic component PASS\tfaces\t{len(selected)}\tfacets\t{count}')
+
 
 
 def read_tsv(path):
@@ -418,14 +694,22 @@ def run(options, root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--executable',type=Path,required=True)
+    parser.add_argument('--executable',type=Path)
+    parser.add_argument('--saved-output',type=Path,help='read existing complete output; never invoke native geometry')
+    parser.add_argument('--source-file',type=Path,help='unchanged original source bytes for saved output')
+    parser.add_argument('--definition',type=int)
     parser.add_argument('--caller',action='store_true',help='invoke complete component CLI and transaction ports')
-    parser.add_argument('--family',choices=('box','cylinder','needs_boundary','coincident'),required=True)
+    parser.add_argument('--family',choices=('box','cylinder','needs_boundary','coincident'))
     parser.add_argument('--threads',type=int,choices=(1,4),default=1)
     parser.add_argument('--module',type=Path)
     parser.add_argument('--device',type=int,choices=(0,1),default=0)
     parser.add_argument('--workspace',type=Path)
     options = parser.parse_args()
+    if options.saved_output:
+        check_saved(options)
+        return
+    if not options.executable or not options.family:
+        parser.error('native mode requires --executable and --family')
     if options.workspace:
         options.workspace.mkdir(parents=True,exist_ok=False)
         run(options,options.workspace.resolve())

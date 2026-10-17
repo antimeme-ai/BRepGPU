@@ -60,3 +60,13 @@ Builds: `build/adaptive-component-cli-release` and the reused isolated instrumen
 `context/adaptive-component-cli`. Root actual-source CLI ownership/exact transport/
 publication review ACCEPT; final source/driver review handoff sent to construction
 owner. No independent commit.
+
+## Reader review correction
+
+Construction peer identified a valid test-only counter conflation: global forest
+epoch need not equal per-face boundary generation after asymmetric incidents.
+Removed that equality; BGACRV has no epoch field, so index epoch is only parsed
+routing metadata. Face generation still matches BGATRM key[2], and the SAME
+incident_chains reader proves exact retained/current physical pairing. Saved
+needs_boundary outputs passed the corrected reader for all3 queries; no native
+rerun. Root informed; remaining driver reuse/publication review ACCEPT.
