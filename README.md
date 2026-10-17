@@ -17,7 +17,20 @@ reproduces the image exactly and records evaluation,setup,qualification and CPU
 display costs. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
 remain available.
 
-[![The complete original OM10 movement — P100 exploded view](assets/om10/p1001-exploded-poster-4k.png)](results/om10-watch-2026-10-17/REPORT.md)
+[![OM10 — source-linked exploded assembly diagram](assets/om10/p1001-exploded-assembly-4k.png)](results/om10-exploded-2026-10-17/REPORT.md)
+
+**A proper exploded movement diagram:** the mainplate, bridges, train, barrel,
+winding work, escapement, balance and calendar occupy separate functional layers.
+All **166 original occurrences** and orientations remain, with a complete part
+legend. Download the [3840×5871 CPU and P100 diagrams](results/om10-exploded-2026-10-17/REPORT.md).
+These replay the same completed mesh; they do not remesh it. Exploded-view raster
+and result download take **0.421s CPU12 / 0.199s P100**; the report records every
+new display and export stage. The authored translations illustrate alignment,
+not validated disassembly. The [same diagram from genuine NVIDIA CPU geometry](assets/om10/nvidia-heal0-exploded-assembly-4k.png)
+now completes all parts under both healing policies: **0.005mm chord request,
+0°/0° angle settings, COMPLETE_UNQUALIFIED**. Original inventory and physical
+shell/source-Euler checks pass; independent distance qualification remains
+separate, so these are not matched-quality speedup results.
 
 **The real OM10 watch is rendered.** Download [3840×4200 assembled and exploded
 posters](results/om10-watch-2026-10-17/REPORT.md), with 2× supersampled native 4K
@@ -31,9 +44,14 @@ dominates, so this does not establish an overall GPU advantage. Separately timed
 rasterization including result download.
 [Full-size images, every recorded phase, source-linked part legend and limitations](results/om10-watch-2026-10-17/REPORT.md).
 The independent whole-watch geometry reader and external alpha qualification
-remain incomplete. Fresh NVIDIA USD/BRep CPU attempts complete103/107 components
-under each healing policy; both report an incomplete pipeline and no reference
-image or complete-render time. Source design: [Association openmovement](https://openmovement.org/project/om10/),
+remain incomplete. The complete NVIDIA USD/BRep CPU chord-only runs now take
+**43.67s without healing /45.00s with healing**, fresh STEP through both original
+labeled views, retaining all107 definitions and passing physical/source-Euler
+checks. Those walls include STEP transfer; the owned snapshot-based walls above
+exclude it. The [complete reference report](results/om10-nvidia-complete-2026-10-17/REPORT.md)
+records actual parameters, every stage, earlier103/107 refusals and the separate
+25°/25° manifold failures. No matched-quality ratio is claimed.
+Source design: [Association openmovement](https://openmovement.org/project/om10/),
 [CC BY-SA 3.0](assets/om10/LICENSE.md); BRepGPU supplies mesh, materials,
 lighting, explosion and labels.
 
