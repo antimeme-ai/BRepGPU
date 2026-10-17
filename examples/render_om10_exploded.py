@@ -163,7 +163,7 @@ def poster(path,raw,mask,view,records,labels,annotations,backend,costs):
     a.extend((f'<rect x="0" y="{panel_y}" width="{w}" height="{185*factor}" fill="#dce7eb"/>',
        f'<text x="{85*factor}" y="{panel_y+46*factor}" font-size="{24*factor}" fill="{accent}" font-weight="700">AUTHORED MODULE EXPLOSION · SAME COMPLETED MESH</text>',
        f'<text x="{85*factor}" y="{panel_y+88*factor}" font-size="{22*factor}">This exploded view raster + download: {costs["raster"]:.3f}s · Both-view replay process: {costs["display"]:.3f}s</text>',
-       f'<text x="{85*factor}" y="{panel_y+126*factor}" font-size="{21*factor}" fill="{gray}">Original CPU12 cold source → mesh → 1920 both views: {costs["cold"]:.2f}s · Meshing: {costs["mesh"]:.2f}s · no remeshing in this replay</text>',
+       f'<text x="{85*factor}" y="{panel_y+126*factor}" font-size="{21*factor}" fill="{gray}">Mesh source: CPU12 completed mesh · Original CPU12 cold source → mesh → 1920 both views: {costs["cold"]:.2f}s · Meshing: {costs["mesh"]:.2f}s · no remeshing in this replay</text>',
        f'<text x="{85*factor}" y="{panel_y+164*factor}" font-size="{19*factor}" fill="{gray}">Guides show authored source alignment; not validated removal paths. Full native stages and PNG/SVG/export costs accompany this image.</text>'))
     column=(w-160*factor)/4
     for i,(kind,text,record) in enumerate(ordered):
@@ -179,6 +179,9 @@ def poster(path,raw,mask,view,records,labels,annotations,backend,costs):
 def main(args):
     require(sys.platform=='linux','geometry/display execution belongs on the fleet')
     require(not args.output.exists(),'new output directory required')
+    original_fields=dict(item.split('=',1) for item in args.process_report.read_text().splitlines()[-1].split())
+    require(original_fields.get('exit')=='0' and math.isfinite(float(original_fields['wall'])) and float(original_fields['wall'])>0,
+            'original process must have succeeded with a finite positive wall time')
     started=time.perf_counter();match=load_native_model_match(args.model,args.query,.005)
     labels=rows(match.labels_path);data=match.scene_path.read_bytes()
     require(len(match.source.definitions)==107 and len(match.source.faces)==9162,'complete original watch required')
@@ -216,12 +219,13 @@ def main(args):
     begin=time.perf_counter();mask=args.output/'background-mask.png';counts=pixel_inventory(args.output/'native/frame-000001.instance',views[1].width,views[1].height,offsets,mask)
     annotation=make_annotation(records,labels,boxes,views[1],args.output/'native/frame-000001.instance',counts)
     visibility=[]
-    for row,r in zip(labels,records):
+    labels_by_id={int(row['occurrence']):row for row in labels}
+    for r in records:
+        row=labels_by_id[r.occurrence_id]
         visibility.append((r.display_label,r.occurrence_id,row['product_name'],r.module,counts.get(r.occurrence_id,0),row['product_name'] in CRITICAL_NAMES))
     tsv(args.output/'visibility.tsv',('display_label','occurrence_id','original_product_name','module','actual_visible_pixels','major_part'),visibility)
     tsv(args.output/'guides.tsv',('occurrence_id','source_x','source_y','exploded_x','exploded_y','role'),annotation[1])
     stages.append(('actual_visibility_mask_and_guides',time.perf_counter()-begin))
-    original_fields=dict(item.split('=',1) for item in args.process_report.read_text().splitlines()[-1].split())
     old={r['scope']:float(r['seconds']) for r in rows(args.model/'timings.tsv')}
     costs={'raster':raster[1],'display':display,'cold':float(original_fields['wall']),'mesh':old[f'query{args.query}.complete_meshing']}
     backend='CPU12' if args.backend=='cpu' else 'P1001 DISPLAY / CPU12 HOST'

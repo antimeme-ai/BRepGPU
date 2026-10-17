@@ -164,3 +164,22 @@ Ownership: this unit owns the eventual explicit layout/replay script and focused
 presentation test/docs only. Root retains native model caller, meshing, CMake,
 reference pipeline and public report. No implementation/render/commit is selected
 on the current reference-repair branch.
+
+## Delivered interface
+
+Implemented `examples/om10_explosion.py` and
+`examples/render_om10_exploded.py`; direct transport properties are in
+`tests/test_om10_explosion.py`. Final manifests are named `explosion.tsv` and
+contain166 canonical occurrence rows with columns:
+`occurrence_id`, `display_label`, `source_usage_path`, `product_id`,
+`definition_id`, `source_group`, `module`, `role`, `world_offset_x_mm`,
+`world_offset_y_mm`, `world_offset_z_mm`, `reason`.
+
+`views.bgview` contains the exact assembled/exploded frames. NVIDIA replay must
+consume that same source-usage translation word and view bytes with its genuine
+geometry. `diagram.bgscene` preserves every non-explosion input byte. All20
+major parts are actually visible in the final matched CPU/P100 ID buffers;
+150of166 occurrences have visible pixels. All166 remain in source geometry,
+manifest and full original-name legend. The final poster is3840×5871 around an
+unchanged3840×4000 native raster,2× supersampled. Actual scoped timings and
+limitations are recorded in the unit journal; no new meshing time is claimed.
