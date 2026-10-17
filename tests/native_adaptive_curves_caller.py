@@ -269,14 +269,18 @@ def whole_chord(net, a, b, qa, qb, bound, allowance):
 
 
 
-def check_line(record,curve,ts,trace_points,traversal):
+def check_line(record,curve,ts,trace_points,traversal,source_value=None):
     assert record is not None
     values,direction=record
     covector,cs,ss,tt=values[:3],values[3:5],values[5:7],values[7:9]
     assert any(covector) and direction==traversal and set(tt)==set(ts)
     for t,scalar,selected in zip(tt,cs,ss):
-        h=curve_h(curve,t)
-        assert scalar==sum(covector[j]*h[j]/h[3] for j in range(3))
+        if source_value is None:
+            h=curve_h(curve,t)
+            point=tuple(h[j]/h[3] for j in range(3))
+        else:
+            point=source_value(t)
+        assert scalar==sum(covector[j]*point[j] for j in range(3))
         p=trace_points[t]
         assert selected==sum(covector[j]*p[j] for j in range(3))
 

@@ -335,16 +335,26 @@ def cylinder_source():
 @lru_cache(maxsize=None)
 def cylinder_trig(u):
     """Exact Taylor intervals; tail is alternating and decreasing after term32."""
-    assert abs(u) <= 7
     sine,cosine,st,ct = F(0),F(0),u,F(1)
     for k in range(32):
         sine += st
         cosine += ct
         st *= -u*u/F((2*k+2)*(2*k+3))
         ct *= -u*u/F((2*k+1)*(2*k+2))
-    # For k>=32 the term ratio is <49/(64*65)<1. Each convergent
-    # alternating tail is enclosed by its first omitted term. Every sum and
-    # tail bound above is rational, with no libm/Decimal rounding assumption.
+    # Preserve the authored32-term profile. For larger ORIGINAL arguments,
+    # continue the same rational series until its tail is both decreasing and
+    # small. No range reduction/phase equivalence or libm truth is introduced.
+    if abs(u) > 7:
+        k = 32
+        target = F(1, 1 << 192)
+        while not (u*u < (2*k+1)*(2*k+2) and max(abs(st),abs(ct)) <= target):
+            assert k < 512, 'original-argument trig oracle unresolved at term cap'
+            sine += st; cosine += ct
+            st *= -u*u/F((2*k+2)*(2*k+3))
+            ct *= -u*u/F((2*k+1)*(2*k+2))
+            k += 1
+    # From the first omitted term onward both alternating tails decrease.
+    # Their first omitted terms therefore bound the full remaining tails.
     return (sine-abs(st),sine+abs(st)),(cosine-abs(ct),cosine+abs(ct))
 
 
@@ -519,7 +529,7 @@ def read_face(path):
         components=components, facets=facets, uses=uses, packets=packets)
 
 
-def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=None):
+def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=None, facet_proof=None):
     assert mesh['digest'] == bytes.fromhex(src.source_sha256) == boundary['digest']
     face = src.faces[0] if face is None else face
     assert mesh['key'][6:] == (face.definition_id, face.id, face.carrier_id)
@@ -568,7 +578,9 @@ def qualify_face(src, boundary, mesh, positional, node_cap, kind='plane', face=N
         b = tuple(points[2]['xyz'][j]-points[0]['xyz'][j] for j in range(3))
         cross = (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])
         assert any(cross), 'actual physical facet collapsed'
-        if kind == 'plane':
+        if facet_proof is not None:
+            facet_proof(carrier, [p['uv'] for p in points], [p['xyz'] for p in points], mesh['upper'])
+        elif kind == 'plane':
             for point in points:
                 u,v = point['uv']
                 truth = tuple(F(carrier.frame[j])+u*F(carrier.frame[3+j])+v*F(carrier.frame[6+j])
