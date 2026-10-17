@@ -29,7 +29,7 @@ enum class TrimPieceGeometry : uint32_t { sealed_virtual, whole_parent };
 struct TrimPieceRecord final {
   uint32_t parent, leaf;
   OriginalRootSlot original;
-  Range<ExactEntry> original_uv, affine_xyz;
+  Range<ExactEntry> original_uv, barycentric;
   TrimPieceGeometry geometry = TrimPieceGeometry::sealed_virtual;
 };
 struct TrimFacetRecord final {

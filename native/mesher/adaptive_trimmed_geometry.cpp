@@ -521,13 +521,8 @@ prepare_work_data(JobContext &context, SurfaceBoundView surface,
         for (const auto &value : piece_uv)
           static_cast<void>(builder.append(value));
         for (const auto *vertex : vertices)
-          for (uint32_t axis = 0; axis < 3; ++axis) {
-            auto value = Rational(budget);
-            for (uint32_t corner = 0; corner < 3; ++corner)
-              value = value.add(vertex->barycentric[corner].multiply(
-                  Rational::from_double(budget, xyz[corner * 3 + axis])));
-            static_cast<void>(builder.append(value));
-          }
+          for (const auto &lambda : vertex->barycentric)
+            static_cast<void>(builder.append(lambda));
         exact_entries += 15;
         pieces.push_back(piece);
         ++stats.pieces;
@@ -659,8 +654,8 @@ std::array<Rational, 6> piece_uv(bgfd::Budget &budget, const TrimFacetWork &work
           exact(budget, work.values(), at + 2), exact(budget, work.values(), at + 3),
           exact(budget, work.values(), at + 4), exact(budget, work.values(), at + 5)};
 }
-std::array<Rational, 9> piece_xyz(bgfd::Budget &budget, const TrimFacetWork &work,
-                                  const TrimPieceRecord &piece) {
+std::array<Rational, 9> piece_xyz_exact(bgfd::Budget &budget, const TrimFacetWork &work,
+                                        const TrimPieceRecord &piece) {
   if (piece.geometry == TrimPieceGeometry::whole_parent) {
     require(piece.parent < work.facets().size(), "direct piece parent missing");
     const auto xyz =
@@ -671,17 +666,60 @@ std::array<Rational, 9> piece_xyz(bgfd::Budget &budget, const TrimFacetWork &wor
             Rational::from_double(budget, xyz[6]), Rational::from_double(budget, xyz[7]),
             Rational::from_double(budget, xyz[8])};
   }
-  require(piece.affine_xyz.count == 9, "trim SAME-L coordinate shape");
-  const auto at = piece.affine_xyz.first;
-  return {exact(budget, work.values(), at),     exact(budget, work.values(), at + 1),
-          exact(budget, work.values(), at + 2), exact(budget, work.values(), at + 3),
-          exact(budget, work.values(), at + 4), exact(budget, work.values(), at + 5),
-          exact(budget, work.values(), at + 6), exact(budget, work.values(), at + 7),
-          exact(budget, work.values(), at + 8)};
+  require(piece.parent < work.facets().size() && piece.barycentric.count == 9,
+          "trim exact SAME-L barycentric shape/parent");
+  const auto xyz =
+      facet_xyz(*work.data().construction, work.facets()[piece.parent].construction_facet);
+  std::array<Rational, 9> result{Rational(budget), Rational(budget), Rational(budget),
+                                 Rational(budget), Rational(budget), Rational(budget),
+                                 Rational(budget), Rational(budget), Rational(budget)};
+  for (uint32_t vertex = 0; vertex < 3; ++vertex)
+    for (uint32_t corner = 0; corner < 3; ++corner) {
+      const auto lambda =
+          exact(budget, work.values(), piece.barycentric.first + 3 * vertex + corner);
+      for (uint32_t axis = 0; axis < 3; ++axis)
+        result[3 * vertex + axis] = result[3 * vertex + axis].add(
+            lambda.multiply(Rational::from_double(budget, xyz[3 * corner + axis])));
+    }
+  return result;
+}
+std::array<Interval, 9> piece_xyz_intervals(bgfd::Budget &budget, const TrimFacetWork &work,
+                                            const TrimPieceRecord &piece) {
+  require(piece.parent < work.facets().size(), "trim interval SAME-L parent missing");
+  const auto xyz =
+      facet_xyz(*work.data().construction, work.facets()[piece.parent].construction_facet);
+  std::array<Interval, 9> result{};
+  if (piece.geometry == TrimPieceGeometry::whole_parent) {
+    for (uint32_t i = 0; i < 9; ++i)
+      result[i] = numeric::point(xyz[i]);
+    return result;
+  }
+  require(piece.barycentric.count == 9, "trim interval SAME-L barycentric shape");
+  for (uint32_t vertex = 0; vertex < 3; ++vertex)
+    for (uint32_t corner = 0; corner < 3; ++corner) {
+      const auto lambda = exact_interval(
+          exact(budget, work.values(), piece.barycentric.first + 3 * vertex + corner));
+      for (uint32_t axis = 0; axis < 3; ++axis)
+        result[3 * vertex + axis] =
+            numeric::add(result[3 * vertex + axis],
+                         numeric::mul(lambda, numeric::point(xyz[3 * corner + axis])));
+    }
+  for (const auto &coordinate : result)
+    if (!numeric::valid(coordinate))
+      throw Error(ErrorCode::unresolved,
+                  "trim SAME-L interval dot exceeds finite arithmetic profile");
+  return result;
 }
 Rational work_allowance(bgfd::Budget &budget, const TrimFacetWork &work) {
   const auto &quality = work.data().allowances;
   return import_exact(budget, quality.values.view(quality.face_position));
+}
+OriginalRootSlot whole_source_root(const TrimFacetRecord &parent, const char *message) {
+  if (parent.original_plane)
+    return parent.original;
+  if (parent.whole_original.has_value())
+    return parent.whole_original.value();
+  throw Error(ErrorCode::invalid_source, message);
 }
 std::array<Rational, 4> leaf_box(bgfd::Budget &budget, const TrimFacetWork &work,
                                  const TrimPieceRecord &piece) {
@@ -695,7 +733,7 @@ std::array<Rational, 4> leaf_box(bgfd::Budget &budget, const TrimFacetWork &work
 }
 SourceTriangleInput source_input(bgfd::Budget &budget, const SourceCache &cache,
                                  OriginalRootSlot original, std::span<const Rational, 6> uv,
-                                 std::span<const Rational, 9> xyz, const Rational &allowance) {
+                                 std::span<const Interval, 9> xyz, const Rational &allowance) {
   require(original.value < cache.original_roots().size(), "foreign source triangle root");
   const auto &root = cache.original_roots()[original.value];
   SourceTriangleInput input;
@@ -708,8 +746,16 @@ SourceTriangleInput source_input(bgfd::Budget &budget, const SourceCache &cache,
       input.normalized_uv[vertex * 2 + axis] = normalized_interval(uv[vertex * 2 + axis], lo, hi);
     }
   for (uint32_t i = 0; i < 9; ++i)
-    input.affine_xyz[i] = exact_interval(xyz[i]);
+    input.affine_xyz[i] = xyz[i];
   return input;
+}
+SourceTriangleInput source_input(bgfd::Budget &budget, const SourceCache &cache,
+                                 OriginalRootSlot original, std::span<const Rational, 6> uv,
+                                 std::span<const Rational, 9> xyz, const Rational &allowance) {
+  std::array<Interval, 9> enclosed{};
+  for (uint32_t i = 0; i < 9; ++i)
+    enclosed[i] = exact_interval(xyz[i]);
+  return source_input(budget, cache, original, uv, enclosed, allowance);
 }
 } // namespace
 TrimBaseBatch pack_base_pieces(JobContext &context, const TrimFacetWork &work,
@@ -725,7 +771,7 @@ TrimBaseBatch pack_base_pieces(JobContext &context, const TrimFacetWork &work,
     const auto &piece = work.pieces()[index];
     const auto uv = piece_uv(budget, work, piece);
     const auto box = leaf_box(budget, work, piece);
-    const auto xyz = piece_xyz(budget, work, piece);
+    const auto xyz = piece_xyz_intervals(budget, work, piece);
     const auto &leaf = selection->leaves[piece.leaf];
     ActualFacetInput input;
     input.source_to_bilinear_upper = leaf.source_to_bilinear_upper;
@@ -740,7 +786,7 @@ TrimBaseBatch pack_base_pieces(JobContext &context, const TrimFacetWork &work,
         input.uv[vertex * 2 + axis] =
             normalized_interval(uv[vertex * 2 + axis], box[axis * 2], box[axis * 2 + 1]);
     for (uint32_t i = 0; i < 9; ++i)
-      input.affine_xyz[i] = exact_interval(xyz[i]);
+      input.affine_xyz[i] = xyz[i];
     batch.inputs.push_back(input);
   }
   return batch;
@@ -756,7 +802,7 @@ TrimSourceBatch pack_source_pieces(JobContext &context, const TrimFacetWork &wor
   for (const auto index : indices) {
     const auto &piece = work.pieces()[index];
     const auto uv = piece_uv(budget, work, piece);
-    const auto xyz = piece_xyz(budget, work, piece);
+    const auto xyz = piece_xyz_intervals(budget, work, piece);
     batch.inputs.push_back(
         source_input(budget, work.data().surface.source(), piece.original, uv, xyz, allowance));
   }
@@ -794,8 +840,7 @@ TrimSourceBatch pack_original_facets(JobContext &context, const TrimFacetWork &w
   const auto allowance = work_allowance(budget, work);
   for (auto index : indices) {
     const auto &parent = work.facets()[index];
-    require(parent.original_plane || parent.whole_original.has_value(),
-            "whole source support unavailable");
+    const auto original = whole_source_root(parent, "whole source support unavailable");
     const auto uv = facet_uv(budget, *work.data().construction, parent.construction_facet);
     const auto actual = facet_xyz(*work.data().construction, parent.construction_facet);
     std::array<Rational, 9> xyz{Rational(budget), Rational(budget), Rational(budget),
@@ -804,9 +849,7 @@ TrimSourceBatch pack_original_facets(JobContext &context, const TrimFacetWork &w
     for (uint32_t i = 0; i < 9; ++i)
       xyz[i] = Rational::from_double(budget, actual[i]);
     batch.inputs.push_back(
-        source_input(budget, work.data().surface.source(),
-                     parent.original_plane ? parent.original : parent.whole_original.value(), uv,
-                     xyz, allowance));
+        source_input(budget, work.data().surface.source(), original, uv, xyz, allowance));
   }
   return batch;
 }
@@ -814,8 +857,7 @@ TrimPreciseResult compare_trim_original_facet_precise(JobContext &context,
                                                       const TrimFacetWork &work, uint32_t index) {
   require(index < work.facets().size(), "precise direct parent missing");
   const auto &parent = work.facets()[index];
-  require(parent.original_plane || parent.whole_original.has_value(),
-          "precise whole source support unavailable");
+  const auto original = whole_source_root(parent, "precise whole source support unavailable");
   auto &budget = context.budget;
   const auto uv = facet_uv(budget, *work.data().construction, parent.construction_facet);
   const auto actual = facet_xyz(*work.data().construction, parent.construction_facet);
@@ -825,10 +867,8 @@ TrimPreciseResult compare_trim_original_facet_precise(JobContext &context,
   for (uint32_t i = 0; i < 9; ++i)
     xyz[i] = Rational::from_double(budget, actual[i]);
   const auto allowance = work_allowance(budget, work);
-  return compare_original_triangle_precise(work.data().surface.source(),
-                                           parent.original_plane ? parent.original
-                                                                 : parent.whole_original.value(),
-                                           uv, xyz, allowance, budget);
+  return compare_original_triangle_precise(work.data().surface.source(), original, uv, xyz,
+                                           allowance, budget);
 }
 namespace {
 Rational norm_square(std::span<const Rational> vector, bgfd::Budget &budget) {
@@ -983,7 +1023,7 @@ TrimPreciseResult compare_trim_piece_precise(JobContext &context, const TrimFace
   auto &budget = context.budget;
   const auto &piece = work.pieces()[piece_index];
   const auto uv = piece_uv(budget, work, piece);
-  const auto xyz = piece_xyz(budget, work, piece);
+  const auto xyz = piece_xyz_exact(budget, work, piece);
   const auto allowance = work_allowance(budget, work);
   if (method == TrimBoundMethod::original_source)
     return precise_source(work.data().surface.source(), piece.original, uv, xyz, allowance, budget);

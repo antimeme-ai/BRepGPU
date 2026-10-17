@@ -2,6 +2,10 @@
 
 2026-10-17. Finite implementation PLAN; no product edits before review.
 
+Delivered. The subsequent [deferred exact XYZ unit](adaptive-trimmed-lazy-xyz-plan.md)
+replaces clipped pieces' eager XYZ payload below with exact barycentrics;
+ordinary packs enclose the same affine map and precise requests evaluate it exactly.
+
 ## Actual problem and existing machinery
 
 The active watch stack is in prepare_trim_facet_work while other scheduler
