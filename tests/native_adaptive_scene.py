@@ -124,13 +124,19 @@ def close_vector(a,b):
     assert all(abs(float(x)-float(y)) <= 1e-10*max(1.,abs(float(y))) for x,y in zip(a,b)), (a,b)
 
 
-def check_output(src,kind,family,output):
-    scene = read_scene(output/'actual.bgscene')
-    assert [d[0] for d in scene['definitions']] == sorted(d.id for d in src.definitions)
+def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
+                 expected_instances=None,expected_definitions=None,debug_outputs=True,
+                 check_geometry=True):
+    scene = read_scene(scene_path or output/'actual.bgscene')
+    definitions = (sorted(d.id for d in src.definitions) if expected_definitions is None
+                   else sorted(expected_definitions))
+    assert [d[0] for d in scene['definitions']] == definitions
     vertices,carriers = scene['vertices'],scene['carriers']
-    raw = (output/'actual.jets').read_bytes()
-    assert len(raw) == len(vertices)*128
-    jets = [struct.unpack_from('<15dII',raw,i*128) for i in range(len(vertices))]
+    jets = None
+    if debug_outputs:
+        raw = (output/'actual.jets').read_bytes()
+        assert len(raw) == len(vertices)*128
+        jets = [struct.unpack_from('<15dII',raw,i*128) for i in range(len(vertices))]
     physical_to_source,source_to_physical = {},{}
     normal_expected = {}
     crease = defaultdict(set)
@@ -144,11 +150,13 @@ def check_output(src,kind,family,output):
             face_triangles[row[4]].append(row)
         assert set(face_triangles) == set(source_definition.face_ids)
         for face in actual_faces:
-            boundary = read_curves(output/(str(face.id)+'.bgacrv'))
-            mesh = read_face(output/(str(face.id)+'.bgatrm'))
-            if kind == 'cylinder':
+            paths = ((str(face.id)+'.bgacrv',str(face.id)+'.bgatrm') if face_paths is None
+                     else face_paths[face.id])
+            boundary = read_curves(output/paths[0])
+            mesh = read_face(output/paths[1])
+            if check_geometry and kind == 'cylinder':
                 check_seam(boundary,src,mesh['upper'],mesh['node_source'])
-            else:
+            elif check_geometry:
                 def value(use,uv):
                     if kind != 'plane':
                         return source_value(kind,*uv)
@@ -157,7 +165,8 @@ def check_output(src,kind,family,output):
                     original = next(c for c in src.carriers if c.id == f.carrier_id)
                     return tuple(F(original.frame[a])+uv[0]*F(original.frame[3+a])+uv[1]*F(original.frame[6+a]) for a in range(3))
                 check_curves(boundary,src,mesh['upper'],mesh['node_source'],'plain',value)
-            qualify_face(src,boundary,mesh,mesh['upper'],mesh['node_source'],kind,face=face)
+            if check_geometry:
+                qualify_face(src,boundary,mesh,mesh['upper'],mesh['node_source'],kind,face=face)
             assert len(face_triangles[face.id]) == len(mesh['facets'])
             for row,facet in zip(face_triangles[face.id],mesh['facets']):
                 roles = facet['sites'] if face.orientation > 0 else (facet['sites'][0],facet['sites'][2],facet['sites'][1])
@@ -190,9 +199,10 @@ def check_output(src,kind,family,output):
                     assert physical_to_source.setdefault(display['physical'],key) == key
                     assert source_to_physical.setdefault(key,display['physical']) == display['physical']
                     expected = source_normal(src,face,site['uv'],carrier,kind)
-                    close_vector(jets[global_id][9:12],expected)
-                    assert struct.pack('<3d',*jets[global_id][12:15]) == struct.pack('<3d',*display['xyz'])
-                    assert jets[global_id][-1] & 2
+                    if jets is not None:
+                        close_vector(jets[global_id][9:12],expected)
+                        assert struct.pack('<3d',*jets[global_id][12:15]) == struct.pack('<3d',*display['xyz'])
+                        assert jets[global_id][-1] & 2
                     normal_expected[global_id] = expected
                 style = face.style_id
                 assert row[3] == (next(i for i,s in enumerate(src.styles) if s.id == style)+1 if style else 2**32-1)
@@ -201,10 +211,18 @@ def check_output(src,kind,family,output):
     if family == 'c0':
         assert any(len(roots) == 2 for roots in crease.values()), 'C0 sides collapsed to canonical point root'
     assert scene['materials'] == [(0.7,0.7,0.7,0.5)]+[(*s.rgba[:3],.5) for s in src.styles]
-    expected_matrices = [u.transform for u in src.usages] if family == 'styled' else [(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.)]
-    assert [tuple(i['matrix']) for i in scene['instances']] == expected_matrices
-    assert [i['material'] for i in scene['instances']] == ([3,4] if family == 'styled' else [1])
-    for frame in (0,1):
+    if expected_instances is None:
+        expected_matrices = [u.transform for u in src.usages] if family == 'styled' else [(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.)]
+        assert [tuple(i['matrix']) for i in scene['instances']] == expected_matrices
+        assert [i['material'] for i in scene['instances']] == ([3,4] if family == 'styled' else [1])
+    else:
+        assert len(scene['instances']) == len(expected_instances)
+        for actual,expected in zip(scene['instances'],expected_instances):
+            identifier,definition,matrix,material = expected
+            assert actual['id'] == identifier
+            assert scene['definitions'][actual['definition']][0] == definition
+            assert tuple(actual['matrix']) == matrix and actual['material'] == material
+    for frame in ((0,1) if debug_outputs else ()):
         raw = (output/f'frame-{frame}.projected').read_bytes()
         assert len(raw) == sum(scene['definitions'][i['definition']][2] for i in scene['instances'])*96
         at = 0

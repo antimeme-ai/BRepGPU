@@ -222,7 +222,7 @@ def check_output(src, family, output, positional, lines=None, final_path=None,
     elif family == 'needs_boundary':
         check_closed_plane_boundary(final,src,positional,F(1e-8))
     else:
-        check_curves(final,src,positional,F(1e-8),'plain',lambda use,uv:plane_value(src,use,uv))
+        check_curves(final,src,positional,node_cap,'plain',lambda use,uv:plane_value(src,use,uv),definition)
     frontier = Counter()
     total = 0
     checked_boundaries = {final_path}

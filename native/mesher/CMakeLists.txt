@@ -146,8 +146,12 @@ elseif(BREPGPU_NATIVE_INSTRUMENTATION STREQUAL "thread")
   target_compile_options(brepgpu_mesher_display_cpu PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
   target_link_options(brepgpu_mesher_display_cpu PRIVATE -fsanitize=thread)
 endif()
+add_library(brepgpu_mesher_native_display STATIC native_display.cpp)
+target_link_libraries(brepgpu_mesher_native_display PUBLIC
+  brepgpu_mesher_presentation brepgpu_mesher_display_cpu ${CMAKE_DL_LIBS})
+brepgpu_native_cpu_rigor(brepgpu_mesher_native_display)
 add_executable(brepgpu-mesh main.cpp)
-target_link_libraries(brepgpu-mesh PRIVATE brepgpu_mesher_run brepgpu_mesher_mesh_publish brepgpu_mesher_scene brepgpu_mesher_presentation brepgpu_mesher_display_cpu Threads::Threads ${CMAKE_DL_LIBS})
+target_link_libraries(brepgpu-mesh PRIVATE brepgpu_mesher_run brepgpu_mesher_mesh_publish brepgpu_mesher_scene brepgpu_mesher_presentation brepgpu_mesher_native_display Threads::Threads ${CMAKE_DL_LIBS})
 brepgpu_native_cpu_rigor(brepgpu-mesh)
 if(BREPGPU_MESHER_ENABLE_CUDA)
   enable_language(CUDA)
@@ -571,11 +575,20 @@ target_link_libraries(brepgpu_mesher_adaptive_scene PUBLIC
   brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_geometry
   brepgpu_mesher_scene brepgpu_mesher_presentation)
 brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_scene)
-add_executable(brepgpu-adaptive-component adaptive_component_main.cpp adaptive_trimmed_io.cpp)
+add_library(brepgpu_mesher_adaptive_component_io STATIC adaptive_component_io.cpp adaptive_trimmed_io.cpp)
+target_link_libraries(brepgpu_mesher_adaptive_component_io PUBLIC
+  brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_caller_io)
+brepgpu_native_cpu_rigor(brepgpu_mesher_adaptive_component_io)
+add_executable(brepgpu-adaptive-component adaptive_component_main.cpp)
 target_link_libraries(brepgpu-adaptive-component PRIVATE
-  brepgpu_mesher_adaptive_component brepgpu_mesher_adaptive_assembly
+  brepgpu_mesher_adaptive_component_io brepgpu_mesher_adaptive_assembly
   brepgpu_mesher_adaptive_caller_io)
 brepgpu_native_cpu_rigor(brepgpu-adaptive-component)
+add_executable(brepgpu-adaptive-model adaptive_model_main.cpp)
+target_link_libraries(brepgpu-adaptive-model PRIVATE
+  brepgpu_mesher_adaptive_component_io brepgpu_mesher_adaptive_assembly
+  brepgpu_mesher_adaptive_scene brepgpu_mesher_native_display)
+brepgpu_native_cpu_rigor(brepgpu-adaptive-model)
 add_executable(brepgpu-adaptive-trimmed adaptive_trimmed_main.cpp adaptive_trimmed_io.cpp)
 target_link_libraries(brepgpu-adaptive-trimmed PRIVATE
   brepgpu_mesher_adaptive_trimmed brepgpu_mesher_adaptive_caller_io)
@@ -596,6 +609,28 @@ if(BREPGPU_MESHER_ENABLE_CUDA)
 endif()
 
 if(BUILD_TESTING)
+  foreach(threads 1 4)
+    set(model_ports)
+    if(threads EQUAL 1)
+      set(model_ports --ports)
+    endif()
+    add_test(NAME native_adaptive_model_cpu${threads} COMMAND "${Python3_EXECUTABLE}" -B
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_model.py"
+      --executable "$<TARGET_FILE:brepgpu-adaptive-model>" --threads "${threads}" ${model_ports})
+    set_tests_properties(native_adaptive_model_cpu${threads} PROPERTIES
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 150)
+  endforeach()
+  if(TARGET brepgpu_mesher_adaptive_cuda AND TARGET brepgpu_mesher_display_cuda)
+    foreach(device 0 1)
+      add_test(NAME native_adaptive_model_p100_${device} COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_model.py"
+        --executable "$<TARGET_FILE:brepgpu-adaptive-model>" --threads 4
+        --module "$<TARGET_FILE:brepgpu_mesher_adaptive_cuda>"
+        --display-module "$<TARGET_FILE:brepgpu_mesher_display_cuda>" --device "${device}")
+      set_tests_properties(native_adaptive_model_p100_${device} PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 150)
+    endforeach()
+  endif()
   add_executable(brepgpu_native_adaptive_component
     ../../tests/native_adaptive_component.cpp adaptive_trimmed_io.cpp)
   target_link_libraries(brepgpu_native_adaptive_component PRIVATE
