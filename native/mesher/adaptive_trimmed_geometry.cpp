@@ -270,11 +270,12 @@ Interval normalized_interval(const Rational &value, const Rational &begin, const
 }
 } // namespace
 
-TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surface,
-                                      FaceConstructionResult construction, FaceDomainLease domain,
-                                      FacetAllowances allowances,
-                                      std::span<const uint32_t> selected_facets,
-                                      ExactTableKey result_key, TrimFacetLimits limits) {
+namespace {
+std::shared_ptr<const TrimFacetData>
+prepare_work_data(JobContext &context, SurfaceBoundView surface,
+                  FaceConstructionResult construction, FaceDomainLease domain,
+                  FacetAllowances allowances, std::span<const uint32_t> selected_facets,
+                  ExactTableKey result_key, TrimFacetLimits limits, bool candidates_only) {
   admit_numeric_environment();
   require(surface && construction && domain, "missing trimmed source/domain/view lease");
   auto &budget = context.budget;
@@ -402,7 +403,7 @@ TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surf
     }
     check_work();
     TrimFacetRecord parent{
-        facet_id, {pieces.size(), 0}, false, actual_facet_nonzero(xyz, budget), {}};
+        facet_id, {pieces.size(), 0}, false, actual_facet_nonzero(xyz, budget), {}, {}};
     const std::array first_point{uv[0], uv[1]};
     const auto original = find_original_carrier_root(surface.source(), carrier, first_point);
     parent.original = original;
@@ -418,6 +419,56 @@ TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surf
       parent.original_plane = true;
       ++stats.plane_facets;
       facets.push_back(parent);
+      continue;
+    }
+    if (candidates_only) {
+      const auto &facet = construction->facets[facet_id];
+      if (facet.key.generator == FacetGenerator::packet) {
+        require(facet.leaf < selection->leaves.size(), "packet bound has no captured leaf");
+        const auto &leaf = selection->leaves[facet.leaf];
+        require(leaf.key.root.value < surface.source().roots().size(), "packet source root absent");
+        const auto &prepared = surface.source().roots()[leaf.key.root.value];
+        require(prepared.source_slot == carrier.value, "packet leaf names foreign source carrier");
+        for (uint32_t vertex = 0; vertex < 3; ++vertex)
+          for (uint32_t axis = 0; axis < 2; ++axis)
+            require(uv[2 * vertex + axis].compare(
+                        import_exact(budget, selection->values.view(leaf.box[2 * axis]))) >= 0 &&
+                        uv[2 * vertex + axis].compare(import_exact(
+                            budget, selection->values.view(leaf.box[2 * axis + 1]))) <= 0,
+                    "packet actual triangle escapes captured leaf");
+        if (pieces.size() >= limits.pieces || pieces.size() >= UINT32_MAX)
+          throw Error(ErrorCode::resource_exhausted, "packet direct piece capacity");
+        parent.original = prepared.original;
+        parent.whole_original = prepared.original;
+        pieces.push_back({static_cast<uint32_t>(facets.size()),
+                          facet.leaf,
+                          prepared.original,
+                          {},
+                          {},
+                          TrimPieceGeometry::whole_parent});
+        parent.pieces.count = 1;
+        ++stats.pieces;
+      } else {
+        require(facet.key.generator == FacetGenerator::band, "unknown ordinary facet generator");
+        const std::array middle{uv[0].add(uv[2]).add(uv[4]).divide(Rational(budget, 3)),
+                                uv[1].add(uv[3]).add(uv[5]).divide(Rational(budget, 3))};
+        const auto selected = find_original_carrier_root(surface.source(), carrier, middle);
+        const auto &support = surface.source().original_roots()[selected.value];
+        bool contained = true;
+        for (uint32_t vertex = 0; vertex < 3; ++vertex)
+          for (uint32_t axis = 0; axis < 2; ++axis)
+            contained =
+                contained &&
+                uv[2 * vertex + axis].compare(
+                    Rational::from_double(budget, support.original_box[2 * axis].lower)) >= 0 &&
+                uv[2 * vertex + axis].compare(
+                    Rational::from_double(budget, support.original_box[2 * axis + 1].upper)) <= 0;
+        parent.original = selected;
+        if (contained)
+          parent.whole_original = selected;
+      }
+      facets.push_back(parent);
+      check_work();
       continue;
     }
     if (!index)
@@ -494,7 +545,90 @@ TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surf
   data->facets = std::move(facets);
   data->pieces = std::move(pieces);
   data->stats = stats;
-  return TrimFacetWork(std::move(data));
+  return data;
+}
+} // namespace
+TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surface,
+                                      FaceConstructionResult construction, FaceDomainLease domain,
+                                      FacetAllowances allowances,
+                                      std::span<const uint32_t> selected, ExactTableKey key,
+                                      TrimFacetLimits limits) {
+  return TrimFacetWork(prepare_work_data(context, std::move(surface), std::move(construction),
+                                         std::move(domain), std::move(allowances), selected, key,
+                                         limits, false));
+}
+TrimFacetWork prepare_trim_facet_candidates(JobContext &context, SurfaceBoundView surface,
+                                            FaceConstructionResult construction,
+                                            FaceDomainLease domain, FacetAllowances allowances,
+                                            std::span<const uint32_t> selected, ExactTableKey key,
+                                            TrimFacetLimits limits) {
+  return TrimFacetWork(prepare_work_data(context, std::move(surface), std::move(construction),
+                                         std::move(domain), std::move(allowances), selected, key,
+                                         limits, true));
+}
+TrimFacetWork materialize_trim_facet_fallback(JobContext &context, const TrimFacetWork &candidate,
+                                              std::span<const uint32_t> selected,
+                                              ExactTableKey key) {
+  const auto &seed = candidate.data();
+  require(key != candidate.values().key(), "fallback exact table aliases candidate work");
+  auto &budget = context.budget;
+  std::pmr::vector<uint32_t> indices(selected.begin(), selected.end(), &budget), facets(&budget);
+  std::sort(indices.begin(), indices.end(), [&](uint32_t a, uint32_t b) {
+    budget.charge(1);
+    return a < b;
+  });
+  require(std::adjacent_find(indices.begin(), indices.end()) == indices.end(),
+          "duplicate fallback parent");
+  for (auto row : indices) {
+    budget.charge(1);
+    require(row < candidate.facets().size(), "fallback parent outside capture");
+    const auto &parent = candidate.facets()[row];
+    require(!parent.original_plane && parent.pieces.count == 0 &&
+                seed.construction->facets[parent.construction_facet].key.generator ==
+                    FacetGenerator::band,
+            "fallback subset is not deferred band work");
+    facets.push_back(parent.construction_facet);
+  }
+  auto clipped = prepare_work_data(context, seed.surface, seed.construction, seed.domain,
+                                   seed.allowances, facets, key, seed.limits, false);
+  auto merged = std::allocate_shared<TrimFacetData>(
+      RunAllocator<TrimFacetData>(seed.surface.resource()), seed.surface, seed.construction,
+      seed.domain, seed.allowances, clipped->values, seed.limits);
+  merged->stats = clipped->stats;
+  merged->stats.plane_facets += seed.stats.plane_facets;
+  size_t at = 0;
+  for (uint32_t row = 0; row < seed.facets.size(); ++row) {
+    budget.charge(1);
+    auto parent = seed.facets[row];
+    const auto first = merged->pieces.size();
+    if (at < indices.size() && indices[at] == row) {
+      const auto &added = clipped->facets[at++];
+      require(added.construction_facet == parent.construction_facet && added.pieces.count,
+              "fallback parent map differs or lacks source pieces");
+      for (uint64_t i = 0; i < added.pieces.count; ++i) {
+        budget.charge(1);
+        auto piece = clipped->pieces[added.pieces.first + i];
+        piece.parent = row;
+        merged->pieces.push_back(piece);
+      }
+    } else {
+      for (uint64_t i = 0; i < parent.pieces.count; ++i) {
+        budget.charge(1);
+        auto piece = seed.pieces[parent.pieces.first + i];
+        require(piece.geometry == TrimPieceGeometry::whole_parent,
+                "candidate already contains materialized virtual coordinates");
+        piece.parent = row;
+        merged->pieces.push_back(piece);
+      }
+    }
+    parent.pieces = {first, merged->pieces.size() - first};
+    merged->facets.push_back(parent);
+  }
+  require(at == indices.size(), "fallback parent merge is incomplete");
+  if (merged->pieces.size() > seed.limits.pieces || merged->pieces.size() > UINT32_MAX)
+    throw Error(ErrorCode::resource_exhausted, "merged fallback piece capacity");
+  merged->stats.pieces = merged->pieces.size();
+  return TrimFacetWork(std::move(merged));
 }
 
 namespace {
@@ -514,6 +648,11 @@ void check_batch(const TrimFacetWork &work, std::span<const uint32_t> indices, s
 }
 std::array<Rational, 6> piece_uv(bgfd::Budget &budget, const TrimFacetWork &work,
                                  const TrimPieceRecord &piece) {
+  if (piece.geometry == TrimPieceGeometry::whole_parent) {
+    require(piece.parent < work.facets().size(), "direct piece parent missing");
+    return facet_uv(budget, *work.data().construction,
+                    work.facets()[piece.parent].construction_facet);
+  }
   require(piece.original_uv.count == 6, "trim UV coordinate shape");
   const auto at = piece.original_uv.first;
   return {exact(budget, work.values(), at),     exact(budget, work.values(), at + 1),
@@ -522,6 +661,16 @@ std::array<Rational, 6> piece_uv(bgfd::Budget &budget, const TrimFacetWork &work
 }
 std::array<Rational, 9> piece_xyz(bgfd::Budget &budget, const TrimFacetWork &work,
                                   const TrimPieceRecord &piece) {
+  if (piece.geometry == TrimPieceGeometry::whole_parent) {
+    require(piece.parent < work.facets().size(), "direct piece parent missing");
+    const auto xyz =
+        facet_xyz(*work.data().construction, work.facets()[piece.parent].construction_facet);
+    return {Rational::from_double(budget, xyz[0]), Rational::from_double(budget, xyz[1]),
+            Rational::from_double(budget, xyz[2]), Rational::from_double(budget, xyz[3]),
+            Rational::from_double(budget, xyz[4]), Rational::from_double(budget, xyz[5]),
+            Rational::from_double(budget, xyz[6]), Rational::from_double(budget, xyz[7]),
+            Rational::from_double(budget, xyz[8])};
+  }
   require(piece.affine_xyz.count == 9, "trim SAME-L coordinate shape");
   const auto at = piece.affine_xyz.first;
   return {exact(budget, work.values(), at),     exact(budget, work.values(), at + 1),
@@ -635,6 +784,51 @@ TrimPlaneBatch pack_plane_facets(JobContext &context, const TrimFacetWork &work,
         source_input(budget, work.data().surface.source(), parent.original, uv, xyz, allowance));
   }
   return batch;
+}
+TrimSourceBatch pack_original_facets(JobContext &context, const TrimFacetWork &work,
+                                     std::span<const uint32_t> indices) {
+  auto &budget = context.budget;
+  check_batch(work, indices, work.facets().size(), budget);
+  TrimSourceBatch batch(work, work.data().surface.resource().get());
+  batch.indices.assign(indices.begin(), indices.end());
+  const auto allowance = work_allowance(budget, work);
+  for (auto index : indices) {
+    const auto &parent = work.facets()[index];
+    require(parent.original_plane || parent.whole_original.has_value(),
+            "whole source support unavailable");
+    const auto uv = facet_uv(budget, *work.data().construction, parent.construction_facet);
+    const auto actual = facet_xyz(*work.data().construction, parent.construction_facet);
+    std::array<Rational, 9> xyz{Rational(budget), Rational(budget), Rational(budget),
+                                Rational(budget), Rational(budget), Rational(budget),
+                                Rational(budget), Rational(budget), Rational(budget)};
+    for (uint32_t i = 0; i < 9; ++i)
+      xyz[i] = Rational::from_double(budget, actual[i]);
+    batch.inputs.push_back(
+        source_input(budget, work.data().surface.source(),
+                     parent.original_plane ? parent.original : parent.whole_original.value(), uv,
+                     xyz, allowance));
+  }
+  return batch;
+}
+TrimPreciseResult compare_trim_original_facet_precise(JobContext &context,
+                                                      const TrimFacetWork &work, uint32_t index) {
+  require(index < work.facets().size(), "precise direct parent missing");
+  const auto &parent = work.facets()[index];
+  require(parent.original_plane || parent.whole_original.has_value(),
+          "precise whole source support unavailable");
+  auto &budget = context.budget;
+  const auto uv = facet_uv(budget, *work.data().construction, parent.construction_facet);
+  const auto actual = facet_xyz(*work.data().construction, parent.construction_facet);
+  std::array<Rational, 9> xyz{Rational(budget), Rational(budget), Rational(budget),
+                              Rational(budget), Rational(budget), Rational(budget),
+                              Rational(budget), Rational(budget), Rational(budget)};
+  for (uint32_t i = 0; i < 9; ++i)
+    xyz[i] = Rational::from_double(budget, actual[i]);
+  const auto allowance = work_allowance(budget, work);
+  return compare_original_triangle_precise(work.data().surface.source(),
+                                           parent.original_plane ? parent.original
+                                                                 : parent.whole_original.value(),
+                                           uv, xyz, allowance, budget);
 }
 namespace {
 Rational norm_square(std::span<const Rational> vector, bgfd::Budget &budget) {

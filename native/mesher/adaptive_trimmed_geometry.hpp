@@ -25,10 +25,12 @@ struct TrimFacetWorkKey final {
   ExactTableKey values;
   auto operator<=>(const TrimFacetWorkKey &) const = default;
 };
+enum class TrimPieceGeometry : uint32_t { sealed_virtual, whole_parent };
 struct TrimPieceRecord final {
   uint32_t parent, leaf;
   OriginalRootSlot original;
   Range<ExactEntry> original_uv, affine_xyz;
+  TrimPieceGeometry geometry = TrimPieceGeometry::sealed_virtual;
 };
 struct TrimFacetRecord final {
   uint32_t construction_facet;
@@ -36,6 +38,7 @@ struct TrimFacetRecord final {
   bool original_plane = false;
   bool physical_nonzero = false;
   OriginalRootSlot original;
+  std::optional<OriginalRootSlot> whole_original;
 };
 struct TrimPreparationStats final {
   uint64_t candidate_visits = 0, clip_vertices = 0, pieces = 0, plane_facets = 0;
@@ -48,6 +51,13 @@ class TrimFacetWork final {
                                                FaceConstructionResult, FaceDomainLease,
                                                FacetAllowances, std::span<const uint32_t>,
                                                ExactTableKey, TrimFacetLimits);
+
+  friend TrimFacetWork prepare_trim_facet_candidates(JobContext &, SurfaceBoundView,
+                                                     FaceConstructionResult, FaceDomainLease,
+                                                     FacetAllowances, std::span<const uint32_t>,
+                                                     ExactTableKey, TrimFacetLimits);
+  friend TrimFacetWork materialize_trim_facet_fallback(JobContext &, const TrimFacetWork &,
+                                                       std::span<const uint32_t>, ExactTableKey);
 
 public:
   [[nodiscard]] const TrimFacetWorkKey &key() const;
@@ -87,6 +97,18 @@ struct TrimPointFloors final {
                                                     FaceConstructionResult, FaceDomainLease,
                                                     FacetAllowances, std::span<const uint32_t>,
                                                     ExactTableKey, TrimFacetLimits = {});
+[[nodiscard]] TrimFacetWork prepare_trim_facet_candidates(JobContext &, SurfaceBoundView,
+                                                          FaceConstructionResult, FaceDomainLease,
+                                                          FacetAllowances,
+                                                          std::span<const uint32_t>, ExactTableKey,
+                                                          TrimFacetLimits = {});
+[[nodiscard]] TrimFacetWork materialize_trim_facet_fallback(JobContext &, const TrimFacetWork &,
+                                                            std::span<const uint32_t>,
+                                                            ExactTableKey);
+[[nodiscard]] TrimSourceBatch pack_original_facets(JobContext &, const TrimFacetWork &,
+                                                   std::span<const uint32_t>);
+[[nodiscard]] TrimPreciseResult
+compare_trim_original_facet_precise(JobContext &, const TrimFacetWork &, uint32_t);
 [[nodiscard]] TrimBaseBatch pack_base_pieces(JobContext &, const TrimFacetWork &,
                                              std::span<const uint32_t>);
 [[nodiscard]] TrimSourceBatch pack_source_pieces(JobContext &, const TrimFacetWork &,
