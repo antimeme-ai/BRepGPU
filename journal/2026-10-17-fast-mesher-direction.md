@@ -271,3 +271,14 @@ attachments with unstated licences, non-public OCCT fixtures).
   rule fixed before looking, fetch script staged, not run) and Fusion 360
   Gallery (non-commercial licence with indemnity). Four more decisions and two
   retries merged into SHOPPING_LIST.md. No geometry code ran on the corpus.
+- M2 returned (papers/2026-10-17-neighbour-reconciliation.md, 59 sources).
+  Finding: the final position comes mostly free. Trusted constraints fix the
+  directions they determine and a prior fills the rest, at one small solve per
+  sample on values the measurement pass already has. Leap size should follow
+  conditioning, not distance. Proposals for G1 (not adopted yet): R2 takes the
+  linear step; transverse leaps bounded by ¼ local feature size instead of β;
+  small tangent gaps mesh as recorded steps; a structural-first branch-choice
+  rule; R1–R6/V1–V4 recast as one point solve in three fixed parallel levels.
+  Corrections to the healing paper: OCCT's neighbour-intersection gap fix is
+  off by default; SMLib's Fix_BadGaps is an empty TODO. Unobtainable items
+  merged into SHOPPING_LIST.md.

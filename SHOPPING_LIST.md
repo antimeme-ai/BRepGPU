@@ -88,3 +88,21 @@ Highest value first:
   `mds2-2146` `qif-ontology-dataset-V2.zip`: data.nist.gov returned HTTP 524.
 - CAx-IF `rec_prac_gvp_v32.pdf` (Geometric Validation Properties practice):
   404 on mbx-if.org; try a Wayback capture.
+
+## From M2 (neighbour reconciliation)
+
+- Weihe & Willhalm 1998 (WAE'98, MPI-I-98-1-019) and the Algorithmica 2000
+  version; only the Willhalm Diplomarbeit was read.
+- Urick et al. 2019, "Watertight Boolean operations" (CAD 115).
+- Patel, Marcum, Remotigue 2005 (IMR): zip versus stitch by gap width.
+- Langbein 2003 PhD thesis (Cardiff); Langbein et al. GMP 2002.
+- Werghi et al. 1999, CAD 31(6), published version.
+- Meyer & Sanders 2003, J. Algorithms 49(1).
+- Müller et al. 2007, JVCIR journal version of position-based dynamics.
+- Gao et al. 2018, GPU optimization of material point methods.
+- Kaufmann & Klass 1988, reflection lines (CAD 20(6)); Hagen et al. 1992,
+  surface interrogation (IEEE CG&A); Gouraud 1971 thesis; Phong 1975;
+  Lavoué & Corsini 2010 (IEEE TMM).
+- Parasolid internals for `PK_FACE_grow_auto_c` and automatic loop healing.
+- Already listed above: Barequet & Kumar 1997; Xiao et al. 2021 full PDF;
+  ACIS "Tightening Gaps".
