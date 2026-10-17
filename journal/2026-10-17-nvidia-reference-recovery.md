@@ -27,7 +27,7 @@ Python callers cannot silently mislabel their settings. Actual SDK parameters
 consume the explicit values. Invalid, duplicate and nonfinite inputs refuse
 before output creation. No raw exporter or requested chord was changed.
 
-The old producer rejects --curve-angle25 as an unknown option. The new literal
+The old producer rejects `--curve-angle 25` as an unknown option. The new literal
 cylinder control test also fails against that unmodified producer, before any
 new SDK mesh exists. A new isolated Release producer builds successfully. Peer
 code review accepted independent option states, complete token/finite checks,
@@ -38,3 +38,17 @@ actual25/25 operations run only on the fleet, with their actual outcomes to foll
 
 No full-watch benchmark rerun, source healing escalation, triangle substitution,
 ring reordering, tolerance relaxation or alpha certification is selected here.
+
+
+The two direct control methods pass on the new producer in0.751s, including a
+literal cylinder whose actual physical sample count increases under3degrees;
+this tests real SDK parameter consumption. Two existing help/missing-input
+compatibility methods pass in0.081s. The new producer SHA256 is
+344c2ddde3b0f52cd34c0e5c79e341c8009506e1042c9da5115139c9e851b73f.
+No old producer or published result was overwritten.
+
+All four documented25/25 controls STILL refuse nontriangle polygon output.
+The default-angle hypothesis is therefore insufficient, not a delivered fix.
+The polygon owner is inspecting the actual new rings and earlier imported
+curve/domain meaning before selecting another capability. No crossed polygon
+was passed to an unjustified triangulator.

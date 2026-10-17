@@ -70,10 +70,13 @@ int main(int argc,char **argv) {
   try {
     if(argc==2 && std::string(argv[1])=="--help"){
       std::cout<<"NVIDIA USD/BRep CPU import+tessellation; genuine f64 triangles/normals\n"
-        "--heal 0|1 --chord-height POSITIVE --output-directory NEWDIR --definition ORIGINAL_ID INPUT.brep [--definition ...]\n";
+        "--heal 0|1 --chord-height POSITIVE --output-directory NEWDIR --definition ORIGINAL_ID INPUT.brep [--definition ...]\n"
+        "[--curve-angle NONNEGATIVE_DEGREES] [--surface-angle NONNEGATIVE_DEGREES]\n"
+        "Omitted angles preserve legacy0/0; pass25/25 explicitly for SDK angular defaults.\n";
       return 0;
     }
     fs::path directory;bool heal=false,have_heal=false,have_chord=false;double chord=0;
+    bool have_curve_angle=false,have_surface_angle=false;double curve_angle=0,surface_angle=0;
     std::vector<std::pair<uint64_t,fs::path>> jobs;std::set<uint64_t> ids;
     for(int i=1;i<argc;++i){
       std::string arg=argv[i];require(i+1<argc,"argument: missing value");
@@ -86,6 +89,12 @@ int main(int argc,char **argv) {
       }else if(arg=="--chord-height"){
         require(!have_chord,"argument: duplicate chord height");std::string v=argv[++i];size_t used=0;
         chord=std::stod(v,&used);require(used==v.size()&&std::isfinite(chord)&&chord>0,"argument: finite positive chord required");have_chord=true;
+      }else if(arg=="--curve-angle"||arg=="--surface-angle"){
+        bool &seen=arg=="--curve-angle"?have_curve_angle:have_surface_angle;
+        double &angle=arg=="--curve-angle"?curve_angle:surface_angle;
+        require(!seen,"argument: duplicate angular control");std::string v=argv[++i];size_t used=0;
+        angle=std::stod(v,&used);
+        require(used==v.size()&&std::isfinite(angle)&&angle>=0,"argument: finite nonnegative angle required");seen=true;
       }else if(arg=="--output-directory"){
         require(directory.empty(),"argument: duplicate output directory");directory=argv[++i];
       }else throw std::runtime_error("argument: unknown option "+arg);
@@ -93,6 +102,13 @@ int main(int argc,char **argv) {
     require(have_heal&&have_chord&&!jobs.empty()&&!directory.empty(),"argument: missing required options");
     require(!fs::exists(directory),"output: destination must be new");
     fs::create_directories(directory);
+    std::ofstream parameters(directory/"parameters.tsv");
+    require(bool(parameters),"output: cannot open parameters");
+    parameters<<"parameter\tvalue\n"<<std::setprecision(17)
+      <<"heal\t"<<heal<<"\nchord_height_mm\t"<<chord
+      <<"\ncurve_angle_degrees\t"<<curve_angle<<"\nsurface_angle_degrees\t"<<surface_angle
+      <<"\nmax_edge_length\t0\nmax_aspect_ratio\t0\nallow_partial\t0\n";
+    parameters.close();require(!parameters.fail(),"output: parameters write/close failed");
     std::ofstream timings(directory/"stages.tsv"),reports(directory/"definitions.tsv"),failures(directory/"failures.tsv"),imports(directory/"imports.tsv"),polygons(directory/"polygon-export.tsv");
     require(timings&&reports&&failures&&imports&&polygons,"output: cannot open reports");
     timings<<"definition_id\tstage\tseconds\n"<<std::setprecision(17);
@@ -120,7 +136,7 @@ int main(int argc,char **argv) {
         SmTArray<SmFace*> fs;SmTArray<SmEdge*> es;SmTArray<SmVertex*> vs;
         breps.values[0]->GetFaces(fs);breps.values[0]->GetEdges(es);breps.values[0]->GetVertices(vs);nf=fs.GetSize();ne=es.GetSize();nv=vs.GetSize();
         stage="tessellate";t=Clock::now();SmTessellationParams params;
-        params.dChordHeightTol=chord;params.dCurveAngleTolDeg=0;params.dSurfaceAngleTolDeg=0;
+        params.dChordHeightTol=chord;params.dCurveAngleTolDeg=curve_angle;params.dSurfaceAngleTolDeg=surface_angle;
         SmPolyBrep *pointer=nullptr;SmTArray<SmTessellationFailure> face_failures;
         auto tess=SmApiTessellate(breps.values[0],pointer,params,FALSE,&face_failures,&report);
         std::unique_ptr<SmPolyBrep> poly(pointer);
