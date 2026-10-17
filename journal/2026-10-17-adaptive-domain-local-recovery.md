@@ -57,3 +57,21 @@ accept the actual implementation. Settled model SHA256:
 `9f7e9605f6fb7ef8c8bd99f48c7417449b556ad5d61402e5b277267303424cd2`.
 Build tree `build/adaptive-cap-construction-release` handed free to root for pinning;
 no component replay or performance claim was made in this lane.
+
+Root-observed actual component replay subsequently completed on both backends at the
+unchanged5µm positional/1µm source allowance:45 original faces,3292 triangles;
+CPU17.2279s and P10016.9071s component time. This closes the previously blocked
+component, not the still-running complete-watch render or a general speedup claim.
+
+Static closure: the first default clang-format invocation used80 columns and rewrote
+unrelated layout. Restored both owned C++ files using fleet Clang18 with explicit
+`{BasedOnStyle: LLVM, ColumnLimit: 100}`; both are nonwhitespace-identical to the compiled
+checkpoint. The original static line filter stopped at550 after80-column wrapping and
+missed the later failure dispatch. The expanded91..700 filter covers all new helpers and
+the complete prepare_face_domain body after100-column formatting. No rebuild/relink or
+native test is needed for this formatting-only closure; pinned watch jobs are untouched.
+Expanded scoped clang-tidy completed exit0 with no new finding. The58 suppressed
+warnings are55 non-user and the same3 preexisting unchecked-optional diagnostics in
+fixed-metric/mapped-facet code, outside this unit (prior full report:
+`progress-trace-adaptive_regions.cpp-tidy.log`). Final report:
+`context/adaptive-watch/domain-local-tidy-final.log`.
