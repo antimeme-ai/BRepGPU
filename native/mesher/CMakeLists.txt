@@ -680,6 +680,12 @@ if(BUILD_TESTING)
   target_link_libraries(brepgpu_native_adaptive_curves_runtime PRIVATE brepgpu_mesher_adaptive_curves)
   add_dependencies(brepgpu_native_adaptive_curves_runtime brepgpu_native_adaptive_trace_fixture)
   brepgpu_native_cpu_rigor(brepgpu_native_adaptive_curves_runtime)
+  add_test(NAME native_adaptive_boundary_profile COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_boundary_profile.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_curves_runtime>"
+    --source "${TRACE_FIXTURE_DIR}/speed.bgsource")
+  set_tests_properties(native_adaptive_boundary_profile PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
   foreach(threads 1 4)
     add_test(NAME native_adaptive_curves_runtime_cpu${threads} COMMAND brepgpu_native_adaptive_curves_runtime
       "${TRACE_FIXTURE_DIR}/speed.bgsource" "${threads}")

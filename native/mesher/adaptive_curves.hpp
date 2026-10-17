@@ -7,6 +7,7 @@
 
 namespace bgmesh::adaptive {
 class CurveSourceCache;
+class SourceCache;
 struct CacheDevice;
 struct FaceCurveAllowance final {
   Slot<FaceTag> face;
@@ -43,6 +44,10 @@ class AdaptiveBoundarySession final {
 public:
   AdaptiveBoundarySession(std::shared_ptr<RunResource>, SourceStore, Slot<DefinitionTag>,
                           CurveSourceCache, CurveLimits, const std::stop_token & = {});
+  // Use this SAME immutable bank for assembly-profile-bound component work.
+  // Its prepared rectangle is never widened by trace preparation.
+  AdaptiveBoundarySession(std::shared_ptr<RunResource>, SourceStore, Slot<DefinitionTag>,
+                          CurveSourceCache, SourceCache, CurveLimits, const std::stop_token & = {});
   ~AdaptiveBoundarySession();
   AdaptiveBoundarySession(const AdaptiveBoundarySession &) = delete;
   AdaptiveBoundarySession &operator=(const AdaptiveBoundarySession &) = delete;
@@ -50,7 +55,7 @@ public:
   void begin(const CurveBoundaryQuery &);
   // Continue the SAME query/forest after a complete consumer request horizon.
   // The expected retained output and every key are checked before mutation.
-  void refine(SharedCurveSnapshot expected, std::span<const BoundaryKey>);
+  void refine(const SharedCurveSnapshot &expected, std::span<const BoundaryKey>);
   StepState step(JobContext &);
   [[nodiscard]] SharedCurveSnapshot result() const;
   [[nodiscard]] CurveStats stats() const noexcept;

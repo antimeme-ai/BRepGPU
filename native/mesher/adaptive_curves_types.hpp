@@ -8,6 +8,7 @@
 
 namespace bgmesh::adaptive {
 class CurveSourceCache;
+class SourceCache;
 enum class CurveTraceAuthority : uint32_t {
   reconstructed_selected = 1,
   authoritative_original = 2
@@ -98,6 +99,7 @@ struct SharedCurveSnapshotData final {
   std::pmr::vector<UseCurveSite> sites;
   std::pmr::vector<UseCurveInterval> intervals;
   std::shared_ptr<const CurveSourceCache> curve_source;
+  std::shared_ptr<const SourceCache> carrier_source;
   SharedCurveSnapshotData(std::shared_ptr<RunResource> owner, SourceStore original,
                           Slot<DefinitionTag> part, uint64_t generation, ExactTable exact,
                           DefinitionBoundarySnapshot physical)
