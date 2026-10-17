@@ -99,7 +99,7 @@ void require_source_uv_uses(const SourceUVFace& f,const std::vector<SourceUVConn
   std::vector<TopoDS_Wire> matches;for(const auto& wire:actual_wires)if(wire.IsSame(l.wire)&&wire.Orientation()==l.wire.Orientation())matches.push_back(wire);
   require(matches.size()==1,context(f)+" loop "+std::to_string(l.id)+": actual native wire binding/orientation changed");
   for(const auto& use:l.uses){TopoDS_Vertex a,b;TopExp::Vertices(use.edge,a,b,true);require(a.IsSame(use.start)&&b.IsSame(use.end),context(f)+" coedge "+std::to_string(use.id)+": native directed endpoints differ from original use");}
-  require(!l.uses.empty(),context(f)+": empty original loop");Handle(ShapeExtend_WireData) data=new ShapeExtend_WireData(matches[0],true);std::vector<TopoDS_Edge> physical;std::set<const SourceUVConnector*> observed;
+  require(!l.uses.empty(),context(f)+": empty original loop");Handle(ShapeExtend_WireData) data=new ShapeExtend_WireData(matches[0],false);std::vector<TopoDS_Edge> physical;std::set<const SourceUVConnector*> observed;
   for(int index=1;index<=data->NbEdges();++index){auto e=data->Edge(index);const SourceUVConnector* declared=nullptr;for(const auto& c:connectors)if(c.face_id==f.id&&c.loop_id==l.id&&c.edge.IsSame(e)){require(!declared,context(f)+": duplicate declared chart connector");declared=&c;}
    if(!declared){physical.push_back(e);continue;}
    const auto& c=*declared;require(e.Orientation()==c.edge.Orientation()&&observed.insert(declared).second,context(f)+": chart connector multiplicity/orientation changed");
