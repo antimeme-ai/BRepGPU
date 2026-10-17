@@ -59,3 +59,28 @@ layer; keep support planes, curves, topology, identities, SDK and exporter
 unchanged. First run both heal0 cases, then heal1 only if both pass. Unsupported
 geometry refuses. Public integration is selected only after this private control
 demonstrates the actual repair and preserves the existing source/physical gates.
+
+Both private heal0 operations now pass unchanged SDK tessellation/extraction and
+the existing physical/source-Euler reader. The selected public entry is a small,
+explicit reference-preparation tool, not a hidden callback in the native mesher.
+The polygon owner supplies native homogeneous-control/frame capture and a
+package-usdpy script that writes a new corrected USD plus preparation reports.
+Root adds --usd-definition ORIGINAL_ID INPUT.usdc to the existing producer.
+It retains a byte copy of that explicitly prepared layer in the fresh output
+directory, then imports at the original input address through exactly the
+existing strict import/heal/tessellation/extraction path. The input address
+preserves relative USD asset resolution; the retained copy alone is not an
+archive of arbitrary composed-layer dependencies. The range helper admits only
+its declared self-contained layers.
+Original --definition still invokes the official converter unchanged. Mixed
+input kinds share the duplicate-ID gate; report each kind and preparation/copy
+stage without claiming the prepared layer is unchanged original CAD.
+
+The direct entry test first fails against the old producer's unknown option.
+Then an independent authored cylinder exported through the original route is
+reimported through --usd-definition with the same parameters; compare actual
+genuine mesh geometry/ancestry, not just status. A mixed-kind duplicate refuses
+before output. Existing angle/invalid-input methods remain the affected checks.
+After narrow review, run both repaired definitions through the public tools;
+retain the private paired-healing outcomes and independent plane fixture. No
+whole107 run or benchmark-driver policy change is selected by this delivery.

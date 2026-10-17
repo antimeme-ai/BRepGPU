@@ -13,6 +13,47 @@ PACKAGE = Path(os.environ.get('BREPGPU_NVIDIA_PACKAGE', ROOT/'quarantine/nvidia-
 
 
 class NvidiaReferenceControls(unittest.TestCase):
+    def test_mixed_input_duplicate_refuses_before_output(self):
+        with tempfile.TemporaryDirectory() as d:
+            output = Path(d)/'new'
+            result = subprocess.run((str(PRODUCER), '--heal', '0', '--chord-height', '.005',
+                '--definition', '7', str(Path(d)/'missing.brep'),
+                '--usd-definition', '7', str(Path(d)/'missing.usdc'),
+                '--output-directory', str(output)), capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('duplicate definition ID', result.stderr)
+            self.assertFalse(output.exists())
+
+    def test_prepared_usd_reuses_actual_pipeline(self):
+        environment = dict(os.environ, CUDA_VISIBLE_DEVICES='', PXR_WORK_THREAD_LIMIT='1',
+                           OMP_NUM_THREADS='1', OMNISOLID_PLUGIN_PATH=str(PACKAGE/'omniSolid/resources'))
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            source = directory/'source'
+            subprocess.run((str(EXPORTER), str(ROOT/'tests/fixtures/reference-source.step'), str(source)),
+                           check=True, capture_output=True)
+            original, prepared = directory/'original', directory/'prepared'
+            common = (str(PRODUCER), '--heal', '0', '--chord-height', '.005',
+                      '--curve-angle', '25', '--surface-angle', '25')
+            subprocess.run((*common, '--definition', '395', str(source/'definition-395.brep'),
+                            '--output-directory', str(original)), env=environment,
+                           check=True, capture_output=True)
+            subprocess.run((*common, '--usd-definition', '395', str(original/'definition-395.usdc'),
+                            '--output-directory', str(prepared)), env=environment,
+                           check=True, capture_output=True)
+            self.assertEqual((original/'definition-395.usdc').read_bytes(),
+                             (prepared/'definition-395.usdc').read_bytes())
+            self.assertEqual((original/'definition-395.bgrefmesh').read_bytes(),
+                             (prepared/'definition-395.bgrefmesh').read_bytes(),
+                             'same actual USD must retain genuine triangles, XYZ, normals and ancestry')
+            with (prepared/'definition-inputs.tsv').open() as stream:
+                inputs = tuple(csv.DictReader(stream, delimiter='\t'))
+            self.assertEqual(inputs, ({'definition_id': '395', 'input_kind': 'prepared_usd'},))
+            with (prepared/'stages.tsv').open() as stream:
+                stages = {r['stage'] for r in csv.DictReader(stream, delimiter='\t')}
+            self.assertIn('copy_prepared_usd', stages)
+            self.assertNotIn('convert_occt_to_usd', stages)
+
     def test_bad_or_duplicate_angles_refuse_before_output(self):
         for option in ('--curve-angle', '--surface-angle'):
             for values in (('-1',), ('nan',), ('inf',), ('25junk',), ('25', '25')):
