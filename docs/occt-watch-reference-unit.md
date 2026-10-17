@@ -52,3 +52,114 @@ watch operation (cap120s,CPU1 meshing/declared CPU display width), only after ro
 coordinates resources. Require107/9162/166 and every face has triangles before
 rendering; any failure retains diagnostics and no complete-image claim. No
 additional adapter, NVIDIA repair, geometry cohort or product-mesher change.
+
+## Failed complete attempt: bounded diagnosis
+
+The first actual watch attempt returned107 failed definitions at the first
+missing-face-triangulation guard. Original storage membership/orientation and
+unmeshed-source admission had passed. The current catch loses OCCT status flags,
+so this does not yet identify a reference-kernel failure. First add retained
+post-mesher flags, number of triangulated original faces and the missing original
+FaceID to the existing producer diagnostics. Run ONE retained original small
+definition with the unchanged parameters and no source re-export. Inspect the
+OCCT context/model-builder failure only if those diagnostics require it.
+IncrementalMesh::Perform calls setDone even for a null model, so IsDone by itself
+is not a complete diagnostic. No face omission, healing or tolerance change is
+selected. Any adapter correction needs source explanation and peer review before
+one affected authored check and the next complete120s attempt.
+
+### Selected missing-UV preparation
+
+The retained four-face diagnosis reports flags4=IMeshData_Failure; three planar
+faces triangulate. The missing cylinder face has four absent CurveOnSurface
+representations, Free=false, Locked=false, with SameParameter flags unchanged.
+No OCCT exception occurs. Planar implicit pcurves explain why the authored box
+fixture and the other three faces passed; missing curved-support UV is the
+demonstrated prerequisite gap, not a wire-self-crossing diagnosis.
+
+Reuse existing brepgpu::prepare_source_uv(original,bindings,SourceUVOptions) from
+native/source_uv/source_uv.cpp without modifying it. Select prepare_query=false:
+ONLY its raw copied-topology projection/seam/whole-period stage. Explicitly do
+not import its optional column/endpoint/domain/pole-connector query edits.
+The raw stage includes conic_source_chart bounded guide-coefficient selection
+and guarded FixSeam/FixShifted whole-period translations; report these too.
+Use existing projection_precision_mm=1e-7, source_residual_mm=.001 and requested
+tolerance_mm=.005; disclose finite projection probes rather than a certificate.
+Invoke only when an actual original face/edge lacks a pcurve. Build bindings
+from the admitted original root faces/wires and ShapeExtend_WireData ordered
+uses, retaining exact original FaceIDs. Local edge/vertex/wire reference IDs are
+BinTools shape identities, not invented STEP entity labels. Deep-copy geometry
+and topology through the selected helper. Its EdgeState/FaceState guards reject
+changes to 3D curves/ranges, vertices, source surfaces and original flags; seam
+and periodic operations retain their existing explicit guards. Any unsupported
+profile or changed physical source refuses visibly.
+
+Mesh prepared.raw_shape and map EVERY pre-admitted original face through
+prepared.mapped(original_face); never reinterpret new storage indices or use
+traversal order as source labels. Original bytes/manifest remain untouched.
+Record projection/seam counts, finite residual and chart-approximation inventory
+in separate preparation reporting. Link this existing owned helper and already
+adopted TKShHealing only into the standalone reference target. The actual missing
+original small definition is the behavior RED; require the SAME four source
+faces to triangulate, then the existing authored geometry/placement check and
+source review before one complete107-definition attempt. Further query topology
+or preparation changes require a separate observed need and reviewed plan.
+
+### Selected source-linked QUERY copy after v2
+
+The v2 complete operation triangulated all faces in101 definitions but refused
+six: four OCCT triangle lists contain two distinct UV seam/pole nodes with
+bit-identical XYZ at a sphere pole/cone apex; another cone and six finite
+BSpline faces have no triangulation despite existing pcurves. Retain those
+exact original jobs as RED, not a claim that the immutable 3D CAD is invalid.
+
+Use the SAME existing `prepare_source_uv` helper with `prepare_query=true` for
+each definition. It first deep-copies original geometry/topology and completes
+the reviewed RAW stage, then deep-copies that raw shape into `query_shape`.
+Select ONLY that existing result: mesh `prepared.query_shape`, and resolve each
+pre-admitted original FaceID through `prepared.query_mapped(original_face)`.
+Do not derive source IDs from new wires, added edges or traversal ordinals.
+The original face inventory remains exactly the original job word.
+
+The selected query stage runs the existing `query_columns`,
+`finite_spline_joints`, `query_domain`, then `query_poles` operations. It may
+change copied pcurve coefficients/endpoints and insert typed degenerate pole
+connector edges on copied wires. Such connectors carry no 3D curve, reuse the
+same original physical pole vertex twice and have a linear nonrational UV
+branch; `require_source_uv_uses(face,connectors)` admits only those declared
+extra edges. Original physical curves/ranges/vertices/flags and carrier surfaces
+are checked again by `EdgeState`/`FaceState`; original-use quotient, branch and
+period guards remain unchanged. No source-helper edits, face healing, omitted
+faces or triangle filtering is selected.
+
+The existing per-use query budget limits cumulative physical-metric pcurve
+perturbation to requested deflection/8 (.000625mm at .005); source correspondence
+probes retain their separate .001mm cap. Report source projection and query
+columns/joints/connectors, maximum finite source/query residuals and maximum
+query UV metric perturbation. These are explicit copied trim-query semantics,
+not exact trim preservation or a certified .005mm surface bound. Images must
+say OCCT REFERENCE with source-linked QUERY preparation.
+
+First strict-build this adapter-only selection and replay the SAME six failed
+retained definitions, unchanged requested deflection/angular deflection. Every
+original face must receive nonempty triangulation and every actual triangle
+must stay finite/noncollapsed; all old gates remain. Require independent actual
+adapter review before any full run. If all six close, run the existing authored
+nine-face geometry/normal/placement operation once for the changed map boundary,
+then ONE new full v3 original107/9162/166 operation under the agreed120s cap.
+Any helper admission or remaining triangulation failure is retained explicitly;
+no escalation to generic repair is implied.
+
+#### Observed QUERY-copy outcome and stop
+
+The strict adapter build and SAME six retained replay completed. All six still
+fail unchanged mesh gates: four sphere/cone pole/apex triangle lists contain
+true physical zero-area triangles (now status0); seven faces across the other
+two definitions remain untriangulated (status4). The query stage emitted1,132
+column edits,4,538 joint-endpoint edits and five typed pole connectors. Maximum
+reported query metric perturbation is5.6273145154406268e-14mm, and finite query
+correspondence residual is5.3448215025199131e-5mm. No full v3 or further authored
+operation was run because the six-job prerequisite failed. Root stopped further
+external-reference repair; raw101/107 remains the best complete-definition
+inventory, and no complete watch images exist. This is an explicit incomplete
+reference operation, not a benchmark of successful OCCT rendering.
