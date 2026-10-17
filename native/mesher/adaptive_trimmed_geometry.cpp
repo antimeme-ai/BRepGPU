@@ -250,7 +250,7 @@ bool same_domain_generation(const FaceConstructionKey &a, const FaceConstruction
   return a.definition == b.definition && a.face == b.face &&
          a.source_generation == b.source_generation && a.query == b.query &&
          a.boundary_generation == b.boundary_generation && a.chart_revision == b.chart_revision &&
-         a.profile_revision == b.profile_revision;
+         a.profile_revision == b.profile_revision && a.assignment_epoch == b.assignment_epoch;
 }
 Interval exact_interval(const Rational &value) {
   const auto bounds = value.bounds();
@@ -300,7 +300,8 @@ TrimFacetWork prepare_trim_facet_work(JobContext &context, SurfaceBoundView surf
           identity.query == view_key.selection.query &&
           identity.boundary_generation == view_key.face.boundary_generation &&
           identity.chart_revision == view_key.face.chart_revision &&
-          identity.profile_revision == view_key.selection.profile_revision,
+          identity.profile_revision == view_key.selection.profile_revision &&
+          identity.assignment_epoch == view_key.face.assignment_epoch,
       "stale trim facet source/domain/view generation");
   require(limits.pieces && limits.exact_entries && limits.batch_records &&
               limits.candidate_visits && limits.work && limits.precise_tasks &&

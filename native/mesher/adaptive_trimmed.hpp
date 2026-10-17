@@ -10,20 +10,15 @@ struct TrimFaceQuery final {
   SharedCurveSnapshot boundary;
   ExactTable values;
   ExactRef positional, node_source;
+  uint64_t assignment = 0; // zero selects the legacy strictly increasing-query API
 };
 struct TrimFaceLimits final {
   CacheLimits surface;
   TrimFacetLimits facets;
   uint64_t regions = uint64_t{1} << 20, anchors = uint64_t{1} << 20;
-  uint64_t exact_bits = uint64_t{1} << 20,
-           construction_work = uint64_t{1} << 42;
+  uint64_t exact_bits = uint64_t{1} << 20, construction_work = uint64_t{1} << 42;
 };
-enum class TrimFaceProgress : uint32_t {
-  progressed,
-  pending,
-  needs_boundary,
-  complete
-};
+enum class TrimFaceProgress : uint32_t { progressed, pending, needs_boundary, complete };
 struct TrimFaceStats final {
   CacheStats surface;
   uint64_t classifications = 0, packet_rounds = 0, region_builds = 0;
@@ -40,13 +35,11 @@ struct FaceTrimResultData final {
   ExactTable bound_values;
   // One conservative accepted threshold for ALL facets, not a measured maximum.
   ExactRef positional_upper, requested_node_source;
-  FaceTrimResultData(std::shared_ptr<RunResource> owner,
-                     FaceConstructionResult face, SurfaceBoundView cover,
-                     const TrimFaceQuery &quality)
-      : resource(std::move(owner)), construction(std::move(face)),
-        boundary(quality.boundary), surface(std::move(cover)),
-        bound_values(quality.values), positional_upper(quality.positional),
-        requested_node_source(quality.node_source) {}
+  FaceTrimResultData(std::shared_ptr<RunResource> owner, FaceConstructionResult face,
+                     SurfaceBoundView cover, const TrimFaceQuery &quality)
+      : resource(std::move(owner)), construction(std::move(face)), boundary(quality.boundary),
+        surface(std::move(cover)), bound_values(quality.values),
+        positional_upper(quality.positional), requested_node_source(quality.node_source) {}
 };
 using FaceTrimResult = std::shared_ptr<const FaceTrimResultData>;
 class FaceTrimSession final {
@@ -68,6 +61,7 @@ public:
   [[nodiscard]] FaceTrimResult result() const;
   [[nodiscard]] TrimFaceStats stats() const noexcept;
   void release_result();
+  void retire_assignment(); // pooled complete/needs_boundary; captured host leases survive
   void cancel() noexcept;
   void close();
 };

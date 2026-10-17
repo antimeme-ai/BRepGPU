@@ -12,6 +12,7 @@ struct FaceConstructionKey final {
   uint64_t chart_revision = 0, profile_revision = 0, construction_revision = 0;
   Slot<DefinitionTag> definition;
   Slot<FaceTag> face;
+  uint64_t assignment_epoch = 0;
   auto operator<=>(const FaceConstructionKey &) const = default;
 };
 enum class DomainPolicy : uint32_t { reconstructed_selected = 1, authoritative_exact_image = 2 };
