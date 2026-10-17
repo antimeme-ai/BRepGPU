@@ -255,6 +255,71 @@ def run(options,root):
     print('PASS\tmodel original definitions/chains/facets/scene/placements/materials/PNG\t3 queries')
 
 
+def progress_trace(options,root):
+    assert options.threads == 1 and not options.module, 'progress ports run once on CPU1'
+    src = model_source(); source = root/'original.bgsource'; write_source(src,source)
+    outputs = []
+    records = []
+    fields = ('event','phase','face','query','assignment','span','horizon','revision',
+              'source_sites','sites','facets','pending','failed','anchors','leaves',
+              'cumulative_work','component','n','boundary','work','peak','byte_limit',
+              'work_limit','spent')
+    for name,extra in (('quiet',[]),('trace',['--trace-progress'])):
+        target = root/name
+        completed = invoke(command(options,source,target,(.01,))+['--mesh-only']+extra,root,name)
+        assert completed.returncode == 0,completed.stderr
+        check_output(src,target,(.01,),mesh_only=True)
+        outputs.append(target)
+        lines = [line.split('\t') for line in completed.stderr.splitlines()
+                 if line.startswith('native_trace\t')]
+        if not extra:
+            assert not lines
+        else:
+            for line in lines:
+                assert len(line) == len(fields)+1,line
+                row = dict(zip(fields,line[1:]))
+                for key in fields[2:]:
+                    row[key] = int(row[key]); assert row[key] >= 0
+                records.append(row)
+    expected_faces = {face.id for face in src.faces}
+    assert {row['face'] for row in records} == expected_faces
+    spans = {}; cdts = {}
+    for row in records:
+        assert row['query'] == 1 and row['assignment'] > 0 and row['face'] in expected_faces
+        key = (row['face'],row['query'],row['assignment'],row['span'])
+        if row['event'] == 'phase_begin':
+            assert key not in spans; spans[key] = row['phase']
+        elif row['event'] == 'phase_end':
+            assert spans.pop(key) == row['phase']
+        elif row['event'] == 'cdt_begin':
+            assert key not in cdts and row['n'] >= row['boundary'] >= 3
+            cdts[key] = row
+        elif row['event'] == 'cdt_end':
+            before = cdts.pop(key)
+            assert row['n'] == before['n'] and row['boundary'] == before['boundary']
+            assert row['work'] >= before['work']
+        else:
+            assert row['event'] == 'surface_phase',row
+    assert not spans and not cdts and any(row['event'] == 'cdt_begin' for row in records)
+    left,right = outputs
+    for a,b in zip(read_tsv(left/'faces.tsv'),read_tsv(right/'faces.tsv')):
+        for field in ('mesh','boundary'):
+            assert (left/a[field]).read_bytes() == (right/b[field]).read_bytes(),field
+    # A typed native work refusal must preserve its diagnostic and transaction.
+    errors = []
+    for name,extra in (('quiet-failure',[]),('trace-failure',['--trace-progress'])):
+        target = root/name
+        failed = invoke(command(options,source,target,(.01,))+[
+            '--mesh-only','--construction-work','1']+extra,root,name)
+        error = [line for line in failed.stderr.splitlines() if line.startswith('error\t')]
+        assert failed.returncode == 1 and len(error) == 1,failed.stderr
+        assert 'exact work budget exhausted' in error[0],error
+        errors.append(error)
+        assert not target.exists() and not list(root.glob(f'{target.name}.tmp-*'))
+    assert errors[0] == errors[1]
+    print(f'PASS\tmodel progress trace\t{len(expected_faces)} original faces/{len(records)} rows; SAME outputs/error')
+
+
 def scratch_policy(options,root):
     assert options.threads == 1 and not options.module, 'scratch policy ports run once on CPU1'
     src = model_source(); source = root/'original.bgsource'; write_source(src,source)
@@ -306,6 +371,7 @@ def main():
     parser.add_argument('--device',type=int,choices=(0,1),default=0)
     parser.add_argument('--ports',action='store_true')
     parser.add_argument('--scratch-policy-only',action='store_true')
+    parser.add_argument('--progress-trace-only',action='store_true')
     parser.add_argument('--resume',action='store_true',help='read completed native model output; run remaining ports only')
     parser.add_argument('--saved-output',type=Path)
     parser.add_argument('--compare-output',type=Path,help='compare saved output to already original-checked reference')
@@ -320,10 +386,12 @@ def main():
         assert options.executable
         if options.workspace:
             options.workspace.mkdir(parents=True,exist_ok=options.resume)
-            (scratch_policy if options.scratch_policy_only else run)(options,options.workspace.resolve())
+            (progress_trace if options.progress_trace_only else
+             scratch_policy if options.scratch_policy_only else run)(options,options.workspace.resolve())
         else:
             with tempfile.TemporaryDirectory(prefix='native-adaptive-model-') as temporary:
-                (scratch_policy if options.scratch_policy_only else run)(options,Path(temporary))
+                (progress_trace if options.progress_trace_only else
+                 scratch_policy if options.scratch_policy_only else run)(options,Path(temporary))
 
 
 if __name__ == '__main__':

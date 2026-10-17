@@ -39,6 +39,7 @@ struct TrimFaceLimits final {
   TrimFacetLimits facets;
   uint64_t regions = uint64_t{1} << 20, anchors = uint64_t{1} << 20;
   uint64_t exact_bits = uint64_t{1} << 20, construction_work = uint64_t{1} << 42;
+  bool trace_progress = false;
 };
 enum class TrimFaceProgress : uint32_t { progressed, pending, needs_boundary, complete };
 struct TrimFaceStats final {
