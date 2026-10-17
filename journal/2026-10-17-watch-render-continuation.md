@@ -188,3 +188,30 @@ An independent existing-OCCT reference visualization unit is being scoped to
 show the original complete assembly while the owned mesher is repaired. It must
 be labeled OCCT reference, retain full source inventories/placements and use
 the actual existing native display; it is not an owned-meshing or NVIDIA result.
+
+## Actual progress trace and first OCCT outcome
+
+The optional diagnostic unit passed the existing original-output reader and
+trace-on/off mesh/boundary byte comparison, strict build, changed-line static
+checks and independent actual-source review. Root accepted it and committed
+9295a35. It changes no geometry, acceptance, resource caps or CUDA interface.
+One selected original barrel-arbor P100 diagnostic now runs with tracing;
+the complete assembly is not being blindly replayed.
+
+The actual trace disambiguates a major amplification path: a curved face
+completes at successive boundary counts68,132,260,516,1028,2052 and4100,
+then is invalidated by another physical-boundary round. Two neighboring planar
+faces return from domain construction requesting refinement without producing
+triangles. The coarse graph path currently requests every positive-error
+interval of each affected face, discarding the crossing index's local witness.
+Repeated refinement of the curved face itself does converge; a short plateau
+in its failing-facet count was not evidence of nontermination. The next study
+must explain the original planar graph failure before selecting a repair.
+
+The first complete independent OCCT reference operation failed, exit1,
+wall9.38s, user8.79s, system0.58s, peak198392KiB. All107 definitions were
+refused because at least one original face had no triangulation, despite
+IsDone. No complete image was emitted. The first bounded original small-part
+diagnostic has3/4 faces triangulated and status flags4; the reference owner is
+studying the actual missing face and OCCT status/source behavior. Neither the
+authored box/cylinder check nor IsDone establishes actual watch coverage.
