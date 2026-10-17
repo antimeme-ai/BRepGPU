@@ -546,6 +546,9 @@ if(BREPGPU_MESHER_ENABLE_CUDA)
 endif()
 
 if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_trim_source ../../tests/native_adaptive_trim_source.cpp)
+  target_link_libraries(brepgpu_native_adaptive_trim_source PRIVATE brepgpu_mesher_adaptive_geometry)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_trim_source)
   add_executable(brepgpu_native_adaptive_curves_geometry ../../tests/native_adaptive_curves_geometry.cpp)
   target_link_libraries(brepgpu_native_adaptive_curves_geometry PRIVATE brepgpu_mesher_adaptive_curve_geometry
     ${CMAKE_DL_LIBS})
@@ -614,6 +617,11 @@ if(BUILD_TESTING)
     DEPENDS ../../tests/native_adaptive_geometry_fixture.py ../../tests/native_mesher_geometry_fixture.py
       ../../tests/native_mesher_run_fixture.py ../../python/brepgpu/imported_source.py VERBATIM)
   add_custom_target(brepgpu_native_adaptive_geometry_fixture DEPENDS "${ADAPTIVE_GEOMETRY_STAMP}")
+  add_dependencies(brepgpu_native_adaptive_trim_source brepgpu_native_adaptive_geometry_fixture)
+  foreach(kind 2 3 4 5)
+    add_test(NAME native_adaptive_trim_source_${kind} COMMAND brepgpu_native_adaptive_trim_source
+      "${ADAPTIVE_GEOMETRY_FIXTURES}/analytic-${kind}.bgsource")
+  endforeach()
   add_dependencies(brepgpu_native_adaptive_geometry brepgpu_native_adaptive_geometry_fixture)
   set(ADAPTIVE_GEOMETRY_ORACLE "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_geometry_oracle.py")
   add_test(NAME native_adaptive_geometry COMMAND "${Python3_EXECUTABLE}" -B "${ADAPTIVE_GEOMETRY_ORACLE}"
