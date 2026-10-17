@@ -1,0 +1,26 @@
+field	value
+source_sha256	c60675abe3314dca55a31da0406deef851e128e2ee8608536525f926f56d61e3
+views_sha256	c141b0f8e4d829a9cedfe8c4989ef904d72d08e637fdf543bf9ffb6de8d7c62d
+geometry	genuine NVIDIA definition-local f64 tessellation, official rectangle polygon triangulation and retained original oriented per-corner normals
+polygon_triangulation	official SDK TriangulatePlanar for exact axis-extruded rectangles; per-definition counts in worker polygon-export.tsv
+scope	fresh STEP through both labeled views
+heal	1
+chord_height_mm	0.005
+curve_angle_degrees	0.0
+surface_angle_degrees	0.0
+reference_preparation	periodic-plane
+physical_shell_source_euler	PASS
+independent_distance_qualification	not_performed_in_caller
+allow_partial	False
+workers	12
+display_threads	12
+source_definitions	107
+source_faces	9162
+occurrences	166
+requested_quality_is_measured_admission	False
+input_admission	complete_native_model_inventory
+available_cpu_affinity	0,2,4,6,8,10,12,14,16,18,20,22
+PXR_WORK_THREAD_LIMIT	1
+OMP_NUM_THREADS	1
+OPENBLAS_NUM_THREADS	1
+MKL_NUM_THREADS	1
