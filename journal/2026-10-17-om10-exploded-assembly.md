@@ -217,3 +217,18 @@ outcomes and links the full report, explicitly separating fresh STEP timing
 from the owned source-snapshot timing. Root accepted the actual heal0 poster
 and policy-caption/source diff. No geometry or display implementation changed
 after the completed replays; no repeated qualification campaign followed.
+
+## Operator-authorized merge
+
+The operator requested merging the completed delivery. PR70 merged into main
+with merge commit06234a60c52f8986f3a674c0ead4771f0105e35e, preserving the
+reference implementation/history. PR71 was then retargeted from the reference
+branch to main; GitHub reports it clean and mergeable. The diagram branch
+already contains the completed reference head032632b and the accepted visual
+head0b97a3f. Both working trees were clean before this journal-only entry.
+No GitHub CI checks are configured on either PR; validation remains the actual
+fleet tests, complete reference operations and all four inspected diagrams
+recorded above. No implementation changed at merge time and no test or render
+was repeated. Merge PR71 with a merge commit as well, then verify main contains
+both accepted heads and the published README, reports and large images. Keep
+feature branches and ignored operational/source artifacts intact.
