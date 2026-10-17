@@ -137,3 +137,54 @@ The previous full CPU v8 operation was terminated by signal15/shell143 at895.24s
 GNU time printed exit=0 after that signal, which is not a success. Its peak was
 2,766,088KiB. Both new operations require all107 definitions and both frames
 before final publication; no final image exists at launch.
+
+While the5µm full runs work through the difficult component, root also launched
+an explicitly20µm illustrative full-assembly preview on the other P100, with
+unchanged1µm node cap /256MiB scratch /32GiB global,2 host threads and2 face owners,
+the same1920×1800/explosion2. It uses two sibling logical CPUs and adds concurrent
+load to the development observations. Its900s wall limit is separate. This is
+not the matched5µm comparison or a silent quality relaxation; any image or
+timing from it must retain its20µm preview scope. It also requires all source
+definitions/faces/placements and both frames before publication.
+
+The20µm/1µm preview also remained on the difficult component. Root deliberately
+terminated it and restarted a20µm/4µm preview, preserving the final tier's5:1
+positional/node ratio. This is a different explicitly stated quality tier, not a
+performance fix or proof that node tolerance caused the long run. No timing from
+the terminated preview is a completed-render time; the5µm/1µm CPU/P100 pair is
+unchanged. Keep the two preview attempts separate in retained outcomes.
+
+## Work refusal: complete runs still blocked
+
+Both complete5µm/1µm v9 operations FAILED on the barrel arbor with
+`exact work budget exhausted`, native exit1. CPU wall1587.29s, user2212.94s,
+system7.88s, peak4,584,756KiB; P100 wall1548.85s, user2150.34s, system8.34s,
+peak5,101,648KiB. Neither published an image. The late failure-only memory hook
+did not fire; these observations do not identify the exhausted work owner.
+The20µm/4µm preview was CENSORED at900.50s, exit124, still on the same component;
+user943.51s, system6.05s, peak4,132,264KiB. The prior20µm/1µm preview was manually
+terminated after367.03s, not a native failure or a completed render.
+
+All native geometry jobs are stopped. No further cap increase or full replay is
+selected. Need source-face/phase/site/horizon progress and the exact work owner
+before choosing an algorithm repair. Root selected a narrow optional native trace
+unit; the existing weak Budget::charge function permits a private failure-only
+debugger capture without changing Failure or the numerical ABI.
+
+Read-only source study identified whole-Band CDT rebuild and accepted-facet
+rechecking after retained anchor insertion; frozen packet footprints can keep
+thin regions wholly in Band territory. These are concrete amplification paths,
+not established current-face/site counts. The original component has45 distinct
+carriers,17 planes/15 cylinders/13 cones,101 edges and64 vertices. Its source
+product is the barrel arbor. The full-period corner-chord metric hypothesis was
+falsified: analytic source roots tile into at most quarter-turn panels and the
+metric uses a selected leaf. The proposed2ε boundary-error hypothesis was also
+falsified: carrier_trace_to_actual_chord_upper already bounds selected S directly
+to the SAME physical Q chord; adding the physical Ce bound would double-charge.
+See papers/2026-10-17-barrel-arbor-amplification-read.md. Do not turn these
+hypotheses into numerical patches.
+
+An independent existing-OCCT reference visualization unit is being scoped to
+show the original complete assembly while the owned mesher is repaired. It must
+be labeled OCCT reference, retain full source inventories/placements and use
+the actual existing native display; it is not an owned-meshing or NVIDIA result.
