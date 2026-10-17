@@ -271,3 +271,14 @@ four actual zero-area pole/apex triangles and seven missing face triangulations.
 Root stopped that reference repair lane; no full third attempt or OCCT watch
 image exists. No triangles or faces were discarded. The explicit reference
 adapter and failed outcomes are committed separately as c6a0bd1.
+
+The genuine NVIDIA reference driver is ready for the complete native model's
+original placement/camera inputs. Its native-model inventory/transport admission
+does not require the expensive owned whole-source reader. A failed preparation
+records a failed pipeline; only a genuine all107-definition result proceeds to
+the existing separate NVIDIA geometry qualification and display. Neither a
+legacy qualification marker nor a borrowed owned mesh will be supplied.
+Root corrected the NVIDIA SVG footer to credit NVIDIA reference meshing
+explicitly; this is presentation text only. The ignored delivery helper now
+targets attempt8 and losslessly recompresses actual native PNG pixels after
+successful complete-operation checks. No image exists at this preparation step.
