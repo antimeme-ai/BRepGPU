@@ -78,3 +78,27 @@ genuine triangles. The other offending cylinder remains unsplit and unresolved.
 That derivative has explicit source correspondence and preparation costs; it
 does not replace the historical original-input outcome. Further split searches
 were stopped rather than relaxing source guards.
+
+The selected plane-range control now succeeds through the unchanged genuine
+SDK and raw extractor:9004 and7060 triangles under both heal0 and heal1. Existing
+physical/source-Euler readers report closedEuler2 shells on all four outputs.
+The same finite lazy-UV trace reduces the previous millimetre discrepancy to
+1.3946e-5mm (a retained nonplanar endpoint mismatch) and3.85e-14mm. No crossed
+polygon admission or replacement triangulation was required.
+
+Root/peer reviewed the public reference boundary. The mathematical preparation
+owner supplies an explicit native control/frame helper plus a package-usdpy
+script; root adds --usd-definition to the original producer. It retains a byte
+copy, reports prepared_usd and copy_prepared_usd, and imports at the ORIGINAL
+input address so relative USD asset resolution is preserved. The helper admits
+self-contained layers. A retained layer copy alone is not an archive of arbitrary
+composed dependencies. Original --definition remains the unchanged converter route.
+
+The two direct prepared-entry checks were RED against the previous producer:
+unknown --usd-definition prevented actual cylinder reimport, and mixed-kind
+duplicate detection did not exist. The isolated producer rebuild succeeds; all
+four control methods now pass in0.826s, including byte-identical actual cylinder
+USD and complete genuine mesh across original/prepared input paths. Peer source
+review accepts the boundary, shared duplicate gate, input-kind/copy reporting
+and tests. The separate plane helper/authored fixture and public real-input
+controls are completing before this delivery is called finished.
