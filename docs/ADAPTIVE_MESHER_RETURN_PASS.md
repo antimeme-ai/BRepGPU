@@ -52,3 +52,29 @@ complete trimmed construction/publication:
 - Full facet/domain error needs an actual interior map. A boundary-only domain
   upper or max edge displacement cannot become a whole-face theorem. The next
   numerical/construction studies spell the real remaining dependencies.
+
+The first complete selected-face unit adds these concrete opportunities:
+
+- For facets wholly inside one ORIGINAL source span, evaluate the existing
+  original `N-WL`/analytic SAME-L task before materializing cache-leaf clips.
+  Passing facets then avoid virtual Fraction geometry entirely. A crossing of
+  original spans needs a source partition; a crossing of numerical cache leaves
+  does not inherently require one for an original-source bound. Retain cached
+  bilinear clipping as a tightening route for nonaccepts. This is a scheduling
+  contender using the same evaluator/kernel, not a selected implementation yet.
+- Numerical refinement must not weaken actual construction progress. The first
+  BAND rule placed points in the first clipped sliver and exhausted work on
+  weighted/saddle inputs. Central points in the actual failing triangle repair
+  those cases under unchanged caps. Preserve that independence when making
+  clipped work lazy or reordering bounds. The exact central margin constrains
+  direct-star areas, not global CDT diameter or eventual termination.
+- The native bound stage now counts many more virtual pieces than emitted
+  facets in the weighted case. Separate exact clipping/preparation from GPU
+  arithmetic in the next measured scheduling study; do not blame integer
+  operand size merely because a sampled stack is in GCD. Bounded diagnostics
+  falsified the large-denominator hypothesis in this actual cohort.
+- Shared-boundary and face sessions currently open their own numerical device
+  services. Component-level orchestration must account for these banks, streams,
+  source uploads and retained host/device peaks rather than treating selected
+  face timings as a complete component/render result. Complete publication and
+  the remaining caller-family ports still precede a tuning campaign.

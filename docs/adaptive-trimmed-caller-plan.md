@@ -169,6 +169,20 @@ CPU/P100 equality checks placement determinism, not source accuracy.
    record rejected findings with their reasons, rerun affected direct checks.
    Publish coherent implementation and result commits on the feature branch.
 
+## Execution status, 2026-10-17
+
+The first complete selected-face caller is implemented. The fixed seven-source
+cohort (tiny-hole plane,16holes, reversed loops, authoritative line clocks,
+bowl, weighted rational, saddle) passes28 processes/56 queries on CPU1/CPU4/
+both P100s, with original-source readers and byte-identical matched artifacts.
+See [the retained observation](../results/adaptive-trimmed-2026-10-17/REPORT.md).
+
+This is a completed subset of the plan above. Full-caller C0/hanging spans,
+periodic seams, multiple outer regions, remaining failure ports and the full
+fresh/warm sequence above remain pending. Existing direct/unit coverage does not
+complete those caller ports. Complete imported component/assembly publication
+also remains a later dependency; no watch render was attempted in this unit.
+
 ## Complete-operation performance
 
 Record external process wall and native decode/compile/session/device setup,
