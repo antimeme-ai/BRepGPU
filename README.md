@@ -17,14 +17,18 @@ reproduces the image exactly and records evaluation,setup,qualification and CPU
 display costs. Earlier [synthetic studies](docs/TROPHY_GALLERY.md)
 remain available.
 
-[![The complete original OM10 movement — P100 exploded view](assets/om10/p1001-exploded-1920.png)](results/om10-watch-2026-10-17/REPORT.md)
+[![The complete original OM10 movement — P100 exploded view](assets/om10/p1001-exploded-poster-4k.png)](results/om10-watch-2026-10-17/REPORT.md)
 
-**The real OM10 watch is rendered.** All **107 solid definitions, 9,162 source
+**The real OM10 watch is rendered.** Download [3840×4200 assembled and exploded
+posters](results/om10-watch-2026-10-17/REPORT.md), with 2× supersampled native 4K
+images, original part names, attribution and actual timings. All **107 solid definitions, 9,162 source
 faces and 166 placed parts** pass through our owned C++/CUDA cached-adaptive
 mesher into assembled and exploded labeled images. Both CPU and P100 finish
 with 273,978 unique triangles. Complete cold snapshot-to-both-images time:
 **875.16s CPU12 / 872.50s P100 with CPU12**. Display is faster on P100; CPU meshing
-dominates, so this does not establish an overall GPU advantage.
+dominates, so this does not establish an overall GPU advantage. Separately timed
+4K display takes **1.814/0.712s CPU versus 0.211/0.187s P100** for assembled/exploded
+rasterization including result download.
 [Full-size images, every recorded phase, source-linked part legend and limitations](results/om10-watch-2026-10-17/REPORT.md).
 The independent whole-watch geometry reader and external alpha qualification
 remain incomplete. Fresh NVIDIA USD/BRep CPU attempts complete103/107 components
