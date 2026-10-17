@@ -77,6 +77,11 @@ the figure is an external view of saved meshes. These are meshing timings.
 The [extended caller checks](results/adaptive-trimmed-ports-2026-10-17/REPORT.md)
 also pass60 queries covering C0/hanging spans, nested islands, periodic seams and
 cache history, plus11 process refusal/publication cases.
+The [complete-component connection](docs/ADAPTIVE_COMPONENTS.md) now also passes
+12 native queries / 36 face outputs across CPU1/CPU4/both P100s: a closed box,
+periodic seam and a definition requiring real shared-boundary refinement.
+Bounded workers reuse their source bank; unaffected faces retain their exact
+boundary snapshots, and final facets pass the existing physical contact check.
 NVIDIA USD/BRep CPU has not been run on these scenarios. General curved
 authoritative-domain maps, complete imported components
 and the real OM10 render remain pending.
