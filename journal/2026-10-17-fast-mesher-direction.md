@@ -258,3 +258,16 @@ FAST_MESHER_DESIGN.md marked as a working draft not to plan from;
 SHOPPING_LIST.md created from every lane's not-acquired list, with four items
 needing operator decisions (BRL-CAD source, Epic CADKernel, tracker
 attachments with unstated licences, non-public OCCT fixtures).
+- M0 committed and pushed (research/fast-mesher-study now on origin).
+- M1, M2, M3 launched in parallel from committed briefs in
+  docs/fast-mesher-campaign/briefs/. Disk read before writing M3: the laptop
+  has ~23 GiB free (99% used), the fleet host ~1.5 TB, so corpus data lives on
+  the fleet host outside any checkout, with only the manifest tracked.
+- M3 returned (corpus/MANIFEST.md, corpus/manifest.tsv; data on the fleet
+  host under corpus/, 75 file hashes re-checked there). Acquired: NIST MBE PMI
+  models (public domain, 71 STEP), CAx-IF public library (53 STEP, licence
+  unstated), five open-hardware printer packages (374 STEP; GPL-3.0 and
+  CC BY-NC-SA). Blocked on operator decisions: ABC (download term; selection
+  rule fixed before looking, fetch script staged, not run) and Fusion 360
+  Gallery (non-commercial licence with indemnity). Four more decisions and two
+  retries merged into SHOPPING_LIST.md. No geometry code ran on the corpus.

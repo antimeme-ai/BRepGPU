@@ -11,6 +11,11 @@ names the paper that wants it. Mark entries acquired or declined in place.
 | BRL-CAD source (`libbrep` CDT tessellator, `ON_Brep_CDT_*`) | An owned public B-rep CDT tessellator with a test suite (test-plans-cad, Appendix C) | github.com/BRL-CAD/brlcad returned 404; the only reachable copy is an unverified third-party mirror. Acquire from an official source, or skip? |
 | Epic CADKernel (Unreal Datasmith) | An owned B-rep tessellator (test-plans-cad) | Source requires an Epic account. Acquire under the operator's account, or skip? |
 | Tracker reproducer attachments with unstated licences | Field-failure fixtures for the corpus (test-plans-cad, "Reproducers worth acquiring") | OCCT GitHub #507, #688, #572, #1444, #682; FreeCAD #12744, #25311, #20456, #25514, #17175, #33251, #29811; truck #41, #123; Gmsh #623, #415, #1107, #3167, #541, #2237, #3147, #3278, #3260. Licence status is unstated. Use them as private corpus, or skip? |
+| ABC dataset download (3 chunks: STEP, meta, stat, Parasolid; 8.95 GB) | Priority-1 arena corpus (M3; corpus/MANIFEST.md) | Accept the site's download term ("The authors give no warranties regarding the dataset") and run `corpus/abc/fetch-selected.sh` on the fleet host? Per-model rights follow Onshape ToU 1.g.ii; models before 2018-08-07 with a LICENSE tab keep reserved rights |
+| Fusion 360 Gallery (s2.0.1 extended STEP first) | Second large real B-rep source with native `.smt` and instanced assemblies (M3) | Licence binds the user and a for-profit employer to non-commercial research use with an indemnity of Autodesk. Accept, or skip? |
+| CAx-IF test-round models | Current multi-vendor AP242 exports with known issues (M3) | Member areas only. Seek membership or access via PDES, Inc. or ProSTEP iViP, or skip? |
+| Publishing results on CAx-IF public library files | No licence covers republishing the files (M3) | Default: publish timings and verdicts only, never the files. Confirm, or ask PDES/ProSTEP? |
+| openmovement OM10 other revisions (MAN VB, AUT beta 01.3, earlier betas) | More real horological geometry (M3) | Needs an openmovement member account (free tier). Create one? |
 | OCCT Mantis attachments and fixtures absent from the public dataset | Hang, OOM and thin-face fixtures (test-plans-cad) | Mantis 0033082, 0026965, 0033476, 0033681, 0033314, 0033906, 0025589, 0023631, 0026074; files `bug25281_tess_infloop_extract.step`, `bug28118_18547.stp`, `OCC396_f2903.brep`, `bug31301.stp`, `bug25287_bad_tess_face_plus.step`, `bug23105_f372.brep`, `bug25551_m-a-i-B6.brep`, `bug25061_a.brep`. Not public; request from OCCT, or re-author? |
 
 ## Standards
@@ -76,3 +81,10 @@ Highest value first:
 - CGAL testsuite Docker images and nightly results.
 - artem-ogre/CDT external fuzz harness (Som1Lse); not public in tree.
 - Nanevski et al. 2001 predicate test set, original location.
+
+## Retry later (no decision needed)
+
+- NIST/MTC box-assembly TDP `mtc.zip` (DOI 10.18434/T4/1503154) and NIST
+  `mds2-2146` `qif-ontology-dataset-V2.zip`: data.nist.gov returned HTTP 524.
+- CAx-IF `rec_prac_gvp_v32.pdf` (Geometric Validation Properties practice):
+  404 on mbx-if.org; try a Wayback capture.
