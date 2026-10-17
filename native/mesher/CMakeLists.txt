@@ -179,14 +179,6 @@ if(BREPGPU_MESHER_BUILD_BENCHMARKS)
 endif()
 
 if(BUILD_TESTING)
-  add_executable(brepgpu_native_adaptive_assembly ../../tests/native_adaptive_assembly.cpp)
-  target_link_libraries(brepgpu_native_adaptive_assembly PRIVATE brepgpu_mesher_adaptive_assembly)
-  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_assembly)
-  add_test(NAME native_adaptive_assembly COMMAND "${Python3_EXECUTABLE}" -B
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_assembly.py"
-    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_assembly>")
-  set_tests_properties(native_adaptive_assembly PROPERTIES
-    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   add_executable(brepgpu_native_mesher_presentation ../../tests/native_mesher_presentation.cpp)
   target_link_libraries(brepgpu_native_mesher_presentation PRIVATE brepgpu_mesher_presentation)
@@ -751,6 +743,14 @@ if(BUILD_TESTING)
     --fixture "$<TARGET_FILE:brepgpu_native_adaptive_packets>" --source "${CELL_FIXTURE}")
 endif()
 if(BUILD_TESTING)
+  add_executable(brepgpu_native_adaptive_assembly ../../tests/native_adaptive_assembly.cpp)
+  target_link_libraries(brepgpu_native_adaptive_assembly PRIVATE brepgpu_mesher_adaptive_assembly)
+  brepgpu_native_cpu_rigor(brepgpu_native_adaptive_assembly)
+  add_test(NAME native_adaptive_assembly COMMAND "${Python3_EXECUTABLE}" -B
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_assembly.py"
+    --fixture "$<TARGET_FILE:brepgpu_native_adaptive_assembly>")
+  set_tests_properties(native_adaptive_assembly PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../python" TIMEOUT 130)
   add_executable(brepgpu_native_adaptive_runtime ../../tests/native_adaptive_runtime.cpp)
   target_link_libraries(brepgpu_native_adaptive_runtime PRIVATE brepgpu_mesher_adaptive_cache)
   add_dependencies(brepgpu_native_adaptive_runtime brepgpu_native_mesher_chart_fixture)
