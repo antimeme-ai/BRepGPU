@@ -51,3 +51,10 @@ The fixture's deliberately small image clips the long timing caption; intended
 trophy dimensions remain separate. No further model qualification campaign.
 All source/operational artifacts remain ignored; the public API document states
 finite scope and pending singular/whole-watch delivery.
+
+After the real watch attempts reached their wall limits before the first
+component completed, added a flushed component-begin progress row to the native
+model caller. It names the query, original definition and ordinal before the
+measured component call, complementing the existing completion row. This is
+operational progress only, not a mesh result or acceptance change; the next
+affected native model build covers compilation.
