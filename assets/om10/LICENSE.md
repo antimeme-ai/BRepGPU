@@ -14,3 +14,10 @@ camera/lighting, authored explosion offsets, labels and timing graphics.
 The original movement design is credited to Association openmovement.
 The software implementation retains the repository's separate software license.
 Original CAD bytes and operational binary snapshots are not included here.
+
+The `*-exploded-assembly-4k.png` diagrams additionally use authored functional
+module translations, source-alignment guides and a complete166-name legend.
+Original part orientations, geometry and materials are retained. These diagrams
+are explanatory illustrations, not validated disassembly instructions. Their
+[report](../../results/om10-exploded-2026-10-17/REPORT.md) separates new display/export
+costs from the original completed mesh operation.
