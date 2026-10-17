@@ -439,13 +439,21 @@ Rational Rational::from_double(bgfd::Budget &budget, double value) {
     mantissa |= uint64_t{1} << 52;
   if (mantissa == 0)
     return Rational(budget);
-  const int exponent = raw_exponent == 0 ? -1074 : static_cast<int>(raw_exponent) - 1075;
+  int exponent = raw_exponent == 0 ? -1074 : static_cast<int>(raw_exponent) - 1075;
+  if (exponent < 0) {
+    const auto common = std::min(static_cast<unsigned>(std::countr_zero(mantissa)),
+                                 static_cast<unsigned>(-exponent));
+    mantissa >>= common;
+    exponent += static_cast<int>(common);
+  }
   auto n = integer(budget, mantissa, bits >> 63 != 0 ? -1 : 1), d = integer(budget, 1);
-  if (exponent >= 0)
+  if (exponent > 0)
     n = n.shift_left(static_cast<uint64_t>(exponent));
-  else
+  else if (exponent < 0)
     d = d.shift_left(static_cast<uint64_t>(-exponent));
-  return from_ratio(std::move(n), std::move(d));
+  // The denominator is one, or its remaining power of two is coprime to
+  // the now-odd mantissa. No general rational normalization is needed.
+  return Rational(std::move(n), std::move(d), Canonical{});
 }
 namespace {
 uint64_t rounded_magnitude(const Rational &value) {

@@ -1,6 +1,7 @@
 # Canonical binary64 dyadic construction
 
-2026-10-17. Finite PLAN only; no arithmetic body edit before parent review.
+2026-10-17. Parent reviewed this PLAN before implementation. Closure is recorded
+in journal/2026-10-17-native-binary64-dyadic.md.
 
 The live sampled watch stack reaches Rational::from_double -> from_ratio ->
 divide_exact during facet candidate preparation. This identifies avoidable
