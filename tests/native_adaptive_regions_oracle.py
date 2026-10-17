@@ -14,6 +14,7 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--fixture',required=True,type=Path)
     parser.add_argument('--source',type=Path)
+    parser.add_argument('--storage-only',action='store_true')
     args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='adaptive-regions-') as directory:
         path=args.source or Path(directory)/'saddle-hole.bgsource'
@@ -21,10 +22,13 @@ def main():
             write_source(curved_source('saddle',(((Fraction(251,512),Fraction(251,512)),
                 (Fraction(251,512),Fraction(253,512)),(Fraction(253,512),Fraction(253,512)),
                 (Fraction(253,512),Fraction(251,512))),)),path)
-        process=subprocess.run([str(args.fixture),str(path)],capture_output=True,text=True,timeout=60)
+        process=subprocess.run([str(args.fixture),'--storage-only' if args.storage_only else str(path)],
+                               capture_output=True,text=True,timeout=60)
         if process.returncode:
             raise RuntimeError(f'actual region fixture exit {process.returncode}: {process.stderr}')
         output=process.stdout
+        if args.storage_only:
+            print(process.stderr,end='')
     cases=[]
     for line in output.splitlines():
         row=line.split('\t')
@@ -37,7 +41,8 @@ def main():
             case.triangles.append(tuple(map(int,row[1:4])))
             case.components.append(int(row[4]))
         else: raise AssertionError('unknown region fixture row')
-    assert {case.name for case in cases}=={'rational','anchor','disconnected','nested','face'}
+    assert {case.name for case in cases}==({'storage'} if args.storage_only else
+        {'rational','anchor','disconnected','nested','face'})
     for case in cases:
         positives=sum(sum(case.points[a][0]*case.points[b][1]-case.points[a][1]*case.points[b][0]
                           for a,b in zip(loop,loop[1:]+loop[:1]))>0 for loop in case.loops)

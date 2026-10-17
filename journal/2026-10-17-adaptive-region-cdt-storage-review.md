@@ -27,3 +27,10 @@ destroy the borrowing index first and emplace the nonmovable owned predicates.
 The preselected 16388-site/16 MiB genuine region operation and SAME exact chain
 reader attack the actual working-set fault; a nondistinguishing cap must be
 reported rather than silently retuned. No additional findings or runs.
+
+Actual body/fixture source review ACCEPTed the same ownership order and last-use
+boundaries. No encoder borrow escapes, predicates reset follows solve, active
+survives original-slot remap, and all phase storage dies before adjacency.
+Fixture return/tiny-cap cleanup uses the same operation and exact chain output.
+Budget peak is explicitly not total RSS. No implementation or execution by this
+review lane; parent/owner retain their finite operation checks and integration.

@@ -101,3 +101,14 @@ and the divide/conquer/deletion mechanisms read for the original constructor.
 The planar edge inequality above is an elementary Euler bound, not a runtime or
 coordinate-bit guarantee imported from a reference package. No dependency or
 new topology algorithm is selected by the captured memory failure.
+
+Actual implementation reread: scoped ACCEPT of the phased
+adaptive_region_cdt.cpp and fixed-grid/tiny-cap additions to the existing region
+fixture/reader. Compact-to-slot remapping occurs before compact dies; the index
+is destroyed before its borrowed tables; predicate emplace completes while
+encoding arrays live. Predicates is reset after solve, and active survives until
+original-site remapping. All of those buffers are gone before HalfEdge adjacency.
+Signed cycle counts and result diagnostics survive by value. The fixture checks
+return/exception cleanup and feeds the same exact chain reader. Its Budget peak
+describes Budget allocations, not total process RSS or the fixture's ordinary
+caller std::vector record storage. No execution belongs to this source review.
