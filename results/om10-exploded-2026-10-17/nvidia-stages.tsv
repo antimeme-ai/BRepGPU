@@ -1,0 +1,71 @@
+config	kind	frame	stage	seconds	scope_note
+heal0	new_diagram_native	-1	raw_file_read_decode_validate	0.209884764	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	-1	raw_session_create	0.00059798300000000006	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	host_output_allocate	0.284693639	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	raw_instance_transform_project	0.061820759000000003	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	triangle_setup	0.028128258999999999	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	tile_count_scan_allocate_fill	0.048145153999999996	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	visibility_shading_resolve	2.0362390709999998	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	diagnostic_host_copy	0	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	output_write	1.0107867189999999	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	0	reused_frame_wall	3.4912470669999998	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	host_output_allocate	0.26739828999999998	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	raw_instance_transform_project	0.010664718	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	triangle_setup	0.0050887040000000003	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	tile_count_scan_allocate_fill	0.0153607	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	visibility_shading_resolve	0.447630896	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	diagnostic_host_copy	0	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	output_write	1.0194477	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	1	reused_frame_wall	1.789809907	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	-1	raw_session_close	0.070953848	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_native	-1	complete_native_through_host_teardown	5.5724099690000006	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal0	new_diagram_replay_export		source_inventory_pose_layout_admission_and_copy	12.662044913042337	complete scopes contain nested phases; not additive
+heal0	new_diagram_replay_export		both_view_reference_display_process	5.57726208108943	complete scopes contain nested phases; not additive
+heal0	new_diagram_replay_export		encode_actual_reference_pngs	1.257947359001264	complete scopes contain nested phases; not additive
+heal0	new_diagram_replay_export		actual_reference_visibility_mask_and_guides	13.325605402002111	complete scopes contain nested phases; not additive
+heal0	new_diagram_replay_export		compose_reference_svg_and_complete_legend	0.008750941953621805	complete scopes contain nested phases; not additive
+heal0	new_diagram_replay_export		rasterize_reference_poster	2.6691546080401167	complete scopes contain nested phases; not additive
+heal0	new_diagram_replay_export		complete_reference_diagram_replay_export	36.14097576099448	complete scopes contain nested phases; not additive
+heal0	original_source_to_old_views		fresh_step_source_export_process_wall	4.037132095079869	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		nvidia_batch_through_all_worker_exits_wall	6.129701826022938	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		all_definition_physical_shell_source_euler_admission	16.736426984076388	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		genuine_mesh_decode_scene_pack_write	19.50822508102283	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		shared_owned_cpu_display_process_wall	1.2654422420309857	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		assembled_png_svg_labels_write	0.4658810211112723	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		exploded_png_svg_labels_write	0.4852106560720131	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal0	original_source_to_old_views		caller_through_outputs_before_timing_write_and_interpreter_exit	43.31493757700082	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	new_diagram_native	-1	raw_file_read_decode_validate	0.225037608	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	-1	raw_session_create	0.00055224799999999998	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	host_output_allocate	0.38756053600000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	raw_instance_transform_project	0.055894544000000004	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	triangle_setup	0.026802859000000002	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	tile_count_scan_allocate_fill	0.046306916000000004	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	visibility_shading_resolve	2.2948256250000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	diagnostic_host_copy	0	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	output_write	1.1131369369999999	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	0	reused_frame_wall	3.94681769	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	host_output_allocate	0.27343720199999999	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	raw_instance_transform_project	0.012997538000000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	triangle_setup	0.0053558920000000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	tile_count_scan_allocate_fill	0.017681609000000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	visibility_shading_resolve	0.49052562699999996	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	diagnostic_host_copy	0	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	output_write	1.027101061	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	1	reused_frame_wall	1.8504915980000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	-1	raw_session_close	0.07667462600000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_native	-1	complete_native_through_host_teardown	6.1092603990000001	completed host wall; nested not additive; final metadata/timings and process exit excluded
+heal1	new_diagram_replay_export		source_inventory_pose_layout_admission_and_copy	11.914417956955731	complete scopes contain nested phases; not additive
+heal1	new_diagram_replay_export		both_view_reference_display_process	6.114015709026717	complete scopes contain nested phases; not additive
+heal1	new_diagram_replay_export		encode_actual_reference_pngs	1.2610150850377977	complete scopes contain nested phases; not additive
+heal1	new_diagram_replay_export		actual_reference_visibility_mask_and_guides	13.251167393987998	complete scopes contain nested phases; not additive
+heal1	new_diagram_replay_export		compose_reference_svg_and_complete_legend	0.008363308967091143	complete scopes contain nested phases; not additive
+heal1	new_diagram_replay_export		rasterize_reference_poster	2.7069446690147743	complete scopes contain nested phases; not additive
+heal1	new_diagram_replay_export		complete_reference_diagram_replay_export	35.87144575000275	complete scopes contain nested phases; not additive
+heal1	original_source_to_old_views		fresh_step_source_export_process_wall	4.162916456931271	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		nvidia_batch_through_all_worker_exits_wall	7.635501105920412	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		all_definition_physical_shell_source_euler_admission	16.35485504299868	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		genuine_mesh_decode_scene_pack_write	18.837787667056546	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		shared_owned_cpu_display_process_wall	1.5245230689179152	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		assembled_png_svg_labels_write	0.7645440959604457	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		exploded_png_svg_labels_write	0.48149141296744347	actual nested wall; not additive; outer driver includes metadata/timing writes and exit
+heal1	original_source_to_old_views		caller_through_outputs_before_timing_write_and_interpreter_exit	44.63231281598564	actual nested wall; not additive; outer driver includes metadata/timing writes and exit

@@ -21,3 +21,9 @@ Original part orientations, geometry and materials are retained. These diagrams
 are explanatory illustrations, not validated disassembly instructions. Their
 [report](../../results/om10-exploded-2026-10-17/REPORT.md) separates new display/export
 costs from the original completed mesh operation.
+
+The `nvidia-heal*-exploded-assembly-4k.png` images use genuine NVIDIA CPU
+reference tessellation of the same CAD, its supplied illustrative palette,
+and BRepGPU CPU display, functional layout and labels. They retain the same
+CC BY-SA3.0 source attribution. Their nominal tolerance request is explicitly
+COMPLETE_UNQUALIFIED; no independently proved5µm or matched-quality claim follows.

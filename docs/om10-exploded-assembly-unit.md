@@ -221,3 +221,10 @@ original STEP FaceIDs. The adapter requires complete0…input_faces−1 ordinal
 coverage per actual definition report, including prepared descendants. Original
 source coverage is retained separately by the complete source manifest and
 parent's source-linked preparation/physical pipeline. No ordinal join is inferred.
+
+NVIDIA replay completed for both root-provided physical-PASS heal0/1 datasets.
+Their visible captions read actual0.005mm chord/0°/0° settings and
+COMPLETE_UNQUALIFIED. Both retain the exact accepted diagram manifest/views and
+166 labels; every20 selected major part has actual pixels. No native remeshing,
+new reference tessellation or independent distance qualification occurred in the
+replay. Public assets and all original/new timing scopes are in the result report.

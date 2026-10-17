@@ -26,8 +26,11 @@ legend. Download the [3840×5871 CPU and P100 diagrams](results/om10-exploded-20
 These replay the same completed mesh; they do not remesh it. Exploded-view raster
 and result download take **0.421s CPU12 / 0.199s P100**; the report records every
 new display and export stage. The authored translations illustrate alignment,
-not validated disassembly. NVIDIA replay is pending its complete reference
-pipeline; no NVIDIA image or matched-quality claim is made here.
+not validated disassembly. The [same diagram from genuine NVIDIA CPU geometry](assets/om10/nvidia-heal0-exploded-assembly-4k.png)
+now completes all parts under both healing policies: **0.005mm chord request,
+0°/0° angle settings, COMPLETE_UNQUALIFIED**. Original inventory and physical
+shell/source-Euler checks pass; independent distance qualification remains
+separate, so these are not matched-quality speedup results.
 
 **The real OM10 watch is rendered.** Download [3840×4200 assembled and exploded
 posters](results/om10-watch-2026-10-17/REPORT.md), with 2× supersampled native 4K
