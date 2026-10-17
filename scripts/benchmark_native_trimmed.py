@@ -107,6 +107,10 @@ def main():
     parser.add_argument('--executable', type=Path, required=True)
     parser.add_argument('--module', type=Path, required=True)
     parser.add_argument('--revision', required=True, help='provided source revision, full 40-character hash')
+    parser.add_argument('--raw-dir', type=Path, default=RAW,
+                        help='new repository-relative raw observation directory')
+    parser.add_argument('--results-dir', type=Path, default=TRACKED,
+                        help='repository-relative directory for the three new TSVs')
     parser.add_argument('--timeout', type=float, default=120.)
     parser.add_argument('--run', action='store_true', help='execute fixed serial observations; default only describes plan')
     args = parser.parse_args()
@@ -123,7 +127,9 @@ def main():
     # No private paths appear in the tracked fields below.
     executable_relative, module_relative = relative(executable), relative(module)
     executable_sha, module_sha = sha(executable), sha(module)
-    raw, tracked = ROOT / RAW, ROOT / TRACKED
+    raw, tracked = (ROOT / args.raw_dir).resolve(), (ROOT / args.results_dir).resolve()
+    relative(raw)
+    relative(tracked)
     assert not raw.exists(), 'observation directory already exists; never overwrite a prior run'
     assert not any((tracked / name).exists() for name in ('processes.tsv','queries.tsv','stages.tsv'))
     (raw / 'sources').mkdir(parents=True)
