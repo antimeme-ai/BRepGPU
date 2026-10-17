@@ -282,3 +282,42 @@ Root corrected the NVIDIA SVG footer to credit NVIDIA reference meshing
 explicitly; this is presentation text only. The ignored delivery helper now
 targets attempt8 and losslessly recompresses actual native PNG pixels after
 successful complete-operation checks. No image exists at this preparation step.
+
+
+## Complete original watch and fresh NVIDIA outcomes
+
+Both pinned v11 attempt8 operations finish with exit0 and atomic publication:
+107unique definitions,9162original faces,166placements,273978unique triangles.
+CPU12 process wall875.16s; P1001/CPU12 wall872.50s. Meshing847.712234/845.785060s,
+scene12.088713/11.836033s. Assembled render0.222594/0.046141s; exploded
+0.114025/0.042798s. These are single concurrent observations on separate physical
+sockets; no overall GPU advantage is established. All889 phase rows perbackend,
+process aggregates, image hashes and166original-name legend are retained in
+results/om10-watch-2026-10-17. Root visually inspected allfour actual1920x1800
+PNGs. Lossless recompression changes PNG packing only, not pixels.
+
+Peer read-only artifact audit finds exact complete face inventory and original
+face/definition header bindings, all166 unique original occurrence labels,
+identical CPU/P100 scene/views/labels/face-index bytes and0forbidden contacts
+among2,218,277candidates. GPU device geometry counters are nonzero; CPU zero.
+Cumulative surface counters are read from the last owner snapshot, not summed.
+These checks are inventory/compatibility evidence, not a replacement whole-watch
+original-source geometry oracle. No qualification campaign was restarted.
+
+Fresh genuine NVIDIA USD/BRep1.0.0 CPU references attempted all107 original
+source definitions under BOTH policies,12workers/innerthreads1, same actual
+native placement/view inputs. Heal0 fails preparation after21.969470s; heal1
+after87.466837s. Both complete103/107. The actual current failure IDs are1716
+and1811 (officialbridge multi-turntrim/topology-splitting refusal),1797and1756
+(our strict adapter unsupported nontriangle polygon). Earlier failure summaries
+must not be substituted for these new outcomes. Reference complete_seconds is
+empty; no image or whole-render speedup exists. The driver exit0 means both
+failed outcomes were recorded. All107 statuses and executable/package pins
+are published with the report; raw source and operational logs stay ignored.
+
+The operator now requests lovely large images and recording all times for an X
+post. A separate presentation-only unit replays the immutable finished native
+scenes at3840x3600 with2x supersampling through existing C++CPU/P100 display.
+Exact camera scaling preserves geometry/views; higher-resolution replay and
+PNG/SVG composition costs remain separate from the completed cold source-to-both-
+1920images operations. No new meshing run or borrowed geometry is necessary.
