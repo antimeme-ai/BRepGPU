@@ -88,3 +88,45 @@ nontriangle export even after explicit Plane preparation. These are reported as
 IMPORT_TESS_PASS/EXPORT_UNSUPPORTED, not complete results. The two actual original
 inputs above do fully export. Mutated radius/vertex cases refuse without prepared
 output; three existing reversed seam/pole/source guard methods remain green.
+
+## Follow-up1808 physical topology diagnosis (no repair selected yet)
+
+Attempt9 successfully exports all107 definitions but existing physical topology admission
+fails1808 only. Old attempt8 heal0/1 both have8816physical vertices/17632triangles and
+no invalid edge pair. New heal0/1 both have10082vertices/20164triangles and exactly
+three physical endpoint pairs with four uses each. SDK reports12spine halfedges and
+outputManifoldfalse before raw extraction (`SmBrep.cpp`37603–37616); the SDK status
+and zero per-face failures alone do not imply closed output.
+
+Pairs are SDK face ordinals597/592,554/549,509/506, not original face IDs. On the first,
+top Plane triangle(6967,6965,6966) and curved-wall triangle(6967,6966,6965) have identical
+physical keys/opposite winding. All points lie atY=.27; wall corner normals haveY=0,
+so its triangle cross product is orthogonal to every wall normal. The other two pairs
+show the same structure. This is a boundary-fan topology fault already present in
+returned SDK output, not evidence of a raw physical-key welding error.
+
+Falsified explanations: original/corrected USD have1112general trim tags, zero rectangular.
+New producer on ORIGINAL unwidened USD at.005/25/25heal0 produces exactly the same
+mesh bytes as widened input (SHA6ec083ca8489001b413f9718ee0308bbf183d4e5eb6e26f2167ecf86aba599cf).
+Thus full-natural-curve Plane hulls are unnecessarily huge but do not cause this fault.
+Angular controls25/0 and0/25 separately still produce12spines; disabling only one does
+not repair. Disabling both is not selected as a quality fix. USD has no serialized
+2D pcurve attributes here, so RAW pcurve preparation is not selected as a blind control.
+
+Root selects one bounded public-API advancing-front control under unchanged enabled
+quality constraints. Literal args/status/cleanup and source grounding are appended to
+the existing unit plan. No product change, welding, triangle dropping or cap relaxation.
+
+The AF control exactly preserves wrapper smoothingfalse/attributestrue/sharedcontext,
+quality parameters and strict partial-output disposal. Parent separately selected a
+full legacy0/0 chord-only baseline at the same.005mm with unchanged preparation and
+closed-shell gates. That baseline must be reported under its own parameter policy;
+it does not convert the failed25/25 output into a success or establish distance
+qualification. No production retry/body is selected by the diagnostic alone.
+
+The single public advancing-front control was externally censored at its180s limit,
+without a completed definition report or exported mesh. It is neither a native FAIL
+nor a successful topology repair. Exact CPU/wall and timeout status were not retained
+because GNUtime was inside the terminated process group and the outer shell ran later
+cat commands; that shell's zero exit is not a native result. No further AF control or
+production retry is selected. Source/raw/SDK gates remain unchanged.

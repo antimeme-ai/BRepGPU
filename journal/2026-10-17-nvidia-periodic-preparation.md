@@ -62,3 +62,28 @@ actual unit and scoped check handoff. Numerical peer accepted nominal-period mat
 final orientation closure; its closed-cycle/face-sense and paired RAW traversal findings
 are integrated. No outstanding finding selects additional work. Parent explicitly
 approved including its standalone CMake registration in this coherent unit commit.
+
+New parent task: diagnose attempt9 physical failure1808. Read actual old/new meshes and
+independent incidence rows, SDK source report construction, converter trim semantics and
+current raw exporter. Three four-use pairs are already counted as12SDKspines before
+extraction, with exact opposite top-plane/curved-wall duplicate triangles. Old heal0/1
+closed, new heal0/1 fail identically. Original USD at same25/25 gives byte-identical new
+output, falsifying Plane range/rectangular-tag hypothesis.25/0 and0/25 also fail; no
+quality relaxation selected. Read public SmBrep::ConvertToPolyBrep advancing-front
+branch and SmApiTessellate wrapper. Root requested one same-quality AF control with
+wrapper-equivalent cleanup, strict complete/manifold gates and same physical checker;
+plan appended to existing unit, private code remains ignored.
+Root approved exact AF signature/cleanup control. Private source/object/executable are
+context/nvidia-periodic-unit/1808-af-producer.*, linked against the existing raw library
+and unchanged SDK. It checks failedFaces/empty failures/status before retaining complete
+output and requires SDK manifold before extraction. Same original USD, .005/25/25heal0,
+physicalcore1, external180s cap; no production change. Root meanwhile selected separate
+full legacy0/0 chord-only baseline with same preparation and physical gates. Do not
+reinterpret that baseline as25/25 quality success. No further algorithm search selected.
+AF control final: externally censored at configured180s with no completed report/mesh;
+process observed active at130s then gone, definitions.tsv and inner time output empty.
+GNUtime inside timeout's process group was terminated too; follow-up cats made outer
+shell exit0. Therefore retain180s-censor/no-native-result, NOT a native pass/failure or
+invented exact wall/CPU measurement. No retry, capraise, parameter search or production
+change selected. Parent notified. Three modified documents are ready for root commit;
+this lane did not stage/commit while parent owns the branch window.

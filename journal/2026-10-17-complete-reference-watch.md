@@ -69,3 +69,39 @@ translation-only byte transport; caption provenance/process validation/name-join
 findings were closed without remeshing. NVIDIA replay will consume the identical
 manifest/camera after complete reference data exists. Original meshing, new
 display and caption-only export costs remain separate.
+
+The first complete prepared25/25 operations exported every definition under
+both heals but failed physical admission on1808. Actual failed walls were
+41.147822920/43.241814644s. SDK output already reports12spines/nonmanifold;
+three four-use edges include opposite duplicate cap/wall triangles. Original
+and Plane-widened USD produce byte-identical failing geometry at the same
+settings; general trim type throughout rules out the hypothesized rectangular
+flag. Disabling just one angular criterion retains the failure. A public AF
+control with unchanged25/25 and.005 was censored at180s without a result; the
+inner timer was terminated too, so no precise native time or exit is claimed.
+No AF retry was implemented and no triangle filtering/welding was attempted.
+
+Before observing the result, root and the narrow peer selected BOTH legacy0/0
+angular baselines at.005 chord, same preparation/source/physical checks/views.
+The small benchmark change forwards explicitly supplied angles only and reads
+actual completed metadata into outcome text. Default finite admission and
+omitted-argument behavior remain unchanged. The direct complete operation
+checks the wiring: heal0/heal1 finish43.673683950/45.001244677s,107definitions,
+9162originalfaces,166placements,231416unique triangles each. Every SDK report
+is manifold with no lamina/spine edges; every decoded shell passes the existing
+physical/source-Euler reader. Record COMPLETE_UNQUALIFIED, not quality PASS or
+a matched-quality speedup. Published direct tables retain both outcomes and
+the stronger angular failures; owned875.16/872.50s cold results remain intact.
+
+After the timed/render operations, a bounded existing original-source query
+capability pilot on1808 refuses in0.054906823s with missing usable trimmed
+pcurve, before numerical output.1173 owned finite witness points were supplied
+only as query probes, never as replacement reference triangles. This is source
+query preparation unavailable, not an observed NVIDIA distance error. Stop
+there; no certification or reconstructed-query project is started.
+
+Both genuine NVIDIA new-layout diagrams now render, retaining the same authored
+manifest/views/labels as CPU/P100. Root inspected the actual heal0 poster:
+clear bridges, train, barrel, balance, calendar and side lanes with all20 major
+parts visible. Existing reference palette is retained; source geometry/rotations
+and all166 instances remain. CPU/P100 assets are unchanged by this handoff.
