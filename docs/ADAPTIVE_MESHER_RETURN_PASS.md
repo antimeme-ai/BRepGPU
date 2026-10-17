@@ -89,3 +89,13 @@ If preparation still dominates afterward, measure actual allocation/operand
 counts before considering broader small/dyadic arithmetic or parallel input
 packing. Those remain follow-up contenders; no generic arithmetic rewrite or
 new mesher architecture is selected by a sampled stack.
+
+One concrete ownership distinction to study if exact preparation remains costly:
+ExactBuilder::append accepts canonical Rational values and ExactTable::seal
+retains an immutable limb arena, but import_exact(ExactView) currently calls
+general from_ratio on every read. ExactView is also publicly constructible from
+raw input, so bypassing its validation globally would be unsound. A separately
+reviewed ExactTable-owned canonical clone could avoid redundant normalization
+while preserving validation for raw views. This is a source-derived avoided-work
+contender, not a measured hotspot or selected change; do not replace generic
+GCD or weaken raw-word admission on its account.
