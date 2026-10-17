@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <bit>
 #include <charconv>
+#include <cmath>
 #include <limits>
 
 namespace bgmesh::adaptive {
@@ -241,14 +242,18 @@ Rational chosen(const Rational &value) {
   return Rational::from_double(value.budget(), value.to_double());
 }
 struct FaceLocator final {
+  using Pair = std::array<double, 2>;
+  using Vector = std::array<double, 3>;
   Point origin;
   std::optional<std::array<Point, 2>> plane_dual;
-  std::optional<Point> cylinder_height;
+  std::optional<std::array<Vector, 3>> analytic_dual;
+  const Carrier &source;
   FaceLocator(bgfd::Budget &b, const Carrier &carrier)
       : origin{Rational::from_double(b, carrier.frame[0]),
                Rational::from_double(b, carrier.frame[1]),
-               Rational::from_double(b, carrier.frame[2])} {
-    if (carrier.kind != 1 && carrier.kind != 2)
+               Rational::from_double(b, carrier.frame[2])},
+        source(carrier) {
+    if (carrier.kind < 1 || carrier.kind > 5)
       return;
     const auto x = frame_axis(b, carrier, 0), y = frame_axis(b, carrier, 1);
     if (carrier.kind == 1) {
@@ -262,12 +267,19 @@ struct FaceLocator final {
       }
       plane_dual = std::array<Point, 2>{std::move(u), std::move(v)};
     } else {
-      auto xy = cross(x, y);
-      auto det = dot(xy, frame_axis(b, carrier, 2));
+      const auto z = frame_axis(b, carrier, 2);
+      auto rows = std::array{cross(y, z), cross(z, x), cross(x, y)};
+      const auto det = dot(rows[2], z);
       if (det.sign() != 0) {
-        for (auto &coordinate : xy)
-          coordinate = coordinate.divide(det);
-        cylinder_height = std::move(xy);
+        std::array<Vector, 3> converted{};
+        for (uint32_t row = 0; row < 3; ++row)
+          for (uint32_t a = 0; a < 3; ++a) {
+            const auto coordinate = proposal_double(rows[row][a].divide(det));
+            if (!coordinate)
+              return;
+            converted[row][a] = *coordinate;
+          }
+        analytic_dual = converted;
       }
     }
   }
@@ -278,12 +290,265 @@ struct FaceLocator final {
             target[2].subtract(origin[2])};
     return {chosen(dot((*plane_dual)[0], d)), chosen(dot((*plane_dual)[1], d))};
   }
-  Rational height(const Point &target) const {
-    if (!cylinder_height)
-      throw Error(ErrorCode::unsupported, "cylinder height locator has singular original frame");
-    Point d{target[0].subtract(origin[0]), target[1].subtract(origin[1]),
-            target[2].subtract(origin[2])};
-    return chosen(dot(*cylinder_height, d));
+  struct ProposalJet final {
+    Vector value{}, du{}, dv{};
+    double squared_residual = std::numeric_limits<double>::infinity();
+  };
+  static double inner(const Vector &a, const Vector &c) {
+    return a[0] * c[0] + a[1] * c[1] + a[2] * c[2];
+  }
+  static bool finite(const Pair &p) { return std::isfinite(p[0]) && std::isfinite(p[1]); }
+  static std::optional<double> proposal_double(const Rational &r) {
+    const auto maximum = Rational::from_double(r.budget(), std::numeric_limits<double>::max());
+    if (r.compare(maximum) > 0 || r.compare(maximum.negative()) < 0)
+      return std::nullopt;
+    return r.to_double();
+  }
+  // Ordinary value/D1 arithmetic is used ONLY to propose locators. The common
+  // RN source kernel below and the final source guard remain separate.
+  ProposalJet proposal_jet(Pair p, const Vector &target) const {
+    const auto su = std::sin(p[0]), cu = std::cos(p[0]);
+    const auto sv = std::sin(p[1]), cv = std::cos(p[1]);
+    double radial = source.radii[0], axial = p[1], dr = 0., dz = 1.;
+    if (source.kind == 3) {
+      dr = std::sin(source.radii[1]);
+      dz = std::cos(source.radii[1]);
+      radial += p[1] * dr;
+      axial = p[1] * dz;
+    } else if (source.kind == 4 || source.kind == 5) {
+      const auto minor = source.kind == 4 ? source.radii[0] : source.radii[1];
+      radial = (source.kind == 4 ? 0. : source.radii[0]) + minor * cv;
+      axial = minor * sv;
+      dr = -minor * sv;
+      dz = minor * cv;
+    }
+    ProposalJet result;
+    Vector residual{};
+    for (uint32_t a = 0; a < 3; ++a) {
+      const auto e = cu * source.frame[3 + a] + su * source.frame[6 + a];
+      result.value[a] = source.frame[a] + radial * e + axial * source.frame[9 + a];
+      result.du[a] = radial * (-su * source.frame[3 + a] + cu * source.frame[6 + a]);
+      result.dv[a] = dr * e + dz * source.frame[9 + a];
+      residual[a] = result.value[a] - target[a];
+    }
+    const auto square = inner(residual, residual);
+    if (std::isfinite(square))
+      result.squared_residual = square;
+    return result;
+  }
+  static bool in_box(Pair p, std::span<const double, 4> box) {
+    if (!finite(p))
+      return false;
+    for (uint32_t a = 0; a < 2; ++a) {
+      // Ordering finite binary64 values is exact ordering of those stored
+      // rational numbers; no tolerance or rounded subtraction is involved.
+      if (p[a] < box[2 * a] || p[a] > box[2 * a + 1])
+        return false;
+    }
+    return true;
+  }
+  struct ProposalStart final {
+    Pair point, guide;
+  };
+  Pair improve(ProposalStart start, const Vector &target, bool locked_u,
+               std::span<const double, 4> box, bgfd::Budget &b) const {
+    auto point = start.point;
+    const auto guide = start.guide;
+    constexpr double pi = 0x1.921fb54442d18p+1;
+    std::array<double, 4> feasible{box[0], box[1], box[2], box[3]};
+    for (uint32_t a = 0; a < 2; ++a)
+      if (a == 0 || source.kind == 4 || source.kind == 5) {
+        feasible[2 * a] = std::max(box[2 * a], guide[a] - pi);
+        feasible[2 * a + 1] = std::min(box[2 * a + 1], guide[a] + pi);
+      }
+    for (uint32_t step = 0; step < 8; ++step) {
+      b.charge(1);
+      const auto jet = proposal_jet(point, target);
+      if (!std::isfinite(jet.squared_residual))
+        break;
+      Vector residual{};
+      for (uint32_t a = 0; a < 3; ++a)
+        residual[a] = jet.value[a] - target[a];
+      const auto nu = std::hypot(jet.du[0], jet.du[1], jet.du[2]);
+      const auto nv = std::hypot(jet.dv[0], jet.dv[1], jet.dv[2]);
+      const bool has_u = !locked_u && std::isfinite(nu) && nu > 0.;
+      const bool has_v = std::isfinite(nv) && nv > 0.;
+      Vector eu{}, ev{};
+      for (uint32_t a = 0; a < 3; ++a) {
+        eu[a] = has_u ? jet.du[a] / nu : 0.;
+        ev[a] = has_v ? jet.dv[a] / nv : 0.;
+      }
+      const auto gu = inner(eu, residual), gv = inner(ev, residual);
+      const auto coupling = inner(eu, ev), determinant = 1. - coupling * coupling;
+      std::array<Pair, 3> directions{};
+      if (has_u && has_v && determinant > 0. && std::isfinite(determinant))
+        directions[0] = {(coupling * gv - gu) / (determinant * nu),
+                         (coupling * gu - gv) / (determinant * nv)};
+      if (has_u)
+        directions[1][0] = -gu / nu;
+      if (has_v)
+        directions[2][1] = -gv / nv;
+      bool moved = false;
+      for (const auto direction : directions) {
+        if (!finite(direction))
+          continue;
+        double scale = 1.;
+        for (uint32_t a = 0; a < 2; ++a) {
+          if (direction[a] > 0.)
+            scale = std::min(scale, (feasible[2 * a + 1] - point[a]) / direction[a]);
+          else if (direction[a] < 0.)
+            scale = std::min(scale, (feasible[2 * a] - point[a]) / direction[a]);
+        }
+        for (uint32_t trial = 0; trial < 8 && scale > 0.; ++trial, scale *= .5) {
+          b.charge(1);
+          Pair candidate{point[0] + scale * direction[0], point[1] + scale * direction[1]};
+          if (candidate == point || !in_box(candidate, feasible))
+            continue;
+          if (proposal_jet(candidate, target).squared_residual < jet.squared_residual) {
+            point = candidate;
+            moved = true;
+            break;
+          }
+        }
+        if (moved)
+          break;
+      }
+      if (!moved)
+        break;
+    }
+    return point;
+  }
+  UV recover(const Point &target, std::span<const Interval, 3> original_target, const UV &guide,
+             bool locked_u, std::span<const double, 4> box, const SourceCache &cache,
+             Slot<CarrierTag> carrier, bgfd::Budget &b) const {
+    if (!analytic_dual)
+      return guide;
+    Vector local{}, physical{}, offset{};
+    for (uint32_t a = 0; a < 3; ++a) {
+      physical[a] = target[a].to_double(); // midpoint of finite original enclosure, or original V
+      offset[a] = physical[a] - source.frame[a];
+    }
+    for (uint32_t a = 0; a < 3; ++a) {
+      local[a] = inner((*analytic_dual)[a], offset);
+      if (!std::isfinite(local[a]))
+        return guide;
+    }
+    locked_u = locked_u || (local[0] == 0. && local[1] == 0.);
+    const Pair raw{guide[0].to_double(), guide[1].to_double()};
+    constexpr double pi = 0x1.921fb54442d18p+1, period = 0x1.921fb54442d18p+2;
+    auto representative = [&](double principal, uint32_t axis) -> std::optional<double> {
+      if (!std::isfinite(principal))
+        return std::nullopt;
+      const auto turns = std::nearbyint((raw[axis] - principal) / period);
+      std::optional<double> best;
+      for (const auto neighbour : {-1., 0., 1.}) {
+        b.charge(1);
+        const auto candidate = principal + (turns + neighbour) * period;
+        if (!std::isfinite(candidate) || candidate < box[2 * axis] ||
+            candidate > box[2 * axis + 1] || candidate < raw[axis] - pi ||
+            candidate > raw[axis] + pi)
+          continue;
+        if (!best || std::abs(candidate - raw[axis]) < std::abs(*best - raw[axis]) ||
+            (std::abs(candidate - raw[axis]) == std::abs(*best - raw[axis]) && candidate < *best))
+          best = candidate;
+      }
+      return best;
+    };
+    std::array<Pair, 2> seeds{};
+    uint32_t seed_count = 1;
+    if (source.kind == 2) {
+      seeds[0] = {std::atan2(local[1] / source.radii[0], local[0] / source.radii[0]), local[2]};
+    } else if (source.kind == 3) {
+      seed_count = 2;
+      seeds[0][0] = std::atan2(local[1], local[0]);
+      seeds[1][0] = seeds[0][0] + pi;
+      for (auto &seed : seeds) {
+        const auto u = locked_u ? raw[0] : seed[0];
+        Vector d{}, residual{};
+        for (uint32_t a = 0; a < 3; ++a) {
+          const auto e = std::cos(u) * source.frame[3 + a] + std::sin(u) * source.frame[6 + a];
+          d[a] = std::sin(source.radii[1]) * e + std::cos(source.radii[1]) * source.frame[9 + a];
+          residual[a] = physical[a] - source.frame[a] - source.radii[0] * e;
+        }
+        seed[1] = inner(residual, d) / inner(d, d);
+      }
+    } else if (source.kind == 4) {
+      seed_count = 2;
+      const auto x = local[0] / source.radii[0], y = local[1] / source.radii[0];
+      seeds[0] = {std::atan2(y, x), std::atan2(local[2] / source.radii[0], std::hypot(x, y))};
+      seeds[1] = {seeds[0][0] + pi, pi - seeds[0][1]};
+    } else {
+      const auto sign = std::copysign(1., source.radii[0]);
+      const auto u = std::atan2(sign * local[1], sign * local[0]);
+      const auto radial = local[0] * std::cos(u) + local[1] * std::sin(u);
+      seeds[0] = {
+          u, std::atan2(local[2] / source.radii[1], (radial - source.radii[0]) / source.radii[1])};
+    }
+    std::optional<Pair> inverse;
+    const auto distance = [&](Pair p) {
+      return std::hypot(p[0] - raw[0], (source.kind >= 4 ? p[1] - raw[1] : 0.));
+    };
+    for (uint32_t i = 0; i < seed_count; ++i) {
+      auto seed = seeds[i];
+      const auto u = locked_u ? std::optional(raw[0]) : representative(seed[0], 0);
+      const auto v = source.kind >= 4 ? representative(seed[1], 1) : std::optional(seed[1]);
+      if (!u || !v)
+        continue;
+      seed = {*u, *v};
+      if (in_box(seed, box) && (!inverse || distance(seed) < distance(*inverse) ||
+                                (distance(seed) == distance(*inverse) && seed < *inverse)))
+        inverse = seed;
+    }
+    std::optional<Pair> best;
+    const auto consider = [&](Pair start) {
+      if (!in_box(start, box))
+        return;
+      const auto p = improve({.point = start, .guide = raw}, physical, locked_u, box, b);
+      const auto score = proposal_jet(p, physical).squared_residual;
+      if (!std::isfinite(score))
+        return;
+      if (!best || score < proposal_jet(*best, physical).squared_residual ||
+          (score == proposal_jet(*best, physical).squared_residual &&
+           (distance(p) < distance(*best) || (distance(p) == distance(*best) && p < *best))))
+        best = p;
+    };
+    consider(raw);
+    if (inverse)
+      consider(*inverse);
+    if (!best || *best == raw)
+      return guide;
+    UV candidate{locked_u ? guide[0] : Rational::from_double(b, (*best)[0]),
+                 Rational::from_double(b, (*best)[1])};
+    const auto common_sample = [&](const UV &uv) {
+      b.charge(1);
+      SampleInput input;
+      input.original = find_original_carrier_root(cache, carrier, uv);
+      for (uint32_t a = 0; a < 2; ++a) {
+        const auto bound = uv[a].bounds();
+        input.uv[a] = {bound.lower, bound.upper};
+      }
+      return evaluate_sample(cache, input);
+    };
+    // At most TWO extra host RN source calls, solely proposal CPU work. These
+    // do not replace final captured CPU/P100 carrier tasks or accept a node.
+    const auto winner = common_sample(candidate);
+    if (winner.status != NumericStatus::ready)
+      return guide;
+    if (!in_box(raw, box))
+      return candidate;
+    const auto old = common_sample(guide);
+    if (old.status != NumericStatus::ready)
+      return guide;
+    Interval residual[3]{};
+    double old_lower = 0.;
+    for (uint32_t a = 0; a < 3; ++a) {
+      residual[a] = numeric::sub(winner.original_xyz[a], original_target[a]);
+      const auto delta = numeric::sub(old.original_xyz[a], original_target[a]);
+      old_lower = std::max(old_lower, delta.lower > 0.   ? delta.lower
+                                      : delta.upper < 0. ? -delta.upper
+                                                         : 0.);
+    }
+    return numeric::norm_upper(residual) < old_lower ? std::move(candidate) : guide;
   }
 };
 Interval period_lift(const Carrier &carrier, const Coedge &use, uint32_t axis) {
@@ -316,8 +581,8 @@ UV guide_point(const Carrier &carrier, const Coedge &use, const CurveSampleResul
   }
   return result;
 }
-std::array<double, 4> original_rational_rectangle(const SourceData &source,
-                                                   const Carrier &carrier, bgfd::Budget &budget) {
+std::array<double, 4> original_rational_rectangle(const SourceData &source, const Carrier &carrier,
+                                                  bgfd::Budget &budget) {
   std::array<double, 4> box{};
   for (uint32_t axis = 0; axis < 2; ++axis) {
     const auto knots = source.view(axis == 0 ? carrier.knot_u : carrier.knot_v);
@@ -584,9 +849,32 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
   // The ORIGINAL natural rectangle is distinct from a requested cache window.
   // Projection proposes a reconstructed locator; the later original source
   // guard and complete selected trace bound still decide acceptance.
-  const auto natural_box = carrier.kind == 6
-      ? std::optional(original_rational_rectangle(request.source.view(), carrier, b))
-      : std::nullopt;
+  const auto natural_box =
+      carrier.kind == 6
+          ? std::optional(original_rational_rectangle(request.source.view(), carrier, b))
+          : std::nullopt;
+  std::pmr::vector<uint8_t> locked_u(source->sites.size(), 0, &b);
+  if (request.carriers.purpose() == SourceCachePurpose::quotient_trim &&
+      (carrier.kind == 3 || carrier.kind == 4) && source->uses.size() == 3 &&
+      request.source.view().faces[request.face.value].loops.count == 1) {
+    // Identify the SAME source incidence before inverse proposals: both pole
+    // endpoint occurrences retain their own guide U, even for a finite pole
+    // departure. Full wedge admission and finite map construction follow below.
+    const auto &original = request.source.view();
+    for (const auto &joint : source->joints) {
+      b.charge(1);
+      const auto &a = source->sites[joint.sites[0]], &c = source->sites[joint.sites[1]];
+      const auto &ua = original.coedges[a.use.value], &uc = original.coedges[c.use.value];
+      if (ua.edge_id != uc.edge_id || ua.sense != -uc.sense)
+        continue;
+      const auto &edge = original.edges[original.edge_index.find(ua.edge_id).value];
+      if (!edge.degenerate && edge.vertex_ids[0] != edge.vertex_ids[1] && a.endpoint < 2 &&
+          a.endpoint == c.endpoint) {
+        locked_u[joint.sites[0]] = 1;
+        locked_u[joint.sites[1]] = 1;
+      }
+    }
+  }
   std::pmr::vector<UV> uv(&b);
   uv.reserve(source->sites.size());
   for (const auto &site : source->sites) {
@@ -595,11 +883,19 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
     auto point = guide_point(carrier, use, samples[site.guide], admitted_box, b);
     if (use.reconstructed && carrier.kind == 1)
       point = locator.plane(target_point(request, site, source->values(), samples, b));
-    else if (use.reconstructed && carrier.kind == 2) {
-      const auto &guide =
-          request.source.view().curves[request.source.view().curve_index.find(use.curve_id).value];
-      if (guide.kind == 1 && guide.frame[3] == 0.)
-        point[1] = locator.height(target_point(request, site, source->values(), samples, b));
+    else if (use.reconstructed && carrier.kind >= 2 && carrier.kind <= 5) {
+      const auto target = target_point(request, site, source->values(), samples, b);
+      std::array<Interval, 3> target_box{};
+      for (uint32_t a = 0; a < 3; ++a) {
+        if (site.endpoint == UINT32_MAX)
+          target_box[a] = samples[site.spatial].original_xyz[a];
+        else {
+          const auto value = target[a].bounds();
+          target_box[a] = {value.lower, value.upper};
+        }
+      }
+      point = locator.recover(target, target_box, point, locked_u[uv.size()] != 0, admitted_box,
+                              request.carriers, carrier_slot, b);
     }
     if (use.reconstructed && natural_box)
       for (uint32_t axis = 0; axis < 2; ++axis) {
@@ -632,7 +928,8 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
       if (edge.degenerate || edge.vertex_ids[0] == edge.vertex_ids[1])
         continue;
       if (!out_use.reconstructed || !in_use.reconstructed)
-        throw Error(ErrorCode::unsupported, "authoritative curved seam cap needs its original domain map");
+        throw Error(ErrorCode::unsupported,
+                    "authoritative curved seam cap needs its original domain map");
       require(out_site.endpoint < 2 && out_site.endpoint == in_site.endpoint,
               "seam wedge endpoint incidence differs");
       const auto loop_slot = out_site.row.loop;
@@ -649,8 +946,12 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
         kind = sign > 0 ? AnalyticCapKind::sphere_north : AnalyticCapKind::sphere_south;
       }
       require(!wedge, "multiple seam wedge joints are outside the finite profile");
-      wedge = SeamWedge{original.vertex_index.find(edge.vertex_ids[out_site.endpoint]), loop_slot,
-                         {in_site.use, out_site.use}, {in, out}, kind, {}};
+      wedge = SeamWedge{original.vertex_index.find(edge.vertex_ids[out_site.endpoint]),
+                        loop_slot,
+                        {in_site.use, out_site.use},
+                        {in, out},
+                        kind,
+                        {}};
     }
   }
   for (const auto &joint : source->joints) {
@@ -670,7 +971,7 @@ TraceSiteWork prepare_trace_sites(const TraceSourceWork &source, TraceCompletion
     for (uint32_t sector = 0; sector < 2; ++sector) {
       const auto use_slot = wedge->meridian_uses[sector];
       const auto hit = std::find_if(source->uses.begin(), source->uses.end(),
-                                     [&](const auto &row) { return row.use == use_slot; });
+                                    [&](const auto &row) { return row.use == use_slot; });
       require(hit != source->uses.end(), "wedge meridian trace is missing");
       const auto first = static_cast<uint32_t>(hit->sites.first);
       const auto last = static_cast<uint32_t>(hit->sites.first + hit->sites.count - 1);

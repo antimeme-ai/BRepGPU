@@ -1,11 +1,64 @@
 """Authored source variants for trace mapping/joint/source-guard fault classes."""
 from dataclasses import replace
 from pathlib import Path
+import math
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'python'))
 from brepgpu.imported_source import (load_source, write_source, ImportedSource,
     Product, SolidDefinition, Vertex, Edge, Coedge, Loop, Face, Carrier, Curve,
     ZERO_FRAME, IDENTITY)
+
+
+def analytic_source(kind):
+    # Literal original iso curves on a dyadic, nonorthogonal frame. The bad
+    # reconstructed guide has the same endpoints and a different interior clock.
+    frame = (0., 0., 0., 1., .25, 0., 0., 1., .125, .125, 0., 1.)
+    origin, x, y, z = (frame[i:i+3] for i in (0, 3, 6, 9))
+    radius, other = (-1., 0.) if kind == 4 else (-2., -.5) if kind == 5 else (1., .4)
+    lo, hi = .25, .75
+    def add(a, b): return tuple(i+j for i, j in zip(a, b))
+    def scale(a, t): return tuple(i*t for i in a)
+    def radial(v):
+        return radius if kind == 2 else radius+v*math.sin(other) if kind == 3 else radius*math.cos(v) if kind == 4 else radius+other*math.cos(v)
+    def axial(v):
+        return v if kind == 2 else v*math.cos(other) if kind == 3 else radius*math.sin(v) if kind == 4 else other*math.sin(v)
+    def direction(u): return add(scale(x, math.cos(u)), scale(y, math.sin(u)))
+    def point(u, v): return add(origin, add(scale(direction(u), radial(v)), scale(z, axial(v))))
+    uv = ((lo, lo), (hi, lo), (hi, hi), (lo, hi))
+    curves, edges, uses = [], [], []
+    for i in range(4):
+        varying_u = i % 2 == 0
+        fixed = uv[i][1 if varying_u else 0]
+        if varying_u:
+            center = add(origin, scale(z, axial(fixed)))
+            cframe = (*center, *x, *y, 0., 0., 0.)
+            curve = Curve(2000+i, 3, 2, cframe, (radial(fixed),)*2, (lo, hi))
+        elif kind in (2, 3):
+            e = direction(fixed)
+            center = add(origin, scale(e, radius))
+            d = z if kind == 2 else add(scale(e, math.sin(other)), scale(z, math.cos(other)))
+            curve = Curve(2000+i, 3, 1, (*center, *d, 0., 0., 0., 0., 0., 0.), (0., 0.), (lo, hi))
+        else:
+            e = direction(fixed)
+            center = origin if kind == 4 else add(origin, scale(e, radius))
+            r = radius if kind == 4 else other
+            curve = Curve(2000+i, 3, 2, (*center, *e, *z, 0., 0., 0.), (r, r), (lo, hi))
+        a = (lo, fixed) if varying_u else (fixed, lo)
+        b = (hi, fixed) if varying_u else (fixed, hi)
+        controls = (*a, 1., *a, 1., *b, 1.) if i == 0 else (*a, 1., *b, 1.)
+        degree = 2 if i == 0 else 1
+        guide = Curve(3000+i, 2, 5, ZERO_FRAME, (0., 0.), (lo, hi), degree,
+                      (lo, hi), (degree+1, degree+1), controls)
+        va, vb = (i, (i+1)%4) if i < 2 else ((i+1)%4, i)
+        edges.append(Edge(400+i, (300+va, 300+vb), 2000+i, (lo, hi), True, True, False, 0.))
+        uses.append(Coedge(500+i, 400+i, 800, 1 if i < 2 else -1, 3000+i, (lo, hi), reconstructed=True))
+        curves.extend((curve, guide))
+    return ImportedSource('ab'*32, 1., 0., 100, 'analytic reconstructed inverse proposals',
+        (Product(100, 'root', 'root', 200),),
+        (SolidDefinition(200, 100, (900,), tuple(e.id for e in edges), (300, 301, 302, 303)),), (),
+        tuple(Vertex(300+i, point(*p), 0.) for i, p in enumerate(uv)), tuple(edges), tuple(uses),
+        (Loop(800, 900, True, tuple(u.id for u in uses)),), (Face(900, 200, 9, 1, (800,), 0.),),
+        (Carrier(9, kind, frame, (radius, other), (lo, hi, lo, hi)),), tuple(curves))
 
 
 def main():
@@ -14,6 +67,12 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     def save(name, source):
         write_source(source, out / f'{name}.bgsource')
+    for kind in (2, 3, 4, 5):
+        analytic = analytic_source(kind)
+        save(f'locator-{kind}', analytic)
+        if kind == 3:
+            save('locator-authoritative', replace(analytic, coedges=tuple(replace(u, reconstructed=False) for u in analytic.coedges)))
+            save('locator-mismatch', replace(analytic, vertices=tuple(replace(v, xyz=(v.xyz[0], v.xyz[1], v.xyz[2]+.125)) for v in analytic.vertices)))
     edge = replace(base.edges[0], vertex_ids=base.edges[0].vertex_ids[::-1],
                    parameter_range=(1., 0.), curve_same_sense=False, same_parameter=False)
     use = replace(base.coedges[0], sense=-1, parameter_map_kind=2,
@@ -115,7 +174,7 @@ def main():
                      replace(c,degree=2,controls=(0.,0.,1.,.5,1.,1.,1.,0.,1.)) if c.id==3000 else c
                      for c in speed.curves)
     save('runtime-equality',replace(speed,curves=equality))
-    print('trace_source_variants=15')
+    print('trace_source_variants=21')
 
 
 if __name__ == '__main__':
