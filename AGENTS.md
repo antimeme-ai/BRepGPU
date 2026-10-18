@@ -257,7 +257,10 @@ Keep reports, bibliographies and acquired PDFs in `papers/`; PDFs are ignored.
 Keep reference implementations in ignored `quarantine/` with a restoration
 manifest and intact source archives. Archived instructions are historical only.
 Keep working logs in ignored `context/`, actions in `journal/`, and issues in
-GitHub with a local readable index. Do not initialize Git in the parent workspace.
+beads (`bd`) from 2026-10-17. GitHub issues and ISSUES.md remain the historical
+public index. Fix every bug: pick it up when it fits the work in hand, and never
+carry it past the completion of the phase or task group in which it was found.
+Do not initialize Git in the parent workspace.
 
 Benchmark correctness comes from analytic/model/metamorphic oracles and stated
 input contracts. CPU parity, successful status codes and attractive renders
@@ -509,10 +512,11 @@ For more details, see README.md and docs/QUICKSTART.md.
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
+   bd 0.58 has no `sync`; issues live in the local Dolt database (`bd dolt push`
+   only when a Dolt remote is configured).
 5. **Clean up** - Clear stashes, prune remote branches
 6. **Verify** - All changes committed AND pushed
 7. **Hand off** - Provide context for next session

@@ -20,6 +20,10 @@ names the paper that wants it. Mark entries acquired or declined in place.
 
 ## Standards
 
+- IGES 5.3 specification (US PRO 1996) and Siemens JT v10 file format reference:
+  held copies carried "copying not allowed without permission" notices and were
+  removed on 2026-10-17 (operator decision D-docs). Acquire with permission for
+  reading (lifecycle map G6, G5).
 - SASIG PDQ V3.0 Attachment C ("recommended values") — healing thresholds.
 - ISO 10303-59:2022 (STEP product data quality) — healing and data quality.
 - ISO/PAS 26183 — data quality.

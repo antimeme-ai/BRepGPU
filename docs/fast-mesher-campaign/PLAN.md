@@ -110,10 +110,22 @@ rewrites it whole.
 The operator reviews the M1 gap list and the M2 findings and says which gaps
 are research, which are their decisions, and which are out of scope.
 
+Done 2026-10-17. All 18 gaps are research lanes; the 15 decisions and M2's five
+proposals take the recommended defaults (journal, "Gate G1"). Work is tracked in
+beads from here (epic `brepgpu-12s`).
+
+### B1. Ingress and admission defects (code; fleet; parallel with M4)
+
+- Brief: `briefs/B1-ingress-defects.md`.
+- The four defects M1 found by reading. Operator policy: no bug is carried
+  past the phase that found it, so B1 closes before M4 does.
+
 ### M4. Gap lanes (one lane per triaged gap; parallel)
 
-- One brief per gap, refined from the M1 stubs.
-- Each writes one paper.
+- One brief per gap, refined from the M1 stubs: `briefs/M4-G1.md` to
+  `briefs/M4-G18.md`, with the shared rules in `briefs/M4-common.md`.
+- Each writes one paper. Two waves: G1–G8 with B1, then G9–G18; G12 starts
+  after G7's paper.
 - Done when every triaged gap has a paper or an operator decision.
 
 ### M5. Holistic design synthesis (designer; laptop)
@@ -165,8 +177,8 @@ are research, which are their decisions, and which are out of scope.
 
 1. The CPU governor during arena runs: set to `performance` (needs root), or
    leave it and record frequency (default).
-2. How pass 2 chooses among reconciliation branches. M2 informs this, and it
-   comes back to the operator at G1.
+2. ~~How pass 2 chooses among reconciliation branches.~~ Settled at G1: M2's
+   structural-first rule is the default and an arena flag.
 
 ## After-action assessment
 

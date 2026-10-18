@@ -297,3 +297,55 @@ attachments with unstated licences, non-public OCCT fixtures).
   dropped, invented straight-line t→s map, plane-angle unit unchecked, display
   accepting scaled instances the mesher refuses). Shopping items merged. Next:
   gate G1, operator triage.
+
+## Gate G1: operator triage (2026-10-17)
+
+The operator approved the triage as proposed ("send it"):
+
+- All 18 research gaps (lifecycle map §4.1, G1–G18) go to M4 as research
+  lanes, each with its own brief. None is out of scope. G12 waits for G7.
+- The 15 operator decisions take the recommended defaults:
+  - D-partial-output: mesh the rest and mark the part incomplete, by default.
+  - D-placements: rigid and mirrored placements share one mesh; uniform scale
+    gets a mesh per scale with ε scaled to match; non-uniform scale and shear
+    are refused explicitly.
+  - D-units: honour declared units; refuse unit-less input unless the caller
+    states units.
+  - D-formats: STL; 3MF with separate items, not united components; glTF with
+    face ids and normals. USD and AP242 tessellated later.
+  - D-consumers: PrusaSlicer, Cura, one glTF renderer and fTetWild as the
+    analysis stand-in. PhysX arrives with physics.
+  - D-PMI: read PMI to warn when ε is loose against the tightest stated
+    tolerance or tighter than the source's own uncertainty. Warn and comply,
+    never refuse.
+  - D-master: follow the file's declared master representation; with no
+    pcurves, recompute them with a recorded residual.
+  - D-shapes: main shape representation only; report the others.
+  - D-profile: a named BRepGPU data-quality profile seeded from JAMA and
+    CAx-IF. Users may tighten it; loosening is recorded.
+  - D-determinism: identical output across thread counts on one backend;
+    functionally identical across backends; one model may mix backends.
+  - D-imprint: none for alpha; matched discretization across declared contacts
+    comes with physics.
+  - D-features: never drop features above ε; defeaturing is out of scope.
+  - D-provisional: provisional meshes are display only; physics consumes only
+    final meshes.
+  - D-measure: record SMT and AutoNUMA state as context, report cold and warm
+    runs, account per definition and per occurrence.
+  - D-docs: remove the IGES 5.3 and JT v10 PDFs marked "copying not allowed"
+    and list them on SHOPPING_LIST.md.
+- M2's five proposals are adopted as defaults, each also an arena flag: one
+  point solve for all edge and vertex resolution; R2 takes the linear step;
+  transverse leaps bounded by ¼ local feature size; small tangent gaps mesh as
+  recorded steps, refused above ¼ local feature size; structural-first branch
+  choice. This closes the plan's open question 2 (pass-2 branch choice).
+
+Bug policy (operator): fix every bug. A bug that fits the work in hand is
+picked up then; otherwise no bug is carried past the completion of the phase or
+task group in which it was found. Work is tracked in beads (bd) from now on;
+the GitHub issues and ISSUES.md remain the historical public index. The four
+defects M1 found by reading are filed and are fixed in maneuver B1, during M4,
+so they close before the research phase does.
+
+Still open: the CPU governor (plan question 1) and the SHOPPING_LIST.md
+decisions (ABC download term first, as the priority-1 corpus source).
