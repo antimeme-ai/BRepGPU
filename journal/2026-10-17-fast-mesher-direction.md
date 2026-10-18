@@ -455,3 +455,15 @@ decisions (ABC download term first, as the priority-1 corpus source).
   renderer exists yet). Corrects the healing paper and two design-draft
   clauses (noted on the M5 bead). One new operator question; the renderer
   question joins G14's.
+- M4-G9 returned (papers/2026-10-17-instancing-semantics.md): a placement
+  table (rigid and mirrored share a key; uniform scale keys on ε/σ_max;
+  non-uniform, shear and singular refused per occurrence) with emit rules per
+  format, tested on the raw STEP placement since OCCT turns mirrors into
+  rotations. No mirror or scale exists in the watch or in any of the 500
+  corpus STEP files, so those rules are tested on authored families only.
+  Accounting rule: one unit of work per mesh key; NVIDIA gets exactly the key
+  set, which is its strongest form, since both its own assembly paths
+  tessellate per occurrence; emit timed separately. Two colour defects filed
+  under B2 (per-occurrence colours dropped silently, including the watch's 9
+  and the Voron Trident's 463; innermost-wins precedence); the mirrored-normal
+  issue noted on the M8 placements bead. Three operator questions filed.

@@ -213,3 +213,8 @@ Highest value first:
   its inspection data would test the warning threshold (H4).
 - **G13 shading:** Woo et al. 1996 and van Overveld–Wyvill 1997 (paywalled);
   Conty Estevez et al. 2019 (open-access chapter, not fetched).
+- **G9 instancing:** an open Part 21 practice for mirrored parts (the AP242 XML
+  practice marks its example "T.B.S."; PDM Usage Guide 4.3 deferred it); the
+  3D Systems STL specification primary text (read only through Burns'
+  reproduction); CAx-IF styled-assembly test-round screenshots (only if colour
+  conflicts appear).
