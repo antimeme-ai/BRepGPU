@@ -191,3 +191,7 @@ Highest value first:
 - **G10 small-feature collapse:** Dey, Shephard and Georges 1997
   (*Engineering with Computers* 13(3), dimension checks); Sheffer, Blacker and
   Bercovier 1997 (clustering, ASME AMD-Vol. 220). Both paywalled.
+- **G14 sizing:** Borouchaki, Hecht and Frey, "Mesh gradation control"
+  (1997/98); Laug and Borouchaki, "Surface meshing with metric gradation
+  control" (2012); Ruppert 1995 (cited, unread); Chiang, Li and Burley, "Taming
+  the shadow terminator" (2019); Karis et al., Nanite (2021).

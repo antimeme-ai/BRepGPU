@@ -389,3 +389,12 @@ decisions (ABC download term first, as the priority-1 corpus source).
   revert to faithful meshing rather than refuse. Three design-draft errata
   noted on the M5 bead (β must split into a repair threshold and a collapse
   radius). Two operator questions filed.
+- M4-G14 returned (papers/2026-10-17-sizing-beyond-chord.md): slicers and
+  fTetWild need ε only; the renderer needs ε plus a per-segment angle cap (G13
+  sets it); PhysX later needs a maximum edge length. Grading is FEM-only and
+  costs about 8× triangles on planes; it also widens edit invalidation, so it
+  stays out. Steel-man finding: NVIDIA's SDK default is chord off with 25°
+  curve and surface angles, while our NVIDIA driver runs 0/0 angles, so every
+  recorded NVIDIA time is a chord-only run although design §9.6 says default
+  angles. Operator question filed at priority 1; the owned mesher must carry
+  whichever term the steel-man arm uses.
