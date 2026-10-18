@@ -244,3 +244,31 @@ overlap. After round 2, the export lane builds the union of both lanes' files
 in a fresh lane directory, `lanes/B2-reader-merged/`. There it runs every suite,
 the 500-file corpus through both the adapter and the exporter, and OM10. The
 independent reviews then read that merged state.
+
+### B2-reader round 2 decision: orientation (2026-10-18)
+
+**What `.37.35`'s verdicts showed.**
+- Of the 23 faces where OCCT's default read changes the orientation flag, none
+  is a reversal of flag and surface together.
+- On 22 of them (OM10's 6, and 16 in the corpus), the face's raw `same_sense`
+  normal points into the material. This was tested by ray parity, which uses
+  geometry only. On those faces FixShape repaired the file.
+- On the remaining one, the raw use agrees with the shell. There FixShape turned
+  a correct face.
+
+**Decision, for the default-read arm.**
+- A turned face whose raw normal points into the material is admitted with a
+  record. That is the strongest default read, and it is right.
+- A turned face whose raw use agrees with the shell refuses the definition as
+  ingress, by name. NVIDIA's arm would carry an inward face there, and an
+  invalid NVIDIA arm is never our win.
+- An undecidable face still refuses.
+
+**Owned side (`.37.36`).** The adapter publishes the raw use for those 22 faces,
+so owned meshes would carry inward faces. The adapter lane first finds the
+mechanism, then fixes it:
+- either resolve the face from the shell's edge uses, with a record and a
+  declared correction;
+- or refuse the face by name.
+
+The merged run waits for `.37.36`.
