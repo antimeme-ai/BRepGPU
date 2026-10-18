@@ -417,3 +417,18 @@ decisions (ABC download term first, as the priority-1 corpus source).
   M5 answer: settle and protect a sufficient chain; the coupled queue becomes
   an arena arm. Requirement on M2's blend noted on the M5 bead. Cusps (α = 0)
   are the lane's own derivation, to test on family F4. No operator questions.
+- M4-G7 returned (papers/2026-10-17-determinism-cache-keys.md): a
+  determinism class per output layer (D0 decode identical everywhere; D1
+  shared entities with one producer each, chosen by content key; D1 faces and
+  records per backend; D2 functions of those bytes; D3 timings never keyed). A
+  cache key over dependency output digests gives early cutoff and makes
+  cracks from mixed versions impossible. The fleet probe ran 626,493 sizing
+  decisions from 478 corpus files on CPU and both P100s, with and without FMA:
+  no decision flipped; pure +−×÷√ rules were bit-identical when contraction
+  matched; GPU0 and GPU1 byte-identical; differences only from libm and
+  --fmad=true, at most 4 ulp. The live risk is round CAD numbers landing
+  exactly on integer sample counts, which is why edge chains need one
+  producer. A "backend" includes the libm variant, since glibc swaps
+  FMA-compiled transcendentals on AVX2+FMA hosts. One display defect filed
+  under B2; one operator question (fixed versus load-reactive mixed-backend
+  placement) filed at priority 1. G12 launched.
