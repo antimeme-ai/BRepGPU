@@ -572,3 +572,4 @@
 {"actor":"Patrick Beam","comment":null,"created_at":"2026-10-18T09:36:46Z","event_type":"created","id":572,"issue_id":"brepgpu-12s.37.39","new_value":"","old_value":""}
 {"actor":"Patrick Beam","comment":"Added label: b2","created_at":"2026-10-18T09:36:46Z","event_type":"label_added","id":573,"issue_id":"brepgpu-12s.37.39","new_value":null,"old_value":null}
 {"actor":"Patrick Beam","comment":"Added label: fast-mesher","created_at":"2026-10-18T09:36:46Z","event_type":"label_added","id":574,"issue_id":"brepgpu-12s.37.39","new_value":null,"old_value":null}
+{"actor":"Patrick Beam","comment":null,"created_at":"2026-10-18T14:19:24Z","event_type":"closed","id":575,"issue_id":"brepgpu-12s.37.20","new_value":"Fixed in B2-reader-adapter; see results/b2-reader-adapter-2026-10-18/REPORT.md. Final merged run green.","old_value":""}
