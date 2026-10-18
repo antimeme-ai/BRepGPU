@@ -349,3 +349,7 @@ so they close before the research phase does.
 
 Still open: the CPU governor (plan question 1) and the SHOPPING_LIST.md
 decisions (ABC download term first, as the priority-1 corpus source).
+- B1 and M4 wave 1 (G1–G8) launched in parallel from committed briefs
+  (docs/fast-mesher-campaign/briefs/B1-ingress-defects.md, M4-common.md,
+  M4-G1.md to M4-G8.md). Wave 2 (G9–G11, G13–G18) launched immediately after,
+  since its lanes barely use the fleet. G12 waits for G7.
