@@ -712,3 +712,27 @@ fixtures that never changed the corpus or OM10 results.
 
 **Closed.** B2 (`.37`) is closed, and with it M4. Next: the operator's M4
 decision sheet, then M5.
+
+## 2026-10-19: operator answers to the M4 decision sheet
+
+- **Defaults.** Every row takes its recommended default except those recorded
+  in `docs/fast-mesher-campaign/M4-decisions.md`, under "Operator answers".
+  - `.53`: functional equivalence, not identical bytes.
+  - `.68`: the x8 link is the slot, so cross-GPU transfer comparisons are
+    forbidden and every test runs on both GPUs.
+  - `.28`: open, pending a yes on the ABC term.
+  - `.29`: Autodesk is excluded permanently.
+  - `.30`: BRL-CAD comes from a mirror, into quarantine.
+  - `.36`: the second OM10 revision is deferred until the first works.
+- **History rewrite (`brepgpu-8k0`).** The operator ordered it at once.
+  - **Backup:** a mirror backup was taken before any change.
+  - **Rewrite:** `git fast-export | perl | git fast-import` replaced the alias
+    with an equal-length placeholder, in 12 places across 8 commits.
+  - **Checks before the push:** all 619 commits were kept. Authors, dates and
+    messages are unchanged. 38 branch tips have identical trees; 7 differ only
+    by the replacement.
+  - **Push:** all 45 branches were force-pushed, and the local branches and
+    worktree were reset onto the new history.
+  - **Not purged:** GitHub keeps pull-request refs and cached views of the old
+    commits. Purging those needs GitHub support.
+  - **Hooks:** pre-commit, commit-msg and pre-push hooks now reject the word.

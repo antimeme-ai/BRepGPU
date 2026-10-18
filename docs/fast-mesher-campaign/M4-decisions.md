@@ -85,3 +85,17 @@ says so. Answer by bead ID; "default" is a valid answer.
 | Bead | Question | Recommended default |
 |---|---|---|
 | `brepgpu-8k0` | Rewrite public history to remove the fleet alias from the 2026-10-16 commits? | No. It is a host alias, not a credential, and a rewrite breaks every clone and PR link. |
+
+## Operator answers (2026-10-19)
+
+**Every row not listed here takes its recommended default.**
+
+| Bead | Answer |
+|---|---|
+| `brepgpu-12s.53` | **Functional equivalence, not identical bytes.** A mixed-backend run must give functionally equivalent output every time. This matches the standing rule that bit-identical CPU/GPU output is not a goal. |
+| `brepgpu-12s.68` | **GPU0's x8 link is the slot itself, not a fault.** Every test runs on both GPUs. Comparing transfer numbers between the x8 and x16 GPUs is forbidden. |
+| `brepgpu-12s.28` | **Open.** The operator asked where the term is accepted. There is no click-through. The ABC page (deep-geometry.github.io/abc-dataset) states that downloading means agreeing that "the authors give no warranties regarding the dataset". The chunks come from NYU's archive, not Hugging Face. Waiting for a yes before `corpus/abc/fetch-selected.sh` runs. |
+| `brepgpu-12s.29` | **Declined, permanently.** No Autodesk software or data enters this machine, except to study its features. The Fusion 360 Gallery is out. |
+| `brepgpu-12s.30` | **Use a mirror.** BRL-CAD goes into quarantine as reference material, so a third-party mirror is acceptable. Record its provenance in the quarantine manifest. |
+| `brepgpu-12s.36` | **Deferred.** The operator has an account. One other current OM10 revision exists. It waits until the first revision works properly. |
+| `brepgpu-8k0` | **Rewrite done.** The public history was rewritten, and hooks now reject the alias in commits, messages and pushes. |
