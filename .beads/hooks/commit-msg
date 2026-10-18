@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+"$(git rev-parse --show-toplevel)/tooling/git-hooks/reject-fleet-alias.sh" msg "$1" || exit 1
