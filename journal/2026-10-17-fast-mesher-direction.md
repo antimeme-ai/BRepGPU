@@ -478,3 +478,15 @@ decisions (ABC download term first, as the priority-1 corpus source).
   tightening only one face made it worse. No construction-time triangle-pair
   test is needed; curved knife edges remain a proof sketch. Two operator
   questions filed.
+- M4-G5 returned (papers/2026-10-17-entity-admission-matrix.md): text and
+  OCCT censuses over 839 unique STEP files (506 production exports, 333 OCCT
+  dataset). Admission matrix by frequency; nearly everything legal in an
+  advanced B-rep is admitted, CSG refused, sheets meshed and reported open.
+  Today's ingress refuses 6.7% of export files on entity kind alone, mostly
+  from the pole-vertex loop, which is legal AP242 (filed under B2; it knocks
+  out several NIST fidelity models). Revolutions need native evaluators, since
+  rational conversion is not linear in the pcurves' angle parameter
+  (correcting map X12). Only 205 of 642,569 export edges carry pcurves, so
+  recomputing them is the normal path. More OCCT translation edits found for
+  G1. One operator question (tessellated-only parts); ABC now matters for
+  offset and extrusion frequency too.

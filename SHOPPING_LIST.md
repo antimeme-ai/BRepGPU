@@ -221,3 +221,10 @@ Highest value first:
 - **G4 thin features:** Li et al. 2026 (JCDE; Cloudflare 403, read only through
   a summarising fetch, proofs unverified); Amenta–Choi–Dey–Leekha, IJCGA 2002
   (the SoCG 2000 version was read); Wang et al., IEEE TIM 2022 (abstract only).
+- **G5 entity admission:** ISO 10303-42 normative text (hyperbola, parabola,
+  3D offset curve, the other swept-surface parameterizations, `select_outer`,
+  extrusion v scaling); AP203 ed.2 and AP214 longforms; OCCT tracker issues
+  33618–33622, 29233, 31672 (host did not resolve); Piegl–Tiller, *The NURBS
+  Book* ch. 7–8; Farouki 1986, Patrikalakis–Prakash 1988, Maekawa 1999,
+  Piegl–Tiller 1999 (offsets); Parasolid and ACIS documentation on offset and
+  swept surfaces, degree limits and sheets.
