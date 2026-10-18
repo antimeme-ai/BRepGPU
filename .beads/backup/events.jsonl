@@ -561,3 +561,6 @@
 {"actor":"Patrick Beam","comment":"Added label: fast-mesher","created_at":"2026-10-18T06:20:06Z","event_type":"label_added","id":561,"issue_id":"brepgpu-12s.37.36","new_value":null,"old_value":null}
 {"actor":"Patrick Beam","comment":null,"created_at":"2026-10-18T07:07:11Z","event_type":"created","id":562,"issue_id":"brepgpu-12s.25.12","new_value":"","old_value":""}
 {"actor":"Patrick Beam","comment":"Added label: fast-mesher","created_at":"2026-10-18T07:07:11Z","event_type":"label_added","id":563,"issue_id":"brepgpu-12s.25.12","new_value":null,"old_value":null}
+{"actor":"Patrick Beam","comment":null,"created_at":"2026-10-18T07:23:58Z","event_type":"created","id":564,"issue_id":"brepgpu-12s.37.37","new_value":"","old_value":""}
+{"actor":"Patrick Beam","comment":"Added label: b2","created_at":"2026-10-18T07:23:58Z","event_type":"label_added","id":565,"issue_id":"brepgpu-12s.37.37","new_value":null,"old_value":null}
+{"actor":"Patrick Beam","comment":"Added label: fast-mesher","created_at":"2026-10-18T07:23:58Z","event_type":"label_added","id":566,"issue_id":"brepgpu-12s.37.37","new_value":null,"old_value":null}
