@@ -3,7 +3,7 @@
 Status: M5 design of the fast-mesher campaign
 ([plan](fast-mesher-campaign/PLAN.md), bead `brepgpu-12s.20`), with the M6
 tribunal's fixes written in ([findings](fast-mesher-campaign/M6-findings.md)).
-Next: gate G2. Plan from this document after G2, not before.
+G2 passed 2026-10-19 on the operator's delegation ("just make sane choices"). Plan from this document.
 
 ## 0. Reading this document
 
@@ -2911,8 +2911,7 @@ perturbing them after principal development [operator].
   models) are meshed at the absolute levels only in scored runs, because 1e-3 of the
   diagonal violates their tolerances on all 17 (worst 84×) and 1e-4 still on 11; the
   warnings the relative levels would raise are computed from the request and
-  recorded (G15 §8 item 1) [open: confirmation that this narrowing of the request
-  set on one input class is acceptable].
+  recorded (G15 §8 item 1) [call; operator delegated at G2].
 - The output-size guard applies at every level.
 
 ### 23.5 Authored families
@@ -3204,7 +3203,7 @@ mechanism's default is relied on.
 | 29 | placement τ | 1e-6 | G9 H5 over every raw placement in the corpus |
 | 30 | gaps against declared uncertainty | gross gate structural (¼ lfs) | G15 H5: do measured gaps track u_ctx across export triples |
 | 31 | PMI warning threshold c_max | 0.1 (`.54`) | G15 H4 offline conformance-flip measurement |
-| 32 | PMI-bearing inputs at relative ε | absolute only in scored runs; warnings recorded | **(operator)** confirmation at G2 (§23.4) |
+| 32 | PMI-bearing inputs at relative ε | absolute only in scored runs; warnings recorded | decided at G2 [call; operator delegated] (§23.4) |
 | 33 | face-over-solid plain style | face wins, recorded | G9 H4 corpus count |
 | 34 | contact k and θ_f | 10, 10° | M-1 pin-in-hole family (physics phase) |
 | 35 | identity carriage cost | ranges | G16 H1–H4 (< 1% time, < 2% bytes) |
@@ -3212,7 +3211,7 @@ mechanism's default is relied on.
 | 37 | angle-term cost | render profile only | G14 H-angle census of radii below 42ε |
 | 38 | grading | none | G14 H-no-grade slicer and fTetWild measurements |
 | 39 | native revolution and extrusion | native | G5 H1, H2 |
-| 40 | general offsets | refused until a corpus shows one | ABC census once `.28` is answered **(operator, open)** |
+| 40 | general offsets | refused until a corpus shows one [call; operator delegated at G2] | a corpus census (ABC if its download term is ever accepted, `.28`) |
 | 41 | equal-tier near-tangent pairs | symmetric recorded step | arm `equal_tier_tangent`; M8 corpus count of the class |
 | 42 | governor | `schedutil`, delivered clock recorded during the run | revisit only if variance hides effects (`.27`) |
 | 43 | dyadic versus closed-form counts | dyadic | arm `closed_form_counts`, per surface-kind class |

@@ -167,6 +167,11 @@ one coordinator check. Findings and dispositions:
 
 ### Gate G2. Operator review of the design
 
+Passed 2026-10-19 on the operator's delegation: "just make sane choices you
+have enough information go win". The designer's defaults stand for §27 #32 and
+#40; the ABC download term (`.28`) stays open, since terms are never accepted on
+the operator's behalf. The same delegation covers gate G3.
+
 ### M7. Implementation plan and plan tribunal
 
 - Write the plan with the writing-plans skill. Its units are conceptual units,
@@ -175,6 +180,8 @@ one coordinator check. Findings and dispositions:
   while delivery continues.
 
 ### Gate G3. Operator approval of the plan
+
+Delegated (see G2): the plan passes G3 after its tribunal's fixes land.
 
 ### M8. Execution
 

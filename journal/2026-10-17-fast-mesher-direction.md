@@ -809,3 +809,21 @@ shape: "7 reviewers -> 1 fix -> review without re-engaging the subagents".
   It is fixed in this phase under its own brief.
 - **Next.** Gate G2, the operator's review of the design. Open for the operator:
   §27 #32 and #40.
+
+## 2026-10-19: gate G2 delegated; B3 and M7 launched
+
+- **G2.** The operator delegated the gate: "just make sane choices you have
+  enough information go win". The designer's defaults stand: PMI-bearing inputs
+  are scored at absolute ε only, with the relative-level warnings recorded
+  (§27 #32), and general offsets stay refused until a corpus shows one (§27
+  #40). The ABC download term (`.28`) stays open, because terms are never
+  accepted on the operator's behalf; the corpus already held serves until then.
+  The same delegation covers G3. Bead `.22` closed.
+- **Agent cap.** The operator caps concurrent agents at three: "keep subagent
+  runs limited to 3 in parallel tops please". Plans and tribunals run in waves
+  of at most three from now on.
+- **B3** (`briefs/B3-harness-scoring.md`): one lane fixes the harness defect
+  that scored our check failures as NVIDIA's (`.25.16`) and three timing biases
+  (`.25.17`–`.25.19`).
+- **M7** (`briefs/M7-implementation-plan.md`, bead `.23`): one planner writes
+  the master plan and the first wave's unit plans.
