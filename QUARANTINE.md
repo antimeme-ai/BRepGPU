@@ -198,3 +198,46 @@ metadata afterwards.
 | eigen | https://gitlab.com/libeigen/eigen.git | 3.4.0 | `3147391d946bb4b6c68edd901f2add6ac1f31f8c` |
 | geogram | https://github.com/BrunoLevy/geogram | v1.9.6 | `fc3eb9bf44d2ee29686592e3ef5f5f4daeda27f8` |
 | numpy-stl | https://github.com/wolph/numpy-stl | v4.1.0 | `16094a661321fa128ac27712d416bcac72a1d0a6` |
+
+## BRL-CAD libbrep CDT source study, 2026-10-18
+
+Acquired for static reference study of `src/libbrep` and its B-rep CDT
+tessellator (`ON_Brep_CDT_*`) and tests. No dependency selected; nothing built
+or executed. Neither github.com/BRL-CAD/brlcad (404) nor SourceForge offers a
+source tarball: SourceForge's file area has only binary packages (Linux .deb
+7.42.0, runtime libraries, and similar) and no "BRL-CAD Source" folder. The
+`brlcad/brlcad` GitHub repository is an empty stub. Used instead a third-party
+GitHub mirror, <https://github.com/idle-meerkat/my-brlcad>, branch
+`vboykox/master`, commit `c8feffc58933ad0e1a08e7b39daa6ead323b80c6`
+(2022-10-26). It is an unofficial development snapshot of BRL-CAD with
+`include/conf` version 7.32.6, not an official release, and may carry local
+changes. Completeness check: 12,793 files extracted.
+
+Intact archive `quarantine/brlcad-libbrep-study/my-brlcad-c8feffc58933.zip`,
+134,320,270 bytes, SHA-256
+`d5619f7d8c7e272b069a8bb441a601119765055403a7c8091323a41fd503dbab`.
+Clean extraction `quarantine/brlcad-libbrep-study/my-brlcad-c8feffc58933`
+omits nested Git metadata, filesystem detritus and symlinks. Licence per the
+archive's `COPYING`: LGPL as a unified work (version 2.1 text in `doc/legal/lgpl.txt`),
+with separate components under the BSD licence or BDL (`doc/legal/bsd.txt`,
+`doc/legal/bdl.txt`) or public domain; check each file. Archived instructions
+are historical.
+
+Present, relative to the extraction root: `src/libbrep/cdt/` (`cdt.cpp`,
+`cdt.h`, `edge.cpp`, `fast.cpp`, `mesh.cpp`, `mesh.h`, `ovlps_simple.cpp`,
+`surf.cpp`, `tri_isect.cpp`, `util.cpp`, `validate.cpp`, `RTree.h`),
+`include/brep/cdt.h` (the public `ON_Brep_CDT_*` declarations),
+`src/libbrep/opennurbs_ext.cpp`, and tests in `src/libbrep/tests/`
+(`brep_cdt_mesh.cpp`, `ppx.cpp`, `test_curve_intersect.cpp`,
+`test_point_intersect.cpp`, `CMakeLists.txt` and sample `.g`, `.stp`, `.3dm`
+and `.cdtmesh` inputs).
+
+Restore into a new destination:
+
+```sh
+mkdir -p quarantine/brlcad-libbrep-study
+curl -fL https://codeload.github.com/idle-meerkat/my-brlcad/zip/c8feffc58933ad0e1a08e7b39daa6ead323b80c6 -o quarantine/brlcad-libbrep-study/my-brlcad-c8feffc58933.zip
+printf '%s  %s\n' d5619f7d8c7e272b069a8bb441a601119765055403a7c8091323a41fd503dbab \
+  quarantine/brlcad-libbrep-study/my-brlcad-c8feffc58933.zip | shasum -a 256 -c -
+python3 -I scripts/ingest_zip.py quarantine/brlcad-libbrep-study/my-brlcad-c8feffc58933.zip quarantine/brlcad-libbrep-study/my-brlcad-c8feffc58933 --root my-brlcad-c8feffc58933ad0e1a08e7b39daa6ead323b80c6 --skip-symlinks
+```
