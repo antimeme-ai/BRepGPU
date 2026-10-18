@@ -49,6 +49,7 @@
 {"issue_id":"brepgpu-12s.25.10","label":"m8"}
 {"issue_id":"brepgpu-12s.25.11","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.25.12","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.25.13","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.25.2","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.25.2","label":"m8"}
 {"issue_id":"brepgpu-12s.25.3","label":"fast-mesher"}
@@ -170,6 +171,8 @@
 {"issue_id":"brepgpu-12s.37.37","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.38","label":"b2"}
 {"issue_id":"brepgpu-12s.37.38","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.37.39","label":"b2"}
+{"issue_id":"brepgpu-12s.37.39","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.4","label":"b2"}
 {"issue_id":"brepgpu-12s.37.4","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.4","label":"ingress"}

@@ -57,6 +57,7 @@
 {"created_at":"2026-10-18T04:38:23Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.7","issue_id":"brepgpu-12s.25.10","type":"discovered-from"}
 {"created_at":"2026-10-18T05:46:06Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.25.11","type":"parent-child"}
 {"created_at":"2026-10-18T07:07:11Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.25.12","type":"parent-child"}
+{"created_at":"2026-10-18T08:59:48Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.25.13","type":"parent-child"}
 {"created_at":"2026-10-17T22:03:44Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s","issue_id":"brepgpu-12s.25.2","type":"discovered-from"}
 {"created_at":"2026-10-17T22:03:44Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.24","issue_id":"brepgpu-12s.25.2","type":"blocks"}
 {"created_at":"2026-10-17T22:03:44Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.25.2","type":"parent-child"}
@@ -151,6 +152,7 @@
 {"created_at":"2026-10-18T06:20:06Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.36","type":"parent-child"}
 {"created_at":"2026-10-18T07:23:58Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.37","type":"parent-child"}
 {"created_at":"2026-10-18T07:24:00Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.38","type":"parent-child"}
+{"created_at":"2026-10-18T09:36:46Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.39","type":"parent-child"}
 {"created_at":"2026-10-17T22:31:31Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.16","issue_id":"brepgpu-12s.37.4","type":"discovered-from"}
 {"created_at":"2026-10-17T22:31:31Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.4","type":"parent-child"}
 {"created_at":"2026-10-17T22:33:59Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.10","issue_id":"brepgpu-12s.37.5","type":"discovered-from"}
