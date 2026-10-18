@@ -140,6 +140,8 @@ found) have landed. The operator decisions raised are collected in
   operator decision. Operator decisions are carried from the journal
   unchanged.
 
+Done 2026-10-19 (d13d63b).
+
 ### M6. Design tribunal (parallel adversarial reviewers)
 
 - Brief: `briefs/M6-design-tribunal.md`.
@@ -158,6 +160,10 @@ found) have landed. The operator decisions raised are collected in
      incremental remeshing, sharpen-in-place.
 - The designer fixes every valid finding; incorrect findings are recorded in
   the journal with the reason.
+
+Done 2026-10-19. One round as the operator set it: seven reviews, one fix pass,
+one coordinator check. Findings and dispositions:
+[M6-findings.md](M6-findings.md).
 
 ### Gate G2. Operator review of the design
 

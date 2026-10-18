@@ -736,3 +736,76 @@ decision sheet, then M5.
   - **Not purged:** GitHub keeps pull-request refs and cached views of the old
     commits. Purging those needs GitHub support.
   - **Hooks:** pre-commit, commit-msg and pre-push hooks now reject the word.
+
+## 2026-10-19: M5 design synthesis
+
+One designer rewrote `docs/FAST_MESHER_DESIGN.md` whole, under
+`docs/fast-mesher-campaign/briefs/M5-design-synthesis.md` (commit d13d63b).
+
+- **Shape.** 2,523 lines in 29 sections, ordered by the lifecycle map's stages.
+  Each section names its stage, its evidence and the operator decisions it
+  carries.
+- **Corrections.** Every correction noted on bead `.20` by the M4 lanes is
+  resolved; §28 maps each to its section.
+- **Open questions.** §27 gives each one a default and the arena arm or
+  measurement that settles it. Two needed the operator: #32 (PMI-bearing
+  inputs at relative ε) and #40 (general offsets, waiting on ABC).
+- **No library proposals.** No new code defects; four known items were filed
+  or noted against M8 (`.25.14`, `.25.15`, notes on `.25.4`).
+- Bead `.20` closed.
+
+## 2026-10-19: M6 design tribunal
+
+Run under `briefs/M6-design-tribunal.md` (bead `.21`). The operator set its
+shape: "7 reviewers -> 1 fix -> review without re-engaging the subagents".
+
+- **Review.** Seven reviewers read the design once each, in parallel, one
+  mandate each: geometry and numerics; fidelity and oracles; performance and
+  architecture; robustness and termination; measurement honesty; doctrine and
+  ceremony; overfitting and roadmap fit. They returned 94 design findings and 68
+  bead findings, collected with an overlap map in
+  `docs/fast-mesher-campaign/M6-findings.md`.
+- **Operator answers during the tribunal.**
+  - "Matched" means achieved fidelity: NVIDIA's headline arm is its fastest arm
+    whose measured output achieves ε and the angle term, its chord tightened as
+    needed.
+  - NVIDIA is steel-manned as shipped; rebuilding it from source is a named
+    exclusion.
+  - The input self-intersection profile classes are a toggle, default offline
+    or on request.
+  - The owned STEP reader (`.25.7`) precedes the first headline, under an
+    ingress budget no larger than NVIDIA's minimal ingress.
+  - Exit code 6 means cancelled.
+- **Fix pass.** One designer wrote every design finding into the sections
+  themselves (no errata). 94 fixed; two rejected in part, with reasons: R2.5's
+  hand-made defective outputs are output mutants and wait for mutation testing
+  (the operator's deferral), and R2.11's "keep volume as a recorded measurement"
+  is a metric for a metric. 47 of the 68 bead findings were fixed in passing.
+  The design is now 3,313 lines; new sections cover loop bounds (§4.7),
+  cancellation and device faults (§4.8) and the refusal catalog (§5.8).
+- **Largest changes.**
+  - The repaired target no longer depends on the request's ε (ε_ref per
+    definition), so LOD, sharpen-in-place and scale classes mesh one solid.
+  - The task graph is acyclic as stated: closure reads move bounds, never
+    resolved neighbours, and no later stage re-splits a chain.
+  - The residual detector, the volume oracle and the GPU predicate gate are
+    gone; sound freeform bounds (Bernstein normal cones) replace estimates.
+  - The oracles take thresholds from inputs only, re-derive every producer
+    claim from source, and return `not_evaluated` rather than a silent pass.
+    New oracles cover reconciliation against source, the angle term, and
+    over-refinement.
+  - The wedge rule uses the signed dihedral; the 3D feature size is PSLG-style.
+  - Measurement: one declared owned configuration, a bootstrap win rule,
+    same-lane pairing, interleaved owned/NVIDIA schedules, per-lane quiet
+    gate, clock and link state recorded inside the timed interval, a corrected
+    speed target (about 70x per-unit cut, a per-stage budget).
+- **Coordinator check.** I read the revised design whole against the findings
+  and overlap groups; the fixes are in place and the two partial rejections
+  stand. No reviewer was re-engaged.
+- **Beads.** The 21 bead findings not fixed in passing were filed under M8 as
+  19 beads plus a note on `.25.2`. One is a live code defect: the NVIDIA harness
+  scores our own check failures as NVIDIA FAIL
+  (`scripts/qualify_om10_nvidia.py:196-202`, `scripts/benchmark_om10_nvidia.py:490`).
+  It is fixed in this phase under its own brief.
+- **Next.** Gate G2, the operator's review of the design. Open for the operator:
+  §27 #32 and #40.
