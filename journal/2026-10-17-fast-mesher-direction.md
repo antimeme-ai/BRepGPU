@@ -580,3 +580,14 @@ decisions (ABC download term first, as the priority-1 corpus source).
   offline reader-equivalent oracle; not snap rounding. Corrects the map's
   "12%" figure. Reference code recorded in QUARANTINE.md. Three operator
   questions filed. This completes the M4 research lanes (18 of 18).
+- B2 reviews so far: B2-oracles review found no blocker but three should-fix
+  items (orientation evidence could accept a contradiction; refusal paths not
+  run on real files; fold bound not written down, and only first-order); sent
+  back, with a read-only oracle run over OM10 and the corpus authorised on the
+  fleet. B2-harness review found four blockers, all biasing or mislabelling
+  NVIDIA: our own admission (16.74 s of 43.67 s in the published heal0 run)
+  inside NVIDIA's "complete" time; harness refusals recorded as NVIDIA
+  failures; face-count assignment by default; re-exec charged to NVIDIA only.
+  Sent back with the should-fix list and a privacy fix (no other users'
+  process names in context rows). B2-display returned (bins canonical on both
+  P100s, never output-visible) and is extending the fix to the CPU display.
