@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 #include <vector>
 using namespace bgmesh;
 using namespace bgmesh::adaptive;
@@ -352,6 +353,24 @@ int main(int argc, char **argv) {
               map_trace_parameter(unknown.source, {0}, Rational::from_double(unknown.budget, .5)));
         },
         ErrorCode::unsupported, "unproved map3 was treated as identity");
+    Fixture measured(variants / "map4.bgsource");
+    {
+      const auto &measured_use = measured.source.view().coedges[0];
+      const auto residuals = measured.source.view().view(measured_use.parameter_residuals);
+      require(measured_use.parameter_map_kind == 4 && measured_use.parameter_map.count == 3 &&
+                  residuals.size() == 3 &&
+                  residuals[0] == 0 && residuals[1] == 2.5e-4 && residuals[2] == 1e-4,
+              "measured map rows/residuals lost by the reader");
+      bool named = false;
+      try {
+        static_cast<void>(
+            map_trace_parameter(measured.source, {0}, Rational::from_double(measured.budget, .5)));
+      } catch (const Error &error) {
+        named = error.code == ErrorCode::unsupported &&
+                std::string_view(error.what()) == measured_parameter_map_refusal;
+      }
+      require(named, "measured map4 was consumed or refused without its name");
+    }
     Fixture auth_good(variants / "auth.bgsource");
     require(trace_requests(run(auth_good)).empty(),
             "original authoritative C0 boundary did not settle");

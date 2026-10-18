@@ -19,6 +19,39 @@
 #include <StepBasic_UncertaintyMeasureWithUnit.hxx>
 #include <StepRepr_NextAssemblyUsageOccurrence.hxx>
 #include <StepShape_ManifoldSolidBrep.hxx>
+#include <StepShape_BrepWithVoids.hxx>
+#include <StepShape_ClosedShell.hxx>
+#include <StepShape_OrientedClosedShell.hxx>
+#include <StepGeom_ConicalSurface.hxx>
+#include <StepGeom_GeometricRepresentationContextAndGlobalUnitAssignedContext.hxx>
+#include <StepGeom_GeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx.hxx>
+#include <StepRepr_GlobalUnitAssignedContext.hxx>
+#include <StepRepr_Representation.hxx>
+#include <StepRepr_RepresentationContext.hxx>
+#include <StepRepr_ReprItemAndMeasureWithUnit.hxx>
+#include <StepBasic_ConversionBasedUnit.hxx>
+#include <StepBasic_ConversionBasedUnitAndPlaneAngleUnit.hxx>
+#include <StepBasic_MeasureWithUnit.hxx>
+#include <StepBasic_PlaneAngleMeasureWithUnit.hxx>
+#include <StepBasic_PlaneAngleUnit.hxx>
+#include <StepBasic_SiUnit.hxx>
+#include <StepBasic_SiUnitAndPlaneAngleUnit.hxx>
+#include <STEPConstruct_UnitContext.hxx>
+#include <DESTEP_Parameters.hxx>
+#include <Interface_Graph.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <StepGeom_RectangularTrimmedSurface.hxx>
+#include <StepGeom_Pcurve.hxx>
+#include <StepGeom_Conic.hxx>
+#include <StepGeom_TrimmedCurve.hxx>
+#include <StepGeom_Plane.hxx>
+#include <StepGeom_ElementarySurface.hxx>
+#include <StepGeom_SurfaceOfRevolution.hxx>
+#include <StepRepr_MappedItem.hxx>
+#include <StepRepr_RepresentationMap.hxx>
+#include <StepRepr_RepresentationRelationship.hxx>
+#include <StepShape_ShapeDefinitionRepresentation.hxx>
+#include <StepShape_ShapeRepresentation.hxx>
 #include <StepShape_ConnectedFaceSet.hxx>
 #include <StepShape_AdvancedFace.hxx>
 #include <StepShape_FaceBound.hxx>
@@ -235,6 +268,8 @@ int main(int argc,char** argv){
     NCollection_Sequence<TCollection_AsciiString> length_units,angle_units,solid_angle_units;
     reader.ChangeReader().FileUnits(length_units,angle_units,solid_angle_units);
     if(length_units.IsEmpty())throw std::runtime_error("source has no representation length unit");
+    // Names only (root contexts); each solid's own context governs below.
+    for(int i=1;i<=angle_units.Length();++i)std::cout<<"source_plane_angle_unit\t"<<angle_units(i).ToCString()<<"\n";
     double source_units_mm=0;
     for(int i=1;i<=length_units.Length();++i){
       std::string unit=length_units(i).ToCString();std::cout<<"source_length_unit\t"<<unit<<"\n";
@@ -261,9 +296,101 @@ int main(int argc,char** argv){
     if(!reader.Transfer(doc))throw std::runtime_error("STEP/XDE transfer failed");
     require_no_processing("after_transfer");
     auto model=Handle(StepData_StepModel)::DownCast(reader.Reader().WS()->Model());
+    // OCCT applies read.step.angleunit.mode over the file's units unless it is File.
+    if(model.IsNull()||model->InternalParameters.AngleUnit!=DESTEP_Parameters::AngleUnitMode_File)throw std::runtime_error("STEP angle-unit mode overrides the declared plane-angle unit");
     auto tp=reader.Reader().WS()->TransferReader()->TransientProcess();
     auto shape_tool=XCAFDoc_DocumentTool::ShapeTool(doc->Main());
     auto id=[&](const Handle(Standard_Transient)& e)->U{if(e.IsNull())return 0;int n=model->IdentLabel(e);if(n<=0)throw std::runtime_error("missing original STEP entity label");return U(n);};
+    // Plane-angle unit of each solid, from the context of the shape
+    // representation OCCT transfers it through (one used by a
+    // SHAPE_DEFINITION_REPRESENTATION, or reached from one by a representation
+    // relationship or mapped item), read the way
+    // STEPControl_ActorRead::PrepareUnits and
+    // STEPConstruct_UnitContext::ComputeFactors read it. OCCT assumes degrees
+    // for a missing plane-angle unit and for a conversion it cannot follow.
+    // OCCT does carry a caller's factors into some nested transfers
+    // (STEPControl_ActorRead.cxx:1012-1014, kept by PrepareUnits when a context
+    // has no assignment, :2340-2357), but not on every path: in the one case
+    // measured here (a degree SHAPE_REPRESENTATION related to a unit-less
+    // ADVANCED_BREP_SHAPE_REPRESENTATION) it read the cone in radians. This
+    // adapter does not model which path applies; it conservatively treats a
+    // context without a unit assignment as declaring no unit. An
+    // uninterpretable unit always refuses; a missing one refuses only when the
+    // solid holds an angle-bearing value (G6 UR-4.4) and is otherwise recorded.
+    const Interface_Graph& graph=reader.Reader().WS()->Graph();
+    struct AngleUnit{bool declared=false;double factor=0;U representation=0;};
+    auto context_units=[&](const Handle(StepRepr_Representation)& rep){auto context=rep->ContextOfItems();Handle(StepRepr_GlobalUnitAssignedContext) units;
+      if(auto c=Handle(StepGeom_GeometricRepresentationContextAndGlobalUnitAssignedContext)::DownCast(context);!c.IsNull())units=c->GlobalUnitAssignedContext();
+      else if(auto c=Handle(StepGeom_GeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx)::DownCast(context);!c.IsNull())units=c->GlobalUnitAssignedContext();
+      return units;};
+    auto declared_angle=[&](const Handle(StepRepr_GlobalUnitAssignedContext)& units,const std::string& where)->AngleUnit{
+      auto radian=[&](const Handle(StepBasic_NamedUnit)& unit,double& factor){auto si=Handle(StepBasic_SiUnitAndPlaneAngleUnit)::DownCast(unit);if(si.IsNull()||si->Name()!=StepBasic_sunRadian)return false;factor=si->HasPrefix()?STEPConstruct_UnitContext::ConvertSiPrefix(si->Prefix()):1.;return true;};
+      std::vector<double> factors;
+      for(int i=1;i<=units->NbUnits();++i){auto unit=units->UnitsValue(i);if(unit.IsNull())continue;double factor=0;
+        if(unit->IsKind(STANDARD_TYPE(StepBasic_SiUnitAndPlaneAngleUnit))){if(!radian(unit,factor))throw std::runtime_error(where+" has an SI plane-angle unit that is not the radian");factors.push_back(factor);continue;}
+        auto converted=Handle(StepBasic_ConversionBasedUnit)::DownCast(unit);Handle(StepBasic_MeasureWithUnit) measure;
+        if(!converted.IsNull()){auto value=converted->ConversionFactor();measure=Handle(StepBasic_MeasureWithUnit)::DownCast(value);if(auto item=Handle(StepRepr_ReprItemAndMeasureWithUnit)::DownCast(value);measure.IsNull()&&!item.IsNull())measure=item->GetMeasureWithUnit();}
+        bool angular=unit->IsKind(STANDARD_TYPE(StepBasic_ConversionBasedUnitAndPlaneAngleUnit))||unit->IsKind(STANDARD_TYPE(StepBasic_PlaneAngleUnit))||(!measure.IsNull()&&measure->IsKind(STANDARD_TYPE(StepBasic_PlaneAngleMeasureWithUnit)));
+        if(!angular)continue;
+        if(!unit->IsKind(STANDARD_TYPE(StepBasic_ConversionBasedUnitAndPlaneAngleUnit))||measure.IsNull())throw std::runtime_error(where+" has an uninterpretable plane-angle unit");
+        double target=0,value=measure->ValueComponent();if(!radian(measure->UnitComponent().NamedUnit(),target)||!std::isfinite(value)||value<=0)throw std::runtime_error(where+" has an uninterpretable plane-angle unit: its conversion is not a positive measure in radians");
+        factors.push_back(target*value);}
+      if(factors.size()>1)throw std::runtime_error(where+" declares "+std::to_string(factors.size())+" plane-angle units; at most one is allowed");
+      return factors.empty()?AngleUnit{}:AngleUnit{true,factors[0],0};};
+    auto sdr_used=[&](const Handle(StepRepr_Representation)& rep){auto users=graph.Sharings(rep);for(users.Start();users.More();users.Next())if(auto sdr=Handle(StepShape_ShapeDefinitionRepresentation)::DownCast(users.Value());!sdr.IsNull()&&sdr->UsedRepresentation()==rep)return true;return false;};
+    auto callers=[&](const Handle(StepRepr_Representation)& rep){std::vector<Handle(StepRepr_Representation)> out;auto users=graph.Sharings(rep);
+      for(users.Start();users.More();users.Next()){
+        if(auto relation=Handle(StepRepr_RepresentationRelationship)::DownCast(users.Value());!relation.IsNull()){auto other=relation->Rep1()==rep?relation->Rep2():relation->Rep1();if(!Handle(StepShape_ShapeRepresentation)::DownCast(other).IsNull())out.push_back(other);}
+        if(auto map=Handle(StepRepr_RepresentationMap)::DownCast(users.Value());!map.IsNull()&&map->MappedRepresentation()==rep){auto items=graph.Sharings(map);for(items.Start();items.More();items.Next())if(auto item=Handle(StepRepr_MappedItem)::DownCast(items.Value());!item.IsNull()){auto holders=graph.Sharings(item);for(holders.Start();holders.More();holders.Next())if(auto holder=Handle(StepShape_ShapeRepresentation)::DownCast(holders.Value());!holder.IsNull())out.push_back(holder);}}}
+      return out;};
+    // Breadth-first over relationship/mapped-item links, each representation once, depth <= 8.
+    auto transferred=[&](const Handle(StepRepr_Representation)& start){std::set<const Standard_Transient*> seen{start.get()};std::vector<std::pair<Handle(StepRepr_Representation),int>> queue{{start,0}};
+      for(std::size_t i=0;i<queue.size();++i){const auto rep=queue[i].first;const int depth=queue[i].second;if(sdr_used(rep))return true;if(depth>=8)continue;
+        for(const auto& caller:callers(rep))if(seen.insert(caller.get()).second)queue.push_back({caller,depth+1});}
+      return false;};
+    auto resolve=[&](const Handle(StepRepr_Representation)& rep)->AngleUnit{
+      AngleUnit unit;if(auto units=context_units(rep);!units.IsNull())unit=declared_angle(units,"representation "+std::to_string(id(rep)));
+      unit.representation=id(rep);return unit;};
+    // First angle-bearing value reachable from a solid (cone semi-angle, conic
+    // trim, pcurve or trimmed bounds on an angular surface, revolution).
+    auto angle_bearing=[&](const Handle(Standard_Transient)& root)->std::string{
+      auto angular=[](const Handle(StepGeom_Surface)& s){return !Handle(StepGeom_SurfaceOfRevolution)::DownCast(s).IsNull()||(!Handle(StepGeom_ElementarySurface)::DownCast(s).IsNull()&&Handle(StepGeom_Plane)::DownCast(s).IsNull());};
+      std::set<const Standard_Transient*> seen{root.get()};std::vector<Handle(Standard_Transient)> stack{root};
+      while(!stack.empty()){auto e=stack.back();stack.pop_back();
+        if(!Handle(StepGeom_ConicalSurface)::DownCast(e).IsNull())return "conical_surface #"+std::to_string(id(e));
+        if(!Handle(StepGeom_SurfaceOfRevolution)::DownCast(e).IsNull())return "surface_of_revolution #"+std::to_string(id(e));
+        if(auto c=Handle(StepGeom_TrimmedCurve)::DownCast(e);!c.IsNull()&&!Handle(StepGeom_Conic)::DownCast(c->BasisCurve()).IsNull())return "conic trimmed_curve #"+std::to_string(id(e));
+        if(auto c=Handle(StepGeom_Pcurve)::DownCast(e);!c.IsNull()&&angular(c->BasisSurface()))return "pcurve on an angular surface #"+std::to_string(id(e));
+        if(auto s=Handle(StepGeom_RectangularTrimmedSurface)::DownCast(e);!s.IsNull()&&angular(s->BasisSurface()))return "rectangular_trimmed_surface #"+std::to_string(id(e));
+        auto next=graph.Shareds(e);for(next.Start();next.More();next.Next())if(seen.insert(next.Value().get()).second)stack.push_back(next.Value());}
+      return "";};
+    std::set<double> reported_angle_factors;
+    auto solid_angle_factor=[&](const Handle(StepShape_ManifoldSolidBrep)& solid,std::vector<Bytes>& diagnostics)->double{
+      const std::string where="solid "+std::to_string(id(solid));std::set<std::pair<bool,double>> found;AngleUnit chosen;
+      auto users=graph.Sharings(solid);for(users.Start();users.More();users.Next())if(auto rep=Handle(StepShape_ShapeRepresentation)::DownCast(users.Value());!rep.IsNull()&&transferred(rep)){auto unit=resolve(rep);found.insert({unit.declared,unit.factor});chosen=unit;}
+      if(found.empty())throw std::runtime_error(where+" is not held by a shape representation that OCCT transfers");
+      if(found.size()!=1)throw std::runtime_error(where+" is held by representations with different plane-angle units");
+      Bytes diag;diag.u32(0);diag.u32(0);diag.text("source_plane_angle_unit");diag.ids({id(solid),chosen.representation});std::ostringstream message;message<<std::setprecision(17);
+      if(chosen.declared){message<<"declared radians per unit="<<chosen.factor;if(reported_angle_factors.insert(chosen.factor).second)std::cout<<"source_plane_angle_factor\t"<<std::setprecision(17)<<chosen.factor<<"\n";}
+      else{auto value=angle_bearing(solid);if(!value.empty())throw std::runtime_error(where+" has no declared plane-angle unit but holds angle-bearing "+value);message<<"absent; solid holds no angle-bearing value";std::cout<<"source_plane_angle_unit_absent\t"<<id(solid)<<"\n";}
+      diag.text(message.str());diagnostics.push_back(diag);return chosen.factor;};
+    // A BREP_WITH_VOIDS adds oriented void shells after the outer shell.
+    // StepToTopoDS_Builder::Init(BrepWithVoids) translates each one and
+    // reverses it when its orientation is .F.; walk the same shells in order.
+    struct RawShell{U ordinal=0,id=0,element=0;bool forward=true;Handle(StepShape_ConnectedFaceSet) faces;};
+    auto raw_shells=[&](const Handle(StepShape_ManifoldSolidBrep)& raw,std::vector<Bytes>& diagnostics){std::vector<RawShell> shells;
+      if(raw->Outer().IsNull())throw std::runtime_error("solid without outer shell "+std::to_string(id(raw)));
+      // ABSR WR3 forbids an oriented outer shell. OCCT translates one through
+      // its closed shell without reversing it, so a .T. one is read
+      // unambiguously as that closed shell and accepted with a record of the
+      // WR3 violation; a .F. one (a reversed outer shell) refuses.
+      Handle(StepShape_ConnectedFaceSet) outer=raw->Outer();U outer_element=id(outer);
+      if(auto oriented=Handle(StepShape_OrientedClosedShell)::DownCast(outer);!oriented.IsNull()){if(!oriented->Orientation()||oriented->ClosedShellElement().IsNull())throw std::runtime_error("outer shell "+std::to_string(id(oriented))+" of solid "+std::to_string(id(raw))+" is a reversed oriented_closed_shell (ABSR WR3 forbids an oriented outer shell)");outer=oriented->ClosedShellElement();outer_element=id(outer);
+        Bytes diag;diag.u32(1);diag.u32(0);diag.text("source_oriented_outer_shell");diag.ids({id(raw),id(oriented),outer_element});diag.text("outer shell is an oriented_closed_shell .T. (ABSR WR3 forbids it); read as its closed shell, as OCCT reads it");diagnostics.push_back(diag);}
+      shells.push_back({0,id(raw->Outer()),outer_element,true,outer});
+      if(auto with_voids=Handle(StepShape_BrepWithVoids)::DownCast(raw);!with_voids.IsNull())for(int k=1;k<=with_voids->NbVoids();++k){auto shell=with_voids->VoidsValue(k);if(shell.IsNull()||shell->ClosedShellElement().IsNull())throw std::runtime_error("void without closed shell at solid "+std::to_string(id(raw)));if(shell->Orientation())throw std::runtime_error("void shell "+std::to_string(id(shell))+" of solid "+std::to_string(id(raw))+" has orientation .T.; ABSR WR4 requires every void to have orientation .F.");shells.push_back({U(k),id(shell),id(shell->ClosedShellElement()),shell->Orientation(),shell->ClosedShellElement()});}
+      std::set<U> faces;for(const auto& shell:shells)for(int fi=1;fi<=shell.faces->NbCfsFaces();++fi)if(!faces.insert(id(shell.faces->CfsFacesValue(fi))).second)throw std::runtime_error("source face in more than one shell of solid "+std::to_string(id(raw)));
+      return shells;};
     auto result=[&](const Handle(Standard_Transient)& e){auto s=TransferBRep::ShapeResult(tp,e);if(s.IsNull())throw std::runtime_error("unmapped original source entity "+std::to_string(id(e)));return s;};
     std::map<std::string,std::vector<Bytes>> tables;std::map<U,Handle(StepShape_ManifoldSolidBrep)> raw_solids;
     std::map<U,TopoDS_Shape> solids,product_shapes;std::map<U,U> product_solids,solid_products,style_targets;
@@ -309,8 +436,8 @@ int main(int argc,char** argv){
     IDs roots;for(auto& p:products)if(!children.count(id(p)))roots.push_back(id(p));if(roots.size()!=1)throw std::runtime_error("ambiguous source root");
     std::set<U> seen_vertices,seen_edges,seen_curves,seen_surfaces;U nfaces=0,nloops=0,ncoedges=0,degenerate=0,not_same=0;unsigned max_pcurve_degree=0;
     for(auto& pair:raw_solids){U si=pair.first;auto raw=pair.second;IDs fs,es,vs;std::set<U> unique_edges,unique_vertices;
-      std::vector<brepgpu::SourceUVFace> uv_faces;
-      for(int fi=1;fi<=raw->Outer()->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(raw->Outer()->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced UV source face");
+      std::vector<brepgpu::SourceUVFace> uv_faces;const auto shells=raw_shells(raw,tables["DIAGS___"]);const double angle_factor=solid_angle_factor(raw,tables["DIAGS___"]);
+      for(const auto& shell:shells)for(int fi=1;fi<=shell.faces->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(shell.faces->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced UV source face");
         brepgpu::SourceUVFace face;face.id=id(rf);face.carrier_id=id(rf->FaceGeometry());face.face=TopoDS::Face(result(rf));auto forward_face=face.face;
         std::vector<TopoDS_Wire> wires;for(TopExp_Explorer w(forward_face,TopAbs_WIRE);w.More();w.Next())wires.push_back(TopoDS::Wire(w.Current()));
         for(int bi=1;bi<=rf->NbBounds();++bi){auto bound=rf->BoundsValue(bi);auto loop=Handle(StepShape_EdgeLoop)::DownCast(bound->Bound());if(loop.IsNull())throw std::runtime_error("non-edge UV source loop");brepgpu::SourceUVLoop binding;binding.id=id(loop);
@@ -318,6 +445,10 @@ int main(int argc,char** argv){
           std::vector<std::size_t> matches;for(std::size_t wi=0;wi<wires.size();++wi){std::vector<TopoDS_Edge> uses;for(TopExp_Explorer e(wires[wi],TopAbs_EDGE);e.More();e.Next())uses.push_back(TopoDS::Edge(e.Current()));if(uses.size()!=binding.uses.size())continue;bool okay=true;for(auto& edge:uses)if(std::none_of(binding.uses.begin(),binding.uses.end(),[&](const brepgpu::SourceUVUse& use){return edge.IsSame(use.edge);}))okay=false;if(okay)matches.push_back(wi);}if(matches.size()!=1)throw std::runtime_error("ambiguous original wire UV binding at face "+std::to_string(face.id));binding.wire=wires[matches[0]];wires.erase(wires.begin()+matches[0]);face.loops.push_back(binding);
         }if(!wires.empty())throw std::runtime_error("unowned native wire before UV preparation");uv_faces.push_back(face);
       }
+      // Every translated shell and face must be one this walk owns; a shell
+      // OCCT dropped (or one we did not visit) refuses instead of passing.
+      {U translated_shells=0,translated_faces=0;for(TopExp_Explorer e(solids.at(si),TopAbs_SHELL);e.More();e.Next())++translated_shells;for(TopExp_Explorer e(solids.at(si),TopAbs_FACE);e.More();e.Next())++translated_faces;
+       if(translated_shells!=shells.size()||translated_faces!=uv_faces.size())throw std::runtime_error("solid "+std::to_string(si)+" translated shells/faces "+std::to_string(translated_shells)+"/"+std::to_string(translated_faces)+" differ from original "+std::to_string(shells.size())+"/"+std::to_string(uv_faces.size()));}
       auto prepared=[&](){try{return brepgpu::prepare_source_uv(solids.at(si),uv_faces,uv_options);}catch(const Standard_Failure& e){throw std::runtime_error("solid "+std::to_string(si)+" source UV "+e.ExceptionType()+" "+e.what());}}();
       auto source_result=[&](const Handle(Standard_Transient)& e){return prepared.mapped(result(e));};solids.at(si)=prepared.raw_shape;
       source_uv_seconds+=prepared.stats.projection_seconds;query_uv_seconds+=prepared.stats.query_seconds;source_uv_projected+=prepared.stats.projected_edges;source_uv_max_residual=std::max(source_uv_max_residual,prepared.stats.max_residual_mm);source_uv_seams+=prepared.stats.seam_pairs;query_columns+=prepared.stats.query_column_edges;query_endpoints+=prepared.stats.query_joint_endpoints;query_connectors+=prepared.stats.query_connectors;query_max_residual=std::max(query_max_residual,prepared.stats.max_query_residual_mm);query_max_uv_metric=std::max(query_max_uv_metric,prepared.stats.max_query_uv_metric_mm);
@@ -329,7 +460,7 @@ int main(int argc,char** argv){
         Bytes w;w.u32(1);w.u32(0);w.text("reference_shape_check");w.ids({si});w.text("OCCT imported solid validity check is non-green; independent geometry qualification remains required");tables["DIAGS___"].push_back(w);
       }
       GProp_GProps volume;BRepGProp::VolumeProperties(solids.at(si),volume);std::cout<<"reference_volume\t"<<si<<"\t"<<std::setprecision(17)<<volume.Mass()<<"\n";
-      for(int fi=1;fi<=raw->Outer()->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(raw->Outer()->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced source face");U fid=id(rf);fs.push_back(fid);++nfaces;auto f=TopoDS::Face(source_result(rf));TopLoc_Location fl;auto surf=BRep_Tool::Surface(f,fl);if(!fl.IsIdentity())surf=Handle(Geom_Surface)::DownCast(surf->Transformed(fl.Transformation()));
+      for(const auto& shell:shells)for(int fi=1;fi<=shell.faces->NbCfsFaces();++fi){auto rf=Handle(StepShape_AdvancedFace)::DownCast(shell.faces->CfsFacesValue(fi));if(rf.IsNull())throw std::runtime_error("non-advanced source face");U fid=id(rf);fs.push_back(fid);++nfaces;auto f=TopoDS::Face(source_result(rf));TopLoc_Location fl;auto surf=BRep_Tool::Surface(f,fl);if(!fl.IsIdentity())surf=Handle(Geom_Surface)::DownCast(surf->Transformed(fl.Transformation()));
         std::vector<unsigned> raw_wire_counts;std::multiset<U> raw_edge_uses;
         std::map<U,TopoDS_Edge> face_edges,actual_face_edges;
         std::map<U,TopoDS_Vertex> face_vertices;
@@ -369,6 +500,10 @@ int main(int argc,char** argv){
         };
         for(TopExp_Explorer actual(f,TopAbs_EDGE);actual.More();actual.Next())match_actual_edge(TopoDS::Edge(actual.Current()),true);
         U sid=id(rf->FaceGeometry());double u0,u1,v0,v1;BRepTools::UVBounds(f,u0,u1,v0,v1);
+        // The cone semi-angle is the one raw angle that becomes a stored
+        // carrier value: it must be the raw value in the declared unit.
+        if(auto cone=Handle(StepGeom_ConicalSurface)::DownCast(rf->FaceGeometry());!cone.IsNull()){GeomAdaptor_Surface translated(surf);const double declared=cone->SemiAngle()*angle_factor;
+          if(translated.GetType()!=GeomAbs_Cone||!(std::abs(translated.Cone().SemiAngle()-declared)<=1e-12)){std::ostringstream message;message<<std::setprecision(17)<<"conical carrier "<<sid<<" semi-angle differs from the declared unit: declared "<<declared<<" rad";throw std::runtime_error(message.str());}}
         if(seen_surfaces.insert(sid).second)tables["CARRIERS"].push_back(surface(sid,surf,{u0,u1,v0,v1}));
         IDs ls;
         for(int bi=1;bi<=rf->NbBounds();++bi){auto bound=rf->BoundsValue(bi);auto loop=Handle(StepShape_EdgeLoop)::DownCast(bound->Bound());if(loop.IsNull())throw std::runtime_error("non-edge source loop");U lid=id(loop);ls.push_back(lid);++nloops;IDs cs;
@@ -398,8 +533,13 @@ int main(int argc,char** argv){
             // original edge-use, bound and geometric senses before selecting
             // the seam pcurve; BRep_Tool then composes the face orientation.
             bool forward=oe->Orientation()==bound->Orientation();auto pcurve_edge=actual_face_edges.at(eid);pcurve_edge.Orientation((forward==re->SameSense())?TopAbs_FORWARD:TopAbs_REVERSED);double pf,pl;auto pc=BRep_Tool::CurveOnSurface(pcurve_edge,f,pf,pl);if(pc.IsNull())throw std::runtime_error("missing recovered UV at coedge "+std::to_string(cid));U pcid=(U(1)<<63)|cid;auto pcd=curve2(pcid,pc,pf,pl);max_pcurve_degree=std::max(max_pcurve_degree,pcd.degree);tables["CURVES__"].push_back(pcd.bytes());
-            Bytes w;w.u64(cid);w.u64(eid);w.u64(lid);w.u64(pcid);w.i32(forward?1:-1);w.u32(1);w.doubles({pf,pl});w.i32(0);w.i32(0);w.u32(same?1:3);w.u32(0);
-            if(same)w.vec({});else{D map;for(int j=0;j<=8;++j){double t=ta+(tb-ta)*j/8;double s=pf+(pl-pf)*(t-first)/(last-first);map.insert(map.end(),{t,s});}w.vec(map);}tables["COEDGES_"].push_back(w);
+            // SameParameter=false: publish a measured t->s map or refuse; never an assumed one.
+            brepgpu::SourceParameterMap measured;measured.kind=1;
+            if(!same){try{measured=brepgpu::measure_source_parameter_map(pcurve_edge,f,ta,tb,uv_options);}catch(const std::exception& e){throw std::runtime_error("coedge "+std::to_string(cid)+" edge "+std::to_string(eid)+": "+e.what());}
+              Bytes diag;diag.u32(1);diag.u32(0);diag.text("measured_parameter_map");diag.ids({cid,eid});std::ostringstream message;message<<std::setprecision(17)<<"kind 4: edge t to pcurve s by projecting curve-on-surface samples onto the 3D curve (Approx_SameParameter method); rows="<<measured.rows.size()<<" residual sampled at nodes and quarter points, max_mm="<<measured.max_residual_mm<<" bound_mm="<<uv_options.source_residual_mm<<"; not a bound between samples";diag.text(message.str());tables["DIAGS___"].push_back(diag);}
+            Bytes w;w.u64(cid);w.u64(eid);w.u64(lid);w.u64(pcid);w.i32(forward?1:-1);w.u32(1);w.doubles({pf,pl});w.i32(0);w.i32(0);w.u32(measured.kind);w.u32(0);
+            // Kind 4 rows are (t, s, sampled residual mm); kinds 1-3 rows are (t, s).
+            D map;for(const auto& row:measured.rows){map.insert(map.end(),{row[0],row[1]});if(measured.kind==4)map.push_back(row[2]);}w.vec(map);tables["COEDGES_"].push_back(w);
           }
           Bytes w;w.u64(lid);w.u64(fid);w.u32(bound->IsKind(STANDARD_TYPE(StepShape_FaceOuterBound)));w.u32(0);w.ids(cs);tables["LOOPS___"].push_back(w);
         }
@@ -415,12 +555,14 @@ int main(int argc,char** argv){
         }
         std::sort(raw_wire_counts.begin(),raw_wire_counts.end());std::sort(translated_wire_counts.begin(),translated_wire_counts.end());
         if(raw_wire_counts!=translated_wire_counts||raw_edge_uses!=translated_edge_uses)throw std::runtime_error("source-to-translated topology changed at face "+std::to_string(fid));
-        Bytes w;w.u64(fid);w.u64(si);w.u64(sid);w.u64(style_targets[fid]);w.i32(rf->SameSense()?1:-1);w.u32(0);w.f64(BRep_Tool::Tolerance(f));w.ids(ls);tables["FACES___"].push_back(w);
+        // Face use in the solid: original same_sense composed with its shell.
+        Bytes w;w.u64(fid);w.u64(si);w.u64(sid);w.u64(style_targets[fid]);w.i32(rf->SameSense()==shell.forward?1:-1);w.u32(static_cast<std::uint32_t>(shell.ordinal));w.f64(BRep_Tool::Tolerance(f));w.ids(ls);tables["FACES___"].push_back(w);
       }
+      for(const auto& shell:shells)if(shell.ordinal){Bytes diag;diag.u32(0);diag.u32(0);diag.text("source_void_shell");diag.ids({si,shell.id,shell.element});diag.text("void shell ordinal="+std::to_string(shell.ordinal)+" orientation="+(shell.forward?".T.":".F.")+" faces="+std::to_string(shell.faces->NbCfsFaces())+"; face orientation composed with shell orientation");tables["DIAGS___"].push_back(diag);}
       es.assign(unique_edges.begin(),unique_edges.end());vs.assign(unique_vertices.begin(),unique_vertices.end());Bytes w;w.u64(si);w.u64(solid_products.at(si));w.ids(fs);w.ids(es);w.ids(vs);tables["SOLIDS__"].push_back(w);
     }
     for(auto& s:styles)tables["STYLES__"].push_back(s.second.bytes());
-    Bytes meta;meta.text("OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; owned STEP source adapter v4; explicit-uv-projector; bounded-conic-source-chart; original-t; shape-processing=none; set-after-read; asserted-before-and-after-transfer");tables["META____"].push_back(meta);
+    Bytes meta;meta.text("OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; owned STEP source adapter v5; explicit-uv-projector; bounded-conic-source-chart; original-t; void-shells; declared-plane-angle; measured-parameter-map; shape-processing=none; set-after-read; asserted-before-and-after-transfer");tables["META____"].push_back(meta);
     std::cout<<"source_uv_seconds\t"<<std::setprecision(17)<<source_uv_seconds<<"\nquery_uv_seconds\t"<<query_uv_seconds<<"\nsource_uv_projected_edges\t"<<source_uv_projected<<"\nsource_uv_max_residual_mm\t"<<source_uv_max_residual<<"\nsource_chart_count\t"<<source_chart_count<<"\nsource_chart_max_uv_metric_mm\t"<<source_chart_max_uv_metric<<"\nsource_uv_seam_pairs\t"<<source_uv_seams<<"\nsource_query_column_edges\t"<<query_columns<<"\nsource_query_endpoint_edits\t"<<query_endpoints<<"\nsource_query_connectors\t"<<query_connectors<<"\nsource_query_max_residual_mm\t"<<query_max_residual<<"\nsource_query_max_uv_metric_mm\t"<<query_max_uv_metric<<"\n";
     const std::vector<std::string> tags={"META____","PRODUCTS","SOLIDS__","USAGES__","VERTICES","EDGES___","COEDGES_","LOOPS___","FACES___","CARRIERS","CURVES__","STYLES__","DIAGS___"};Bytes body;
     for(auto& tag:tags){Bytes section;for(auto& row:tables[tag])section.row(row);body.raw(tag);body.u64(tables[tag].size());body.u64(section.v.size());body.v.insert(body.v.end(),section.v.begin(),section.v.end());}

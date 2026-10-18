@@ -49,6 +49,8 @@ Rational mapped_parameter(bgfd::Budget &budget, const UseSource &source, const R
     throw Error(ErrorCode::invalid_source, "boundary sample outside original spatial edge");
   if (source.use.parameter_map_kind == 1)
     return t;
+  if (source.use.parameter_map_kind == 4)
+    throw Error(ErrorCode::unsupported, measured_parameter_map_refusal);
   if (source.use.parameter_map_kind != 2)
     throw Error(ErrorCode::unsupported, "unproved source parameter continuation map");
   const auto range = source.use.parameter_map;

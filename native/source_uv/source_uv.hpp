@@ -9,6 +9,7 @@
 #include <TopTools_ShapeMapHasher.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom_Surface.hxx>
+#include <array>
 #include <cstdint>
 #include <vector>
 
@@ -55,6 +56,18 @@ struct PreparedSourceUV {
 };
 PreparedSourceUV prepare_source_uv(const TopoDS_Shape&,const std::vector<SourceUVFace>&,
                                   const SourceUVOptions& = {});
+// Edge-parameter t to pcurve-parameter s correspondence for one use whose edge
+// is not SameParameter: kind 4, measured piecewise-linear rows (t, s, sampled
+// residual mm). Rows run between the EDGE_CURVE's parameter ends, from ta to tb
+// as the adapter orders the edge (by its original same_sense), not by the use.
+struct SourceParameterMap {
+  std::uint32_t kind=0;
+  std::vector<std::array<double,3>> rows;
+  double max_residual_mm=0;
+  std::uint64_t probes=0;
+};
+SourceParameterMap measure_source_parameter_map(const TopoDS_Edge& use_edge,const TopoDS_Face& face,
+  double ta,double tb,const SourceUVOptions& = {});
 // These direct guards are also exercised by authored altered-native fixtures.
 void require_source_uv_uses(const SourceUVFace&,const std::vector<SourceUVConnector>& = {});
 void require_source_uv_period_translation(const Handle(Geom2d_Curve)& before,

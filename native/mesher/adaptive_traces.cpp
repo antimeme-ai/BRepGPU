@@ -26,6 +26,8 @@ Rational map_trace_parameter(const SourceStore &source, Slot<CoedgeTag> slot, co
     invalid("trace parameter outside original edge");
   if (use.parameter_map_kind == 1)
     return t;
+  if (use.parameter_map_kind == 4)
+    throw Error(ErrorCode::unsupported, measured_parameter_map_refusal);
   if (use.parameter_map_kind != 2)
     throw Error(ErrorCode::unsupported, "unproved original trace parameter continuation");
   const auto &data = source.view();

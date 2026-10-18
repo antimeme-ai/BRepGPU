@@ -2,8 +2,10 @@
 #if defined(BREPGPU_SOURCE_GEOMETRY)
 #include "geometry_store.hpp"
 #endif
+#include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <map>
 
 int main(int argc, char **argv) {
   if (argc != 2 && !(argc == 3 && std::string_view(argv[2]) == "--geometry")) {
@@ -15,6 +17,17 @@ int main(int argc, char **argv) {
     auto resource = std::make_shared<bgmesh::RunResource>(uint64_t{4} << 30);
     const auto source = bgmesh::load_source(argv[1], resource);
     const auto &d = source.view();
+    // Ordinals are contiguous per definition, so its shell count is max + 1.
+    std::map<uint64_t, uint32_t> definition_shells;
+    for (const auto &face : d.faces) {
+      auto &count = definition_shells[face.definition_id.value];
+      count = std::max(count, face.shell + 1);
+    }
+    uint64_t shells = 0;
+    for (const auto &entry : definition_shells)
+      shells += entry.second;
+    std::cout << "shells\t" << shells << "\nvoid_shells\t" << shells - definition_shells.size()
+              << '\n';
     std::cout << "products\t" << d.products.size() << "\ndefinitions\t" << d.definitions.size()
               << "\nusages\t" << d.usages.size() << "\nvertices\t" << d.vertices.size()
               << "\nedges\t" << d.edges.size() << "\ncoedges\t" << d.coedges.size() << "\nloops\t"

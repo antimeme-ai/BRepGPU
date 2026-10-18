@@ -363,14 +363,17 @@ def original_records(path):
               'ITEM_DEFINED_TRANSFORMATION', 'SHAPE_REPRESENTATION',
               'ADVANCED_BREP_SHAPE_REPRESENTATION', 'SHAPE_DEFINITION_REPRESENTATION',
               'MANIFOLD_SOLID_BREP', 'MAPPED_ITEM', 'REPRESENTATION_MAP',
-              'SHAPE_REPRESENTATION_RELATIONSHIP', 'UNCERTAINTY_MEASURE_WITH_UNIT'}
+              'SHAPE_REPRESENTATION_RELATIONSHIP', 'UNCERTAINTY_MEASURE_WITH_UNIT',
+              'BREP_WITH_VOIDS', 'CLOSED_SHELL', 'ORIENTED_CLOSED_SHELL',
+              'PLANE_ANGLE_MEASURE_WITH_UNIT', 'MEASURE_WITH_UNIT'}
     wanted.update(('PRODUCT_DEFINITION','PRODUCT_DEFINITION_FORMATION','PRODUCT'))
     records = {}
     for index, match in enumerate(starts):
         end = starts[index+1].start() if index+1 < len(starts) else len(text)
         rhs = text[match.end():end].strip()
         name = re.match(r'[A-Z_][A-Z0-9_]*', rhs)
-        if not rhs.startswith('(') and (name is None or name[0] not in wanted):
+        if not rhs.startswith('(') and (name is None or (name[0] not in wanted and
+                                                         not _is_shape_representation_name(name[0]))):
             continue
         reader = _OriginalValues(rhs)
         result = reader.value()
@@ -412,6 +415,129 @@ def _near(actual, expected, tolerance, description):
     return error
 
 
+_SI_PREFIX = {None: 1., '.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9,
+              '.MEGA.': 1e6, '.KILO.': 1e3, '.HECTO.': 1e2, '.DECA.': 1e1, '.DECI.': 1e-1,
+              '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6, '.NANO.': 1e-9,
+              '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
+# Every StepShape_ShapeRepresentation subtype OCCT 8.0.1 reads, as the adapter's
+# IsKind(StepShape_ShapeRepresentation) admits them.
+_SHAPE_REPRESENTATION_EXTRAS = frozenset(('SHAPE_REPRESENTATION_WITH_PARAMETERS', 'SHAPE_DIMENSION_REPRESENTATION',
+                                          'POINT_REPRESENTATION',
+                                          'TESSELLATED_SHAPE_REPRESENTATION_WITH_ACCURACY_PARAMETERS'))
+
+
+def _is_shape_representation_name(name):
+    return name.endswith('SHAPE_REPRESENTATION') or name in _SHAPE_REPRESENTATION_EXTRAS
+
+
+def _shape_representation(row):
+    """(name, items, context) of a shape representation record, else None."""
+    if type(row) is _Call:
+        return row.args if _is_shape_representation_name(row.kind) and len(row.args) >= 3 else None
+    if type(row) is tuple and any(_is_shape_representation_name(part.kind) for part in row):
+        for part in row:
+            if part.kind == 'REPRESENTATION' and len(part.args) >= 3:
+                return part.args
+    return None
+
+
+def _si_radian(records, reference):
+    unit = records.get(reference.id)
+    parts = {part.kind: part for part in unit} if type(unit) is tuple else {}
+    if 'PLANE_ANGLE_UNIT' not in parts or 'SI_UNIT' not in parts:
+        return None
+    prefix, name = parts['SI_UNIT'].args
+    return _SI_PREFIX[prefix] if name == '.RADIAN.' and prefix in _SI_PREFIX else None
+
+
+def _plane_angle_unit(records, reference):
+    """Radians per declared plane-angle unit; None when it is no plane-angle unit.
+
+    Same rule as the step-source adapter: SI radian with its prefix, or a
+    conversion-based unit whose positive measure is in SI radians. A conversion
+    to anything else (including another conversion, so no cycle can recurse)
+    is refused.
+    """
+    unit = records.get(reference.id)
+    if type(unit) is not tuple:
+        return None
+    parts = {part.kind: part for part in unit}
+    if 'PLANE_ANGLE_UNIT' not in parts:
+        return None
+    if 'SI_UNIT' in parts:
+        factor = _si_radian(records, reference)
+        require(factor is not None, 'unsupported original SI plane-angle unit')
+        return factor
+    require('CONVERSION_BASED_UNIT' in parts, 'uninterpretable original plane-angle unit')
+    measure = _refer(records, parts['CONVERSION_BASED_UNIT'].args[1]).args
+    value = measure[0]
+    require(type(value) is _Call and value.kind == 'PLANE_ANGLE_MEASURE', 'original plane-angle conversion measure')
+    target = _si_radian(records, measure[1])
+    require(target is not None, 'uninterpretable original plane-angle unit: conversion is not to SI radians')
+    require(math.isfinite(float(value.args[0])) and float(value.args[0]) > 0, 'nonpositive original plane-angle conversion')
+    return target*float(value.args[0])
+
+
+class _RepresentationGraph:
+    """Shape-representation links the adapter follows: SDR use, relationships, mapped items."""
+    def __init__(self, records):
+        self.records = records
+        self.shape = {id: args for id, r in records.items() for args in (_shape_representation(r),) if args is not None}
+        shape = self.shape
+        self.used = {r.args[1].id for r in records.values()
+                     if type(r) is _Call and r.kind == 'SHAPE_DEFINITION_REPRESENTATION'}
+        self.holders, item_holders, self.callers = defaultdict(list), defaultdict(list), defaultdict(list)
+        for id in shape:
+            for item in shape[id][1]:
+                if type(item) is _Ref:
+                    item_holders[item.id].append(id)
+        self.holders = item_holders
+        for id, row in records.items():
+            for part in (row if type(row) is tuple else (row,)):
+                # A complex relationship's SHAPE_REPRESENTATION_RELATIONSHIP() part is empty.
+                if part.kind in ('SHAPE_REPRESENTATION_RELATIONSHIP', 'REPRESENTATION_RELATIONSHIP') and len(part.args) >= 4:
+                    a, b = part.args[2].id, part.args[3].id
+                    if b in shape: self.callers[a].append(b)
+                    if a in shape: self.callers[b].append(a)
+            if type(row) is _Call and row.kind == 'MAPPED_ITEM':
+                mapping = records.get(row.args[1].id)
+                if type(mapping) is _Call and mapping.kind == 'REPRESENTATION_MAP':
+                    self.callers[mapping.args[1].id].extend(item_holders.get(id, ()))
+
+    def transferred(self, rep_id):
+        """Breadth-first, each representation once, depth <= 8 (as the adapter)."""
+        seen, queue = {rep_id}, [(rep_id, 0)]
+        for rep, depth in queue:
+            if rep in self.used:
+                return True
+            if depth < 8:
+                for caller in self.callers.get(rep, ()):
+                    if caller not in seen:
+                        seen.add(caller)
+                        queue.append((caller, depth+1))
+        return False
+
+    def plane_angle(self, rep_id):
+        """('declared', factor) or ('absent', None) for one representation context."""
+        records = self.records
+        context = records.get(self.shape[rep_id][2].id)
+        parts = [part for part in context if part.kind == 'GLOBAL_UNIT_ASSIGNED_CONTEXT'] if type(context) is tuple else []
+        if parts:
+            factors = [f for ref in parts[0].args[0] for f in (_plane_angle_unit(records, ref),) if f is not None]
+            require(len(factors) <= 1, 'original context declares several plane-angle units')
+            return ('declared', factors[0]) if factors else ('absent', None)
+        # Like the adapter: a context without unit assignment declares no unit.
+        return ('absent', None)
+
+    def solid_plane_angle(self, solid_id):
+        """Radians per plane-angle unit governing one solid, or None when absent."""
+        holders = [id for id in self.holders.get(solid_id, ()) if self.transferred(id)]
+        require(holders, 'original solid is not held by a transferred shape representation')
+        found = {self.plane_angle(id) for id in holders}
+        require(len(found) == 1, 'original solid representations declare different plane-angle units')
+        return next(iter(found))[1]
+
+
 def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-32):
     """Compare every actual source carrier/vertex with original STEP values.
 
@@ -449,6 +575,8 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
                     factors.update(factor for ref in part.args[0] for factor in (length_factor(ref),)
                                    if factor is not None)
     require(factors == {source.units_mm}, 'original context length units differ from owned source')
+    representations = _RepresentationGraph(records)
+    plane_angle = {definition.id: representations.solid_plane_angle(definition.id) for definition in source.definitions}
     uncertainties = set()
     for row in records.values():
         if type(row) is _Call and row.kind == 'UNCERTAINTY_MEASURE_WITH_UNIT':
@@ -474,7 +602,7 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
             record = records.get(item.id)
             if type(record) is not _Call:
                 continue
-            if record.kind == 'MANIFOLD_SOLID_BREP':
+            if record.kind in ('MANIFOLD_SOLID_BREP', 'BREP_WITH_VOIDS'):
                 result.add(item.id)
             elif record.kind == 'MAPPED_ITEM':
                 mapping = _refer(records, record.args[1], 'REPRESENTATION_MAP').args
@@ -515,8 +643,13 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
         if carrier.kind != 6:
             maximum = max(maximum, _near(carrier.frame, original_frame(records, args[1]),
                                          coordinate_tolerance, 'original carrier frame differs'))
+            # The cone semi-angle is stated in the context's plane-angle unit.
+            if carrier.kind == 3:
+                owners = {plane_angle[face.definition_id] for face in source.faces if face.carrier_id == carrier.id}
+                require(len(owners) == 1 and None not in owners, 'original cone has no single declared plane-angle unit')
             radii = (0., 0.) if carrier.kind == 1 else (
-                (float(args[2]), float(args[3])) if carrier.kind in (3, 5) else (float(args[2]), 0.))
+                (float(args[2]), float(args[3])*next(iter(owners))) if carrier.kind == 3 else
+                (float(args[2]), float(args[3])) if carrier.kind == 5 else (float(args[2]), 0.))
             maximum = max(maximum, _near(carrier.radii, radii, coordinate_tolerance, 'original carrier parameters differ'))
         else:
             pu, pv = map(int, args[1:3])
@@ -533,11 +666,35 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
                              for component in (*_refer(records, reference, 'CARTESIAN_POINT').args[1], F(1)))
             maximum = max(maximum, _near(carrier.controls, controls, coordinate_tolerance,
                                          'original spline surface homogeneous controls differ'))
+    # Shell of every original face: ordinal 0 outer, k for the k-th void, with
+    # the void's oriented_closed_shell sense composed into the face use.
+    face_shells = {}
+    for id in {row.id for row in source.definitions}:
+        raw = records[id]
+        outer = raw.args[1]
+        if records[outer.id].kind == 'ORIENTED_CLOSED_SHELL':
+            # OCCT and the adapter take a .T. oriented outer shell as its
+            # closed shell; ABSR WR3 forbids it and a .F. one refuses.
+            oriented = records[outer.id].args
+            require(oriented[3] == '.T.', 'original outer shell is a reversed oriented_closed_shell')
+            outer = oriented[2]
+        shells = [(0, True, outer)]
+        if raw.kind == 'BREP_WITH_VOIDS':
+            for k, ref in enumerate(raw.args[2], 1):
+                oriented = _refer(records, ref, 'ORIENTED_CLOSED_SHELL').args
+                shells.append((k, oriented[3] == '.T.', oriented[2]))
+        for ordinal, forward, ref in shells:
+            for face_ref in _refer(records, ref, 'CLOSED_SHELL').args[1]:
+                require(face_ref.id not in face_shells, 'original face in two shells')
+                face_shells[face_ref.id] = (ordinal, forward)
+    require(set(face_shells) == {face.id for face in source.faces}, 'original shell face inventory differs')
     for face in source.faces:
         raw = records[face.id]
+        ordinal, forward = face_shells[face.id]
         require(raw.kind == 'ADVANCED_FACE' and face.carrier_id == raw.args[2].id and
-                face.orientation == (1 if raw.args[3] == '.T.' else -1),
-                'original face carrier/orientation differs')
+                face.orientation == (1 if (raw.args[3] == '.T.') == forward else -1) and
+                face.shell == ordinal,
+                'original face carrier/orientation/shell differs')
         loops = tuple(_refer(records, ref).args[1].id for ref in raw.args[1])
         require(set(face.loop_ids) == set(loops), 'original face bounds differ')
         for ref in raw.args[1]:
@@ -710,12 +867,14 @@ def qualify_source(source, original_path=None):
     if original_path is not None:
         digest, original = original_inventory(original_path)
         require(source.source_sha256 == digest, 'original source bytes differ')
-        kinds = {'products': 'PRODUCT_DEFINITION', 'definitions': 'MANIFOLD_SOLID_BREP',
-                 'usages': 'NEXT_ASSEMBLY_USAGE_OCCURRENCE', 'vertices': 'VERTEX_POINT',
-                 'edges': 'EDGE_CURVE', 'coedges': 'ORIENTED_EDGE', 'loops': 'EDGE_LOOP',
-                 'faces': 'ADVANCED_FACE'}
-        for name, kind in kinds.items():
-            require(set(tables[name]) == original.get(kind, set()), 'complete original IDs: ' + name)
+        kinds = {'products': ('PRODUCT_DEFINITION',),
+                 'definitions': ('MANIFOLD_SOLID_BREP', 'BREP_WITH_VOIDS'),
+                 'usages': ('NEXT_ASSEMBLY_USAGE_OCCURRENCE',), 'vertices': ('VERTEX_POINT',),
+                 'edges': ('EDGE_CURVE',), 'coedges': ('ORIENTED_EDGE',), 'loops': ('EDGE_LOOP',),
+                 'faces': ('ADVANCED_FACE',)}
+        for name, names in kinds.items():
+            expected = set().union(*(original.get(kind, set()) for kind in names))
+            require(set(tables[name]) == expected, 'complete original IDs: ' + name)
     require(source.root_product_id in tables['products'], 'original assembly root missing')
     for definition in source.definitions:
         require(definition.product_id in tables['products'], 'solid original product missing')

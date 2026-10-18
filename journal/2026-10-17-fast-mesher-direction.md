@@ -537,3 +537,12 @@ decisions (ABC download term first, as the priority-1 corpus source).
   face count and nothing is pinned, so published NVIDIA times are not at their
   strongest and owned watch times ran under AutoNUMA migration. Two operator
   questions filed; the governor question gained measured clocks.
+- B1 landed (results/b1-ingress-defects-2026-10-17/REPORT.md). Rework fixed
+  every first-review finding (measured map published as a new kind 4 that
+  every consumer refuses by name; residual stated as sampled; `.T.` voids
+  refused; narrower plane-angle rule; transferred-representation contexts
+  only). A second review found it ready apart from a latent knot-bisection
+  refusal and nits, all fixed in a final round. Final: test_step_ingress 22/22
+  and the affected suites green; native mesher 127/129 with the two failures
+  pre-existing; the read-only corpus ingress run over 500 files gives zero new
+  refusals. Beads brepgpu-12s.1 and .1.1–.1.4 closed.

@@ -13,6 +13,9 @@
 #include <Geom_SphericalSurface.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom2d_Line.hxx>
+#include <Geom2d_BezierCurve.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_BSplineCurve.hxx>
 #include <NCollection_Array2.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <Geom_Circle.hxx>
@@ -60,7 +63,34 @@ SourceUVFace conic_boundary(double radius){
  for(int i=0;i<4;++i){auto e=i==0?BRepBuilderAPI_MakeEdge(circle,vertices[0],vertices[1],0,2*half).Edge():BRepBuilderAPI_MakeEdge(vertices[i],vertices[(i+1)%4]).Edge();builder.Add(wire,e);loop.uses.push_back(use(10+i,20+i,e,100+i,100+(i+1)%4,vertices[i],vertices[(i+1)%4]));}builder.Add(face,wire);loop.wire=wire;return {1,2,face,{loop}};
 }
 Handle(Geom2d_BSplineCurve) example(){NCollection_Array1<gp_Pnt2d> p(1,3);p(1)=gp_Pnt2d(0,.1);p(2)=gp_Pnt2d(.5,.25);p(3)=gp_Pnt2d(1,.1);NCollection_Array1<double> k(1,2);k(1)=0;k(2)=1;NCollection_Array1<int> m(1,2);m.Init(3);return new Geom2d_BSplineCurve(p,k,m,2);}
-int main(int argc,char** argv){try{if(argc!=3)throw std::runtime_error("fixture arguments");std::string mode=argv[1];if(mode=="sphere-v-shift"||mode=="period-basis-edit"){auto before=example();auto after=Handle(Geom2d_BSplineCurve)::DownCast(before->Copy());Handle(Geom_Surface) surface;if(mode=="sphere-v-shift"){surface=new Geom_SphericalSurface(gp_Ax3(),2.5);after->Translate(gp_Vec2d(0,pi));}else{surface=new Geom_CylindricalSurface(gp_Ax3(),.345);after->Translate(gp_Vec2d(2*pi,0));auto p=after->Pole(2);p.SetY(p.Y()+.02);after->SetPole(2,p);}require_source_uv_period_translation(before,after,surface,0,1);return 0;}
+// Line C(t)=(t,0,0), t in [0,1], on the plane z=0 with an authored pcurve and
+// SameParameter=false. The step-source adapter cannot reach this state through
+// OCCT's STEP translation, so the correspondence measure is driven directly.
+// curve-knot: C is a degree-1 B-spline on the same line whose speed changes at
+// the knot t=0.4 (x=0.3). inflection: P(s)=(g(s),0), g(s)=s+(s-m)^3 minus its
+// chord, m=1/32, so the first s piece has zero error at its midpoint and
+// 3h^3/64 at its quarter points. near-knot: as curve-knot with x(0.4) =
+// 0.25 + 1e-10, so the knot lies 1.6e-10 in t from the node projected from
+// the pcurve node s = 0.25: within projection tolerance, not bitwise equal.
+int parameter_map(const std::string& mode){
+ BRep_Builder builder;TopoDS_Face face;builder.MakeFace(face,new Geom_Plane(gp_Ax3()),1.e-7);
+ auto a=BRepBuilderAPI_MakeVertex(gp_Pnt(0,0,0)).Vertex(),b=BRepBuilderAPI_MakeVertex(gp_Pnt(1,0,0)).Vertex();
+ Handle(Geom_Curve) line=new Geom_Line(gp_Pnt(0,0,0),gp_Dir(1,0,0));
+ if(mode=="parameter-map-curve-knot"||mode=="parameter-map-near-knot"){NCollection_Array1<gp_Pnt> poles(1,3);poles(1)=gp_Pnt(0,0,0);poles(2)=gp_Pnt(mode=="parameter-map-near-knot"?.25+1e-10:.3,0,0);poles(3)=gp_Pnt(1,0,0);NCollection_Array1<double> knots(1,3);knots(1)=0;knots(2)=.4;knots(3)=1;NCollection_Array1<int> mults(1,3);mults(1)=2;mults(2)=1;mults(3)=2;line=new Geom_BSplineCurve(poles,knots,mults,1);}
+ auto edge=BRepBuilderAPI_MakeEdge(line,a,b,0,1).Edge();
+ Handle(Geom2d_Curve) pc;if(mode=="parameter-map-identity"||mode=="parameter-map-curve-knot"||mode=="parameter-map-near-knot")pc=new Geom2d_Line(gp_Pnt2d(0,0),gp_Dir2d(1,0));
+ else if(mode=="parameter-map-offset")pc=new Geom2d_Line(gp_Pnt2d(0,.01),gp_Dir2d(1,0));
+ else if(mode=="parameter-map-inflection"){const double m=1./32,k=1.,a1=1+k*(3*m*m-((1-m)*(1-m)*(1-m)+m*m*m)),a2=-3*k*m,a3=k;
+  NCollection_Array1<gp_Pnt2d> poles(1,4);poles(1)=gp_Pnt2d(0,0);poles(2)=gp_Pnt2d(a1/3,0);poles(3)=gp_Pnt2d(2*a1/3+a2/3,0);poles(4)=gp_Pnt2d(a1+a2+a3,0);pc=new Geom2d_BezierCurve(poles);}
+ else{NCollection_Array1<gp_Pnt2d> poles(1,3);poles(1)=gp_Pnt2d(0,0);poles(2)=gp_Pnt2d(0,0);poles(3)=gp_Pnt2d(1,0);pc=new Geom2d_BezierCurve(poles);}
+ builder.UpdateEdge(edge,pc,face,0.);builder.Range(edge,face,0,1);builder.SameParameter(edge,false);
+ // Tighter bounds make the quadratic and the inflection maps split pieces.
+ bool reversed=mode=="parameter-map-reversed";SourceUVOptions options;if(mode=="parameter-map-reparametrized"||reversed)options.source_residual_mm=1e-4;if(mode=="parameter-map-inflection")options.source_residual_mm=5e-6;
+ auto map=measure_source_parameter_map(edge,face,reversed?1.:0.,reversed?0.:1.,options);std::cout<<std::setprecision(17)<<"parameter_map_bound_mm\t"<<options.source_residual_mm<<'\n';
+ std::cout<<std::setprecision(17)<<"parameter_map_kind\t"<<map.kind<<"\nparameter_map_residual_mm\t"<<map.max_residual_mm<<"\nparameter_map_probes\t"<<map.probes<<'\n';
+ for(const auto& row:map.rows)std::cout<<"parameter_map_row\t"<<row[0]<<'\t'<<row[1]<<'\t'<<row[2]<<'\n';return 0;
+}
+int main(int argc,char** argv){try{if(argc!=3)throw std::runtime_error("fixture arguments");std::string mode=argv[1];if(mode.rfind("parameter-map-",0)==0)return parameter_map(mode);if(mode=="sphere-v-shift"||mode=="period-basis-edit"){auto before=example();auto after=Handle(Geom2d_BSplineCurve)::DownCast(before->Copy());Handle(Geom_Surface) surface;if(mode=="sphere-v-shift"){surface=new Geom_SphericalSurface(gp_Ax3(),2.5);after->Translate(gp_Vec2d(0,pi));}else{surface=new Geom_CylindricalSurface(gp_Ax3(),.345);after->Translate(gp_Vec2d(2*pi,0));auto p=after->Pole(2);p.SetY(p.Y()+.02);after->SetPole(2,p);}require_source_uv_period_translation(before,after,surface,0,1);return 0;}
  auto binding=mode=="evaluation-rounding"?global_domain_controls(0,true):mode=="cylinder-reversed"?reversed_cylinder():mode.find("global-domain-controls")==0?global_domain_controls(mode=="global-domain-controls-too-far"?512:8):mode.find("conic-boundary")==0?conic_boundary(mode=="conic-boundary-too-far"?10:.01):octant();if(mode=="sphere-octant-reversed"){binding.face.Reverse();for(auto& loop:binding.loops){loop.wire.Reverse();std::reverse(loop.uses.begin(),loop.uses.end());for(auto& u:loop.uses){u.edge.Reverse();std::swap(u.start,u.end);std::swap(u.start_id,u.end_id);}}}if(mode=="dropped-use")binding.loops.front().uses.erase(binding.loops.front().uses.begin()+1);BRep_Builder owner_builder;TopoDS_Shell owner;owner_builder.MakeShell(owner);owner_builder.Add(owner,binding.face);SourceUVOptions options;options.prepare_query=true;if(mode=="conic-boundary-tight-budget")options.tolerance_mm=1.e-7;auto prepared=prepare_source_uv(owner,{binding},options);auto face=TopoDS::Face(prepared.query_mapped(binding.face));if(!BinTools::Write(prepared.query_shape,argv[2],false,false,BinTools_FormatVersion_VERSION_4))throw std::runtime_error("query write failed");std::cout<<std::setprecision(17)<<"input_face_free\t"<<binding.face.Free()<<"\nquery_face_free\t"<<face.Free()<<"\n";
  if(mode.find("conic-boundary")==0){for(const auto& r:prepared.chart_approximations)std::cout<<"source_chart\t"<<r.face_id<<'\t'<<r.coedge_id<<'\t'<<r.axis<<'\t'<<r.side<<'\t'<<r.max_guide_coefficient_delta<<'\t'<<r.uv_metric_mm<<'\t'<<r.max_guide_extension_residual_mm<<'\t'<<r.max_selected_residual_mm<<'\n';std::cout<<"query_uv_metric\t"<<prepared.stats.max_query_uv_metric_mm<<'\n';auto original=binding.loops.front().uses.front().edge;auto raw_face=TopoDS::Face(prepared.mapped(binding.face));auto raw_edge=TopoDS::Edge(prepared.mapped(original));double a,b;auto curve=Handle(Geom_Circle)::DownCast(BRep_Tool::Curve(raw_edge,a,b));std::cout<<"original_circle\t"<<curve->Radius()<<'\t'<<a<<'\t'<<b<<'\n';auto pc=BRep_Tool::CurveOnSurface(raw_edge,raw_face,a,b);for(int i=0;i<=16;++i){double t=i==0?a:i==16?b:a+(b-a)*i/16;auto uv=pc->Value(t);std::cout<<"raw_boundary\t"<<t<<'\t'<<uv.X()<<'\t'<<uv.Y()<<'\n';}}
  if(mode.find("global-domain-controls")==0||mode=="evaluation-rounding"){auto original=binding.loops.front().uses.front().edge;auto raw_face=TopoDS::Face(prepared.mapped(binding.face));auto raw_edge=TopoDS::Edge(prepared.mapped(original)),query_edge=TopoDS::Edge(prepared.query_mapped(original));double a,b;auto raw=Handle(Geom2d_BSplineCurve)::DownCast(BRep_Tool::CurveOnSurface(raw_edge,raw_face,a,b));auto query=Handle(Geom2d_BSplineCurve)::DownCast(BRep_Tool::CurveOnSurface(query_edge,face,a,b));std::cout<<"query_pc_basis\t"<<query->Degree()<<'\t'<<query->NbPoles()<<'\t'<<a<<'\t'<<b<<"\n";for(int i=1;i<=query->NbPoles();++i){auto p=query->Pole(i);std::cout<<"query_control\t"<<i<<'\t'<<p.X()<<'\t'<<p.Y()<<'\t'<<query->Weight(i)<<"\n";}std::cout<<"raw_middle_v\t"<<raw->Pole(2).Y()<<"\n";}

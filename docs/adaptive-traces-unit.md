@@ -44,7 +44,10 @@ and stale phase before reading rows. No callback or scheduler is embedded here.
 
 Site preparation maps each literal t to original s before sampling. Kind1 is
 s=t, kind2 uses exact original affine pieces with deterministic knot tie; kind3
-is unsupported. Closed original endpoints stay separate occurrences. Endpoint
+is unsupported. Kind4 is the step-source adapter's measured piecewise-linear map
+for a non-SameParameter use: rows (t, s, residual mm), the residual sampled at
+nodes and quarter points, not bounded. Every consumer refuses kind4 by name
+until one charges its residual to its error budget; it is never exact. Closed original endpoints stay separate occurrences. Endpoint
 source obligations use original source endpoints, never rounded Q. Select guide
 UV (with supported symbolic period lift), or finite plane/cylinder recovery;
 choose deterministic dyadic coordinates, preserve original branch, then bound

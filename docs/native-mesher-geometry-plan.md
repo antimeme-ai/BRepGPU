@@ -237,7 +237,10 @@ XYZ. The endpoint mapping is literally parameter_range endpoints to vertex_ids;
 do not reverse it again using curve_same_sense. Dimension2 pcurve parameter maps
 are identity or the retained exact piecewise-affine map. Map kind3 is an
 unproved continuation guide in the current reader and remains unsupported until
-its own bounded implementation; do not turn it into identity.
+its own bounded implementation; do not turn it into identity. Map kind4 is a
+measured piecewise-linear map with a sampled residual per row (step-source
+adapter, non-SameParameter uses); it is refused by name everywhere until a
+consumer charges that residual to its error budget, and is never exact.
 
 Choose one dyadic joint per face/source-vertex branch before sampling incoming
 uses. Recover candidate chart sites by retained branch guides plus plane dual

@@ -219,6 +219,11 @@ if(BUILD_TESTING)
   target_link_libraries(brepgpu_native_mesher_source PRIVATE brepgpu_mesher_source)
   brepgpu_native_cpu_rigor(brepgpu_native_mesher_source)
   add_test(NAME native_mesher_source COMMAND brepgpu_native_mesher_source "${SOURCE_FIXTURE}")
+  add_executable(brepgpu_native_placement_admission ../../tests/native_placement_admission.cpp)
+  target_link_libraries(brepgpu_native_placement_admission PRIVATE brepgpu_mesher_source brepgpu_mesher_display_cpu Threads::Threads)
+  brepgpu_native_cpu_rigor(brepgpu_native_placement_admission)
+  add_test(NAME native_placement_admission COMMAND brepgpu_native_placement_admission
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/fixtures/rigid-placements.tsv")
 
   set(EXACT_VECTORS "${CMAKE_CURRENT_BINARY_DIR}/exact-vectors.bin")
   add_custom_command(OUTPUT "${EXACT_VECTORS}"

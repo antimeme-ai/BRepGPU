@@ -1,4 +1,5 @@
 #include "source.hpp"
+#include "../rigid_placement.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -257,10 +258,16 @@ void decode_row(std::size_t section, Reader &r, SourceData &d) {
     v.parameter_map_kind = r.u32();
     r.zero();
     const auto size = r.count(8);
-    require(size % 2 == 0, "odd source parameter map vector");
-    v.parameter_map = {d.parameter_maps.size(), size / 2};
-    for (uint64_t i = 0; i < size / 2; ++i)
+    // Kind 4 rows are (t, s, sampled residual mm); every other kind is (t, s).
+    const uint64_t width = v.parameter_map_kind == 4 ? 3 : 2;
+    require(size % width == 0, "source parameter map vector is not whole rows");
+    v.parameter_map = {d.parameter_maps.size(), size / width};
+    v.parameter_residuals = {d.scalars.size(), width == 3 ? size / 3 : 0};
+    for (uint64_t i = 0; i < size / width; ++i) {
       d.parameter_maps.push_back(r.numbers<2>());
+      if (width == 3)
+        d.scalars.push_back(r.f64());
+    }
     d.coedges.push_back(v);
     break;
   }
@@ -281,7 +288,7 @@ void decode_row(std::size_t section, Reader &r, SourceData &d) {
     v.carrier_id = r.id<CarrierTag>();
     v.style_id = r.id<StyleTag>();
     v.orientation = r.i32();
-    r.zero();
+    v.shell = r.u32();
     v.tolerance = r.f64();
     v.loops = r.ids(d.loop_ids);
     d.faces.push_back(v);
@@ -542,6 +549,22 @@ void validate(SourceData &d, Work &work) {
   }
   inventory(d.definition_faces, d.face_ids, std::span<const Range<FaceId>>(face_ranges),
             d.face_index, work);
+  // Shell ordinals of each definition run 0 (outer) .. n (voids) without gaps.
+  for (const auto &v : d.definitions) {
+    std::pmr::vector<uint8_t> shells(v.faces.count, 0, d.resource.get());
+    for (auto id : slice(d.face_ids, v.faces)) {
+      work.charge(1);
+      const auto shell = d.faces[d.face_index.find(id).value].shell;
+      require(shell < shells.size(), "source face shell ordinals are not contiguous");
+      shells[shell] = 1;
+    }
+    std::size_t used = 0;
+    while (used < shells.size() && shells[used])
+      ++used;
+    for (std::size_t i = used; i < shells.size(); ++i)
+      require(!shells[i], "source face shell ordinals are not contiguous");
+    require(v.faces.count == 0 || used != 0, "source face shell ordinals are not contiguous");
+  }
   inventory(d.definition_edges, d.edge_ids, std::span<const Range<EdgeId>>(edge_ranges),
             d.edge_index, work);
   inventory(d.definition_vertices, d.vertex_ids, std::span<const Range<VertexId>>(vertex_ranges),
@@ -589,8 +612,12 @@ void validate(SourceData &d, Work &work) {
     const auto &edge = d.edges[e];
     const auto &curve = d.curves[d.curve_index.find(v.curve_id).value];
     require(curve.dimension == 2, "source pcurve dimension mismatch");
-    require(v.parameter_map_kind >= 1 && v.parameter_map_kind <= 3,
+    require(v.parameter_map_kind >= 1 && v.parameter_map_kind <= 4,
             "unknown source parameter map kind");
+    if (v.parameter_map_kind == 4)
+      for (const auto residual : slice(d.scalars, v.parameter_residuals))
+        require(std::isfinite(residual) && residual >= 0,
+                "nonfinite or negative measured parameter map residual");
     require(edge.same_parameter || v.parameter_map_kind != 1,
             "SameParameter false without explicit map");
     if (curve.kind == 4)
@@ -648,19 +675,11 @@ void validate(SourceData &d, Work &work) {
     const auto a = d.product_index.find(v.parent_product_id).value;
     const auto b = d.product_index.find(v.child_product_id).value;
     style_reference(d, v.style_id);
-    for (unsigned row = 0; row < 3; ++row)
-      for (unsigned col = 0; col < 3; ++col) {
-        double value = 0;
-        for (unsigned k = 0; k < 3; ++k)
-          value += v.transform[4 * row + k] * v.transform[4 * col + k];
-        require(std::isfinite(value) && std::abs(value - (row == col ? 1.0 : 0.0)) <= 1e-9,
-                "nonrigid original source placement");
-      }
-    const auto &a0 = v.transform;
-    const auto det = a0[0] * (a0[5] * a0[10] - a0[6] * a0[9]) -
-                     a0[1] * (a0[4] * a0[10] - a0[6] * a0[8]) +
-                     a0[2] * (a0[4] * a0[9] - a0[5] * a0[8]);
-    require(det > 0, "reflected/singular source placement");
+    const auto placement = brepgpu::rigid_placement_status(v.transform.data());
+    require(placement != brepgpu::PlacementStatus::nonfinite &&
+                placement != brepgpu::PlacementStatus::nonorthonormal,
+            "nonrigid original source placement");
+    require(placement == brepgpu::PlacementStatus::rigid, "reflected/singular source placement");
     graph_pairs.emplace_back(a, static_cast<uint32_t>(i));
     require(indegree[b] != std::numeric_limits<uint32_t>::max(), "source usage degree overflow");
     ++indegree[b];

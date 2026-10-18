@@ -36,6 +36,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <iomanip>
 #include <limits>
 #include <map>
 #include <set>
@@ -248,5 +249,75 @@ PreparedSourceUV prepare_source_uv(const TopoDS_Shape& original,const std::vecto
  // Query-only source-linked endpoint/column/pole construction follows below.
  if(options.prepare_query){auto query_begin=Clock::now();BRepBuilderAPI_Copy query_copier(output.raw_shape,true,false);output.query_shape=query_copier.Shape();for(decltype(output.copies)::Iterator it(output.copies);it.More();it.Next())output.query_copies.Bind(it.Key(),query_copier.ModifiedShape(it.Value()));auto queries=mapped_faces(faces,query_copier);std::vector<EdgeState> query_states;NCollection_IndexedMap<TopoDS_Shape,TopTools_ShapeMapHasher> recorded;std::vector<FaceState> query_face_states;for(const auto& f:queries){query_face_states.emplace_back(f.face);for(const auto& l:f.loops)for(const auto& u:l.uses)if(!recorded.Contains(u.edge)){recorded.Add(u.edge);query_states.emplace_back(u.edge);}}QueryBudget budget{options,output.stats,{}};for(const auto& record:output.chart_approximations){budget.cumulative[record.coedge_id]=record.uv_metric_mm;output.stats.max_query_uv_metric_mm=std::max(output.stats.max_query_uv_metric_mm,record.uv_metric_mm);}for(auto& f:queries){const char* stage="source columns";try{auto providers=query_columns(f,options,output.stats,budget);stage="finite joints";finite_spline_joints(f,providers,options,output.stats,budget);stage="natural domain";query_domain(f,options,output.stats,budget);stage="analytic pole topology";query_poles(f,output,options,budget);stage="actual original use quotient";require_source_uv_uses(f,output.connectors);stage="final correspondence";check_correspondence(f,options,output.stats.max_query_residual_mm,true);}catch(const Standard_Failure& e){fail(context(f)+" query "+stage+": "+e.ExceptionType()+" "+e.what());}}for(const auto& state:query_states)state.check("query final physical source");for(const auto& state:query_face_states)state.check("query final physical source");output.stats.query_seconds=std::chrono::duration<double>(Clock::now()-query_begin).count();}
  return output;
+}
+// Measured edge-t to pcurve-s correspondence for a use whose edge is not
+// SameParameter, by the method of Approx_SameParameter (OCCT
+// Approx_SameParameter.cxx: BuildInitialDistribution, CheckSameParameter and
+// the Newton step of ProjectPointOnCurve): sample the curve on surface S(P(s))
+// over the pcurve range (16 per pcurve knot span), project each sample onto
+// the 3D curve from the affine seed, add a node at every interior knot of the
+// 3D curve, and publish the piecewise-linear map as kind 4. The residual
+// |C(t) - S(P(s(t)))| is SAMPLED at every node and at 1/4, 1/2, 3/4 of every
+// piece; it is not a bound between samples. A piece whose samples exceed
+// source_residual_mm is split at its s midpoint. A node off the curve, a
+// failed or nonmonotone projection, or the node cap refuses the use.
+SourceParameterMap measure_source_parameter_map(const TopoDS_Edge& use_edge,const TopoDS_Face& face,double ta,double tb,const SourceUVOptions& options){
+ const std::string where="parameter map: ";double first=0,last=0;auto curve=world_curve(use_edge,first,last);
+ require(!curve.IsNull(),where+"edge has no 3D curve to correspond with");
+ require(std::isfinite(first)&&std::isfinite(last)&&first<last&&((ta==first&&tb==last)||(ta==last&&tb==first)),where+"use range differs from the edge range");
+ auto pc=pcurve(use_edge,face);require(!pc.curve.IsNull()&&std::isfinite(pc.first)&&std::isfinite(pc.last)&&pc.first<pc.last,where+"missing or empty pcurve");
+ const double bound=options.source_residual_mm;require(std::isfinite(bound)&&bound>0,where+"invalid residual bound");
+ auto surface=world_surface(face);SourceParameterMap result;result.kind=4;
+ auto on_surface=[&](double s){auto uv=pc.curve->Value(s);require(finite(uv),where+"nonfinite pcurve point");return surface->Value(uv.X(),uv.Y());};
+ auto residual=[&](double t,double s){++result.probes;double r=curve->Value(t).Distance(on_surface(s));require(std::isfinite(r),where+"nonfinite residual");return r;};
+ auto over=[&](double r,const char* why){std::ostringstream m;m<<std::setprecision(17)<<where<<why<<": sampled residual "<<r<<" mm exceeds bound "<<bound<<" mm";fail(m.str());};
+ auto unmatched=[&](double s,double seed){std::ostringstream m;m<<std::setprecision(17)<<where<<"projection of the curve-on-surface point at s="<<s<<" onto the 3D curve failed or is not monotone (affine-seed residual "<<residual(seed,s)<<" mm)";fail(m.str());};
+ auto project=[&](const gp_Pnt& q,double t,double lo,double hi)->double{
+  for(int i=0;i<30;++i){gp_Pnt p;gp_Vec d1,d2;curve->D2(t,p,d1,d2);gp_Vec v(p,q);double f=v.Dot(d1);if(std::abs(f)<=options.projection_precision_mm*d1.Magnitude())return t>lo&&t<hi?t:NAN;double df=v.Dot(d2)-d1.Dot(d1);if(!(std::abs(df)>1e-12))return NAN;t=std::min(std::max(t-f/df,lo),hi);}
+  return NAN;};
+ // Same Newton step, admitting the closed bracket [lo, hi] (used only to
+ // classify a sample against a knot, never as a published node).
+ auto project_closed=[&](const gp_Pnt& q,double t,double lo,double hi)->double{
+  for(int i=0;i<30;++i){gp_Pnt p;gp_Vec d1,d2;curve->D2(t,p,d1,d2);gp_Vec v(p,q);double f=v.Dot(d1);if(std::abs(f)<=options.projection_precision_mm*d1.Magnitude())return t;double df=v.Dot(d2)-d1.Dot(d1);if(!(std::abs(df)>1e-12))return NAN;t=std::min(std::max(t-f/df,lo),hi);}
+  return NAN;};
+ auto knots_of=[](auto basis,double lo,double hi){std::vector<double> k;if(!basis.IsNull())for(int i=1;i<=basis->NbKnots();++i)if(lo<basis->Knot(i)&&basis->Knot(i)<hi)k.push_back(basis->Knot(i));return k;};
+ Handle(Geom2d_Curve) basis2=pc.curve;while(!Handle(Geom2d_TrimmedCurve)::DownCast(basis2).IsNull())basis2=Handle(Geom2d_TrimmedCurve)::DownCast(basis2)->BasisCurve();
+ Handle(Geom_Curve) basis3=curve;while(!Handle(Geom_TrimmedCurve)::DownCast(basis3).IsNull())basis3=Handle(Geom_TrimmedCurve)::DownCast(basis3)->BasisCurve();
+ std::vector<double> cuts=knots_of(Handle(Geom2d_BSplineCurve)::DownCast(basis2),pc.first,pc.last);cuts.push_back(pc.first);cuts.push_back(pc.last);
+ std::sort(cuts.begin(),cuts.end());struct Node{double s,t;};std::vector<Node> nodes{{pc.first,first}};
+ for(std::size_t i=1;i<cuts.size();++i)for(int j=1;j<=16;++j){double s=j==16?cuts[i]:cuts[i-1]+(cuts[i]-cuts[i-1])*j/16;
+  if(s==pc.last){nodes.push_back({s,last});continue;}double seed=first+(last-first)*(s-pc.first)/(pc.last-pc.first);double t=project(on_surface(s),seed,nodes.back().t,last);
+  if(!(t>nodes.back().t))unmatched(s,seed);nodes.push_back({s,t});}
+ // A 3D-curve knot is a node with that exact t. A node already within the
+ // projection tolerance of the knot (scaled by curve speed) moves onto it;
+ // otherwise bisect s on the projected t, where a projection landing on the
+ // bracket end counts as being on that side of the knot.
+ for(double knot:knots_of(Handle(Geom_BSplineCurve)::DownCast(basis3),first,last)){
+  auto at=std::upper_bound(nodes.begin(),nodes.end(),knot,[](double k,const Node& n){return k<n.t;});if(at==nodes.begin()||at==nodes.end())continue;
+  gp_Pnt p;gp_Vec d1;curve->D1(knot,p,d1);const double speed=d1.Magnitude();const double near=speed>0?options.projection_precision_mm/speed:0;
+  auto below=at-1;if(below->t==knot)continue;
+  if(below!=nodes.begin()&&knot-below->t<=near){below->t=knot;continue;}
+  if(at+1!=nodes.end()&&at->t-knot<=near){at->t=knot;continue;}
+  Node a=*below,b=*at;double lo=a.s,hi=b.s;
+  for(int i=0;i<200&&lo<hi;++i){double s=lo+(hi-lo)/2;if(s<=lo||s>=hi)break;const double seed=a.t+(b.t-a.t)*(s-a.s)/(b.s-a.s);double t=project(on_surface(s),seed,a.t,b.t);
+   if(std::isnan(t))t=project_closed(on_surface(s),seed,a.t,b.t);if(std::isnan(t))unmatched(s,seed);if(t<knot)lo=s;else hi=s;}
+  nodes.insert(at,Node{lo+(hi-lo)/2,knot});}
+ for(std::size_t i=1;i<nodes.size();++i)if(!(nodes[i].t>nodes[i-1].t))fail(where+"nodes are not strictly increasing in t after placing 3D-curve knots");
+ std::vector<double> node_residual;for(const auto& n:nodes){double r=residual(n.t,n.s);if(r>bound)over(r,"curve-on-surface point is off the 3D curve");node_residual.push_back(r);}
+ const std::size_t cap=std::size_t(1)<<16;struct Out{Node node;double node_residual,piece_residual;};std::vector<Out> out{{nodes.front(),node_residual.front(),0}};
+ struct Piece{Node a,b;double rb;};std::vector<Piece> pending;for(std::size_t i=nodes.size()-1;i>0;--i)pending.push_back({nodes[i-1],nodes[i],node_residual[i]});
+ while(!pending.empty()){auto piece=pending.back();pending.pop_back();const auto& a=piece.a;const auto& b=piece.b;double worst=0;
+  for(double f:{.25,.5,.75})worst=std::max(worst,residual(a.t+(b.t-a.t)*f,a.s+(b.s-a.s)*f));
+  if(worst<=bound){out.push_back({b,piece.rb,worst});continue;}
+  if(out.size()+pending.size()+2>cap)over(worst,"piecewise-linear map needs more than the node cap");
+  Node m{(a.s+b.s)/2,0};const double seed=(a.t+b.t)/2;m.t=project(on_surface(m.s),seed,a.t,b.t);if(!(m.t>a.t&&m.t<b.t))unmatched(m.s,seed);
+  double r=residual(m.t,m.s);if(r>bound)over(r,"curve-on-surface point is off the 3D curve");
+  pending.push_back({m,b,piece.rb});pending.push_back({a,m,r});}
+ // Row residual: the sampled maximum at the row's node and inside the piece
+ // that ends at it in published order; the first published row has its node.
+ const bool reversed=ta!=first;const std::size_t n=out.size();
+ for(std::size_t k=0;k<n;++k){std::size_t i=reversed?n-1-k:k;double r=out[i].node_residual;if(k>0)r=std::max(r,reversed?out[i+1].piece_residual:out[i].piece_residual);
+  result.rows.push_back({out[i].node.t,out[i].node.s,r});result.max_residual_mm=std::max(result.max_residual_mm,r);}
+ return result;
 }
 }

@@ -897,8 +897,13 @@ def _improve_connectivity(triangles,points,boundary_edges,metric):
     return active
 
 
+MEASURED_MAP_REFUSAL=('measured parameter map (kind 4) carries a sampled residual that no consumer '
+                      'charges to its error budget; it is never consumed as exact')
+
+
 def _mapped_parameter(source,edge,coedge,t,carrier,quality):
     if coedge.parameter_map_kind==1:return t
+    if coedge.parameter_map_kind==4:raise ValueError(f'edge {edge.id}: {MEASURED_MAP_REFUSAL}')
     pairs=coedge.parameter_map
     direction=1 if edge.parameter_range[1]>=edge.parameter_range[0] else -1
     left,right=pairs[0],pairs[-1]
@@ -918,12 +923,17 @@ def _curve_knots_in_edge(source,edge,incidents):
         # Owned cylinder UV depends on the ORIGINAL spatial curve. Foreign
         # branch-guide knot artifacts do not constrain that derived trim.
         if carrier.kind in (1,2,3):continue
+        if coedge.parameter_map_kind==4:raise ValueError(f'edge {edge.id}: {MEASURED_MAP_REFUSAL}')
         pc=source.curve(coedge.curve_id)
         if coedge.parameter_map_kind==1:result.update(t for t in pc.knots if lo<t<hi)
         elif coedge.parameter_map_kind==2:
-            (ta,sa),(tb,sb)=coedge.parameter_map[0],coedge.parameter_map[-1]
-            if sb!=sa:
-                result.update(ta+(tb-ta)*(s-sa)/(sb-sa) for s in pc.knots if lo<ta+(tb-ta)*(s-sa)/(sb-sa)<hi)
+            # Each affine piece has its own preimage; its ends are split points.
+            for (ta,sa),(tb,sb) in zip(coedge.parameter_map,coedge.parameter_map[1:]):
+                result.update(t for t in (ta,tb) if lo<t<hi)
+                if sb!=sa:
+                    s_lo,s_hi=sorted((sa,sb))
+                    result.update(ta+(tb-ta)*(s-sa)/(sb-sa) for s in pc.knots
+                                  if s_lo<s<s_hi and lo<ta+(tb-ta)*(s-sa)/(sb-sa)<hi)
         else:result.update(t for t,_ in coedge.parameter_map if lo<t<hi)
     return sorted(result,reverse=start>end)
 

@@ -59,6 +59,8 @@ std::array<Rational, 2> mapped_range(bgfd::Budget &b, const SourceData &source, 
   const auto domain = ordered(begin, end);
   if (use.parameter_map_kind == 1)
     return domain;
+  if (use.parameter_map_kind == 4)
+    unsupported(measured_parameter_map_refusal);
   if (use.parameter_map_kind != 2)
     unsupported("unproved source parameter continuation map");
   const auto map = slice(source.parameter_maps, use.parameter_map);

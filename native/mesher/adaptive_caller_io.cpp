@@ -282,6 +282,8 @@ definition_curve_requests(const SourceStore &source, Slot<DefinitionTag> definit
       const auto &face = s.faces.at(s.face_index.find(loop.face_id).value);
       if (face.definition_id != s.definitions[definition.value].id)
         continue;
+      if (use.parameter_map_kind == 4)
+        throw Error(ErrorCode::unsupported, measured_parameter_map_refusal);
       if (use.parameter_map_kind != 1 && use.parameter_map_kind != 2)
         throw Error(ErrorCode::unsupported, "unimplemented original use parameter map");
       // Keep every occurrence of THIS definition, not one guide per edge. A

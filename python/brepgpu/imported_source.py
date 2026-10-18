@@ -78,6 +78,8 @@ class Coedge:
     reconstructed: bool = True
     parameter_map_kind: int = 1
     parameter_map: tuple = ()
+    # Kind 4 (measured piecewise-linear) only: sampled residual mm per row.
+    parameter_residuals: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -97,6 +99,9 @@ class Face:
     loop_ids: tuple
     tolerance: float
     style_id: int = 0
+    # 0 for the outer shell, k for the k-th BREP_WITH_VOIDS void shell. The
+    # orientation is the face's use in the solid (shell sense composed).
+    shell: int = 0
 
 
 @dataclass(frozen=True)
@@ -260,6 +265,29 @@ def _controls(controls, dimension, expected, owner):
         raise ValueError(f'{owner}: nonpositive homogeneous weight')
 
 
+RIGID_PLACEMENT_TOLERANCE = 1e-9
+
+
+def rigid_placement_status(m):
+    """Mirror of brepgpu::rigid_placement_status (native/rigid_placement.hpp).
+
+    Same binary64 operations in the same order, so both readers and the
+    display classify every row-major 3x4 map identically.
+    """
+    if any(not math.isfinite(x) for x in m):
+        return 'nonfinite'
+    for row in range(3):
+        for col in range(3):
+            value = 0.0
+            for k in range(3):
+                value += m[4*row+k]*m[4*col+k]
+            if not abs(value-(1.0 if row == col else 0.0)) <= RIGID_PLACEMENT_TOLERANCE:
+                return 'nonorthonormal'
+    det = (m[0]*(m[5]*m[10]-m[6]*m[9]) - m[1]*(m[4]*m[10]-m[6]*m[8])
+           + m[2]*(m[4]*m[9]-m[5]*m[8]))
+    return 'rigid' if det > 0 else 'improper'
+
+
 def validate_source(source):
     """Validate wire structure and source ownership, not geometric correctness."""
     if type(source) is not ImportedSource:
@@ -289,20 +317,18 @@ def validate_source(source):
             for identifier in identifiers: source._get(name, identifier)
         if any(source.face(i).definition_id != definition.id for i in definition.face_ids):
             raise ValueError(f'definition {definition.id}: face owner mismatch')
+        shells = {source.face(i).shell for i in definition.face_ids}
+        if definition.face_ids and shells != set(range(len(shells))):
+            raise ValueError(f'definition {definition.id}: face shell ordinals are not contiguous')
     for usage in source.usages:
         source.product(usage.parent_product_id)
         source.product(usage.child_product_id)
         _finite(usage.transform, f'usage {usage.id}')
         if len(usage.transform) != 12: raise ValueError('invalid placement length')
-        axes = [usage.transform[j:j+3] for j in (0, 4, 8)]
-        for i, a in enumerate(axes):
-            for j, b in enumerate(axes):
-                if abs(sum(x*y for x, y in zip(a,b)) - (1.0 if i == j else 0.0)) > 1e-9:
-                    raise ValueError(f'usage {usage.id}: nonrigid placement')
-        det = (axes[0][0]*(axes[1][1]*axes[2][2]-axes[1][2]*axes[2][1])
-               -axes[0][1]*(axes[1][0]*axes[2][2]-axes[1][2]*axes[2][0])
-               +axes[0][2]*(axes[1][0]*axes[2][1]-axes[1][1]*axes[2][0]))
-        if det < 0: raise ValueError(f'usage {usage.id}: reflected placement')
+        status = rigid_placement_status(usage.transform)
+        if status in ('nonfinite', 'nonorthonormal'):
+            raise ValueError(f'usage {usage.id}: nonrigid placement')
+        if status != 'rigid': raise ValueError(f'usage {usage.id}: reflected placement')
         if usage.style_id: source.style(usage.style_id)
     for vertex in source.vertices:
         _finite(vertex.xyz + (vertex.tolerance,), f'vertex {vertex.id}')
@@ -326,8 +352,14 @@ def validate_source(source):
         if curve.dimension != 2: raise ValueError('pcurve dimension')
         if curve.kind==4 and any(not 0<=t<=1 for t in coedge.parameter_range):
             raise ValueError('active pcurve range leaves natural Bezier carrier domain')
-        if coedge.sense not in (-1, 1) or coedge.parameter_map_kind not in (1,2,3):
+        if coedge.sense not in (-1, 1) or coedge.parameter_map_kind not in (1,2,3,4):
             raise ValueError('invalid coedge map/sense')
+        if coedge.parameter_map_kind == 4:
+            if (len(coedge.parameter_residuals) != len(coedge.parameter_map)
+                    or any(type(r) is not float or not math.isfinite(r) or r < 0 for r in coedge.parameter_residuals)):
+                raise ValueError('measured parameter map needs one finite nonnegative residual per row')
+        elif coedge.parameter_residuals:
+            raise ValueError('only measured parameter maps carry residuals')
         if not edge.same_parameter and coedge.parameter_map_kind == 1:
             raise ValueError('SameParameter=false requires explicit parameter map')
         _finite(coedge.parameter_range, f'coedge {coedge.id}')
@@ -350,6 +382,7 @@ def validate_source(source):
         if face.id not in definition.face_ids: raise ValueError('face missing from definition')
         source.carrier(face.carrier_id)
         if face.orientation not in (-1,1) or not face.loop_ids: raise ValueError('invalid face')
+        if type(face.shell) is not int or not 0 <= face.shell < 2**32: raise ValueError('invalid face shell')
         if any(source.loop(i).face_id != face.id for i in face.loop_ids):
             raise ValueError('face/loop owner mismatch')
         _finite((face.tolerance,), 'face tolerance')
@@ -463,14 +496,15 @@ def _read_row(tag,r):
     if tag == b'COEDGES_':
         i,e,l,c=q(),q(),q(),q(); sense=r.number('i'); recon=r.boolean()
         interval=r.numbers('d',2); shift=r.numbers('i',2); kind=r.number('I'); r.zero()
-        pairs=r.vector('d')
-        if len(pairs)%2: raise ValueError('odd parameter map vector')
-        return Coedge(i,e,l,sense,c,interval,shift,recon,kind,tuple(zip(pairs[::2],pairs[1::2])))
+        values=r.vector('d'); width=3 if kind==4 else 2
+        if len(values)%width: raise ValueError('parameter map vector is not whole rows')
+        rows=tuple(zip(values[::width],values[1::width]))
+        return Coedge(i,e,l,sense,c,interval,shift,recon,kind,rows,values[2::3] if width==3 else ())
     if tag == b'LOOPS___':
         i,f=q(),q(); outer=r.boolean(); r.zero(); return Loop(i,f,outer,r.vector('Q'))
     if tag == b'FACES___':
-        i,d,c,s=q(),q(),q(),q(); orientation=r.number('i'); r.zero(); tolerance=r.number('d')
-        return Face(i,d,c,orientation,r.vector('Q'),tolerance,s)
+        i,d,c,s=q(),q(),q(),q(); orientation=r.number('i'); shell=r.number('I'); tolerance=r.number('d')
+        return Face(i,d,c,orientation,r.vector('Q'),tolerance,s,shell)
     if tag == b'CARRIERS':
         i=q(); kind=r.number('I'); r.zero(); frame=r.numbers('d',12); radii=r.numbers('d',2)
         uv=r.numbers('d',4); degree=r.numbers('I',2); shape=r.numbers('I',2)
@@ -551,12 +585,14 @@ def _write_row(tag,value):
         for v in (x.id,x.edge_id,x.loop_id,x.curve_id): q(v)
         w.number('i',x.sense); w.number('I',int(x.reconstructed)); w.numbers('d',x.parameter_range)
         w.numbers('i',x.periodic_shift); w.number('I',x.parameter_map_kind); w.zero()
-        w.vector('d',tuple(v for pair in x.parameter_map for v in pair))
+        rows=(tuple((*pair,r) for pair,r in zip(x.parameter_map,x.parameter_residuals))
+              if x.parameter_map_kind==4 else x.parameter_map)
+        w.vector('d',tuple(v for row in rows for v in row))
     elif tag == b'LOOPS___':
         q(x.id); q(x.face_id); w.number('I',int(x.outer)); w.zero(); w.vector('Q',x.coedge_ids)
     elif tag == b'FACES___':
         for v in (x.id,x.definition_id,x.carrier_id,x.style_id): q(v)
-        w.number('i',x.orientation); w.zero(); d(x.tolerance); w.vector('Q',x.loop_ids)
+        w.number('i',x.orientation); w.number('I',x.shell); d(x.tolerance); w.vector('Q',x.loop_ids)
     elif tag == b'CARRIERS':
         q(x.id); w.number('I',x.kind); w.zero(); w.numbers('d',x.frame)
         w.numbers('d',x.radii); w.numbers('d',x.uv_bounds); w.numbers('I',x.degrees)

@@ -104,9 +104,16 @@ struct Coedge final {
   bool reconstructed;
   Vec2 parameter_range;
   std::array<int32_t, 2> periodic_shift;
+  // 1 identity, 2 exact affine pieces, 3 unproved guide, 4 measured
+  // piecewise-linear rows with a sampled residual per row (unsupported by
+  // every consumer until one charges the residual to its error budget).
   uint32_t parameter_map_kind;
   Range<Vec2> parameter_map;
+  Range<double> parameter_residuals; // kind 4 only, one per map row, in mm
 };
+inline constexpr const char *measured_parameter_map_refusal =
+    "measured parameter map (kind 4) carries a sampled residual that no consumer charges to "
+    "its error budget; it is never consumed as exact";
 struct Loop final {
   LoopId id;
   FaceId face_id;
@@ -118,9 +125,10 @@ struct Face final {
   DefinitionId definition_id;
   CarrierId carrier_id;
   StyleId style_id;
-  int32_t orientation;
+  int32_t orientation; // use in the solid: surface sense composed with its shell
   double tolerance;
   Range<LoopId> loops;
+  uint32_t shell = 0; // 0: outer shell; k: k-th BREP_WITH_VOIDS void shell
 };
 struct SurfaceSpan final {
   std::array<double, 4> bounds;

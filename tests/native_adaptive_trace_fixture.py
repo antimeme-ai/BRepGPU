@@ -84,6 +84,9 @@ def main():
                      coedges=(use, *base.coedges[1:]), curves=curves)
     save('maps', mapped)
     save('map3', replace(mapped, coedges=(replace(use, parameter_map_kind=3), *mapped.coedges[1:])))
+    # Measured map: same rows with a sampled residual per row (mm).
+    save('map4', replace(mapped, coedges=(replace(use, parameter_map_kind=4,
+         parameter_residuals=(0., 2.5e-4, 1e-4)), *mapped.coedges[1:])))
     reconstructed = replace(base,coedges=tuple(replace(u,reconstructed=True) for u in base.coedges))
     tiny = 2.**-40
     proposed = tuple(replace(c,controls=(1.+tiny,0.,1.,1.+tiny,1.,1.))

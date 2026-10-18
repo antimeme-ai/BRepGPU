@@ -165,6 +165,8 @@ class Producer final {
     const auto domain = ordered(scalar(edge.parameter_range[0]), scalar(edge.parameter_range[1]));
     if (use.parameter_map_kind == 1)
       return domain;
+    if (use.parameter_map_kind == 4)
+      unsupported(measured_parameter_map_refusal);
     if (use.parameter_map_kind != 2)
       unsupported("unimplemented original envelope parameter continuation map");
     const auto map = slice(source.parameter_maps, use.parameter_map);
@@ -302,6 +304,8 @@ public:
           const auto &use = source.coedges[source.coedge_index.find(use_id).value];
           if (use.periodic_shift[0] != 0 || use.periodic_shift[1] != 0)
             unsupported("nonzero original lift outside adaptive envelope profile");
+          if (use.parameter_map_kind == 4)
+            unsupported(measured_parameter_map_refusal);
           if (use.parameter_map_kind != 1 && use.parameter_map_kind != 2)
             unsupported("unimplemented original envelope parameter map");
           const auto edge = source.edge_index.find(use.edge_id);

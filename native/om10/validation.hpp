@@ -1,5 +1,6 @@
 #ifndef BG_OM10_VALIDATION_HPP
 #define BG_OM10_VALIDATION_HPP
+#include "../rigid_placement.hpp"
 #include "vector_math.hpp"
 #include <algorithm>
 #include <memory_resource>
@@ -174,7 +175,10 @@ inline void validate_scene_records(const SceneView &scene, bool source_profile,
     require(i.definition < definitions.size() &&
                 (source_profile ? i.reserved <= materials.size() : i.reserved == 0),
             "decode: instance definition/reserved");
-    require(source_profile ? independent_axes(i.matrix, i.matrix + 4, i.matrix + 8, true)
+    // Source-profile instances follow the source readers' placement rule; the
+    // legacy profile keeps its stricter rigid check.
+    require(source_profile ? brepgpu::rigid_placement_status(i.matrix) ==
+                                 brepgpu::PlacementStatus::rigid
                            : orthogonal(i.matrix, i.matrix + 4, i.matrix + 8, true),
             "decode: nonrigid instance matrix");
   }
