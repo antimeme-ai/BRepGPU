@@ -1,5 +1,7 @@
 # The complete original OM10 movement
 
+> **Marked 2026-10-18, bead brepgpu-12s.37.17.** Pre-fix harness: the NVIDIA times here (failed 103/107 attempts, focused recovery processes, restated complete walls) used face-count worker assignment, one-socket 12-physical-core or single-core affinity without per-worker pinning, memory unbound under AutoNUMA, one worker count, no context rows, complete walls that include our own admission and scene packing, and the OCCT no-shape-processing ingress arm rather than the candidate strongest ingress (OCCT's default STEP read); the owned watch and 4K replay times ran with one-socket 12-physical-core affinity, memory unbound under AutoNUMA and no context rows; whether the fixed harness or the default-read arm is faster is not yet measured.
+
 Latest reference follow-up: **all107 NVIDIA definitions now complete**, with
 original9,162-face/166-instance coverage and all physical/source-Euler checks
 passing. Both explicit chord-only healing policies finish fresh STEP→both

@@ -1,5 +1,7 @@
 # Complete NVIDIA OM10 reference
 
+> **Marked 2026-10-18, bead brepgpu-12s.37.17 (NVIDIA figures only; the owned 875.16/872.50 s quoted below are marked in their own report).** Pre-fix harness: the NVIDIA complete walls, stage rows and 25°/25° failed-attempt times here used 12 workers assigned by source face count, the caller confined to one socket's 12 physical cores but no worker pinned to its own core, memory unbound under AutoNUMA, one worker count, no per-timing context rows, a complete wall that includes our own physical-shell admission, decode and scene packing, and the OCCT no-shape-processing ingress arm rather than the candidate strongest ingress (OCCT's default STEP read); whether the fixed harness or the default-read arm is faster is not yet measured.
+
 The genuine NVIDIA USD/BRep CPU reference now meshes and renders the entire
 original movement under both declared healing policies: **107 definitions,
 9,162 original faces and166 placed instances**. Each run produces231,416 unique

@@ -1,5 +1,7 @@
 # OM10 exploded assembly diagram
 
+> **Marked 2026-10-18, bead brepgpu-12s.37.17.** Pre-fix harness: the NVIDIA fresh-source walls here used face-count worker assignment, one-socket 12-physical-core affinity without per-worker pinning, memory unbound under AutoNUMA, one worker count, no context rows, walls that include our own admission and scene packing, and the OCCT no-shape-processing ingress arm rather than the candidate strongest ingress (OCCT's default STEP read); the owned and NVIDIA replay times ran with 12-physical-core affinity, memory unbound and no context rows; whether the fixed harness or the default-read arm is faster is not yet measured.
+
 The complete movement is separated into visible functional modules: mainplate,
 train, bridges, barrel and mainspring, winding/setting work, escapement,
 balance/hairspring, motion work and calendar. **All107 definitions,9,162 original

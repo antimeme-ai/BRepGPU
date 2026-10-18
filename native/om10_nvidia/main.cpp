@@ -17,9 +17,12 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <time.h>
+#include <unistd.h>
 
 // Official entry has no USD types; its public header otherwise requires the
 // full OpenUSD C++ headers, which the native release does not package.
@@ -31,8 +34,34 @@ using Clock = std::chrono::steady_clock;
 void require(bool value,const std::string &message) {
   if(!value)throw std::runtime_error(message);
 }
-double elapsed(Clock::time_point start) {
-  return std::chrono::duration<double>(Clock::now()-start).count();
+double process_cpu() {
+  timespec t{};clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&t);
+  return double(t.tv_sec)+1e-9*double(t.tv_nsec);
+}
+// Wall and process-CPU start of a stage. The worker runs one definition at a
+// time, so a stage's process-CPU delta is that stage's CPU, helper threads
+// included; harness calibration weights definitions by it.
+struct Stamp {
+  Clock::time_point wall;double cpu;
+};
+Stamp stamp(){return {Clock::now(),process_cpu()};}
+// Seconds from this process's creation (fork; /proc/self/stat starttime, in
+// clock ticks since boot) to now: exec, NVIDIA library loading and static
+// initialisation before main. Tick resolution, 10 ms on the fleet.
+double since_process_start() {
+  std::ifstream stat("/proc/self/stat");std::string text((std::istreambuf_iterator<char>(stat)),{});
+  auto close=text.rfind(')');require(close!=std::string::npos,"unreadable /proc/self/stat");
+  std::istringstream fields(text.substr(close+2));std::string value;
+  for(int field=3;field<=22;++field)fields>>value;
+  timespec boot{};clock_gettime(CLOCK_BOOTTIME,&boot);
+  return double(boot.tv_sec)+1e-9*double(boot.tv_nsec)-std::stod(value)/double(sysconf(_SC_CLK_TCK));
+}
+struct Span {
+  const Stamp &start;
+};
+Span elapsed(const Stamp &start){return {start};}
+std::ostream &operator<<(std::ostream &out,const Span &span) {
+  return out<<std::chrono::duration<double>(Clock::now()-span.start.wall).count()<<'\t'<<process_cpu()-span.start.cpu;
 }
 std::string clean(std::string value) {
   for(char &c:value)if(c=='\t'||c=='\n'||c=='\r')c=' ';
@@ -72,7 +101,9 @@ struct Job {
   bool prepared_usd;
 };
 int main(int argc,char **argv) {
+  const Stamp main_start=stamp();
   try {
+    const double exec_to_main=since_process_start(),cpu_before_main=main_start.cpu;
     if(argc==2 && std::string(argv[1])=="--help"){
       std::cout<<"NVIDIA USD/BRep CPU import+tessellation; genuine f64 triangles/normals\n"
         "--heal 0|1 --chord-height POSITIVE --output-directory NEWDIR --definition ORIGINAL_ID INPUT.brep [--definition ...]\n"
@@ -122,19 +153,25 @@ int main(int argc,char **argv) {
     inputs.close();require(!inputs.fail(),"output: input kinds write/close failed");
     std::ofstream timings(directory/"stages.tsv"),reports(directory/"definitions.tsv"),failures(directory/"failures.tsv"),imports(directory/"imports.tsv"),polygons(directory/"polygon-export.tsv");
     require(timings&&reports&&failures&&imports&&polygons,"output: cannot open reports");
-    timings<<"definition_id\tstage\tseconds\n"<<std::setprecision(17);
+    timings<<"definition_id\tstage\tseconds\tprocess_cpu_seconds\n"<<std::setprecision(17);
+    // Absolute CLOCK_MONOTONIC (steady_clock) times let the launcher, which
+    // records its own fork and reap times on the same clock, split the process
+    // wall into start, main and exit exactly. The /proc starttime value is a
+    // tick-resolution cross-check.
+    timings<<"0\tprocess_exec_to_main_from_stat\t"<<exec_to_main<<'\t'<<cpu_before_main<<'\n';
+    timings<<"0\tprocess_main_start_monotonic\t"<<std::chrono::duration<double>(main_start.wall.time_since_epoch()).count()<<"\t\n";
     reports<<"definition_id\tstatus\theal\tchord_mm\tinput_faces\tinput_edges\tinput_vertices\tphysical_vertices\ttriangles\tlamina_edges\tspine_edges\tinput_manifold\toutput_manifold\tmessage\n"<<std::setprecision(17);
     failures<<"definition_id\tnvidia_face_ordinal\tstage\tstatus\n";
     imports<<"definition_id\tprim_path\tpacked_index\tstatus\tmessage\n";
     polygons<<"definition_id\toriginal_sdk_polygons\toriginal_sdk_triangles\tadmitted_rectangles\tofficial_rectangle_split_calls\tproduced_triangles\n";
-    auto start=Clock::now();SmApiCreateContext();
+    auto start=stamp();SmApiCreateContext();
     require(SmApiUsdEnsurePluginRegistered()==SM_SUCCESS,"plugin registration failed; check isolated package runtime");
     timings<<"0\tworker_context_plugin_setup\t"<<elapsed(start)<<'\n';
     bool good=true;
     for(const auto &job:jobs){
-      auto begin=Clock::now();std::string stage=job.prepared_usd?"copy_prepared_usd":"convert_occt_to_usd";uint64_t nf=0,ne=0,nv=0;SmTessellationReport report;
+      auto begin=stamp();std::string stage=job.prepared_usd?"copy_prepared_usd":"convert_occt_to_usd";uint64_t nf=0,ne=0,nv=0;SmTessellationReport report;
       try {
-        auto t=Clock::now();std::string message;fs::path usd=directory/("definition-"+std::to_string(job.id)+".usdc");
+        auto t=stamp();std::string message;fs::path usd=directory/("definition-"+std::to_string(job.id)+".usdc");
         if(job.prepared_usd){
           require(fs::is_regular_file(job.input),"prepared USD input is not a regular file");
           fs::copy_file(job.input,usd);
@@ -145,7 +182,7 @@ int main(int argc,char **argv) {
           const bool converted=occt::ConvertOcctFileToUsd(job.input.string(),usd.string(),message);
           require(converted,"official OCCT-to-USD bridge: "+message);
         }
-        timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';stage="import_usd_brep_heal";t=Clock::now();
+        timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';stage="import_usd_brep_heal";t=stamp();
         Imported breps;std::vector<SmApiUsdBrepImportResult> results;
         auto status=SmApiUsdImportBreps(usd.c_str(),breps.values,heal?TRUE:FALSE,FALSE,&results);
         for(const auto &r:results)imports<<job.id<<'\t'<<clean(r.m_sPrimPath)<<'\t'<<r.m_iPackedBrepIndex<<'\t'<<int(r.m_sStatus)<<'\t'<<clean(r.m_sMessage)<<'\n';
@@ -154,7 +191,7 @@ int main(int argc,char **argv) {
         timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';
         SmTArray<SmFace*> fs;SmTArray<SmEdge*> es;SmTArray<SmVertex*> vs;
         breps.values[0]->GetFaces(fs);breps.values[0]->GetEdges(es);breps.values[0]->GetVertices(vs);nf=fs.GetSize();ne=es.GetSize();nv=vs.GetSize();
-        stage="tessellate";t=Clock::now();SmTessellationParams params;
+        stage="tessellate";t=stamp();SmTessellationParams params;
         params.dChordHeightTol=chord;params.dCurveAngleTolDeg=curve_angle;params.dSurfaceAngleTolDeg=surface_angle;
         SmPolyBrep *pointer=nullptr;SmTArray<SmTessellationFailure> face_failures;
         auto tess=SmApiTessellate(breps.values[0],pointer,params,FALSE,&face_failures,&report);
@@ -162,10 +199,10 @@ int main(int argc,char **argv) {
         for(const auto &f:face_failures)failures<<job.id<<'\t'<<f.lFaceIndex<<'\t'<<int(f.eStage)<<'\t'<<int(f.eStatus)<<'\n';
         timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';
         require(tess==SM_SUCCESS&&poly&&face_failures.GetSize()==0,"strict NVIDIA tessellation failed");
-        stage="extract_f64_corner_mesh";t=Clock::now();Mesh mesh=extract(*breps.values[0],*poly);
+        stage="extract_f64_corner_mesh";t=stamp();Mesh mesh=extract(*breps.values[0],*poly);
         polygons<<job.id<<'\t'<<mesh.original_polygons<<'\t'<<mesh.original_triangles<<'\t'<<mesh.rectangle_count<<'\t'<<mesh.official_split_calls<<'\t'<<mesh.triangles.size()<<'\n';
-        timings<<job.id<<"\tofficial_rectangle_triangulation_nested_in_extract\t"<<mesh.official_split_seconds<<'\n';
-        timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';stage="write_genuine_mesh";t=Clock::now();
+        timings<<job.id<<"\tofficial_rectangle_triangulation_nested_in_extract\t"<<mesh.official_split_seconds<<"\t\n";
+        timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';stage="write_genuine_mesh";t=stamp();
         fs::path path=directory/("definition-"+std::to_string(job.id)+".bgrefmesh");fs::path temporary=path.string()+".tmp";
         write_mesh(temporary,job.id,mesh);fs::rename(temporary,path);
         timings<<job.id<<'\t'<<stage<<'\t'<<elapsed(t)<<'\n';
@@ -176,6 +213,9 @@ int main(int argc,char **argv) {
       }
       timings<<job.id<<"\tdefinition_complete_through_object_teardown\t"<<elapsed(begin)<<'\n';
     }
+    // The caller derives exit time from the process wall: wall - exec_to_main - main_body.
+    timings<<"0\tmain_body\t"<<elapsed(main_start)<<'\n';
+    timings<<"0\tprocess_main_end_monotonic\t"<<std::chrono::duration<double>(Clock::now().time_since_epoch()).count()<<"\t\n";
     for(auto *stream:{&timings,&reports,&failures,&imports,&polygons}){stream->close();require(!stream->fail(),"output: report write/close failed");}
     return good?0:1;
   }catch(const std::exception &error){std::cerr<<error.what()<<'\n';return 1;}

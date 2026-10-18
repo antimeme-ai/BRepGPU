@@ -610,3 +610,17 @@ decisions (ABC download term first, as the priority-1 corpus source).
   fill with no atomics). Never output-visible; display bytes unchanged. CUDA
   ordering costs +0.16 to 1.85 ms; the CPU fill beats the old atomic fill on
   every family.
+- B2-harness landed (results/b2-harness-2026-10-17/REPORT.md) after five
+  reviews and five rounds. NVIDIA's headline is now the minimal STEP→.brep
+  ingress process plus the NVIDIA-only worker makespan, including its process
+  start, teardown and exit; our preparation, admission, emit, display and
+  measurement are listed beside it, never added. The published heal0
+  "NVIDIA complete" 43.67 s contained at least 21.7 s of our own work; its
+  ingress plus batch was 10.17 s, so the gap to beat is wider than the old
+  figures said. Our failures can no longer be scored as NVIDIA's (exit codes
+  3/4/5). Workers are LPT-assigned by measured CPU and pinned; one quiet
+  policy and one page-cache policy serve owned and NVIDIA runs; a long-lived
+  converter per worker matches in-process use (first-call excess measured at
+  about 10 ms), byte-identical to one-shot on 105 of 105 converted watch
+  definitions. Published figures carry a one-line pre-fix mark. Every row is
+  n=1; headlines need the G8 repetition, not yet built.

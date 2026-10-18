@@ -3,6 +3,8 @@
 
 No import, tessellation, repaired normals, geometry substitution or remeshing.
 The source inventory/placement admission below is not numerical qualification.
+Runs bound to one lane node (scripts/measurement_lane.py); every stage timing
+names its context row in context.tsv.
 """
 import argparse
 import math
@@ -22,6 +24,9 @@ from om10_scene import write_png
 from render_om10_nvidia import matched_views
 from render_om10_exploded import (rows,tsv,digest,pixel_inventory,make_annotation,poster,
                                   CRITICAL_NAMES)
+from measurement_lane import Recorder,bound,ensure_bound,node_lane,numactl,read_topology
+
+DISPLAY_THREADS=12
 
 
 def reference_inventory(data,source,reports):
@@ -54,6 +59,18 @@ def reference_inventory(data,source,reports):
 def main(args):
     require(sys.platform=='linux','reference display execution belongs on the fleet')
     require(not args.output.exists(),'new output directory required')
+    numactl();lane=node_lane(read_topology(),args.lane_node)
+    require(len(lane.cpus)>=DISPLAY_THREADS,f'lane node {args.lane_node} has fewer than {DISPLAY_THREADS} allowed CPUs')
+    ensure_bound(lane)
+    args.output.mkdir(parents=True)
+    recorder=Recorder(args.output/'context.tsv',lane,'cold',(('caller','render_om10_exploded_reference'),
+                                                              ('config',args.config)))
+    with recorder.timing('admission_and_copy'):
+        prepared=prepare(args)
+    replay(args,recorder,lane,*prepared)
+
+
+def prepare(args):
     started=time.perf_counter()
     source=load_reference_source(args.reference/'source/source.bgocct')
     match=load_native_model_match(args.model,args.query,.005,
@@ -130,20 +147,34 @@ def main(args):
     data=(args.reference/'scene.bgrefmesh').read_bytes()
     changed=translated_reference_scene(data,offsets,expected);reference_inventory(data,source,reports)
     boxes=stored_geometry(match.scene_path.read_bytes())
-    args.output.mkdir(parents=True)
     for name in ('labels.tsv','explosion.tsv','views.bgview'):shutil.copyfile(args.layout/name,args.output/name)
     (args.output/'diagram.bgrefmesh').write_bytes(changed)
     shutil.copyfile(args.outcomes,args.output/'original-reference-outcomes.tsv')
     shutil.copyfile(args.reference/'metadata.tsv',args.output/'original-reference-metadata.tsv')
     command=[str(args.display),'--mesh',str(args.output/'diagram.bgrefmesh'),'--views',str(args.output/'views.bgview'),
-             '--threads','12','--output-directory',str(args.output/'native')]
-    (args.output/'command.txt').write_text(repr(tuple(command))+'\n')
-    stages=[('source_inventory_pose_layout_admission_and_copy',time.perf_counter()-started)]
-    begin=time.perf_counter()
-    with (args.output/'display.log').open('wb') as f:
-        process=subprocess.run(['/usr/bin/time','-f','exit=%x wall=%e user=%U system=%S peak_kib=%M',
-            '-o',str(args.output/'display-process.tsv'),*command],stdout=f,stderr=subprocess.STDOUT)
-    display=time.perf_counter()-begin;stages.append(('both_view_reference_display_process',display))
+             '--threads',str(DISPLAY_THREADS),'--output-directory',str(args.output/'native')]
+    # Published record: tool by name, files relative to this output; no workstation paths.
+    def portable(part):
+        path=Path(part)
+        if not path.is_absolute():return part
+        try:return str(path.relative_to(args.output.resolve()))
+        except ValueError:return path.name
+    (args.output/'command.txt').write_text(repr(tuple(portable(part) for part in command))+'\n')
+    stages=[('source_inventory_pose_layout_admission_and_copy',time.perf_counter()-started,'admission_and_copy')]
+    return (source,heal,chord,curve_angle,surface_angle,metadata,outcome,original_wall,paths,pins,records,labels,
+            label_by_id,views,offsets,boxes,command,stages)
+
+
+def replay(args,recorder,lane,source,heal,chord,curve_angle,surface_angle,metadata,outcome,original_wall,paths,pins,
+           records,labels,label_by_id,views,offsets,boxes,command,stages):
+    started=time.perf_counter()-stages[0][1]
+    with recorder.timing('display'):
+        begin=time.perf_counter()
+        with (args.output/'display.log').open('wb') as f:
+            process=subprocess.run(bound(['/usr/bin/time','-f','exit=%x wall=%e user=%U system=%S peak_kib=%M',
+                '-o',str(args.output/'display-process.tsv'),*command],lane),stdout=f,stderr=subprocess.STDOUT)
+        display=time.perf_counter()-begin
+    stages.append(('both_view_reference_display_process',display,'display'))
     require(process.returncode==0,'reference display failed; see display.log')
     native=rows(args.output/'native/timings.tsv')
     raster_names={'raw_instance_transform_project','triangle_setup','tile_count_scan_allocate_fill',
@@ -153,27 +184,41 @@ def main(args):
         word=[r for r in native if int(r['frame'])==i and r['stage'] in raster_names]
         require(len(word)==5 and {r['stage'] for r in word}==raster_names,'reference raster stages incomplete')
         raster.append(math.fsum(float(r['milliseconds'])/1000 for r in word))
-    begin=time.perf_counter()
-    for i,name in enumerate(('assembled','exploded')):
-        write_png(args.output/(name+'-raw.png'),views[i].width,views[i].height,
-                  (args.output/f'native/frame-{i:06d}.rgba').read_bytes())
-    stages.append(('encode_actual_reference_pngs',time.perf_counter()-begin));begin=time.perf_counter()
-    mask=args.output/'background-mask.png'
-    counts=pixel_inventory(args.output/'native/frame-000001.instance',views[1].width,views[1].height,offsets,mask)
-    annotation=make_annotation(records,labels,boxes,views[1],args.output/'native/frame-000001.instance',counts)
-    visibility=[(r.display_label,r.occurrence_id,label_by_id[r.occurrence_id]['product_name'],r.module,
-                 counts.get(r.occurrence_id,0),label_by_id[r.occurrence_id]['product_name'] in CRITICAL_NAMES) for r in records]
-    tsv(args.output/'visibility.tsv',('display_label','occurrence_id','original_product_name','module','actual_visible_pixels','major_part'),visibility)
-    tsv(args.output/'guides.tsv',('occurrence_id','source_x','source_y','exploded_x','exploded_y','role'),annotation[1])
-    stages.append(('actual_reference_visibility_mask_and_guides',time.perf_counter()-begin));begin=time.perf_counter()
-    caption=(f'NVIDIA CPU reference mesh · Original source → both images: {original_wall:.2f}s · '
+    with recorder.timing('encode_pngs'):
+        begin=time.perf_counter()
+        for i,name in enumerate(('assembled','exploded')):
+            write_png(args.output/(name+'-raw.png'),views[i].width,views[i].height,
+                      (args.output/f'native/frame-{i:06d}.rgba').read_bytes())
+        stages.append(('encode_actual_reference_pngs',time.perf_counter()-begin,'encode_pngs'))
+    with recorder.timing('visibility_and_guides'):
+        begin=time.perf_counter()
+        mask=args.output/'background-mask.png'
+        counts=pixel_inventory(args.output/'native/frame-000001.instance',views[1].width,views[1].height,offsets,mask)
+        annotation=make_annotation(records,labels,boxes,views[1],args.output/'native/frame-000001.instance',counts)
+        visibility=[(r.display_label,r.occurrence_id,label_by_id[r.occurrence_id]['product_name'],r.module,
+                     counts.get(r.occurrence_id,0),label_by_id[r.occurrence_id]['product_name'] in CRITICAL_NAMES) for r in records]
+        tsv(args.output/'visibility.tsv',('display_label','occurrence_id','original_product_name','module','actual_visible_pixels','major_part'),visibility)
+        tsv(args.output/'guides.tsv',('occurrence_id','source_x','source_y','exploded_x','exploded_y','role'),annotation[1])
+        stages.append(('actual_reference_visibility_mask_and_guides',time.perf_counter()-begin,'visibility_and_guides'))
+    # The fixed harness writes the NVIDIA headline into the reference metadata;
+    # an outcome means that scope only when its time is exactly that value.
+    recorded=metadata.get('nvidia_headline_seconds')
+    meaning=('NVIDIA headline' if recorded is not None and float(recorded)==original_wall
+             else 'Original source → both images (pre-fix harness)')
+    caption=(f'NVIDIA CPU reference mesh · {meaning}: {original_wall:.2f}s · '
              f'heal{heal} · chord {chord:g}mm · curve/surface {curve_angle:g}°/{surface_angle:g}° · '
              f'{outcome["status"]} · no remeshing')
-    height=poster(args.output/'exploded-assembly.svg',args.output/'exploded-raw.png',mask,views[1],records,labels,
-        annotation,'NVIDIA CPU MESH / CPU12 DISPLAY',{'raster':raster[1],'display':display,'reference_caption':caption},reference=True)
-    stages.append(('compose_reference_svg_and_complete_legend',time.perf_counter()-begin));begin=time.perf_counter()
-    result=subprocess.run([str(args.rsvg),'--output',str(args.output/'exploded-assembly.png'),str(args.output/'exploded-assembly.svg')],capture_output=True)
-    require(result.returncode==0,'reference SVG export failed');stages.append(('rasterize_reference_poster',time.perf_counter()-begin))
+    with recorder.timing('compose_poster'):
+        begin=time.perf_counter()
+        height=poster(args.output/'exploded-assembly.svg',args.output/'exploded-raw.png',mask,views[1],records,labels,
+            annotation,'NVIDIA CPU MESH / CPU12 DISPLAY',{'raster':raster[1],'display':display,'reference_caption':caption},reference=True)
+        stages.append(('compose_reference_svg_and_complete_legend',time.perf_counter()-begin,'compose_poster'))
+    with recorder.timing('rasterize_poster'):
+        begin=time.perf_counter()
+        result=subprocess.run(bound([str(args.rsvg),'--output',str(args.output/'exploded-assembly.png'),
+                                     str(args.output/'exploded-assembly.svg')],lane),capture_output=True)
+        stages.append(('rasterize_reference_poster',time.perf_counter()-begin,'rasterize_poster'))
+    require(result.returncode==0,'reference SVG export failed')
     require([(name,digest(path)) for name,path in paths]==pins,'reference inputs/tools changed')
     tsv(args.output/'pins.tsv',('component','sha256'),[*pins,('output_reference_scene',digest(args.output/'diagram.bgrefmesh'))])
     tsv(args.output/'metadata.tsv',('key','value'),(('backend','NVIDIA CPU reference mesh / BRepGPU CPU12 display'),
@@ -183,10 +228,12 @@ def main(args):
         ('heal',heal),('chord_height_mm',chord),('curve_angle_degrees',curve_angle),
         ('surface_angle_degrees',surface_angle),('independent_distance_qualification',metadata['independent_distance_qualification']),
         ('reference_outcome_status',outcome['status']),('original_source_to_both_images_seconds',original_wall),
+        ('reference_outcome_complete_seconds_meaning',meaning),('lane_node',lane.node),
         ('new_exploded_raster_and_host_copy_seconds',raster[1]),('new_both_view_display_process_seconds',display),
         ('actual_visible_occurrences',sum(counts.get(r.occurrence_id,0)>0 for r in records))))
-    stages.append(('complete_reference_diagram_replay_export',time.perf_counter()-started))
-    tsv(args.output/'timings.tsv',('stage','seconds'),stages)
+    stages.append(('complete_reference_diagram_replay_export_excluding_context_capture',
+                   time.perf_counter()-started-recorder.capture_seconds,'all'))
+    tsv(args.output/'timings.tsv',('stage','seconds','context'),stages)
     missing=[name for _,_,name,_,count,major in visibility if major and count==0]
     require(not missing,'major reference parts not visible: '+','.join(missing))
     (args.output/'COMPLETE').write_text('Genuine NVIDIA mesh diagram replay; geometry qualification remains separately reported.\n')
@@ -198,6 +245,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('reference','model','layout','outcomes','output','display','rsvg'):parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--config',required=True);parser.add_argument('--query',type=int,default=0)
+    parser.add_argument('--lane-node',type=int,default=0,help='NUMA node the replay and its display run on')
     try:main(parser.parse_args())
     except (ValueError,OSError,KeyError,StopIteration,struct.error) as error:
         print('NVIDIA exploded reference FAILED:',error,file=sys.stderr);raise SystemExit(1)

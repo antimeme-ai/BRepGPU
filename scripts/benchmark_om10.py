@@ -5,6 +5,13 @@ Two fresh STEP-to-both-labeled-views calls are single observations, in fixed
 CPU24 then P1000 order, without flushing filesystem caches. Repeated native
 processes consume their unchanged prepared scene and exact per-pose requests.
 Resident frame walls have a separately named narrower scope. No stage-median total.
+
+RETIRED: this driver runs the previous-regime mesher (examples/render_om10.py),
+which the operator removed from the system on 2026-10-17. It runs unpinned and
+emits no context rows, so it must not produce new published numbers. It
+refuses unless --historical-reproduction is given, and then marks every
+output as a historical reproduction. Owned timings use
+scripts/measurement_lane.py.
 """
 import argparse
 import csv
@@ -34,12 +41,19 @@ def write_rows(path, header, rows):
         writer.writerows(rows)
 
 
+RETIRED = ('benchmark_om10.py drives the retired previous-regime mesher; it runs unpinned without '
+           'context rows and must not produce new published numbers')
+
+
 def main(args):
+    if not args.historical_reproduction:
+        raise SystemExit('refused: '+RETIRED+'; pass --historical-reproduction only to reproduce an old artifact')
     if sys.platform != 'linux':
         raise ValueError('OM10 modeling/render/benchmarks execute on the Linux fleet')
     if args.repeats < 3 or args.resident_frames < 2:
         raise ValueError('at least three native repeats and two resident frames are required')
     args.output.mkdir(parents=True, exist_ok=False)
+    write_rows(args.output/'HISTORICAL-REPRODUCTION.tsv', ('field', 'value'), (('status', RETIRED),))
     script = ROOT/'examples/render_om10.py'
     pin = hashlib.sha256(script.read_bytes()).hexdigest()
     driver = Path(__file__).resolve()
@@ -215,4 +229,6 @@ if __name__ == '__main__':
     p.add_argument('--source-residual', type=float, default=.001)
     p.add_argument('--azimuth', type=float, default=-58.)
     p.add_argument('--elevation', type=float, default=52.)
+    p.add_argument('--historical-reproduction', action='store_true',
+                   help='run the retired driver anyway, to reproduce an old artifact; outputs are marked historical')
     main(p.parse_args())

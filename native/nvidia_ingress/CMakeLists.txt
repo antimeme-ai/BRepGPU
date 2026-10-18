@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.20)
+project(brepgpu_nvidia_ingress LANGUAGES CXX)
+find_package(OpenCASCADE REQUIRED)
+# Minimal STEP -> per-definition .brep ingress timed as NVIDIA's ingress cost.
+add_executable(brepgpu-nvidia-ingress main.cpp)
+target_compile_features(brepgpu-nvidia-ingress PRIVATE cxx_std_17)
+target_include_directories(brepgpu-nvidia-ingress PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+target_link_directories(brepgpu-nvidia-ingress PRIVATE ${OpenCASCADE_LIBRARY_DIR})
+target_link_libraries(brepgpu-nvidia-ingress PRIVATE TKDESTEP TKXSBase TKShHealing TKTopAlgo TKGeomAlgo
+  TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel)
+target_compile_options(brepgpu-nvidia-ingress PRIVATE -Wall -Wextra -Wpedantic)
+if(UNIX AND NOT APPLE)
+  target_link_options(brepgpu-nvidia-ingress PRIVATE -Wl,--disable-new-dtags)
+endif()
+set_target_properties(brepgpu-nvidia-ingress PROPERTIES BUILD_RPATH "${OpenCASCADE_LIBRARY_DIR}")
