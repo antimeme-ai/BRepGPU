@@ -272,3 +272,30 @@ mechanism, then fixes it:
 - or refuse the face by name.
 
 The merged run waits for `.37.36`.
+
+### `.37.36` result and decisions (2026-10-18)
+
+The adapter found two mechanisms behind the inward faces.
+- **S1, one face against its own bound.** The face's same_sense contradicts its
+  own outer bound, while its edge uses and its neighbours agree with the shell.
+  This is OM10's 6 faces.
+- **S2, a whole shell inside out.** Each face agrees with its bound and the edge
+  uses are consistent, but the shell's signed volume has the wrong sign. This is
+  the Cold section fan's two voids, 13 faces.
+
+Both are corrected with typed records and declared as `S1` and `S2`. Any other
+inconsistency refuses the face by name (reason 7).
+
+**Decisions.**
+- **S2 is accepted.** For a closed, edge-consistent shell, the sign of the
+  signed volume is exact geometric evidence of which side is material.
+- **The oracle.** `qualify_original_geometry` accepts a written orientation that
+  differs from the raw use only where the source carries a
+  `source_face_orientation_raw` record. Even then, it accepts it only after
+  checking the side independently of the adapter's code. Otherwise the oracle
+  refuses as it does now.
+- **The translation-only reference arm.** It applies the same principle as
+  placements: on a face whose raw use points into the material, the exporter
+  writes the corrected side and declares `S1` or `S2`. The exporter decides this
+  by its own ray-parity verdict, not by the adapter's code. The merged run checks
+  that both implementations correct the same faces.
