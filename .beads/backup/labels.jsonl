@@ -107,6 +107,9 @@
 {"issue_id":"brepgpu-12s.37.18","label":"b2"}
 {"issue_id":"brepgpu-12s.37.18","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.18","label":"ingress"}
+{"issue_id":"brepgpu-12s.37.19","label":"b2"}
+{"issue_id":"brepgpu-12s.37.19","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.37.19","label":"steel-man"}
 {"issue_id":"brepgpu-12s.37.2","label":"b2"}
 {"issue_id":"brepgpu-12s.37.2","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.3","label":"b2"}
