@@ -568,3 +568,15 @@ decisions (ABC download term first, as the priority-1 corpus source).
   lexing lower bound, so M5 should keep the bridge with raw overrides and bring
   an owned reader forward. One defect filed under B2, three M8 items, three
   operator questions.
+- M4-G3 returned (papers/2026-10-17-export-precision-validity.md): OCCT
+  BRepMesh stand-in meshes of all 478 unique corpus files at 0.025 and
+  0.005 mm, rounded to float32 and re-imported through emulations of each
+  consumer (PrusaSlicer's STL repair compiled and run as-is). Near the origin
+  2–3% of FP64-clean solids fail, nearly all by sub-picometre slivers and
+  sub-nanometre contacts; at +100 m 18–32% fail, with real displacement above
+  ε, fixed by recentring wherever the reader keeps the transform. Three local
+  conditions (C1–C3) predicted every failure. Remedy: float32-safe
+  construction in the file's frame, identity-only welding, exact decimals, an
+  offline reader-equivalent oracle; not snap rounding. Corrects the map's
+  "12%" figure. Reference code recorded in QUARANTINE.md. Three operator
+  questions filed. This completes the M4 research lanes (18 of 18).

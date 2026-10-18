@@ -171,3 +171,30 @@ attributes an included integer header. No code was copied into production and
 no dependency or reference executable was adopted/run. The
 [GPU study](papers/2026-10-16-gpu-cdt-frontier.md) records the author PDF hash,
 exact restoration commands, quantized input and actual driver/build limitations.
+
+## Export consumer references (M4-G3), 2026-10-17
+
+Fetched by lane M4-G3 for reader-equivalent export validity
+(papers/2026-10-17-export-precision-validity.md). The clones live on the fleet
+host under the BRepGPU root at `lanes/M4-G3/refs/`, not in this checkout. They
+are study references, not dependencies. Restore each with
+`git clone <url> && git -C <name> checkout <commit>`, stripping nested Git
+metadata afterwards.
+
+| Name | URL | Tag | Commit |
+|---|---|---|---|
+| curaengine | https://github.com/Ultimaker/CuraEngine | 5.13.0 | `636f9608621fd1d6c1b75ad2a969de53beabfbc6` |
+| cura | https://github.com/Ultimaker/Cura | 5.13.0 | `1fb8a7610460e03ec62da950d1c173a249b23b59` |
+| libsavitar | https://github.com/Ultimaker/libSavitar | 5.3.0 | `e66e4e8f69e8764411d01b09140d04de8552552b` |
+| lib3mf | https://github.com/3MFConsortium/lib3mf | v2.5.0 | `64bb454d1fcb53effa57d3cef752a10d740d41a2` |
+| threejs | https://github.com/mrdoob/three.js | r186 | `9b4a2ac29c63ccb43fd51c5661f2f873ac2c39b8` |
+| gltf-blender-io | https://github.com/KhronosGroup/glTF-Blender-IO | v4.2.3 | `0be56aa3dcdb00bea7fa8dbdcb1d5d5685d8d160` |
+| spec_core | https://github.com/3MFConsortium/spec_core | 1.4.0 | `997b385e06f3181cf9aae0c578e0b45ccd48ccb2` |
+| admesh | https://github.com/admesh/admesh | v0.98.5 | `70ca24a9b4e6d8aa05e8572e768110dad9b4d47b` |
+| gltf-spec | https://github.com/KhronosGroup/glTF | main | `521a91d491f02bb7db7d445b35f591d09d2a64ce` |
+| prusaslicer | https://github.com/prusa3d/PrusaSlicer | version_2.9.6 | `b028299c770b8380ee81c921a2867d522f288123` |
+| uranium | https://github.com/Ultimaker/Uranium | 5.13.0 | `0ae6c37095f6f73494c9660e6fb0450df4d18e3e` |
+| pyarcus | https://github.com/Ultimaker/pyArcus | 5.3.0 | `10e23195a57fca9807f6a5a7bb075c865de60059` |
+| eigen | https://gitlab.com/libeigen/eigen.git | 3.4.0 | `3147391d946bb4b6c68edd901f2add6ac1f31f8c` |
+| geogram | https://github.com/BrunoLevy/geogram | v1.9.6 | `fc3eb9bf44d2ee29686592e3ef5f5f4daeda27f8` |
+| numpy-stl | https://github.com/wolph/numpy-stl | v4.1.0 | `16094a661321fa128ac27712d416bcac72a1d0a6` |

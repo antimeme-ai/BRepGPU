@@ -245,3 +245,7 @@ Highest value first:
   `degenerate_toroidal_surface` evaluation and the CTO clauses; the usd-brep Git
   LFS STEP/IGES/JT fixtures (our snapshot holds pointers only); OCCT Mantis
   #25415 (line shift) and #26376 (negative torus radius).
+- **G3 export precision:** Fortune 1999, "Vertex-rounding a three-dimensional
+  polyhedral subdivision" (DCG); Milenkovic and Sacks 2019, "Geometric rounding
+  and feature separation in meshes" (CAD); Valque 2024 PhD thesis, *3D Snap
+  Rounding* (not on HAL); Trettner et al. 2022, EMBER (URL returned HTML).
