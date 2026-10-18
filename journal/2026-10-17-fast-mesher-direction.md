@@ -432,3 +432,15 @@ decisions (ABC download term first, as the priority-1 corpus source).
   FMA-compiled transcendentals on AVX2+FMA hosts. One display defect filed
   under B2; one operator question (fixed versus load-reactive mixed-backend
   placement) filed at priority 1. G12 launched.
+- M4-G15 returned (papers/2026-10-17-pmi-tolerance-requests.md), with the G17
+  correction applied: a request-checking rule R-PMI (one-sided margin per
+  tolerance kind; consumption c = ε/m before and δ_f/m after meshing; PMI-OUT,
+  PMI-LOOSE, UNC-FINE and UNC-EXCEEDED warnings; ε never changed, nothing
+  refused). With vertices on the surface a hole's mating size drops by 2δ and a
+  boss's is unchanged. Census of the NIST corpus: 17 of 49 files carry PMI
+  (618 tolerance records); 11 hole sizes in 5 models sit with nominal on the
+  lower limit, so any such mesh is out of tolerance; relative ε of 1e-3 of the
+  diagonal violates tolerances on all 17; declared uncertainty reflects the
+  exporter (1e-6 to 0.127 mm for one part); the nominal-model flag appears in
+  none. One ingress defect filed under B2 (uncertainty maximum across
+  contexts); c_max (0.1 or 0.25) filed for the operator.

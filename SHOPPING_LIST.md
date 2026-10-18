@@ -207,3 +207,7 @@ Highest value first:
   Miller, Pav and Walkington, IMR 2003. Add two questions to the Parasolid PK
   entry: the incremental-refinement round limit, and how "very close" inner
   loops are defined.
+- **G15 PMI:** ASME Y14.5.1-2019 (mathematical definitions); the ISO 10303-242
+  normative text (sign convention for unequally disposed zones); ISO 286-1
+  tables in a licensed form (fit classes). The NIST MTC TDP retry gains a use:
+  its inspection data would test the warning threshold (H4).
