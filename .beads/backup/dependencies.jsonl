@@ -73,6 +73,8 @@
 {"created_at":"2026-10-18T00:23:44Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.24","issue_id":"brepgpu-12s.25.8","type":"blocks"}
 {"created_at":"2026-10-18T00:23:44Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.25.8","type":"parent-child"}
 {"created_at":"2026-10-18T00:23:44Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.3","issue_id":"brepgpu-12s.25.8","type":"discovered-from"}
+{"created_at":"2026-10-18T01:40:47Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.25.9","type":"parent-child"}
+{"created_at":"2026-10-18T01:40:47Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.17","issue_id":"brepgpu-12s.25.9","type":"discovered-from"}
 {"created_at":"2026-10-17T22:03:43Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s","issue_id":"brepgpu-12s.26","type":"parent-child"}
 {"created_at":"2026-10-17T22:03:43Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.25","issue_id":"brepgpu-12s.26","type":"blocks"}
 {"created_at":"2026-10-17T22:03:45Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s","issue_id":"brepgpu-12s.27","type":"parent-child"}
@@ -118,6 +120,10 @@
 {"created_at":"2026-10-18T00:42:12Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.12","issue_id":"brepgpu-12s.37.21","type":"discovered-from"}
 {"created_at":"2026-10-18T01:23:05Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.22","type":"parent-child"}
 {"created_at":"2026-10-18T01:23:05Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.5","issue_id":"brepgpu-12s.37.22","type":"discovered-from"}
+{"created_at":"2026-10-18T01:23:06Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.23","type":"parent-child"}
+{"created_at":"2026-10-18T01:23:07Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.5","issue_id":"brepgpu-12s.37.23","type":"discovered-from"}
+{"created_at":"2026-10-18T01:23:07Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.24","type":"parent-child"}
+{"created_at":"2026-10-18T01:23:07Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37.5","issue_id":"brepgpu-12s.37.24","type":"discovered-from"}
 {"created_at":"2026-10-17T22:30:31Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.37","issue_id":"brepgpu-12s.37.3","type":"parent-child"}
 {"created_at":"2026-10-17T22:30:31Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.8","issue_id":"brepgpu-12s.37.3","type":"discovered-from"}
 {"created_at":"2026-10-17T22:31:31Z","created_by":"Patrick Beam","depends_on_id":"brepgpu-12s.16","issue_id":"brepgpu-12s.37.4","type":"discovered-from"}
