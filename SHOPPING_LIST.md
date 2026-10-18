@@ -233,3 +233,5 @@ Highest value first:
   items already listed: IGES 5.3 global-section fields 13–15 and 19 and the
   analytic-surface parameterisations; ISO 10303-42 parameterisations of cone,
   extrusion and parabola.
+- **G12 edit invalidation:** Wu–Sarma 2004 (CAD 36(9), closed access); Wu–Sarma
+  2001 (abstract only read).

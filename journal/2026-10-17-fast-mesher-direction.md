@@ -502,3 +502,13 @@ decisions (ABC download term first, as the priority-1 corpus source).
   lane: no angle is read raw, so applying the declared angle factor would
   convert twice. Three further unit defects filed under B2; four operator
   questions filed.
+- M4-G12 returned (papers/2026-10-17-edit-invalidation.md): incremental
+  remeshing is fresh meshing behind G7's cache, with no mesh patching. Every
+  meshing source surveyed patches an old mesh and differs from fresh; the
+  incremental-computation literature gets equivalence by construction. Host
+  gives content (full resubmission by default, or a tested delta); reuse is a
+  key hit only, never deflection (OCCT's 1.1×/0.9× rule rejected; OCCT 8.0.1's
+  Modified flag is read by nothing in TKMesh); a bounded halo of two vertex
+  rings plus recorded spatial and collapse regions; four global couplings
+  forbidden. Four corrections to the draft and M2 noted on the M5 bead. G7's
+  placement question answered both ways; no new operator questions.
