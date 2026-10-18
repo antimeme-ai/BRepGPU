@@ -1,5 +1,6 @@
 #include "math.hpp"
 #include "validation.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -46,6 +47,8 @@ struct Session {
   uint64_t *offsets = nullptr;
   uint64_t *block_sums = nullptr;
   uint64_t *block_offsets = nullptr;
+  uint64_t *long_scan = nullptr;
+  uint32_t *long_tiles = nullptr;
   uint32_t *bins = nullptr;
   Sample *samples = nullptr;
   uint8_t *rgba = nullptr;
@@ -54,6 +57,9 @@ struct Session {
   uint64_t *instance = nullptr;
   unsigned long long *bad = nullptr;
   uint64_t tile_capacity = 0, bin_capacity = 0, sample_capacity = 0, pixel_capacity = 0;
+  // Multiprocessor count, read once by open_stream; long_grid is the block
+  // count the last build_bins launched for long tiles (0 if it sorted nothing).
+  uint32_t multiprocessors = 0, long_grid = 0;
   bool evaluated = false, poisoned = false;
   const char *stage = "session_create";
 };
@@ -93,6 +99,15 @@ template <class F> bool selected(Session &s, Error *e, F fn) {
   if (!ok)
     s.poisoned = true;
   return ok;
+}
+// Creates the session's stream on the selected device and reads its
+// multiprocessor count.
+void open_stream(Session &s) {
+  check(cudaStreamCreateWithFlags(&s.stream, cudaStreamNonBlocking), "create stream");
+  int sms = 0;
+  check(cudaDeviceGetAttribute(&sms, cudaDevAttrMultiProcessorCount, s.device),
+        "read multiprocessor count");
+  s.multiprocessors = static_cast<uint32_t>(std::max(sms, 1));
 }
 template <class T> void allocate(T *&ptr, uint64_t n) {
   if (n > SIZE_MAX / sizeof(T))
@@ -221,6 +236,125 @@ __global__ void fill_kernel(const Prepared *triangles, uint64_t n, uint32_t tile
       bins[offsets[tile] + atomicAdd(cursor + tile, 1u)] = i;
     }
 }
+// fill_kernel's atomic cursors place a tile's entries in arrival order. The
+// order kernels then sort each tile's entries ascending. A primitive appears at
+// most once per tile, so the ascending list is unique: the published bins are a
+// function of the triangles alone, as the determinism paper's section 2.2
+// requires (item 4, canonical publication; item 5, no slot-allocating atomics
+// in published layers). Every network is Batcher's bitonic sort, and each tile
+// is sorted by exactly one path, chosen by its length k:
+//   2..32       one warp, one entry per lane (warp_sort<1>);
+//   33..256     one warp, eight entries per lane (warp_sort<8>);
+//   257 and up  one block (order_long_bins_kernel), for tiles listed by scan.
+constexpr uint32_t SHORT_BIN = 32, MEDIUM_BIN = 256, SORT_SHARED = 4096;
+// One warp holds the list in registers, padded with UINT32_MAX. Primitive
+// indices are below UINT32_MAX (validation caps the count at UINT32_MAX), so
+// the padding sorts after every entry. Position p = lane * ITEMS + j; partners
+// at distance half >= ITEMS sit in another lane and are read by shuffle.
+template <uint32_t ITEMS> __device__ void warp_sort(uint32_t *list, uint32_t k, uint32_t lane) {
+  static_assert(ITEMS && (ITEMS & (ITEMS - 1)) == 0, "power-of-two lane width");
+  uint32_t e[ITEMS];
+#pragma unroll
+  for (uint32_t j = 0; j < ITEMS; ++j) {
+    const uint32_t p = lane * ITEMS + j;
+    e[j] = p < k ? list[p] : UINT32_MAX;
+  }
+#pragma unroll
+  for (uint32_t size = 2; size <= 32 * ITEMS; size <<= 1)
+#pragma unroll
+    for (uint32_t half = size / 2; half; half >>= 1)
+#pragma unroll
+      for (uint32_t j = 0; j < ITEMS; ++j) {
+        const uint32_t p = lane * ITEMS + j;
+        const bool ascending = (p & size) == 0;
+        if (half >= ITEMS) {
+          const uint32_t other = __shfl_xor_sync(0xffffffffu, e[j], half / ITEMS);
+          e[j] = ((p & half) == 0) == ascending ? min(e[j], other) : max(e[j], other);
+        } else if ((j & half) == 0 && j + half < ITEMS) {
+          const uint32_t a = e[j], b = e[j + half];
+          e[j] = ascending ? min(a, b) : max(a, b);
+          e[j + half] = ascending ? max(a, b) : min(a, b);
+        }
+      }
+#pragma unroll
+  for (uint32_t j = 0; j < ITEMS; ++j) {
+    const uint32_t p = lane * ITEMS + j;
+    if (p < k)
+      list[p] = e[j];
+  }
+}
+// One warp per tile. Sorts lists of 2..256 entries and sets long_flags[tile]
+// for lists longer than MEDIUM_BIN; a scan of the flags then gathers those
+// tiles, in tile order, for order_long_bins_kernel.
+__global__ void order_warp_bins_kernel(const uint64_t *offsets, uint64_t ntiles, uint32_t *bins,
+                                       uint32_t *long_flags) {
+  const uint64_t tile = (uint64_t(blockIdx.x) * blockDim.x + threadIdx.x) / 32;
+  const uint32_t lane = threadIdx.x % 32;
+  if (tile >= ntiles)
+    return;
+  const uint64_t begin = offsets[tile], k = offsets[tile + 1] - begin;
+  if (lane == 0)
+    long_flags[tile] = k > MEDIUM_BIN;
+  if (k < 2 || k > MEDIUM_BIN)
+    return;
+  if (k <= SHORT_BIN)
+    warp_sort<1>(bins + begin, static_cast<uint32_t>(k), lane);
+  else
+    warp_sort<MEDIUM_BIN / 32>(bins + begin, static_cast<uint32_t>(k), lane);
+}
+__global__ void gather_long_kernel(const uint32_t *long_flags, const uint64_t *long_scan,
+                                   uint64_t ntiles, uint32_t *long_tiles) {
+  const uint64_t tile = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (tile < ntiles && long_flags[tile])
+    long_tiles[long_scan[tile]] = static_cast<uint32_t>(tile);
+}
+// Single-direction bitonic form: each merge of width `size` first compares
+// mirrored pairs, then halves. Every comparator puts the minimum at the lower
+// index, so slots at or past k act as +infinity padding and comparators
+// touching them are skipped. Index I is 32-bit for shared-memory lists and
+// 64-bit for global ones. half is a power of two, so comparator c's lower slot
+// is c with a zero bit inserted at half: ((c & ~(half - 1)) << 1) | (c & (half - 1)).
+template <class I> __device__ void block_sort(uint32_t *data, I k) {
+  I width = 1;
+  while (width < k)
+    width <<= 1;
+  for (I size = 2; size <= width; size <<= 1)
+    for (I half = size / 2; half; half >>= 1) {
+      for (I c = threadIdx.x; c < width / 2; c += blockDim.x) {
+        const I i = ((c & ~(half - 1)) << 1) | (c & (half - 1));
+        const I j = half == size / 2 ? (i | (size - 1)) - (i & (size - 1)) : i + half;
+        if (j < k && data[i] > data[j]) {
+          const uint32_t t = data[i];
+          data[i] = data[j];
+          data[j] = t;
+        }
+      }
+      __syncthreads();
+    }
+}
+// Persistent grid over the gathered long tiles; *count is the gathered length.
+// Lists of up to SORT_SHARED entries sort in shared memory, longer ones in place
+// in global memory. The network costs O(k log^2 k / 256) steps per thread,
+// against visibility_kernel's O(k) per thread on the same tile.
+__global__ void order_long_bins_kernel(const uint64_t *offsets, const uint32_t *long_tiles,
+                                       const uint64_t *count, uint32_t *bins) {
+  __shared__ uint32_t local[SORT_SHARED];
+  const uint64_t n = *count;
+  for (uint64_t item = blockIdx.x; item < n; item += gridDim.x) {
+    const uint32_t tile = long_tiles[item];
+    const uint64_t begin = offsets[tile], k = offsets[tile + 1] - begin;
+    if (k <= SORT_SHARED) {
+      for (uint32_t i = threadIdx.x; i < k; i += blockDim.x)
+        local[i] = bins[begin + i];
+      __syncthreads();
+      block_sort<uint32_t>(local, static_cast<uint32_t>(k));
+      for (uint32_t i = threadIdx.x; i < k; i += blockDim.x)
+        bins[begin + i] = local[i];
+    } else
+      block_sort<uint64_t>(bins + begin, k);
+    __syncthreads();
+  }
+}
 __global__ void visibility_kernel(const Prepared *triangles, const uint64_t *offsets,
                                   const uint32_t *bins, uint32_t width, uint32_t height,
                                   uint32_t tiles_x, Sample *samples, unsigned long long *bad) {
@@ -332,6 +466,8 @@ void cleanup(Session &s, Error *e, bool &ok) {
   release(s.offsets);
   release(s.block_sums);
   release(s.block_offsets);
+  release(s.long_scan);
+  release(s.long_tiles);
   release(s.bins);
   release(s.samples);
   release(s.rgba);
@@ -383,7 +519,7 @@ bool create_profile(const SceneView *view, int32_t device, void **out, Error *e,
   }
   auto start = Clock::now();
   bool ok = selected(*s, e, [&] {
-    check(cudaStreamCreateWithFlags(&s->stream, cudaStreamNonBlocking), "create stream");
+    open_stream(*s);
     times->create = ms(start);
     s->stage = "scene_allocate_upload";
     auto t = Clock::now();
@@ -459,11 +595,65 @@ void reserve_tiles(Session &s, uint64_t n) {
   free_checked(s.offsets);
   free_checked(s.block_sums);
   free_checked(s.block_offsets);
+  free_checked(s.long_scan);
+  free_checked(s.long_tiles);
   allocate(s.counts, n);
+  allocate(s.long_scan, n + 1);
+  allocate(s.long_tiles, n);
   allocate(s.offsets, n + 1);
   allocate(s.block_sums, (n + 511) / 512);
   allocate(s.block_offsets, (n + 511) / 512);
   s.tile_capacity = n;
+}
+// Builds complete CSR tile bins for the session's prepared triangles:
+// s.offsets[0..ntiles] and s.bins[0..references), each tile's entries in
+// ascending primitive order. Returns the reference count. The ordering runs as
+// its own stage, "tile_bin_sort", so a failure there is attributed to it.
+uint64_t build_bins(Session &s, uint64_t nprimitives, uint32_t tiles_x, uint64_t ntiles) {
+  require(s.multiprocessors, "bins: session stream not opened");
+  s.long_grid = 0;
+  reserve_tiles(s, ntiles);
+  check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream), "zero tile counts");
+  if (nprimitives)
+    count_kernel<<<(nprimitives + 255) / 256, 256, 0, s.stream>>>(s.triangles, nprimitives,
+                                                                  tiles_x, s.counts);
+  uint32_t blocks = (ntiles + 511) / 512;
+  scan512<<<blocks, 256, 0, s.stream>>>(s.counts, s.offsets, s.block_sums, ntiles);
+  scan512<<<1, 256, 0, s.stream>>>(s.block_sums, s.block_offsets, nullptr, blocks);
+  add_scan<<<(ntiles + 255) / 256, 256, 0, s.stream>>>(s.offsets, s.block_offsets, s.block_sums,
+                                                       ntiles, blocks);
+  uint64_t references = 0;
+  copy_out(&references, s.offsets + ntiles, 1, s);
+  finish(s);
+  if (references > s.bin_capacity) {
+    free_checked(s.bins);
+    allocate(s.bins, references);
+    s.bin_capacity = references;
+  }
+  check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream), "zero tile cursors");
+  if (nprimitives)
+    fill_kernel<<<(nprimitives + 255) / 256, 256, 0, s.stream>>>(s.triangles, nprimitives, tiles_x,
+                                                                 s.counts, s.offsets, s.bins);
+  finish(s);
+  if (references > 1) {
+    const char *outer = s.stage;
+    s.stage = "tile_bin_sort";
+    order_warp_bins_kernel<<<static_cast<uint32_t>((ntiles + 7) / 8), 256, 0, s.stream>>>(
+        s.offsets, ntiles, s.bins, s.counts);
+    scan512<<<blocks, 256, 0, s.stream>>>(s.counts, s.long_scan, s.block_sums, ntiles);
+    scan512<<<1, 256, 0, s.stream>>>(s.block_sums, s.block_offsets, nullptr, blocks);
+    add_scan<<<(ntiles + 255) / 256, 256, 0, s.stream>>>(s.long_scan, s.block_offsets,
+                                                         s.block_sums, ntiles, blocks);
+    gather_long_kernel<<<(ntiles + 255) / 256, 256, 0, s.stream>>>(s.counts, s.long_scan, ntiles,
+                                                                   s.long_tiles);
+    // Four 16 KiB blocks fit one P100 SM; the grid loops over the gathered tiles.
+    s.long_grid = 4 * s.multiprocessors;
+    order_long_bins_kernel<<<s.long_grid, 256, 0, s.stream>>>(s.offsets, s.long_tiles,
+                                                              s.long_scan + ntiles, s.bins);
+    finish(s);
+    s.stage = outer;
+  }
+  return references;
 }
 void reserve_frame(Session &s, uint64_t nsamples, uint64_t npixels) {
   if (nsamples > s.sample_capacity) {
@@ -531,29 +721,7 @@ bool render_gpu(void *token, const Request *request, FrameOutput *out, Error *e,
     times->setup = ms(t);
     s.stage = "tile_count_scan_allocate_fill";
     t = Clock::now();
-    reserve_tiles(s, ntiles);
-    check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream), "zero tile counts");
-    if (s.scene.nprimitives)
-      count_kernel<<<(s.scene.nprimitives + 255) / 256, 256, 0, s.stream>>>(
-          s.triangles, s.scene.nprimitives, tx, s.counts);
-    uint32_t blocks = (ntiles + 511) / 512;
-    scan512<<<blocks, 256, 0, s.stream>>>(s.counts, s.offsets, s.block_sums, ntiles);
-    scan512<<<1, 256, 0, s.stream>>>(s.block_sums, s.block_offsets, nullptr, blocks);
-    add_scan<<<(ntiles + 255) / 256, 256, 0, s.stream>>>(s.offsets, s.block_offsets, s.block_sums,
-                                                         ntiles, blocks);
-    uint64_t references = 0;
-    copy_out(&references, s.offsets + ntiles, 1, s);
-    finish(s);
-    if (references > s.bin_capacity) {
-      free_checked(s.bins);
-      allocate(s.bins, references);
-      s.bin_capacity = references;
-    }
-    check(cudaMemsetAsync(s.counts, 0, ntiles * sizeof(uint32_t), s.stream), "zero tile cursors");
-    if (s.scene.nprimitives)
-      fill_kernel<<<(s.scene.nprimitives + 255) / 256, 256, 0, s.stream>>>(
-          s.triangles, s.scene.nprimitives, tx, s.counts, s.offsets, s.bins);
-    finish(s);
+    build_bins(s, s.scene.nprimitives, tx, ntiles);
     times->bins = ms(t);
     s.stage = "visibility_shading_resolve";
     t = Clock::now();

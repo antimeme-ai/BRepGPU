@@ -182,6 +182,17 @@ triangle bounds/cache and GPU can exploit sample parallelism without forcing
 either into the other's unfavorable loop order. Retain workers/device storage
 between explicitly reused requests. No Python triangle loop enters the baseline.
 
+> **Note, 2026-10-18 (B2-display, bead `brepgpu-12s.37.3`).** Since this
+> change, the published bins are canonical on both CPU and CUDA: each tile's
+> list is in ascending primitive order, whatever the thread count, run or GPU.
+> On CUDA the atomic scatter order described above is now transient inside the
+> bin stage; per-tile sorts publish the ascending order. The CPU fill no longer
+> uses atomics: index-range chunks, balanced by reference count, count, scan
+> and fill in order. The chunk count follows the worker count; the result does
+> not.
+> Visibility selection was already order independent, so display bytes are
+> unchanged. See `results/b2-display-2026-10-17/REPORT.md`.
+
 Normals are smoothly interpolated only within the actual source face and
 renormalized; duplicated edge corners retain sharp face boundaries. Lighting
 is documented illustrative metallic Lambert/fill/Blinn, source/curated linear

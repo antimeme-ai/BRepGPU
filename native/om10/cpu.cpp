@@ -41,13 +41,14 @@ class Pool {
   bool stop = false;
   uint64_t generation = 0, finished = 0, count = 0;
   std::atomic<uint64_t> next{0};
+  uint64_t grain = 32;
   std::function<void(uint64_t)> job;
   void drain() {
     for (;;) {
-      uint64_t begin = next.fetch_add(32);
+      uint64_t begin = next.fetch_add(grain);
       if (begin >= count)
         break;
-      for (uint64_t i = begin; i < std::min(begin + 32, count); ++i)
+      for (uint64_t i = begin; i < std::min(begin + grain, count); ++i)
         job(i);
     }
   }
@@ -88,11 +89,15 @@ public:
     }
   }
   ~Pool() { close(); }
-  void parallel(uint64_t n, std::function<void(uint64_t)> f) {
+  uint32_t size() const { return uint32_t(workers.size() + 1); }
+  // Runs f(0..n-1); workers claim `step` consecutive indices at a time.
+  void parallel(uint64_t n, std::function<void(uint64_t)> f, uint64_t step = 32) {
+    require(step > 0, "pool: zero claim size");
     {
       std::lock_guard<std::mutex> lock(mutex);
       job = std::move(f);
       count = n;
+      grain = step;
       next = 0;
       finished = 0;
       ++generation;
@@ -112,6 +117,12 @@ struct Session {
   std::vector<Prepared> triangles;
   std::vector<uint64_t> offsets;
   std::vector<uint32_t> bins;
+  // Bin builder scratch, kept across frames: per-primitive reference counts,
+  // chunk boundaries, block prefixes of the counts, per-chunk tile rows;
+  // bin_chunks is the last chunk count.
+  std::vector<uint32_t> bin_references, bin_rows;
+  std::vector<uint64_t> bin_first, bin_block_prefix;
+  uint64_t bin_chunks = 0;
   std::vector<Sample> samples;
   bool evaluated = false, poisoned = false;
   Session(SceneView s, uint32_t n) : scene(s), pool(n), jets(s.nvertices) {}
@@ -120,6 +131,114 @@ void first_error(std::atomic<uint64_t> &out, uint64_t i) {
   uint64_t old = out.load();
   while (i < old && !out.compare_exchange_weak(old, i)) {
   }
+}
+// Builds complete CSR tile bins for s.triangles: s.offsets[0..ntiles] and
+// s.bins[0..offsets[ntiles]), each tile's entries in ascending primitive order.
+// The primitives split into contiguous index ranges ("chunks") holding about
+// equal numbers of tile references, from a prefix over per-primitive counts.
+// Each chunk counts its references into a private row, a per-tile scan over the
+// rows in chunk order gives every chunk its start inside each tile, and each
+// chunk then fills its slots walking its range in ascending order. No slot comes
+// from an atomic. The chunk count depends on the worker count; the result does
+// not, since any chunking yields the sequential order (determinism paper,
+// section 2.2: item 3, a decomposition that does not influence results; item 4,
+// canonical publication; item 5, no slot-allocating atomics). Rows cost
+// 4 * chunks * ntiles bytes, held to ROW_BUDGET entries (64 MiB).
+constexpr uint64_t ROW_BUDGET = uint64_t(1) << 24, REF_BLOCK = 4096;
+void build_bins(Session &s, uint32_t tiles_x, uint64_t ntiles) {
+  const uint64_t n = s.triangles.size();
+  const uint64_t chunks = std::max<uint64_t>(
+      1, std::min<uint64_t>({s.pool.size(), std::max<uint64_t>(1, ROW_BUDGET / ntiles), n}));
+  s.bin_chunks = chunks;
+  // Per-primitive reference counts, with a sum per block of REF_BLOCK
+  // primitives so the prefix over blocks is short.
+  const uint64_t nblocks = (n + REF_BLOCK - 1) / REF_BLOCK;
+  s.bin_references.resize(n);
+  s.bin_block_prefix.resize(nblocks + 1);
+  s.pool.parallel(
+      nblocks,
+      [&](uint64_t block) {
+        uint64_t sum = 0;
+        for (uint64_t i = block * REF_BLOCK; i < std::min(n, (block + 1) * REF_BLOCK); ++i) {
+          const auto &p = s.triangles[i];
+          s.bin_references[i] = p.area ? uint32_t(p.xmax / 16 - p.xmin / 16 + 1) *
+                                             uint32_t(p.ymax / 16 - p.ymin / 16 + 1)
+                                       : 0;
+          sum += s.bin_references[i];
+        }
+        s.bin_block_prefix[block + 1] = sum;
+      },
+      1);
+  s.bin_block_prefix[0] = 0;
+  for (uint64_t block = 0; block < nblocks; ++block)
+    s.bin_block_prefix[block + 1] += s.bin_block_prefix[block];
+  // Chunk c starts at the first primitive i whose preceding references,
+  // prefix(i), reach c * total / chunks (written so the product cannot
+  // overflow): a binary search over block prefixes, then a scan inside one block.
+  const uint64_t total = s.bin_block_prefix[nblocks];
+  s.bin_first.assign(chunks + 1, n);
+  s.bin_first[0] = 0;
+  for (uint64_t c = 1; c < chunks; ++c) {
+    const uint64_t goal = total / chunks * c + total % chunks * c / chunks;
+    const uint64_t block =
+        std::lower_bound(s.bin_block_prefix.begin(), s.bin_block_prefix.end(), goal) -
+        s.bin_block_prefix.begin();
+    uint64_t i = 0;
+    if (block) {
+      i = (block - 1) * REF_BLOCK;
+      uint64_t seen = s.bin_block_prefix[block - 1];
+      while (i < n && seen < goal)
+        seen += s.bin_references[i++];
+    }
+    s.bin_first[c] = i;
+  }
+  s.bin_rows.resize(chunks * ntiles);
+  const auto each_reference = [&](uint64_t c, auto f) {
+    for (uint64_t i = s.bin_first[c]; i < s.bin_first[c + 1]; ++i) {
+      const auto &p = s.triangles[i];
+      if (!p.area)
+        continue;
+      for (int32_t y = p.ymin / 16; y <= p.ymax / 16; ++y)
+        for (int32_t x = p.xmin / 16; x <= p.xmax / 16; ++x)
+          f(i, uint64_t(y) * tiles_x + x);
+    }
+  };
+  s.pool.parallel(
+      chunks,
+      [&](uint64_t c) {
+        uint32_t *row = s.bin_rows.data() + c * ntiles;
+        std::fill(row, row + ntiles, 0u);
+        each_reference(c, [&](uint64_t, uint64_t tile) { ++row[tile]; });
+      },
+      1);
+  s.offsets.resize(ntiles + 1);
+  s.pool.parallel(
+      ntiles,
+      [&](uint64_t tile) {
+        uint64_t sum = 0;
+        for (uint64_t c = 0; c < chunks; ++c) {
+          uint32_t &k = s.bin_rows[c * ntiles + tile];
+          const uint32_t count = k;
+          k = static_cast<uint32_t>(sum);
+          sum += count;
+        }
+        s.offsets[tile + 1] = sum;
+      },
+      1024);
+  s.offsets[0] = 0;
+  for (uint64_t i = 0; i < ntiles; ++i)
+    s.offsets[i + 1] = checked_add(s.offsets[i], s.offsets[i + 1]);
+  require(s.offsets.back() <= SIZE_MAX / sizeof(uint32_t), "tile bins size overflow");
+  s.bins.resize(s.offsets.back());
+  s.pool.parallel(
+      chunks,
+      [&](uint64_t c) {
+        uint32_t *row = s.bin_rows.data() + c * ntiles;
+        each_reference(c, [&](uint64_t i, uint64_t tile) {
+          s.bins[s.offsets[tile] + row[tile]++] = static_cast<uint32_t>(i);
+        });
+      },
+      1);
 }
 bool create_profile(const SceneView *scene, uint32_t threads, void **out, Error *e, Times *times,
                     bool source_profile) {
@@ -221,35 +340,7 @@ bool render_cpu(void *token, const Request *request, FrameOutput *output, Error 
                     [&](uint64_t i) { setup(s.scene, r, i, s.points.data(), s.triangles[i]); });
     times->setup = elapsed(t);
     t = Clock::now();
-    std::unique_ptr<std::atomic<uint32_t>[]> counts(new std::atomic<uint32_t>[ntiles]);
-    for (uint64_t i = 0; i < ntiles; ++i)
-      counts[i] = 0;
-    s.pool.parallel(s.triangles.size(), [&](uint64_t i) {
-      const auto &p = s.triangles[i];
-      if (!p.area)
-        return;
-      for (int32_t y = p.ymin / 16; y <= p.ymax / 16; ++y)
-        for (int32_t x = p.xmin / 16; x <= p.xmax / 16; ++x)
-          counts[uint64_t(y) * tiles_x + x].fetch_add(1, std::memory_order_relaxed);
-    });
-    s.offsets.resize(ntiles + 1);
-    s.offsets[0] = 0;
-    for (uint64_t i = 0; i < ntiles; ++i) {
-      s.offsets[i + 1] = checked_add(s.offsets[i], counts[i].load());
-      counts[i] = 0;
-    }
-    require(s.offsets.back() <= SIZE_MAX / sizeof(uint32_t), "tile bins size overflow");
-    s.bins.resize(s.offsets.back());
-    s.pool.parallel(s.triangles.size(), [&](uint64_t i) {
-      const auto &p = s.triangles[i];
-      if (!p.area)
-        return;
-      for (int32_t y = p.ymin / 16; y <= p.ymax / 16; ++y)
-        for (int32_t x = p.xmin / 16; x <= p.xmax / 16; ++x) {
-          uint64_t tile = uint64_t(y) * tiles_x + x;
-          s.bins[s.offsets[tile] + counts[tile].fetch_add(1, std::memory_order_relaxed)] = i;
-        }
-    });
+    build_bins(s, tiles_x, ntiles);
     times->bins = elapsed(t);
     t = Clock::now();
     s.samples.resize(npixels);

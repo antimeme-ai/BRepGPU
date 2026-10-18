@@ -603,3 +603,10 @@ decisions (ABC download term first, as the priority-1 corpus source).
   frame is not the identity (bead .37.20, follow-on). The shared oracle file
   was landed as the lane's HEAD-plus-own-functions copy, leaving B2-ingress's
   hunks unstaged.
+- B2-display landed (results/b2-display-2026-10-17/REPORT.md) after two
+  reviews: published tile bins are canonical on CUDA (count, scan, fill, then
+  per-tile bitonic sorts: warp kernel on the full grid, persistent block kernel
+  over gathered long tiles) and on CPU (fixed-order, reference-balanced chunk
+  fill with no atomics). Never output-visible; display bytes unchanged. CUDA
+  ordering costs +0.16 to 1.85 ms; the CPU fill beats the old atomic fill on
+  every family.
