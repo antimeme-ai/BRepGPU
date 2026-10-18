@@ -158,6 +158,7 @@ self-review, and then an independent review.
 | `.37.22` | The reference exporter refuses `BREP_WITH_VOIDS` sources. | Carry voids as B1 did. |
 | `.37.23` | The reference exporter has no occurrence styles, and its vertex-loop faces fail BRepCheck. | Write occurrence styles. Handle vertex loops. |
 | `.37.25` | The reference XDE exporter refuses solids placed through `MAPPED_ITEM`. | Admit them. |
+| `.37.26` | An extra `MAPPED_ITEM` in a parent representation is translated by OCCT as geometry that never reaches `USAGES__`, so the occurrence is lost silently. | Read mapped items raw; publish each as an occurrence, or refuse it with a record. |
 
 The correctness constraint is G1's authority rule: the raw entity is
 authoritative, and OCCT serves only as an evaluator.

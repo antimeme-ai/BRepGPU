@@ -624,3 +624,12 @@ decisions (ABC download term first, as the priority-1 corpus source).
   about 10 ms), byte-identical to one-shot on 105 of 105 converted watch
   definitions. Published figures carry a one-line pre-fix mark. Every row is
   n=1; headlines need the G8 repetition, not yet built.
+- B2-ingress: first review found colour resolution and records not ready (14
+  findings, including mapped-item CDORSIs never placed); the rework fixed all
+  and on the fleet OM10 now yields 9 occurrence-style rows with none unplaced.
+  S13 decision (dispatcher): the retired legacy scene builder keeps refusing
+  OM10's one occurrence-over-face colour case by name rather than rendering a
+  wrong colour. Second review: no blocker, four should-fixes (refused faces
+  only a text record, a defaulted pole tolerance, mapped-item style
+  attribution by guesswork, unbounded path counting); round 3 running. A new
+  defect (extra mapped items dropped silently) joins B2-reader.
