@@ -3,7 +3,7 @@ project(brepgpu_reference_source LANGUAGES CXX)
 find_package(OpenCASCADE REQUIRED)
 add_executable(brepgpu-reference-source main.cpp)
 target_compile_features(brepgpu-reference-source PRIVATE cxx_std_17)
-target_include_directories(brepgpu-reference-source PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+target_include_directories(brepgpu-reference-source PRIVATE .. ${OpenCASCADE_INCLUDE_DIR})
 target_link_directories(brepgpu-reference-source PRIVATE ${OpenCASCADE_LIBRARY_DIR})
 target_link_libraries(brepgpu-reference-source PRIVATE TKDESTEP TKXCAF TKCAF TKLCAF
   TKCDF TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel)

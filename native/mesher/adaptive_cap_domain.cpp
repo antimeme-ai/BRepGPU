@@ -146,6 +146,7 @@ class CapDomainProducer final {
       }
     }
     uint64_t original_count = 0;
+    require_edge_loops(source, face);
     for (uint64_t i = 0; i < face.loops.count; ++i) {
       const auto &loop = source.loops[source.loop_index.find(source.loop_ids[face.loops.first + i]).value];
       original_count += loop.coedges.count;

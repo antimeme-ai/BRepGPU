@@ -791,6 +791,7 @@ SourceBoundarySnapshot DefinitionBoundaryForest::freeze_face_boundary(Slot<FaceT
   const auto &source = impl_->data();
   const auto &original = source.faces[face.value];
   std::pmr::vector<Slot<EdgeTag>> incident(&impl_->budget);
+  require_edge_loops(source, original);
   for (uint64_t li = 0; li < original.loops.count; ++li) {
     impl_->budget.charge(1);
     const auto loop_id = source.loop_ids[static_cast<std::size_t>(original.loops.first + li)];

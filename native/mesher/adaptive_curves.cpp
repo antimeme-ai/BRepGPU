@@ -1322,7 +1322,8 @@ struct AdaptiveBoundarySession::Impl {
           domain[2 * axis] = expanded_knot(carrier, {axis, carrier.degrees[axis]});
           domain[2 * axis + 1] = expanded_knot(carrier, {axis, carrier.control_shape[axis]});
         }
-      else
+      else {
+        require_edge_loops(source.view(), face);
         for (uint64_t li = 0; li < face.loops.count; ++li) {
           const auto &loop =
               source.view()
@@ -1353,6 +1354,7 @@ struct AdaptiveBoundarySession::Impl {
             }
           }
         }
+      }
       selected.push_back({slot, domain});
     }
     std::sort(selected.begin(), selected.end(), [&](const auto &a, const auto &b) {

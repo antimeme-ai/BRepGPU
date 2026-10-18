@@ -347,6 +347,7 @@ prepare_work_data(JobContext &context, SurfaceBoundView surface,
   }
   check_work();
   size_t use_index = 0;
+  require_edge_loops(source, face);
   for (const auto loop_id :
        std::span(source.loop_ids).subspan(face.loops.first, face.loops.count)) {
     const auto uses = source.loops[source.loop_index.find(loop_id).value].coedges;

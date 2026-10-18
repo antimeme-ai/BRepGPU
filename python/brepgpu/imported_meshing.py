@@ -12,7 +12,7 @@ from pathlib import Path
 import struct
 import time
 
-from .imported_source import ImportedSource, validate_source
+from .imported_source import ImportedSource, require_edge_loops, validate_source
 
 
 @dataclass(frozen=True)
@@ -1245,6 +1245,7 @@ def mesh_imported(source,quality=None,*,progress=None,domain_backend='native'):
         boundary_intersection,triangulate=_boundary_intersection,_triangulate
     else:raise ValueError("domain_backend must be 'native', 'direct' or 'python'")
     begin=time.perf_counter();validate_source(source)
+    for face in source.faces:require_edge_loops(source,face)
     vertices=[];triangles=[];face_meshes=[];edge_samples=[]
     vertex_by_key={};endpoint_keys={};edge_records={};incidents={};edge_owners={}
     parameters={};mandatory={};contexts={};edge_bounds={}

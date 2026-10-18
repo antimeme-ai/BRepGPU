@@ -1,4 +1,5 @@
 #include "scene_view.hpp"
+#include "assembly.hpp"
 #include "../om10/validation.hpp"
 #include "geometry_enclosure.hpp"
 #include <algorithm>
@@ -266,6 +267,27 @@ public:
       instance.id = i + 1;
       instance.definition = narrow(original.definition.value - 1);
       instance.reserved = narrow(original.appearance.value);
+      // CAx-IF precedence (assembly.hpp): an occurrence style that beats the
+      // definition's face styles, or a per-occurrence face style, needs a
+      // colour-variant definition, which this builder does not make. Refuse.
+      {
+        std::pmr::vector<OccurrenceFaceStyle> faces(&budget);
+        const auto style = occurrence_style(
+            source,
+            std::span<const UsageId>(mesh.usage_paths).subspan(original.path.first, original.path.count), budget,
+            &faces);
+        const auto &record = out.definitions[instance.definition];
+        const bool face_styled = std::any_of(
+            out.triangles.begin() + static_cast<std::ptrdiff_t>(record.first_triangle),
+            out.triangles.begin() +
+                static_cast<std::ptrdiff_t>(record.first_triangle + record.triangle_count),
+            [](const auto &t) { return t.material != UINT32_MAX; });
+        if (!faces.empty() || (style.over_faces && face_styled))
+          throw Error(ErrorCode::unsupported,
+                      "native display occurrence " + std::to_string(i + 1) +
+                          " needs a colour-variant definition (its occurrence style beats face "
+                          "styles); this scene builder keeps one material per triangle");
+      }
       std::copy(original.matrix.begin(), original.matrix.end(), instance.matrix);
       const auto &explosion =
           presentation.explosion.empty() ? original.explosion : presentation.explosion[i];

@@ -27,7 +27,8 @@ class ImportedSourceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             path=Path(td)/'source.bin';write_source(metadata_fixture(),path);raw=path.read_bytes()
             corruptions=[raw[:cut] for cut in (0,8,87,len(raw)-1)]
-            version=bytearray(raw);struct.pack_into('<I',version,8,2);corruptions.append(version)
+            for wrong in (1,3):  # the format is version 2 since B2-ingress
+                version=bytearray(raw);struct.pack_into('<I',version,8,wrong);corruptions.append(version)
             rows=bytearray(raw);struct.pack_into('<Q',rows,96,2**64-1);corruptions.append(rows)
             corruptions.append(raw+b'\0')
             for data in corruptions:

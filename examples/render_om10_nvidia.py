@@ -21,7 +21,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'python'),str(ROOT/'examples'),str(ROOT/'scripts')]
 from brepgpu.imported_assembly import assemble
 from brepgpu.nvidia_reference import (load_definition, write_assembly, load_native_model_match,
-                                     qualify_physical_definition)
+                                     qualify_physical_definition, IncompleteSourceDefinition)
 from om10_scene import PALETTE, authored_material, labeled_svg, visible_anchors, write_png
 from render_om10 import callouts
 from measurement_lane import (Lane, Recorder, bound, ensure_bound, format_cpus, lane_cpus,
@@ -91,6 +91,37 @@ def refuse(value,message):
 
 def require(value,message):
     if not value:raise ValueError(message)
+
+
+PHYSICAL_COLUMNS=('definition_id','status','vertices','edges','triangles','euler','message')
+
+
+def incomplete_source(matched,source_hash):
+    """The native source's definitions that are incomplete at the source (a face refused,
+    D-partial-output), read before NVIDIA's ingress; () without a native source. Ours."""
+    if not (Path(matched)/'model.tsv').is_file():return (),None
+    from brepgpu.imported_source import load_source,DEFINITION_COMPLETE
+    try:source=load_source(Path(matched)/'source.bgsource')
+    except (ValueError,OSError) as error:raise HarnessRefusal(f'matched input admission: {error}') from error
+    refuse(source.source_sha256==source_hash,'matched native source digest differs from the STEP')
+    return tuple(d.id for d in source.definitions if d.status!=DEFINITION_COMPLETE),source
+
+
+def physical_row(mesh,native_match,definition_id):
+    """One physical.tsv row: our admission of NVIDIA's mesh. A definition incomplete at the
+    source is NOT_EVALUATED (ours), never FAIL against NVIDIA."""
+    try:
+        if native_match is not None:
+            stats=qualify_physical_definition(mesh,native_match.source,native_match.source.definition(definition_id))
+        else:
+            from brepgpu.imported_oracles import qualify_physical_solid
+            stats=qualify_physical_solid(dict(zip(mesh.physical_keys,mesh.points)),
+                tuple(tuple(mesh.physical_keys[i] for i in t) for t in mesh.triangles))
+        return (definition_id,'PASS',stats['vertices'],stats['edges'],stats['triangles'],stats['euler'],'')
+    except IncompleteSourceDefinition as error:
+        return (definition_id,'NOT_EVALUATED',0,0,0,0,f'{error}; ours, not an NVIDIA outcome')
+    except Exception as error:
+        return (definition_id,'FAIL',0,0,0,0,str(error))
 
 
 def digest(path):
@@ -646,6 +677,16 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
     # G8 §7.1, shared policy with owned runs: the STEP file's pages are dropped
     # immediately before each ingress and residency is recorded (libraries
     # recorded, not dropped).
+    # A source definition incomplete at ingress (a face refused at the source) is
+    # our refusal: NVIDIA receives no input, and no physical row can read FAIL.
+    incomplete,native_source=incomplete_source(args.matched,source_hash)
+    if incomplete:
+        tsv(args.output/'physical.tsv',PHYSICAL_COLUMNS,
+            ((d.id,'NOT_EVALUATED',0,0,0,0,'definition incomplete at the source (a face refused); NVIDIA not run'
+              if d.id in incomplete else 'NVIDIA not run: the source has incomplete definitions')
+             for d in native_source.definitions))
+        raise IngressRefusal(f'source definitions {list(incomplete)} are incomplete at the source (faces refused, '
+                             'D-partial-output); NVIDIA receives no input')
     residency['before_nvidia_ingress']=prepare_ingress_cache(args.step,(args.nvidia_ingress,))
     # NVIDIA's ingress: the minimal STEP->.brep an OCCT user runs, timed fork
     # to exit like owned ingress. Its files are the input NVIDIA consumes.
@@ -804,23 +845,14 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
         decode=time.perf_counter()-start
         start=time.perf_counter();physical=[]
         kind='shell_and_original_source_euler' if native_match is not None else 'shell_only'
-        for mesh in meshes:
-            try:
-                if native_match is not None:
-                    stats=qualify_physical_definition(mesh,native_match.source,
-                                                      native_match.source.definition(mesh.id))
-                else:
-                    from brepgpu.imported_oracles import qualify_physical_solid
-                    stats=qualify_physical_solid(dict(zip(mesh.physical_keys,mesh.points)),
-                        tuple(tuple(mesh.physical_keys[i] for i in t) for t in mesh.triangles))
-                physical.append((mesh.id,'PASS',stats['vertices'],stats['edges'],stats['triangles'],stats['euler'],''))
-            except Exception as error:
-                physical.append((mesh.id,'FAIL',0,0,0,0,str(error)))
+        for mesh in meshes:physical.append(physical_row(mesh,native_match,mesh.id))
         admission=time.perf_counter()-start
         times.append(('all_definition_physical_shell_source_euler_admission',admission,'admission'))
-    tsv(args.output/'physical.tsv',('definition_id','status','vertices','edges','triangles','euler','message'),physical)
+    tsv(args.output/'physical.tsv',PHYSICAL_COLUMNS,physical)
     scopes.append(('physical_admission','admission',admission,'our admission of NVIDIA output; never NVIDIA time',False))
     write_scopes(args.output,scopes)
+    if any(r[1]=='NOT_EVALUATED' for r in physical):
+        raise IngressRefusal('a source definition is incomplete at the source; physical admission not evaluated')
     require(all(r[1]=='PASS' for r in physical),'reference physical shell/source-Euler admission failed')
     # NVIDIA's geometry identity, written with its admission so a driver can
     # re-qualify it even when our later work fails.

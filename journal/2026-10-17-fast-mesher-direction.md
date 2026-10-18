@@ -633,3 +633,13 @@ decisions (ABC download term first, as the priority-1 corpus source).
   only a text record, a defaulted pole tolerance, mapped-item style
   attribution by guesswork, unbounded path counting); round 3 running. A new
   defect (extra mapped items dropped silently) joins B2-reader.
+- B2-ingress landed (results/b2-ingress-2026-10-17/REPORT.md) after three
+  reviews and four rounds: units and uncertainty resolved per context from unit
+  entities; vertex loops carried and refused per face under OCCT's own rule
+  with structural face/loop/solid statuses (source format version 2); colours
+  read from every styled item with CAx-IF precedence, occurrence styles in a
+  new table, colour variants keyed on resolved materials; typed diagnostics and
+  a truthful translation label. An incomplete source definition is now our
+  ingress refusal, never NVIDIA's failure. Corpus 230→232 accepted with no
+  accepted→refused moves; OM10 unchanged apart from its 9 occurrence styles now
+  read. Seven follow-on defects filed; six go to B2-reader, one to M8.

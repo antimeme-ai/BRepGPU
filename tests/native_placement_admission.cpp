@@ -44,8 +44,8 @@ void row(Bytes &out, const Bytes &value) {
 }
 // Root product 100 places product 101 once through usage 99.
 Bytes source_with_usage(const Matrix &matrix) {
-  std::array<Bytes, 13> payloads;
-  std::array<uint64_t, 13> counts{};
+  std::array<Bytes, 14> payloads;
+  std::array<uint64_t, 14> counts{};
   Bytes value;
   text(value, "placement admission probe");
   row(payloads[0], value);
@@ -70,20 +70,20 @@ Bytes source_with_usage(const Matrix &matrix) {
     number(value, x);
   row(payloads[3], value);
   counts[3] = 1;
-  constexpr std::array<std::string_view, 13> tags{
+  constexpr std::array<std::string_view, 14> tags{
       "META____", "PRODUCTS", "SOLIDS__", "USAGES__", "VERTICES", "EDGES___", "COEDGES_",
-      "LOOPS___", "FACES___", "CARRIERS", "CURVES__", "STYLES__", "DIAGS___"};
+      "LOOPS___", "FACES___", "CARRIERS", "CURVES__", "STYLES__", "DIAGS___", "OCCSTYLE"};
   Bytes out;
   for (char c : std::string_view("BGSRC001"))
     out.push_back(static_cast<std::byte>(c));
-  word(out, 1, 4);
+  word(out, 2, 4);
   word(out, 0, 4);
   for (unsigned i = 0; i < 32; ++i)
     out.push_back(static_cast<std::byte>(i));
   number(out, 1);
   number(out, 0);
   word(out, 100);
-  word(out, 13, 4);
+  word(out, 14, 4);
   word(out, 0, 4);
   uint64_t size = 88;
   for (const auto &payload : payloads)

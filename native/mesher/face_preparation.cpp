@@ -171,6 +171,7 @@ struct FaceBoundaryPreparation::Impl final {
     // proposal can index the immutable native transport.
     std::pmr::vector<Slot<EdgeTag>> expected(&budget);
     const auto &face = source().faces[request.face.value];
+    require_edge_loops(source(), face);
     for (const auto id : slice(source().loop_ids, face.loops)) {
       const auto &loop = source().loops[source().loop_index.find(id).value];
       for (const auto use : slice(source().coedge_ids, loop.coedges))
@@ -259,6 +260,7 @@ struct FaceBoundaryPreparation::Impl final {
       invalid("face preparation source slot outside table");
     const auto &face = source().faces[request.face.value];
     uint32_t quotient_count = 0;
+    require_edge_loops(source(), face);
     for (const auto loop_id : slice(source().loop_ids, face.loops)) {
       const auto &loop = source().loops[source().loop_index.find(loop_id).value];
       for (const auto use_id : slice(source().coedge_ids, loop.coedges)) {

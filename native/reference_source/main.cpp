@@ -1,5 +1,20 @@
 // Separate original-source boundary for the external CPU reference. No product
 // source, owned mesh, foreign mesher or occurrence transform is involved.
+#include "step_units.hpp"
+#include "step_styles.hpp"
+#include "step_vertex_loops.hpp"
+#include <BRepBndLib.hxx>
+#include <Bnd_Box.hxx>
+#include <StepGeom_CartesianPoint.hxx>
+#include <StepShape_EdgeCurve.hxx>
+#include <StepShape_EdgeLoop.hxx>
+#include <StepShape_FaceBound.hxx>
+#include <StepShape_OrientedEdge.hxx>
+#include <StepShape_VertexLoop.hxx>
+#include <StepShape_VertexPoint.hxx>
+#include <StepShape_BrepWithVoids.hxx>
+#include <StepShape_OrientedClosedShell.hxx>
+#include <TopoDS_Wire.hxx>
 #include <STEPCAFControl_Reader.hxx>
 #include <STEPConstruct_Styles.hxx>
 #include <STEPConstruct_RenderingProperties.hxx>
@@ -109,12 +124,6 @@ int main(int argc,char** argv){
     auto digest=sha256(input);
     STEPCAFControl_Reader reader;reader.SetNameMode(true);reader.SetColorMode(true);reader.SetMatMode(true);reader.SetPropsMode(true);
     if(reader.ReadFile(argv[1])!=IFSelect_RetDone)throw std::runtime_error("original STEP read failed");
-    NCollection_Sequence<TCollection_AsciiString> lengths,angles,solid_angles;
-    reader.ChangeReader().FileUnits(lengths,angles,solid_angles);
-    if(lengths.IsEmpty())throw std::runtime_error("original STEP has no representation length unit");
-    for(int i=1;i<=lengths.Length();++i){std::string u=lengths(i).ToCString();
-      if(u!="millimetre"&&u!="millimeter"&&u!="mm")throw std::runtime_error("reference export requires original millimetre units: "+u);}
-    reader.ChangeReader().SetSystemLengthUnit(1.0);
     const auto read_end=Clock::now();
     reader.SetShapeProcessFlags(ShapeProcess::OperationsFlags());
     auto require_no_processing=[&](const char* stage){
@@ -124,10 +133,21 @@ int main(int argc,char** argv){
     };
     require_no_processing("before_transfer");
     Handle(TDocStd_Document) doc;XCAFApp_Application::GetApplication()->NewDocument("BinXCAF",doc);
+    namespace units=brepgpu::step_units;
+    units::prepare_millimetre_transfer(doc);
     if(!reader.Transfer(doc))throw std::runtime_error("original STEP/XDE transfer failed");
     require_no_processing("after_transfer");
     const auto transfer_end=Clock::now();
     auto model=Handle(StepData_StepModel)::DownCast(reader.Reader().WS()->Model());
+    units::require_transferred_millimetre(doc,model);
+    // Length units per context from the unit entities, never names; the same
+    // millimetre-only rule and contexts as the STEP source adapter.
+    const units::RepresentationGraph representations(reader.Reader().WS()->Graph());
+    {std::map<U,Handle(StepRepr_Representation)> governed;
+     for(const auto& rep:units::product_representations(model))governed.emplace(units::label(model,rep),rep);
+     for(int i=1;i<=model->NbEntities();++i)if(auto s=Handle(StepShape_ManifoldSolidBrep)::DownCast(model->Value(i));!s.IsNull()){
+       auto users=reader.Reader().WS()->Graph().Sharings(s);for(users.Start();users.More();users.Next())if(auto rep=Handle(StepShape_ShapeRepresentation)::DownCast(users.Value());!rep.IsNull())for(const auto& r:representations.transfer_path(rep))governed.emplace(units::label(model,r),r);}
+     for(const auto& g:governed)units::require_millimetre(model,g.second,units::context_length(model,g.second));}
     auto process=reader.Reader().WS()->TransferReader()->TransientProcess();
     auto shape_tool=XCAFDoc_DocumentTool::ShapeTool(doc->Main());
     auto id=[&](const Handle(Standard_Transient)& e)->U{if(e.IsNull())return 0;int n=model->IdentLabel(e);if(n<=0)throw std::runtime_error("missing original STEP label");return U(n);};
@@ -136,29 +156,33 @@ int main(int argc,char** argv){
     std::map<U,TopoDS_Shape> solids;
     std::vector<Handle(StepBasic_ProductDefinition)> products;
     std::vector<Handle(StepRepr_NextAssemblyUsageOccurrence)> usages;
-    std::set<U> parents,children;double uncertainty=0;
+    std::set<U> parents,children;double uncertainty=0;std::map<U,std::optional<double>> usable_uncertainty;
     for(int i=1;i<=model->NbEntities();++i){auto e=model->Value(i);
-      if(auto s=Handle(StepShape_ManifoldSolidBrep)::DownCast(e);!s.IsNull()){raw_solids[id(s)]=s;solids[id(s)]=shape(s);}
+      if(auto s=Handle(StepShape_ManifoldSolidBrep)::DownCast(e);!s.IsNull()){raw_solids[id(s)]=s;solids[id(s)]=shape(s);
+        // The solid's B-rep context governs its uncertainty, in mm (G6 UR-7),
+        // chosen as the STEP source adapter chooses it; the header maximum
+        // takes only usable values (UR-7: one below the floor makes no claim).
+        const auto held=units::held_uncertainty(model,representations.holders(s));auto& usable=usable_uncertainty[id(s)];
+        if(held.governing.governed){Bnd_Box box;BRepBndLib::Add(solids[id(s)],box);const double diagonal=box.IsVoid()?0.:std::sqrt(box.SquareExtent());
+          if(units::uncertainty_usable(held.governing.mm,diagonal)){usable=held.governing.mm;uncertainty=std::max(uncertainty,held.governing.mm);}}}
       if(auto p=Handle(StepBasic_ProductDefinition)::DownCast(e);!p.IsNull())products.push_back(p);
       if(auto u=Handle(StepRepr_NextAssemblyUsageOccurrence)::DownCast(e);!u.IsNull()){usages.push_back(u);parents.insert(id(u->RelatingProductDefinition()));children.insert(id(u->RelatedProductDefinition()));}
-      if(auto u=Handle(StepBasic_UncertaintyMeasureWithUnit)::DownCast(e);!u.IsNull()){if(!std::isfinite(u->ValueComponent())||u->ValueComponent()<0)throw std::runtime_error("invalid original uncertainty");uncertainty=std::max(uncertainty,u->ValueComponent());}
     }
     if(solids.empty())throw std::runtime_error("no original solid definitions");
-    std::map<U,Style> styles;std::map<U,U> targets,product_solids,solid_products;
-    STEPConstruct_Styles style_reader(reader.Reader().WS());style_reader.LoadStyles();
-    for(int i=1;i<=style_reader.NbStyles();++i){auto s=style_reader.Style(i);Style d;d.id=id(s);d.sources={d.id};
-      Handle(StepVisual_Colour) sc,bc,cc;STEPConstruct_RenderingProperties rendering;bool component=false;
-      if(style_reader.GetColors(s,sc,bc,cc,rendering,component)){Quantity_Color color;auto chosen=!sc.IsNull()?sc:(!bc.IsNull()?bc:cc);
-        if(!chosen.IsNull()&&STEPConstruct_Styles::DecodeColor(chosen,color)){d.rgba={color.Red(),color.Green(),color.Blue(),1-rendering.Transparency()};d.color=true;d.sources.push_back(id(chosen));}}
-      styles[d.id]=d;if(!s->Item().IsNull())targets[id(s->Item())]=d.id;
-    }
+    std::map<U,Style> styles;std::map<U,U> product_solids,solid_products;
+    // The same styles as the STEP source adapter (native/step_styles.hpp), so
+    // the reference and owned sources agree style for style. Per-occurrence
+    // styles have no table here.
+    brepgpu::step_styles::Resolver style_resolver(model,reader.Reader().WS());
+    for(const auto& c:style_resolver.colours()){Style d;d.id=c.id;d.sources=c.sources;d.rgba={c.rgba[0],c.rgba[1],c.rgba[2],c.rgba[3]};d.color=c.color;styles[d.id]=d;}
     std::map<std::string,std::vector<Bytes>> tables;
     std::vector<U> roots;
     for(auto& p:products){U pi=id(p);if(!children.count(pi))roots.push_back(pi);auto ps=shape(p);
       if(!parents.count(pi)){std::set<U> matches;for(TopExp_Explorer ex(ps,TopAbs_SOLID);ex.More();ex.Next())for(auto& s:solids)if(ex.Current().IsSame(s.second))matches.insert(s.first);
         if(matches.size()!=1)throw std::runtime_error("leaf product #"+std::to_string(pi)+" does not bind exactly one original solid");
         U si=*matches.begin();if(solid_products.count(si))throw std::runtime_error("original solid has multiple leaf products #"+std::to_string(si));product_solids[pi]=si;solid_products[si]=pi;}
-      U style=product_solids.count(pi)?targets[product_solids.at(pi)]:0;TDF_Label label;shape_tool->Search(ps,label,true,true,false);
+      std::set<U> part_reps;if(product_solids.count(pi))for(const auto& holder:representations.holders(raw_solids.at(product_solids.at(pi))))for(const auto& rep:representations.transfer_path(holder))part_reps.insert(units::label(model,rep));
+      U style=style_resolver.product_style(pi,part_reps,product_solids.count(pi)?product_solids.at(pi):0);TDF_Label label;shape_tool->Search(ps,label,true,true,false);
       if(!label.IsNull()){Handle(TDataStd_TreeNode) node;if(label.FindAttribute(XCAFDoc::MaterialRefGUID(),node)&&node->HasFather()){
         Handle(TCollection_HAsciiString) name,description,unit,type;double density=0;
         if(XCAFDoc_MaterialTool::GetMaterial(node->Father()->Label(),name,description,density,unit,type)){Style d;if(style)d=styles.at(style);d.id=(U(1)<<62)|pi;d.sources.push_back(pi);d.material=text(name);d.unit=text(unit)+" "+text(type);d.density=density;d.density_set=true;styles[d.id]=d;style=d.id;}}}
@@ -166,7 +190,7 @@ int main(int argc,char** argv){
       Bytes w;w.u64(pi);w.u64(product_solids.count(pi)?product_solids.at(pi):0);w.u64(style);w.text(name);w.text(text(product->Id()));tables["PRODUCTS"].push_back(w);
     }
     if(roots.size()!=1||solid_products.size()!=solids.size())throw std::runtime_error("ambiguous root or unowned original solid");
-    for(auto& u:usages){Bytes w;w.u64(id(u));w.u64(id(u->RelatingProductDefinition()));w.u64(id(u->RelatedProductDefinition()));w.u64(targets[id(u)]);w.text(text(u->Name()));w.doubles(matrix(shape(u).Location().Transformation()));tables["USAGES__"].push_back(w);}
+    for(auto& u:usages){Bytes w;w.u64(id(u));w.u64(id(u->RelatingProductDefinition()));w.u64(id(u->RelatedProductDefinition()));w.u64(0);w.text(text(u->Name()));w.doubles(matrix(shape(u).Location().Transformation()));tables["USAGES__"].push_back(w);}
     for(auto& s:styles)tables["STYLES__"].push_back(s.second.bytes());
     const auto graph_end=Clock::now();
     std::filesystem::path directory(argv[2]);
@@ -193,14 +217,61 @@ int main(int argc,char** argv){
         if(translated.Orientation()!=expected_orientation||actual_orientations.at(index)!=expected_orientation)
           throw std::runtime_error("translated result or exported solid face orientation disagrees with original #"+std::to_string(fi));
         row.u64(fi);row.u64(id(f->FaceGeometry()));row.u64(U(set.NbShapes()-index+1));row.i32(f->SameSense()?1:-1);row.u32(0);
-        Bytes style;style.u64(fi);style.u64(targets[fi]);tables["FACE_STY"].push_back(style);++total_faces;
+        Bytes style;style.u64(fi);style.u64(style_resolver.item_style(fi));tables["FACE_STY"].push_back(style);++total_faces;
       }
       if(actual_faces!=mapped_faces)throw std::runtime_error("exported solid face inventory differs from original #"+std::to_string(si));
       auto temporary=directory/(filename+".tmp");std::ofstream out(temporary,std::ios::binary);if(!out)throw std::runtime_error("cannot write definition #"+std::to_string(si));
       set.Write(out);set.Write(solid,out);out.flush();if(!out||out.tellp()>std::streamoff(256)*1024*1024)throw std::runtime_error("definition write failed or exceeds official256MiB limit #"+std::to_string(si));out.close();if(!out)throw std::runtime_error("definition close failed #"+std::to_string(si));
       std::filesystem::rename(temporary,directory/filename);tables["DEFS____"].push_back(row);
     }
-    const auto export_end=Clock::now();Bytes meta;meta.text("owned reference source v2; OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; shape-processing=none; set-after-read; asserted-before-and-after-transfer");meta.u32(4);meta.u32(0);
+    // The reference format has no diagnostics or occurrence-style table
+    // (occurrence styles there: bead brepgpu-12s.37.23). What the resolver
+    // found, the occurrence styles not carried, and the vertex-loop faces OCCT
+    // exported that the STEP source adapter refuses are records in
+    // records.tsv beside the manifest (stage, severity, space-separated ids,
+    // message), and are also said on stdout.
+    std::vector<std::string> records{"stage\tseverity\tids\tmessage"};
+    auto record=[&](const std::string& stage,std::uint32_t severity,const std::vector<U>& ids,const std::string& message){std::string line=stage+'\t'+std::to_string(severity)+'\t';for(std::size_t k=0;k<ids.size();++k)line+=(k?" ":"")+std::to_string(ids[k]);records.push_back(line+'\t'+message);};
+    // The adapter's vertex-loop rule (native/step_vertex_loops.hpp) on the
+    // faces this export writes: OCCT's face is exported as translated; a face
+    // the adapter would refuse is recorded with its reason.
+    U refused_exported=0;
+    // Every shell of a solid, the outer one and each BREP_WITH_VOIDS void, as
+    // the STEP source adapter walks them (the export itself still walks the
+    // outer shell only; a void solid is refused at its face inventory above).
+    auto shell_sets=[&](const Handle(StepShape_ManifoldSolidBrep)& raw){std::vector<Handle(StepShape_ConnectedFaceSet)> sets;
+      if(auto outer=Handle(StepShape_OrientedClosedShell)::DownCast(raw->Outer());!outer.IsNull())sets.push_back(outer->ClosedShellElement());else sets.push_back(raw->Outer());
+      if(auto with_voids=Handle(StepShape_BrepWithVoids)::DownCast(raw);!with_voids.IsNull())for(int k=1;k<=with_voids->NbVoids();++k)if(!with_voids->VoidsValue(k).IsNull())sets.push_back(with_voids->VoidsValue(k)->ClosedShellElement());
+      sets.erase(std::remove_if(sets.begin(),sets.end(),[](const auto& set){return set.IsNull();}),sets.end());return sets;};
+    for(auto& entry:raw_solids)for(const auto& set:shell_sets(entry.second))for(int i=1;i<=set->NbCfsFaces();++i){auto f=Handle(StepShape_AdvancedFace)::DownCast(set->CfsFacesValue(i));if(f.IsNull())continue;
+      std::vector<Handle(StepShape_VertexLoop)> loops;std::vector<TopoDS_Shape> edges;
+      for(int b=1;b<=f->NbBounds();++b){auto bound=f->BoundsValue(b)->Bound();if(auto loop=Handle(StepShape_VertexLoop)::DownCast(bound);!loop.IsNull()){loops.push_back(loop);continue;}
+        if(auto loop=Handle(StepShape_EdgeLoop)::DownCast(bound);!loop.IsNull())for(int k=1;k<=loop->NbEdgeList();++k)if(auto curve=Handle(StepShape_EdgeCurve)::DownCast(loop->EdgeListValue(k)->EdgeElement());!curve.IsNull())edges.push_back(TransferBRep::ShapeResult(process,curve));}
+      if(loops.empty())continue;
+      const auto face=TopoDS::Face(shape(f));std::vector<TopoDS_Wire> remaining;
+      for(TopExp_Explorer w(face,TopAbs_WIRE);w.More();w.Next()){bool edge_loop=false;for(TopExp_Explorer e(w.Current(),TopAbs_EDGE);e.More()&&!edge_loop;e.Next())for(const auto& edge:edges)if(!edge.IsNull()&&e.Current().IsSame(edge)){edge_loop=true;break;}if(!edge_loop)remaining.push_back(TopoDS::Wire(w.Current()));}
+      std::vector<std::pair<std::vector<U>,std::string>> refusals;std::set<U> refused;
+      for(const auto& loop:loops){auto pole=Handle(StepShape_VertexPoint)::DownCast(loop->LoopVertex());auto point=pole.IsNull()?Handle(StepGeom_CartesianPoint)():Handle(StepGeom_CartesianPoint)::DownCast(pole->VertexGeometry());
+        if(point.IsNull()||point->NbCoordinates()!=3){refusals.push_back({{id(f),id(loop),id(pole)},"its vertex is not a vertex_point on a cartesian_point (AP242 advanced_face WR6)"});refused.insert(id(loop));continue;}
+        const auto translated=TransferBRep::ShapeResult(process,pole);const TopoDS_Vertex vertex=translated.IsNull()?TopoDS_Vertex():TopoDS::Vertex(translated);
+        // The raw coordinates are millimetres as they stand: the unit gate above
+        // admits only contexts whose length unit resolves to 1 mm (mm-only until
+        // M8, bead brepgpu-12s.25.6), so the length factor here is 1.
+        auto assessed=brepgpu::step_vertex_loops::assess(face,remaining,f->NbBounds(),vertex,gp_Pnt(point->CoordinatesValue(1),point->CoordinatesValue(2),point->CoordinatesValue(3)),usable_uncertainty[entry.first]);
+        if(assessed.reason!=brepgpu::step_vertex_loops::Reason::admitted){refusals.push_back({{id(f),id(loop),id(pole)},std::string(brepgpu::step_vertex_loops::name(assessed.reason))+": "+assessed.refusal});refused.insert(id(loop));}}
+      if(!remaining.empty())for(const auto& loop:loops)if(!refused.count(id(loop))){refusals.push_back({{id(f),id(loop),id(loop->LoopVertex())},"translation_differs: OCCT made a wire on this face that its vertex-loop rule does not explain"});refused.insert(id(loop));}
+      if(!refusals.empty())++refused_exported;
+      for(const auto& r:refusals){record("source_face_refused",1,r.first,r.second+"; exported as OCCT translated it, which the STEP source adapter refuses");std::cout<<"reference_face_refused\t"<<r.first[0]<<'\t'<<r.first[1]<<'\t'<<r.first[2]<<"\n";}}
+    std::cout<<"reference_faces_refused_by_adapter\t"<<refused_exported<<"\n";
+    {auto face_on=[&](U product,U face_id){auto solid=product_solids.find(product);if(solid==product_solids.end())return false;
+       for(const auto& set:shell_sets(raw_solids.at(solid->second)))for(int k=1;k<=set->NbCfsFaces();++k)if(id(set->CfsFacesValue(k))==face_id)return true;return false;};
+     const auto rows=style_resolver.occurrences(roots[0],face_on);style_resolver.finish();
+     for(const auto& note:style_resolver.notes){std::cout<<"reference_style_note\t"<<note.stage;for(U i:note.ids)std::cout<<'\t'<<i;std::cout<<'\t'<<note.message<<"\n";record(note.stage,note.severity,note.ids,note.message);}
+     for(const auto& row:rows){std::cout<<"reference_occurrence_style_not_carried\t"<<row.style<<'\t'<<row.face;for(U u:row.path)std::cout<<'\t'<<u;std::cout<<"\n";
+       std::vector<U> ids{row.style,row.face};ids.insert(ids.end(),row.path.begin(),row.path.end());record("reference_occurrence_style_not_carried",1,ids,"occurrence style (style, face, usage path) that the reference format does not carry");}
+     std::cout<<"reference_occurrence_styles_not_carried\t"<<rows.size()<<"\n";std::cout<<"style_path_work\t"<<style_resolver.path_work()<<"\n";}
+    {auto temporary=directory/"records.tsv.tmp";std::ofstream out(temporary);for(const auto& line:records)out<<line<<"\n";out.close();if(!out)throw std::runtime_error("reference records write failed");std::filesystem::rename(temporary,directory/"records.tsv");}
+    const auto export_end=Clock::now();Bytes meta;meta.text("owned reference source v4; OCCT b8f597c677811d1f9f4d8a97f5ae2825c0353a42; context-units; shape-processing=translation-only; OCCT translation without ShapeProcess (empty bitset set after read, asserted before and after transfer); OCCT translation-layer edits apply: E1-E16, G1-G22, T1-T8, U1-U4, P1-P4, R1-R3 of papers/2026-10-17-occt-ingress-translation-edits.md section 2.1");meta.u32(4);meta.u32(0);
     meta.doubles({seconds(begin,read_end),seconds(read_end,transfer_end),seconds(transfer_end,graph_end),seconds(graph_end,export_end)});tables["META____"].push_back(meta);
     const std::vector<std::string> tags={"META____","PRODUCTS","DEFS____","USAGES__","STYLES__","FACE_STY"};Bytes body;
     for(auto& tag:tags){Bytes rows;for(auto& r:tables[tag])rows.row(r);body.raw(tag);body.u64(tables[tag].size());body.u64(rows.v.size());body.v.insert(body.v.end(),rows.v.begin(),rows.v.end());}

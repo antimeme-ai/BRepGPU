@@ -74,7 +74,6 @@ struct Quality final {
 struct PathFrame final {
   Slot<ProductTag> product;
   Matrix transform;
-  StyleId style;
   std::size_t next = 0;
   bool emitted = false;
 };
@@ -82,7 +81,67 @@ struct PathFrame final {
 AssemblyData::AssemblyData(std::shared_ptr<RunResource> owner, SourceStore original,
                            ExactTable exact)
     : resource(std::move(owner)), source(std::move(original)), values(std::move(exact)),
-      definitions(resource.get()), instances(resource.get()), paths(resource.get()) {}
+      definitions(resource.get()), instances(resource.get()), paths(resource.get()),
+      face_styles(resource.get()) {}
+
+OccurrenceStyleResult occurrence_style(const SourceData &source, std::span<const UsageId> path,
+                                       bgfd::Budget &budget,
+                                       std::pmr::vector<OccurrenceFaceStyle> *faces) {
+  auto usage = [&](UsageId id) -> const Usage & {
+    return source.usages[source.usage_index.find(id).value];
+  };
+  auto product = [&](ProductId id) -> const Product & {
+    return source.products[source.product_index.find(id).value];
+  };
+  // Only a style with a colour takes precedence; a material-only or null
+  // style never repaints what lies under it.
+  auto coloured = [&](StyleId id) {
+    return id && source.styles[source.style_index.find(id).value].has_color;
+  };
+  StyleId best{};
+  std::size_t depth = 0;
+  bool row = false;
+  for (std::size_t i = 0; i < path.size(); ++i) {
+    budget.charge(1);
+    if (coloured(usage(path[i]).style_id) && i + 1 > depth) {
+      best = usage(path[i]).style_id;
+      depth = i + 1;
+      row = false;
+    }
+  }
+  // Deeper (more specific) occurrence styles win: our rule; the adapter
+  // records nested ones that disagree without an override link.
+  for (const auto &occurrence : source.occurrence_styles) {
+    budget.charge(1 + occurrence.path.count);
+    const auto prefix = std::span<const UsageId>(source.usage_ids)
+                            .subspan(occurrence.path.first, occurrence.path.count);
+    const bool on_path = prefix.size() <= path.size() &&
+                         std::equal(prefix.begin(), prefix.end(), path.begin());
+    if (!on_path || !coloured(occurrence.style))
+      continue;
+    if (occurrence.face) {
+      if (faces && prefix.size() == path.size())
+        faces->push_back({occurrence.face, occurrence.style});
+      continue;
+    }
+    if (prefix.size() > depth || (prefix.size() == depth && !row)) {
+      best = occurrence.style;
+      depth = prefix.size();
+      row = true;
+    }
+  }
+  if (best)
+    return {best, true};
+  // Plain styles: the outermost assembly node with a colour wins over the part.
+  auto current = source.root_product_id;
+  for (const auto id : path) {
+    budget.charge(1);
+    if (const auto style = product(current).style_id; coloured(style))
+      return {style, true};
+    current = usage(id).child_product_id;
+  }
+  return {product(current).style_id, false};
+}
 
 AssemblyStore prepare_assembly(bgfd::Budget &budget, const SourceStore &source,
                                const std::shared_ptr<RunResource> &resource,
@@ -142,9 +201,10 @@ AssemblyStore prepare_assembly(bgfd::Budget &budget, const SourceStore &source,
     allowances.push_back({quality.positional, quality.node_source});
   std::pmr::vector<NativeInstance> instances(resource.get());
   std::pmr::vector<UsageId> paths(resource.get()), path(&budget);
+  std::pmr::vector<OccurrenceFaceStyle> face_styles(resource.get());
   std::pmr::vector<PathFrame> stack(&budget);
   const auto root = original.product_index.find(original.root_product_id);
-  stack.push_back({root, identity(budget), original.products[root.value].style_id});
+  stack.push_back({root, identity(budget)});
   while (!stack.empty()) {
     budget.charge(1);
     auto &frame = stack.back();
@@ -171,7 +231,11 @@ AssemblyStore prepare_assembly(bgfd::Budget &budget, const SourceStore &source,
           selected.node = std::move(node);
         const Range<UsageId> stored_path{paths.size(), path.size()};
         paths.insert(paths.end(), path.begin(), path.end());
-        instances.push_back({product.id, definition, stored_path, stored, frame.style});
+        const auto first_face_style = face_styles.size();
+        const auto style = occurrence_style(original, path, budget, &face_styles);
+        instances.push_back({product.id, definition, stored_path, stored, style.style,
+                             style.over_faces,
+                             {first_face_style, face_styles.size() - first_face_style}});
       }
     }
     const auto children_range = adjacency[frame.product.value];
@@ -185,14 +249,10 @@ AssemblyStore prepare_assembly(bgfd::Budget &budget, const SourceStore &source,
     const auto &usage = original.usages[usage_slot];
     const auto child = original.product_index.find(usage.child_product_id);
     auto transform = compose(frame.transform, usage.transform);
-    const auto style = usage.style_id ? usage.style_id
-                       : original.products[child.value].style_id
-                           ? original.products[child.value].style_id
-                           : frame.style;
     path.push_back(usage.id);
     if (path.size() > original.products.size())
       throw Error(ErrorCode::internal_error, "source usage path exceeds admitted acyclic graph");
-    stack.push_back({child, std::move(transform), style});
+    stack.push_back({child, std::move(transform)});
   }
   ExactBuilder values(resource, key);
   std::pmr::vector<DefinitionAllowance> definitions(resource.get());
@@ -209,6 +269,7 @@ AssemblyStore prepare_assembly(bgfd::Budget &budget, const SourceStore &source,
   data->definitions = std::move(definitions);
   data->instances = std::move(instances);
   data->paths = std::move(paths);
+  data->face_styles = std::move(face_styles);
   return AssemblyStore(std::move(data));
 }
 } // namespace bgmesh

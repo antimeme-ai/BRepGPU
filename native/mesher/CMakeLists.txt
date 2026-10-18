@@ -128,7 +128,7 @@ target_link_libraries(brepgpu_mesher_run PUBLIC brepgpu_mesher_face_preparation_
 brepgpu_native_cpu_rigor(brepgpu_mesher_run)
 add_library(brepgpu_mesher_scene STATIC scene_view.cpp)
 target_include_directories(brepgpu_mesher_scene PUBLIC ../../include)
-target_link_libraries(brepgpu_mesher_scene PUBLIC brepgpu_mesher_mesh brepgpu_mesher_geometry)
+target_link_libraries(brepgpu_mesher_scene PUBLIC brepgpu_mesher_mesh brepgpu_mesher_geometry brepgpu_mesher_assembly)
 brepgpu_native_cpu_rigor(brepgpu_mesher_scene)
 add_library(brepgpu_mesher_presentation STATIC presentation.cpp)
 target_link_libraries(brepgpu_mesher_presentation PUBLIC brepgpu_mesher_scene)
@@ -703,7 +703,7 @@ if(BUILD_TESTING)
       endforeach()
     endif()
   endforeach()
-  foreach(family box cylinder weighted c0 styled)
+  foreach(family box cylinder weighted c0 styled styled_mixed styled_plain styled_material)
     add_test(NAME native_adaptive_scene_${family} COMMAND "${Python3_EXECUTABLE}" -B
       "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/native_adaptive_scene.py"
       --executable "$<TARGET_FILE:brepgpu_native_adaptive_scene>" --family "${family}")

@@ -424,6 +424,7 @@ struct Builder final {
     // cannot silently omit a hole, reorder uses, or jump over a source-map piece.
     std::size_t cursor = 0;
     const auto &face = source().faces[r.chart.envelope.face.value];
+    require_edge_loops(source(), face);
     for (uint64_t li = 0; li < face.loops.count; ++li) {
       const auto &loop =
           source().loops[source().loop_index.find(source().loop_ids[face.loops.first + li]).value];

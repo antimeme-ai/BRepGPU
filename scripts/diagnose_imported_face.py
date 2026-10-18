@@ -8,24 +8,31 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'python'))
-from brepgpu.imported_source import load_source
+from brepgpu.imported_source import (load_source,DEFINITION_COMPLETE,DEFINITION_INCOMPLETE,
+                                     FACE_REFUSED)
 from brepgpu.imported_meshing import mesh_imported,MeshQuality
 
 
 def face_view(source,identifier):
+    """One face as a whole source: its loops (a vertex loop keeps its pole vertex), the
+    definition status the face alone implies, only the diagnostics that name the face (its
+    source_face_refused records among them) and no occurrence styles (the view has no usages)."""
     face=source.face(identifier);definition=source.definition(face.definition_id)
     loops=tuple(source.loop(i) for i in face.loop_ids)
     coedges=tuple(source.coedge(i) for loop in loops for i in loop.coedge_ids)
     edges=tuple(source.edge(i) for i in sorted({c.edge_id for c in coedges}))
-    vertices=tuple(source.vertex(i) for i in sorted({v for e in edges for v in e.vertex_ids}))
+    vertices=tuple(source.vertex(i) for i in sorted({v for e in edges for v in e.vertex_ids}
+                                                    |{l.vertex_id for l in loops if l.vertex_id}))
     curves=tuple(source.curve(i) for i in sorted(({e.curve_id for e in edges if e.curve_id}
                                                |{c.curve_id for c in coedges})))
+    status=DEFINITION_INCOMPLETE if face.status==FACE_REFUSED else DEFINITION_COMPLETE
     return replace(source,root_product_id=definition.product_id,
         products=(source.product(definition.product_id),),
         definitions=(replace(definition,face_ids=(face.id,),edge_ids=tuple(e.id for e in edges),
-                             vertex_ids=tuple(v.id for v in vertices)),),
+                             vertex_ids=tuple(v.id for v in vertices),status=status),),
         usages=(),faces=(face,),loops=loops,coedges=coedges,edges=edges,vertices=vertices,
-        curves=curves,carriers=(source.carrier(face.carrier_id),))
+        curves=curves,carriers=(source.carrier(face.carrier_id),),
+        diagnostics=tuple(d for d in source.diagnostics if face.id in d.source_ids),occurrence_styles=())
 
 
 _SCAN_SOURCE=None

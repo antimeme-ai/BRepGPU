@@ -936,6 +936,46 @@ csv.writer(open(out/'definitions.tsv','w'),delimiter='\\t',lineterminator='\\n')
             self.assertIn('ingress refused (ours)', result.stderr)
             self.assertFalse((root/'ingress/worker-exits.tsv').exists())
 
+    def test_incomplete_source_definition_is_our_ingress_refusal(self):
+        """B2-ingress third review F1: a definition incomplete at the source (a face refused,
+        D-partial-output) is ours. The driver refuses before NVIDIA's ingress (exit 4), every
+        physical.tsv row says not evaluated (never FAIL), and the benchmark maps the exit to
+        ingress_refused. The admission step names the same refusal if one ever reaches it."""
+        from types import SimpleNamespace
+        from benchmark_om10_nvidia import classify_exit
+        from brepgpu.imported_source import load_source
+        adapter = Path(os.environ.get('BREPGPU_STEP_SOURCE', ROOT/'build/om10-step-source/brepgpu-step-source'))
+        cone = (ROOT/'tests/fixtures/apex-cone.step').read_text()
+        lone = cone.replace("#17 = ADVANCED_FACE('',(#18),#26,.T.);", "#17 = ADVANCED_FACE('',(#18,#42),#26,.T.);").replace(
+            'ENDSEC;\nEND-ISO', "#42 = FACE_BOUND('',#43,.T.);\n#43 = VERTEX_LOOP('',#44);\n#44 = VERTEX_POINT('',#45);\n"
+            "#45 = CARTESIAN_POINT('',(1.,1.,0.));\nENDSEC;\nEND-ISO")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            step = root/'lone.step'
+            step.write_text(lone)
+            matched = root/'matched'
+            matched.mkdir()
+            subprocess.run((str(adapter), str(step), str(matched/'source.bgsource')), check=True, capture_output=True)
+            source = load_source(matched/'source.bgsource')
+            (matched/'model.tsv').write_text(f'key\tvalue\nscope\tcomplete_assembly\nsource_digest\t{source.source_sha256}\n')
+            self.assertEqual([(x.id, x.status) for x in source.definitions], [(15, 1)])
+            result = subprocess.run((sys.executable, '-B', str(ROOT/'examples/render_om10_nvidia.py'),
+                '--step', str(step), '--matched', str(matched), '--output', str(root/'out'), '--heal', '0',
+                '--workers', '1', '--allow-fixture', '--exporter', str(EXPORTER), '--nvidia-ingress', str(INGRESS),
+                '--producer', str(self.stand_in(root)), '--package', str(PACKAGE)), capture_output=True, text=True)
+            self.assertEqual(result.returncode, 4, result.stderr)
+            self.assertIn('ingress refused (ours)', result.stderr)
+            self.assertIn('incomplete at the source', result.stderr)
+            self.assertFalse((root/'out/nvidia-input').exists())
+            self.assertFalse((root/'out/worker-exits.tsv').exists())
+            physical = rows(root/'out/physical.tsv')
+            self.assertEqual([(r['definition_id'], r['status']) for r in physical], [('15', 'NOT_EVALUATED')])
+            self.assertIn('incomplete at the source', physical[0]['message'])
+            self.assertEqual(classify_exit(result.returncode), ('INGRESS_REFUSED', 'ingress_refused'))
+            from render_om10_nvidia import physical_row
+            row = physical_row(None, SimpleNamespace(source=source), 15)
+            self.assertEqual(row[:2], (15, 'NOT_EVALUATED'))
+
     @unittest.skipUnless(PRODUCER.is_file() and PACKAGE.is_dir(), 'needs the built NVIDIA producer and package')
     def test_measured_cpu_calibrates_and_scopes_split_owners(self):
         from render_om10_nvidia import digest

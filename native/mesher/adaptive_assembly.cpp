@@ -297,6 +297,7 @@ public:
                                 scalar(carrier.uv_bounds[2]), scalar(carrier.uv_bounds[3])});
         }
       }
+      require_edge_loops(source, face);
       for (auto loop_id : slice(source.loop_ids, face.loops)) {
         const auto &loop = source.loops[source.loop_index.find(loop_id).value];
         for (auto use_id : slice(source.coedge_ids, loop.coedges)) {

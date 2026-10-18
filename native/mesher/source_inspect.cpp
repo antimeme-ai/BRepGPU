@@ -28,6 +28,21 @@ int main(int argc, char **argv) {
       shells += entry.second;
     std::cout << "shells\t" << shells << "\nvoid_shells\t" << shells - definition_shells.size()
               << '\n';
+    std::cout << "vertex_loops\t"
+              << std::count_if(d.loops.begin(), d.loops.end(),
+                               [](const auto &loop) { return loop.vertex.value != 0; })
+              << "\noccurrence_styles\t" << d.occurrence_styles.size() << '\n';
+    std::cout << "refused_faces\t"
+              << std::count_if(d.faces.begin(), d.faces.end(),
+                               [](const auto &f) { return f.status == bgmesh::source_status_refused; })
+              << "\nrefused_loops\t"
+              << std::count_if(d.loops.begin(), d.loops.end(),
+                               [](const auto &l) { return l.status == bgmesh::source_status_refused; })
+              << "\nincomplete_definitions\t"
+              << std::count_if(d.definitions.begin(), d.definitions.end(), [](const auto &v) {
+                   return v.status == bgmesh::definition_status_incomplete;
+                 })
+              << '\n';
     std::cout << "products\t" << d.products.size() << "\ndefinitions\t" << d.definitions.size()
               << "\nusages\t" << d.usages.size() << "\nvertices\t" << d.vertices.size()
               << "\nedges\t" << d.edges.size() << "\ncoedges\t" << d.coedges.size() << "\nloops\t"

@@ -95,9 +95,19 @@ def write_assembly(path, meshes, assembly, offsets, materials, definition_materi
             f.write(struct.pack('<4d',*rgb,roughness))
 
 
+class IncompleteSourceDefinition(ValueError):
+    """A definition with a face refused at the source (D-partial-output). Ours, never an
+    NVIDIA outcome: its shell is not the original's, so it is not evaluated."""
+
+
 def qualify_physical_definition(mesh, source, definition):
     """Reuse the existing independent shell mechanism on genuine external keys."""
     from .imported_oracles import qualify_physical_solid
+    from .imported_source import DEFINITION_COMPLETE
+    # A definition with a face refused at the source is incomplete: its shell is
+    # not the original's, so it is never qualified as one (D-partial-output).
+    if definition.status != DEFINITION_COMPLETE:
+        raise IncompleteSourceDefinition(f'definition {definition.id} is incomplete at the source (a face is refused)')
     vertices=dict(zip(mesh.physical_keys,mesh.points))
     triangles=tuple(tuple(mesh.physical_keys[i] for i in t) for t in mesh.triangles)
     stats=qualify_physical_solid(vertices,triangles)

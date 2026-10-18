@@ -38,6 +38,8 @@ struct SourceData final {
   std::shared_ptr<RunResource> resource;
   std::pmr::vector<std::byte> original_bytes;
   SourceDigest source_digest;
+  // source_uncertainty_mm: a file-wide maximum of the solids' governing B-rep
+  // values, a summary only; a part's own value is its source_uncertainty record.
   double units_mm = 0, source_uncertainty_mm = 0;
   ProductId root_product_id;
   Range<char> adapter_revision;
@@ -53,6 +55,9 @@ struct SourceData final {
   std::pmr::vector<Curve> curves;
   std::pmr::vector<Style> styles;
   std::pmr::vector<Diagnostic> diagnostics;
+  std::pmr::vector<DiagnosticValue> diagnostic_values;
+  std::pmr::vector<OccurrenceStyle> occurrence_styles;
+  std::pmr::vector<UsageId> usage_ids;
   std::pmr::vector<char> strings;
   std::pmr::vector<double> scalars;
   std::pmr::vector<uint32_t> multiplicities;
@@ -93,6 +98,30 @@ class SourceStore final {
 public:
   [[nodiscard]] const SourceData &view() const noexcept { return *data_; }
 };
+// Refuse one face, by name, before a consumer reads its loops: a face refused
+// at the source (its status) is never meshed, and this consumer takes
+// edge-loop bounds only. A vertex_loop bound (a pole vertex, no uses) is
+// carried by the source; a consumer that cannot mesh it refuses here.
+inline void require_edge_loops(const SourceData &d, const Face &face) {
+  if (face.status != source_status_admitted)
+    for (std::size_t i = 0; i < face.loops.count; ++i) {
+      const auto &loop = d.loops[d.loop_index.find(d.loop_ids[face.loops.first + i]).value];
+      if (loop.status != source_status_admitted)
+        throw Error(ErrorCode::unsupported,
+                    "face " + std::to_string(face.id.value) + ": refused at the source (loop " +
+                        std::to_string(loop.id.value) +
+                        ", see its source_face_refused record); no consumer meshes it");
+    }
+  for (std::size_t i = 0; i < face.loops.count; ++i) {
+    const auto &loop = d.loops[d.loop_index.find(d.loop_ids[face.loops.first + i]).value];
+    if (loop.vertex)
+      throw Error(ErrorCode::unsupported,
+                  "face " + std::to_string(face.id.value) + ": vertex_loop bound " +
+                      std::to_string(loop.id.value) + " at pole vertex " +
+                      std::to_string(loop.vertex.value) +
+                      ": this consumer takes edge-loop bounds only");
+  }
+}
 [[nodiscard]] SourceStore read_source(std::span<const std::byte> bytes,
                                       const std::shared_ptr<RunResource> &resource,
                                       SourceLimits limits = {});

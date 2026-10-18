@@ -328,6 +328,7 @@ DomainPreparation prepare_face_domain(const DomainRequest &request, JobContext &
   std::pmr::vector<uint8_t> consumed(traces.size(), uint8_t{0}, &budget);
   std::pmr::vector<EdgeOrigin> origins(&budget);
   std::optional<DomainFailure> failure;
+  require_edge_loops(source, face);
   for (uint64_t li = 0; li < face.loops.count; ++li) {
     budget.charge(1);
     const auto loop_slot = source.loop_index.find(source.loop_ids[face.loops.first + li]);

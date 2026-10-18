@@ -20,8 +20,14 @@ struct SourceUVUse {
   TopoDS_Edge edge; // original geometric orientation composed with source use
   TopoDS_Vertex start,end;
 };
-struct SourceUVLoop { SourceID id=0; TopoDS_Wire wire; std::vector<SourceUVUse> uses; };
-struct SourceUVFace { SourceID id=0,carrier_id=0; TopoDS_Face face; std::vector<SourceUVLoop> loops; };
+// A vertex_loop bound has a pole vertex and no uses. Its wire is OCCT's
+// translation of it: one degenerated edge at the pole, natural bounds for a
+// sole bound on a closed surface, or null where OCCT ignores the bound.
+struct SourceUVLoop { SourceID id=0; TopoDS_Wire wire; std::vector<SourceUVUse> uses; SourceID pole_id=0; TopoDS_Vertex pole; };
+// unexplained: wires OCCT made for a refused face that no source loop explains
+// (a vertex-loop translation that differs from OCCT's own rule). They are
+// owned by the face so the translated inventory stays whole; nothing meshes them.
+struct SourceUVFace { SourceID id=0,carrier_id=0; TopoDS_Face face; std::vector<SourceUVLoop> loops; std::vector<TopoDS_Wire> unexplained; };
 struct SourceUVOptions {
   double projection_precision_mm=1.e-7,source_residual_mm=.001,tolerance_mm=.005;
   bool prepare_query=false;

@@ -256,6 +256,7 @@ FaceEnvelope prepare_face_envelope(GeometryContext &ctx, const GeometryStore &ge
   const auto plane = carrier.kind == 1 ? plane_duals(b, carrier) : std::nullopt;
   const auto height =
       (carrier.kind == 2 || carrier.kind == 3) ? height_dual(b, carrier) : std::nullopt;
+  require_edge_loops(source, face);
   for (const auto loop_id : slice(source.loop_ids, face.loops)) {
     const auto &loop = source.loops[source.loop_index.find(loop_id).value];
     for (const auto use_id : slice(source.coedge_ids, loop.coedges)) {

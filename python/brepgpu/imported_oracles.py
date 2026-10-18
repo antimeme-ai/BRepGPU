@@ -357,7 +357,7 @@ def original_records(path):
               'VERTEX_POINT', 'PLANE', 'CYLINDRICAL_SURFACE', 'CONICAL_SURFACE',
               'SPHERICAL_SURFACE', 'TOROIDAL_SURFACE', 'B_SPLINE_SURFACE_WITH_KNOTS',
               'LINE', 'CIRCLE', 'ELLIPSE', 'B_SPLINE_CURVE_WITH_KNOTS',
-              'ADVANCED_FACE', 'FACE_OUTER_BOUND', 'FACE_BOUND', 'EDGE_LOOP',
+              'ADVANCED_FACE', 'FACE_OUTER_BOUND', 'FACE_BOUND', 'EDGE_LOOP', 'VERTEX_LOOP',
               'ORIENTED_EDGE', 'EDGE_CURVE', 'NEXT_ASSEMBLY_USAGE_OCCURRENCE',
               'PRODUCT_DEFINITION_SHAPE', 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION',
               'ITEM_DEFINED_TRANSFORMATION', 'CARTESIAN_TRANSFORMATION_OPERATOR_3D', 'SHAPE_REPRESENTATION',
@@ -365,7 +365,7 @@ def original_records(path):
               'MANIFOLD_SOLID_BREP', 'MAPPED_ITEM', 'REPRESENTATION_MAP',
               'SHAPE_REPRESENTATION_RELATIONSHIP', 'UNCERTAINTY_MEASURE_WITH_UNIT',
               'BREP_WITH_VOIDS', 'CLOSED_SHELL', 'ORIENTED_CLOSED_SHELL',
-              'PLANE_ANGLE_MEASURE_WITH_UNIT', 'MEASURE_WITH_UNIT'}
+              'PLANE_ANGLE_MEASURE_WITH_UNIT', 'LENGTH_MEASURE_WITH_UNIT', 'MEASURE_WITH_UNIT'}
     wanted.update(('PRODUCT_DEFINITION','PRODUCT_DEFINITION_FORMATION','PRODUCT'))
     records = {}
     for index, match in enumerate(starts):
@@ -556,6 +556,42 @@ def _plane_angle_unit(records, reference):
     return target*float(value.args[0])
 
 
+_SI_EXPONENT = {None: 0, '.EXA.': 18, '.PETA.': 15, '.TERA.': 12, '.GIGA.': 9, '.MEGA.': 6, '.KILO.': 3,
+                '.HECTO.': 2, '.DECA.': 1, '.DECI.': -1, '.CENTI.': -2, '.MILLI.': -3, '.MICRO.': -6,
+                '.NANO.': -9, '.PICO.': -12, '.FEMTO.': -15, '.ATTO.': -18}
+
+
+def _length_unit(records, reference, chain=()):
+    """Millimetres per length unit from its entities (G6 UR-2); None when no length unit.
+
+    An SI metre gives 10^(prefix+3) mm; a conversion-based unit gives its
+    positive length measure times its target's millimetres, to depth 8. A
+    conversion target may be an SI metre written without LENGTH_UNIT (as the
+    adapter accepts). The name never sets the factor.
+    """
+    unit = records.get(reference.id)
+    if type(unit) is not tuple:
+        return None
+    parts = {part.kind: part for part in unit}
+    plain_target = bool(chain) and 'SI_UNIT' in parts and parts['SI_UNIT'].args[1] == '.METRE.'
+    if 'LENGTH_UNIT' not in parts and not plain_target:
+        return None
+    require(reference.id not in chain, 'original conversion-based length unit refers to itself (a cycle)')
+    require(len(chain) < 8, 'original conversion-based length unit nested deeper than 8')
+    if 'SI_UNIT' in parts:
+        prefix, name = parts['SI_UNIT'].args
+        require(name == '.METRE.' and prefix in _SI_EXPONENT, 'unsupported original SI length unit')
+        return float('1e%d' % (_SI_EXPONENT[prefix]+3))
+    require('CONVERSION_BASED_UNIT' in parts, 'uninterpretable original length unit')
+    measure = _refer(records, parts['CONVERSION_BASED_UNIT'].args[1]).args
+    value = measure[0]
+    require(type(value) is _Call and value.kind == 'LENGTH_MEASURE', 'original length conversion measure')
+    require(math.isfinite(float(value.args[0])) and float(value.args[0]) > 0, 'nonpositive original length conversion')
+    target = _length_unit(records, measure[1], chain+(reference.id,))
+    require(target is not None, 'original length conversion target is no length unit')
+    return float(value.args[0])*target
+
+
 class _RepresentationGraph:
     """Shape-representation links the adapter follows: SDR use, relationships, mapped items."""
     def __init__(self, records):
@@ -607,6 +643,38 @@ class _RepresentationGraph:
         # Like the adapter: a context without unit assignment declares no unit.
         return ('absent', None)
 
+    def _context_parts(self, rep_id):
+        context = self.records.get(self.shape[rep_id][2].id)
+        return {part.kind: part for part in context} if type(context) is tuple else {}
+
+    def length(self, rep_id):
+        """Millimetres per length unit of one representation's context, or None."""
+        parts = self._context_parts(rep_id).get('GLOBAL_UNIT_ASSIGNED_CONTEXT')
+        factors = [f for ref in (parts.args[0] if parts else ()) for f in (_length_unit(self.records, ref),)
+                   if f is not None]
+        require(len(factors) <= 1, 'original context declares several length units')
+        return factors[0] if factors else None
+
+    def uncertainty(self, rep_id):
+        """Governing uncertainty in mm of one context (G6 UR-7), or None when absent."""
+        parts = self._context_parts(rep_id).get('GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT')
+        measures = []
+        for ref in (parts.args[0] if parts else ()):
+            row = _refer(self.records, ref, 'UNCERTAINTY_MEASURE_WITH_UNIT').args
+            factor = _length_unit(self.records, row[1])
+            if factor is not None:
+                named = (row[2] or '').lower() in ('closure', 'distance_accuracy_value', 'distance accuracy value',
+                                                   'point coincidence tolerance')
+                measures.append((named, float(row[0].args[0])*factor))
+        if any(named for named, _ in measures):
+            measures = [m for m in measures if m[0]]
+        return max((value for _, value in measures), default=None)
+
+    def solid_holders(self, solid_id):
+        holders = [id for id in self.holders.get(solid_id, ()) if self.transferred(id)]
+        require(holders, 'original solid is not held by a transferred shape representation')
+        return holders
+
     def solid_plane_angle(self, solid_id):
         """Radians per plane-angle unit governing one solid, or None when absent."""
         holders = [id for id in self.holders.get(solid_id, ()) if self.transferred(id)]
@@ -633,35 +701,27 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
         require((product.name, product.reference) == (name, item[0]), 'original product part name/reference differs')
     for usage in source.usages:
         require(usage.name == records[usage.id].args[1], 'original source usage name differs')
-    def length_factor(reference):
-        unit = records.get(reference.id)
-        if type(unit) is not tuple:
-            return None
-        parts = {part.kind: part for part in unit}
-        if 'LENGTH_UNIT' not in parts:
-            return None
-        require('SI_UNIT' in parts, 'unsupported original length unit')
-        prefix, base = parts['SI_UNIT'].args
-        require(base == '.METRE.' and prefix in (None,'.MILLI.','.CENTI.'),
-                'unsupported original SI length prefix')
-        return {None:1000.,'.MILLI.':1.,'.CENTI.':10.}[prefix]
-    factors = set()
-    for row in records.values():
-        if type(row) is tuple:
-            for part in row:
-                if part.kind == 'GLOBAL_UNIT_ASSIGNED_CONTEXT':
-                    factors.update(factor for ref in part.args[0] for factor in (length_factor(ref),)
-                                   if factor is not None)
-    require(factors == {source.units_mm}, 'original context length units differ from owned source')
+    # Units and uncertainty per context (G6 UR-1, UR-7): each solid's holders
+    # are in the source's millimetres, and the header carries the largest
+    # governing uncertainty of the solids' own B-rep contexts that makes a usable
+    # claim (0 when none). UR-7: a value below 1e-15 of the definition's diagonal,
+    # 0 among them, makes no claim. The diagonal here is the box of the raw
+    # vertex points, a lower bound of the adapter's shape box, so the two can
+    # differ only for a value within that gap of the floor.
     representations = _RepresentationGraph(records)
     plane_angle = {definition.id: representations.solid_plane_angle(definition.id) for definition in source.definitions}
-    uncertainties = set()
-    for row in records.values():
-        if type(row) is _Call and row.kind == 'UNCERTAINTY_MEASURE_WITH_UNIT':
-            value = row.args[0]
-            require(type(value) is _Call and value.kind == 'LENGTH_MEASURE', 'original uncertainty measure kind')
-            uncertainties.add(float(value.args[0])*length_factor(row.args[1]))
-    require(uncertainties == {source.source_uncertainty_mm}, 'original source uncertainty differs')
+    governing = {}
+    for definition in source.definitions:
+        holders = representations.solid_holders(definition.id)
+        require({representations.length(id) for id in holders} == {source.units_mm},
+                'original solid context length unit differs from owned source')
+        values = [v for v in map(representations.uncertainty, holders) if v is not None]
+        points = [source.vertex(i).xyz for i in definition.vertex_ids]
+        diagonal = math.dist(tuple(map(min, *points)), tuple(map(max, *points))) if len(points) > 1 else 0.
+        value = max(values, default=None)
+        governing[definition.id] = value if value is not None and value > 0 and value >= 1e-15*diagonal else None
+    require(max((v for v in governing.values() if v is not None), default=0.) == source.source_uncertainty_mm,
+            'original governing B-rep uncertainty differs from owned source')
     product_ids = {row.id for row in source.products}
     product_solids = {}
     representation_links = defaultdict(set)
@@ -779,6 +839,13 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
             bound = _refer(records, ref)
             loop = source.loop(bound.args[1].id)
             require(loop.outer == (bound.kind == 'FACE_OUTER_BOUND'), 'original outer/inner loop designation differs')
+            if _refer(records, bound.args[1]).kind == 'VERTEX_LOOP':
+                # AP242 advanced_face WR6, WR7: one point vertex, no uses.
+                pole = _refer(records, bound.args[1]).args[1]
+                require(_refer(records, pole, 'VERTEX_POINT') and loop.vertex_id == pole.id and not loop.coedge_ids,
+                        'original vertex loop differs')
+                continue
+            require(loop.vertex_id == 0, 'original edge loop carries a vertex')
             raw_loop = _refer(records, bound.args[1], 'EDGE_LOOP')
             word = tuple(ref.id for ref in raw_loop.args[1])
             bound_forward = bound.args[2] == '.T.'
@@ -1060,7 +1127,7 @@ def qualify_source(source, original_path=None):
         kinds = {'products': ('PRODUCT_DEFINITION',),
                  'definitions': ('MANIFOLD_SOLID_BREP', 'BREP_WITH_VOIDS'),
                  'usages': ('NEXT_ASSEMBLY_USAGE_OCCURRENCE',), 'vertices': ('VERTEX_POINT',),
-                 'edges': ('EDGE_CURVE',), 'coedges': ('ORIENTED_EDGE',), 'loops': ('EDGE_LOOP',),
+                 'edges': ('EDGE_CURVE',), 'coedges': ('ORIENTED_EDGE',), 'loops': ('EDGE_LOOP', 'VERTEX_LOOP'),
                  'faces': ('ADVANCED_FACE',)}
         for name, names in kinds.items():
             expected = set().union(*(original.get(kind, set()) for kind in names))
@@ -1084,7 +1151,9 @@ def qualify_source(source, original_path=None):
                     'original loop face owner differs')
     coedge_owners = Counter()
     for loop in source.loops:
-        require(loop.face_id in tables['faces'] and loop.coedge_ids, 'original loop face/uses missing')
+        require(loop.face_id in tables['faces'] and
+                (bool(loop.coedge_ids) != bool(loop.vertex_id)) and
+                (not loop.vertex_id or loop.vertex_id in tables['vertices']), 'original loop face/uses missing')
         for id in loop.coedge_ids:
             require(id in tables['coedges'] and tables['coedges'][id].loop_id == loop.id,
                     'original coedge loop owner differs')

@@ -318,7 +318,6 @@ public:
         }
       }
       definition_remap[def.value] = c;
-      out.original_definitions.push_back(def);
     }
     if (request.scope == SceneScope::complete_assembly) {
       require(out.components.size() == static_cast<std::size_t>(std::count(
@@ -355,10 +354,66 @@ public:
       out.materials.push_back(value);
       out.material_styles.push_back(style.id);
     }
-    for (uint32_t c = 0; c < out.components.size(); ++c) {
+    // Colour variants (CAx-IF precedence, assembly.hpp): a display triangle has
+    // one material per definition, so occurrences whose faces must show
+    // different materials get their own copy of the definition. The key is the
+    // resolved material of each face: a per-occurrence face style, else
+    // inherited when the occurrence style beats face styles, else the face's
+    // own style or inherited.
+    using VariantKey = std::pmr::vector<uint32_t>;
+    auto key_of = [&](uint32_t c, const NativeInstance *instance) {
       const auto &component = *out.components[c];
-      bgom10::Definition definition{source.definitions[component.query.definition.value].id.value,
-                                    out.vertices.size(), 0, out.triangles.size(), 0};
+      VariantKey key(&budget);
+      const auto overrides =
+          instance ? std::span<const OccurrenceFaceStyle>(assembly.face_styles)
+                         .subspan(instance->face_styles.first, instance->face_styles.count)
+                   : std::span<const OccurrenceFaceStyle>{};
+      for (const auto &prepared : component.faces) {
+        budget.charge(1 + overrides.size());
+        const auto &face = source.faces[prepared->construction->key.face.value];
+        const auto row = std::find_if(overrides.begin(), overrides.end(),
+                                      [&](const auto &r) { return r.face == face.id; });
+        // A face's own style shows only with a colour: a colourless one cannot
+        // take precedence over the part's style (as in assembly.cpp).
+        const bool own = face.style_id &&
+                         source.styles[source.style_index.find(face.style_id).value].has_color;
+        key.push_back(row != overrides.end() ? material(row->style)
+                      : !(instance && instance->style_over_faces) && own
+                          ? material(face.style_id)
+                          : bgom10::INHERIT_OCCURRENCE_MATERIAL);
+      }
+      return key;
+    };
+    std::pmr::vector<std::pmr::vector<VariantKey>> component_keys(out.components.size(), &budget);
+    std::pmr::vector<uint32_t> instance_variant(assembly.instances.size(), UINT32_MAX, &budget);
+    for (uint32_t i = 0; i < assembly.instances.size(); ++i) {
+      budget.charge(1);
+      const auto c = definition_remap[assembly.instances[i].definition.value];
+      if (c == UINT32_MAX)
+        continue;
+      auto key = key_of(c, &assembly.instances[i]);
+      auto &keys = component_keys[c];
+      auto found = std::find(keys.begin(), keys.end(), key);
+      if (found == keys.end())
+        found = keys.insert(keys.end(), std::move(key));
+      instance_variant[i] = narrow(static_cast<std::size_t>(found - keys.begin()));
+    }
+    std::pmr::vector<uint32_t> first_variant(out.components.size(), 0, &budget);
+    for (uint32_t c = 0; c < out.components.size(); ++c) {
+      if (component_keys[c].empty())
+        component_keys[c].push_back(key_of(c, nullptr));
+      first_variant[c] = narrow(out.definitions.size());
+      for (const auto &variant : component_keys[c]) {
+      const auto &component = *out.components[c];
+      out.original_definitions.push_back(component.query.definition);
+      // Display identities are unique: variant k > 0 tags the source ID's top
+      // byte with k; original_definitions keeps the source definition.
+      const auto variant_index = static_cast<uint64_t>(&variant - component_keys[c].data());
+      const auto source_id = source.definitions[component.query.definition.value].id.value;
+      require(source_id < (uint64_t{1} << 56) && variant_index < 256,
+              "adaptive scene colour variant identity out of range");
+      bgom10::Definition definition{source_id | (variant_index << 56), out.vertices.size(), 0,
+                                    out.triangles.size(), 0};
       std::pmr::vector<Candidate> candidates(&budget);
       std::pmr::vector<bgom10::Triangle> triangles(&budget);
       for (uint32_t f = 0; f < component.faces.size(); ++f) {
@@ -457,8 +512,7 @@ public:
                     "adaptive scene requires positive source roles");
           bgom10::Triangle output{};
           output.face = face.id.value;
-          output.material =
-              face.style_id ? material(face.style_id) : bgom10::INHERIT_OCCURRENCE_MATERIAL;
+          output.material = variant[f];
           for (uint32_t role = 0; role < 3; ++role) {
             const auto s = facet.sites[role];
             const auto &site = mesh.sites[s];
@@ -517,6 +571,7 @@ public:
       require(definition.vertex_count && definition.triangle_count,
               "adaptive scene has empty definition");
       out.definitions.push_back(definition);
+      }
     }
     require(request.presentation.explosion.empty() ||
                 request.presentation.explosion.size() == assembly.instances.size(),
@@ -526,9 +581,10 @@ public:
       const auto &original = assembly.instances[i];
       require(original.definition.value < definition_remap.size(),
               "adaptive scene instance definition outside source");
-      const auto mapped = definition_remap[original.definition.value];
-      if (mapped == UINT32_MAX)
+      const auto component = definition_remap[original.definition.value];
+      if (component == UINT32_MAX)
         continue;
+      const auto mapped = first_variant[component] + instance_variant[i];
       placed[mapped] = 1;
       bgom10::Instance instance{};
       instance.id = uint64_t{i} + 1;

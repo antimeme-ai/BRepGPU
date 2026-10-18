@@ -16,7 +16,7 @@ ZERO_FRAME = (0.0,) * 12
 IDENTITY = (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
 _TAGS = (b'META____', b'PRODUCTS', b'SOLIDS__', b'USAGES__', b'VERTICES',
          b'EDGES___', b'COEDGES_', b'LOOPS___', b'FACES___', b'CARRIERS',
-         b'CURVES__', b'STYLES__', b'DIAGS___')
+         b'CURVES__', b'STYLES__', b'DIAGS___', b'OCCSTYLE')
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,13 @@ class Product:
     style_id: int = 0
 
 
+# Source status (D-partial-output): a face or loop refused at the source is
+# carried for its topology and never meshed; its reason is a source_face_refused
+# diagnostic. A definition holding a refused face is incomplete, never complete.
+FACE_ADMITTED, FACE_REFUSED = 0, 1
+DEFINITION_COMPLETE, DEFINITION_INCOMPLETE = 0, 1
+
+
 @dataclass(frozen=True)
 class SolidDefinition:
     id: int
@@ -35,6 +42,7 @@ class SolidDefinition:
     face_ids: tuple
     edge_ids: tuple
     vertex_ids: tuple
+    status: int = DEFINITION_COMPLETE
 
 
 @dataclass(frozen=True)
@@ -88,6 +96,10 @@ class Loop:
     face_id: int
     outer: bool
     coedge_ids: tuple
+    # A vertex_loop bound (AP242 advanced_face WR6, WR7): its one point vertex,
+    # with no coedges. 0 for an edge loop.
+    vertex_id: int = 0
+    status: int = FACE_ADMITTED  # FACE_REFUSED: refused at the source
 
 
 @dataclass(frozen=True)
@@ -102,6 +114,7 @@ class Face:
     # 0 for the outer shell, k for the k-th BREP_WITH_VOIDS void shell. The
     # orientation is the face's use in the solid (shell sense composed).
     shell: int = 0
+    status: int = FACE_ADMITTED  # FACE_REFUSED exactly when a loop of it is refused
 
 
 @dataclass(frozen=True)
@@ -162,18 +175,47 @@ class Style:
     has_density: bool = False
 
 
+# Kinds of a diagnostic's numeric fields (papers/2026-10-17-validation-records.md
+# section 4.1 ValueKind, with code for enumerators and parameter for curve and
+# surface parameters). Messages hold no magnitudes.
+VALUE_KINDS = MappingProxyType({'length_mm': 1, 'angle_rad': 2, 'area_mm2': 3, 'ratio': 4, 'count': 5,
+                                'boolean': 6, 'code': 7, 'parameter': 8})
+
+
+@dataclass(frozen=True)
+class DiagnosticValue:
+    name: str
+    kind: int
+    value: float
+
+
 @dataclass(frozen=True)
 class Diagnostic:
     stage: str
     severity: int
     source_ids: tuple
     message: str
+    values: tuple = ()
+
+
+@dataclass(frozen=True)
+class OccurrenceStyle:
+    """A style for one assembly occurrence path (CAx-IF CDORSI, Model Styling §5.1).
+
+    usage_ids run top-down from the root product. face_id 0 styles the whole
+    occurrence (and everything under it); otherwise only that face of it.
+    """
+    style_id: int
+    face_id: int
+    usage_ids: tuple
 
 
 @dataclass(frozen=True)
 class ImportedSource:
     source_sha256: str
     units_mm: float
+    # A file-wide maximum of the solids' governing B-rep uncertainties: a summary
+    # only, never a part's value (each part's is its source_uncertainty record).
     source_uncertainty_mm: float
     root_product_id: int
     adapter_revision: str
@@ -189,6 +231,7 @@ class ImportedSource:
     curves: tuple
     styles: tuple = ()
     diagnostics: tuple = ()
+    occurrence_styles: tuple = ()
     _indices: object = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
@@ -196,7 +239,7 @@ class ImportedSource:
         row_types = {'products':Product,'definitions':SolidDefinition,'usages':Usage,
                      'vertices':Vertex,'edges':Edge,'coedges':Coedge,'loops':Loop,
                      'faces':Face,'carriers':Carrier,'curves':Curve,'styles':Style}
-        immutable_types=tuple(row_types.values())+(SurfaceSpan,CurveSpan,Diagnostic)
+        immutable_types=tuple(row_types.values())+(SurfaceSpan,CurveSpan,Diagnostic,DiagnosticValue)
         def immutable(value):
             if type(value) in (str,int,float,bool,type(None)):return
             if type(value) is tuple:
@@ -223,6 +266,12 @@ class ImportedSource:
         if type(self.diagnostics) is not tuple or any(type(d) is not Diagnostic for d in self.diagnostics):
             raise TypeError('diagnostics must be an immutable tuple of owned values')
         immutable(self.diagnostics)
+        if (type(self.occurrence_styles) is not tuple or
+                any(type(o) is not OccurrenceStyle for o in self.occurrence_styles)):
+            raise TypeError('occurrence styles must be an immutable tuple of owned values')
+        for row in self.occurrence_styles:
+            if type(row.usage_ids) is not tuple or any(type(x) is not int for x in (row.style_id, row.face_id, *row.usage_ids)):
+                raise TypeError('occurrence style values must be owned integers')
 
     def _get(self, collection, identifier):
         try:
@@ -286,6 +335,23 @@ def rigid_placement_status(m):
     det = (m[0]*(m[5]*m[10]-m[6]*m[9]) - m[1]*(m[4]*m[10]-m[6]*m[8])
            + m[2]*(m[4]*m[9]-m[5]*m[8]))
     return 'rigid' if det > 0 else 'improper'
+
+
+def require_edge_loops(source, face):
+    """Refuse one face, by name, before a consumer reads its loops: a face refused at
+    the source (its status) is never meshed, and the consumer takes edge loops only."""
+    if face.status != FACE_ADMITTED:
+        refused = next((i for i in face.loop_ids if source.loop(i).status != FACE_ADMITTED), None)
+        if refused is None:
+            raise ValueError(f'face {face.id}: refused at the source without a refused loop (an '
+                             'inconsistent source); no consumer meshes it')
+        raise ValueError(f'face {face.id}: refused at the source (loop {refused}, see its '
+                         'source_face_refused record); no consumer meshes it')
+    for loop_id in face.loop_ids:
+        loop = source.loop(loop_id)
+        if loop.vertex_id:
+            raise ValueError(f'face {face.id}: vertex_loop bound {loop.id} at pole vertex {loop.vertex_id}: '
+                             'this consumer takes edge-loop bounds only')
 
 
 def validate_source(source):
@@ -373,7 +439,15 @@ def validate_source(source):
                 raise ValueError('nonmonotone edge parameter map')
     for loop in source.loops:
         face = source.face(loop.face_id)
-        if loop.id not in face.loop_ids or not loop.coedge_ids:
+        if type(loop.vertex_id) is not int or not 0 <= loop.vertex_id < 2**64:
+            raise ValueError('invalid loop vertex')
+        if loop.vertex_id:
+            source.vertex(loop.vertex_id)
+            if loop.coedge_ids:
+                raise ValueError(f'vertex loop {loop.id} has coedges')
+            if loop.vertex_id not in source.definition(face.definition_id).vertex_ids:
+                raise ValueError(f'vertex loop {loop.id} vertex missing from its definition')
+        if loop.id not in face.loop_ids or not (loop.coedge_ids or loop.vertex_id):
             raise ValueError('invalid loop ownership')
         if any(source.coedge(i).loop_id != loop.id for i in loop.coedge_ids):
             raise ValueError('loop/coedge owner mismatch')
@@ -388,6 +462,7 @@ def validate_source(source):
         _finite((face.tolerance,), 'face tolerance')
         if face.tolerance < 0: raise ValueError('negative face tolerance')
         if face.style_id: source.style(face.style_id)
+    _validate_status(source)
     for carrier in source.carriers:
         _finite(carrier.frame + carrier.radii + carrier.uv_bounds, f'carrier {carrier.id}')
         if len(carrier.frame) != 12 or len(carrier.radii) != 2 or len(carrier.uv_bounds) != 4:
@@ -433,6 +508,29 @@ def validate_source(source):
         if style.has_density and style.density < 0: raise ValueError('negative density')
     if any(d.severity >= 2 for d in source.diagnostics):
         raise ValueError('source adapter reported an error diagnostic')
+    for d in source.diagnostics:
+        names = [v.name for v in d.values]
+        if (len(set(names)) != len(names) or not all(names) or
+                any(v.kind not in VALUE_KINDS.values() or not math.isfinite(v.value) for v in d.values)):
+            raise ValueError(f'diagnostic {d.stage}: invalid numeric field')
+    keys = set()
+    for row in source.occurrence_styles:
+        source.style(row.style_id)
+        if not row.usage_ids:
+            raise ValueError('occurrence style path is empty')
+        parent = source.root_product_id
+        for usage_id in row.usage_ids:
+            usage = source.usage(usage_id)
+            if usage.parent_product_id != parent:
+                raise ValueError(f'occurrence style path {row.usage_ids} is not connected from the root')
+            parent = usage.child_product_id
+        if row.face_id:
+            definition = source.product(parent).definition_id
+            if not definition or source.face(row.face_id).definition_id != definition:
+                raise ValueError(f'occurrence style face {row.face_id} is not on its occurrence')
+        if (row.usage_ids, row.face_id) in keys:
+            raise ValueError('duplicate occurrence style')
+        keys.add((row.usage_ids, row.face_id))
     return source
 
 
@@ -480,12 +578,52 @@ def _nested(r,read):
     return tuple(result)
 
 
+def _validate_status(source):
+    """A refused loop refuses its face, a face is refused only through a refused loop, a
+    definition is incomplete exactly when a face of it is refused, and every refused loop
+    has its source_face_refused record naming (face, loop)."""
+    for loop in source.loops:
+        if loop.status not in (FACE_ADMITTED, FACE_REFUSED):
+            raise ValueError(f'source loop {loop.id}: unknown status {loop.status!r}')
+    recorded = set()
+    for d in source.diagnostics:
+        if d.stage != 'source_face_refused':
+            continue
+        if len(d.source_ids) < 2:
+            raise ValueError('source_face_refused record names no face and loop')
+        face, loop = source.face(d.source_ids[0]), source.loop(d.source_ids[1])
+        if loop.face_id != face.id or loop.status != FACE_REFUSED:
+            raise ValueError(f'source_face_refused record names loop {loop.id} that is not a '
+                             f'refused loop of face {face.id}')
+        recorded.add(loop.id)
+    for loop in source.loops:
+        if loop.status == FACE_REFUSED and loop.id not in recorded:
+            raise ValueError(f'refused loop {loop.id} of face {loop.face_id} has no source_face_refused record')
+    for face in source.faces:
+        if face.status not in (FACE_ADMITTED, FACE_REFUSED):
+            raise ValueError(f'source face {face.id}: unknown status {face.status!r}')
+        refused = [i for i in face.loop_ids if source.loop(i).status == FACE_REFUSED]
+        if refused and face.status != FACE_REFUSED:
+            raise ValueError(f'source face {face.id} is admitted but holds refused loop {refused[0]}')
+        if not refused and face.status == FACE_REFUSED:
+            raise ValueError(f'source face {face.id} is refused without a refused loop')
+    for definition in source.definitions:
+        if definition.status not in (DEFINITION_COMPLETE, DEFINITION_INCOMPLETE):
+            raise ValueError(f'source definition {definition.id}: unknown status {definition.status!r}')
+        refused = any(source.face(i).status == FACE_REFUSED for i in definition.face_ids)
+        if refused != (definition.status == DEFINITION_INCOMPLETE):
+            raise ValueError(f'source definition {definition.id} status differs from its faces: '
+                             'it is incomplete exactly when a face is refused')
+
+
 def _read_row(tag,r):
     q=lambda:r.number('Q')
     if tag == b'META____': return r.string()
     if tag == b'PRODUCTS':
         i,d,s=q(),q(),q(); return Product(i,r.string(),r.string(),d,s)
-    if tag == b'SOLIDS__': return SolidDefinition(q(),q(),r.vector('Q'),r.vector('Q'),r.vector('Q'))
+    if tag == b'SOLIDS__':
+        i,p=q(),q(); faces,edges,vertices=r.vector('Q'),r.vector('Q'),r.vector('Q')
+        return SolidDefinition(i,p,faces,edges,vertices,r.number('I'))
     if tag == b'USAGES__':
         i,p,c,s=q(),q(),q(),q(); return Usage(i,p,c,r.string(),r.numbers('d',12),s)
     if tag == b'VERTICES': return Vertex(q(),r.numbers('d',3),r.number('d'))
@@ -501,10 +639,11 @@ def _read_row(tag,r):
         rows=tuple(zip(values[::width],values[1::width]))
         return Coedge(i,e,l,sense,c,interval,shift,recon,kind,rows,values[2::3] if width==3 else ())
     if tag == b'LOOPS___':
-        i,f=q(),q(); outer=r.boolean(); r.zero(); return Loop(i,f,outer,r.vector('Q'))
+        i,f=q(),q(); outer=r.boolean(); r.zero(); uses=r.vector('Q'); vertex=q()
+        return Loop(i,f,outer,uses,vertex,r.number('I'))
     if tag == b'FACES___':
         i,d,c,s=q(),q(),q(),q(); orientation=r.number('i'); shell=r.number('I'); tolerance=r.number('d')
-        return Face(i,d,c,orientation,r.vector('Q'),tolerance,s,shell)
+        loops=r.vector('Q'); return Face(i,d,c,orientation,loops,tolerance,s,shell,r.number('I'))
     if tag == b'CARRIERS':
         i=q(); kind=r.number('I'); r.zero(); frame=r.numbers('d',12); radii=r.numbers('d',2)
         uv=r.numbers('d',4); degree=r.numbers('I',2); shape=r.numbers('I',2)
@@ -521,7 +660,14 @@ def _read_row(tag,r):
         name,unit=r.string(),r.string(); return Style(i,ids,rgba,color,name,unit,r.number('d'),density)
     if tag == b'DIAGS___':
         severity=r.number('I'); r.zero(); stage=r.string(); ids=r.vector('Q')
-        return Diagnostic(stage,severity,ids,r.string())
+        message=r.string(); count=r.number('Q')
+        if count > (len(r.data)-r.pos)//20: raise ValueError('oversized diagnostic value count')
+        values=[]
+        for _ in range(count):
+            name=r.string(); kind=r.number('I'); r.zero(); values.append(DiagnosticValue(name,kind,r.number('d')))
+        return Diagnostic(stage,severity,ids,message,tuple(values))
+    if tag == b'OCCSTYLE':
+        style,face=q(),q(); return OccurrenceStyle(style,face,r.vector('Q'))
     raise ValueError('unknown source section')
 
 
@@ -530,8 +676,11 @@ def load_source(path):
     path=Path(path)
     if path.stat().st_size > 2**30: raise ValueError('source binary exceeds 1 GiB limit')
     data=path.read_bytes(); r=_Reader(data)
-    if bytes(r.take(8)) != b'BGSRC001' or r.number('I') != 1:
-        raise ValueError('unsupported source magic/version')
+    if bytes(r.take(8)) != b'BGSRC001':
+        raise ValueError('unsupported source magic')
+    if r.number('I') != 2:
+        raise ValueError('unsupported source version: this reader reads BGSRC001 version 2 '
+                         '(vertex loops, typed diagnostics, occurrence styles, face and definition status)')
     r.zero(); digest=bytes(r.take(32)).hex(); units,uncertainty=r.numbers('d',2)
     root=r.number('Q'); count=r.number('I'); r.zero(); length=r.number('Q')
     if count != len(_TAGS) or length != len(data): raise ValueError('source file count/length mismatch')
@@ -572,6 +721,7 @@ def _write_row(tag,value):
     elif tag == b'SOLIDS__':
         q(x.id); q(x.product_id)
         for v in (x.face_ids,x.edge_ids,x.vertex_ids): w.vector('Q',v)
+        w.number('I',x.status)
     elif tag == b'USAGES__':
         for v in (x.id,x.parent_product_id,x.child_product_id,x.style_id): q(v)
         w.string(x.name); w.numbers('d',x.transform)
@@ -589,10 +739,12 @@ def _write_row(tag,value):
               if x.parameter_map_kind==4 else x.parameter_map)
         w.vector('d',tuple(v for row in rows for v in row))
     elif tag == b'LOOPS___':
-        q(x.id); q(x.face_id); w.number('I',int(x.outer)); w.zero(); w.vector('Q',x.coedge_ids)
+        q(x.id); q(x.face_id); w.number('I',int(x.outer)); w.zero(); w.vector('Q',x.coedge_ids); q(x.vertex_id)
+        w.number('I',x.status)
     elif tag == b'FACES___':
         for v in (x.id,x.definition_id,x.carrier_id,x.style_id): q(v)
         w.number('i',x.orientation); w.number('I',x.shell); d(x.tolerance); w.vector('Q',x.loop_ids)
+        w.number('I',x.status)
     elif tag == b'CARRIERS':
         q(x.id); w.number('I',x.kind); w.zero(); w.numbers('d',x.frame)
         w.numbers('d',x.radii); w.numbers('d',x.uv_bounds); w.numbers('I',x.degrees)
@@ -617,6 +769,10 @@ def _write_row(tag,value):
         w.string(x.material_name); w.string(x.density_unit); d(x.density)
     elif tag == b'DIAGS___':
         w.number('I',x.severity); w.zero(); w.string(x.stage); w.vector('Q',x.source_ids); w.string(x.message)
+        q(len(x.values))
+        for v in x.values: w.string(v.name); w.number('I',v.kind); w.zero(); d(v.value)
+    elif tag == b'OCCSTYLE':
+        q(x.style_id); q(x.face_id); w.vector('Q',x.usage_ids)
     else: raise ValueError('unknown source section')
     return w
 
@@ -626,14 +782,14 @@ def write_source(source,path):
     validate_source(source)
     tables=((source.adapter_revision,),source.products,source.definitions,source.usages,
             source.vertices,source.edges,source.coedges,source.loops,source.faces,
-            source.carriers,source.curves,source.styles,source.diagnostics)
+            source.carriers,source.curves,source.styles,source.diagnostics,source.occurrence_styles)
     body=_Writer()
     for tag,rows in zip(_TAGS,tables):
         section=_Writer()
         for row in rows: section.row(_write_row(tag,row))
         body.data.extend(tag); body.number('Q',len(rows)); body.number('Q',len(section.data))
         body.data.extend(section.data)
-    header=_Writer(); header.data.extend(b'BGSRC001'); header.number('I',1); header.zero()
+    header=_Writer(); header.data.extend(b'BGSRC001'); header.number('I',2); header.zero()
     header.data.extend(bytes.fromhex(source.source_sha256)); header.numbers('d',(source.units_mm,source.source_uncertainty_mm))
     header.number('Q',source.root_product_id); header.number('I',len(_TAGS)); header.zero()
     header.number('Q',88+len(body.data)); Path(path).write_bytes(header.data+body.data)

@@ -16,6 +16,67 @@ from native_adaptive_trimmed_caller import (
     read_face, qualify_face, cylinder_source, c0_source, curved_source, source_value, cylinder_trig, orient)
 from brepgpu.imported_source import Product, Usage, Style, write_source
 
+INHERIT = 2**32-1
+
+
+def occurrence_plan(src):
+    """Per occurrence, in assembly order: (definition, instance material, {face: material}).
+
+    Derived from the precedence rules as a ranking of every candidate style of a face,
+    not by re-walking an occurrence the way the native resolver does. Candidates, best
+    rank first (ranks compare as tuples):
+      (4,)        an occurrence-style row naming this face on exactly this occurrence
+                  (CAx-IF Model Styling v1.10 section 5.1: a CDORSI whose item is the face);
+      (3, n, r)   an explicit whole-occurrence style on the first n usages of the path: a
+                  usage style (r = 0) or an occurrence-style row (r = 1) (section 5.1); a
+                  longer prefix is more specific (our rule, recorded by the adapter where
+                  nested rows disagree) and a row beats a usage style of the same depth;
+      (2, -k)     the style of the assembly-node product k levels below the root, above
+                  the part: a style higher in the assembly overrides lower ones (4.2.1);
+      (1,)        the face's own style (G9 5.2's face-over-solid call);
+      (0,)        the part's own style, the fallback whether or not it has a colour.
+    Ranks 1 to 4 admit only a style with a colour: a colourless (material-only or null)
+    style shows nothing, so it cannot take precedence (review S3). The instance takes its
+    best candidate that names no face; a face shows its own material when its best
+    candidate names it (ranks 4 and 1) and inherits the instance material otherwise.
+    """
+    products = {p.id: p for p in src.products}
+    usages = {u.id: u for u in src.usages}
+    index = {s.id: i+1 for i, s in enumerate(src.styles)}
+    coloured = {s.id for s in src.styles if s.has_color}
+    rows = tuple(getattr(src, "occurrence_styles", ()))
+    children = defaultdict(list)
+    for usage in sorted(src.usages, key=lambda u: u.id):  # the native assembly orders by ID
+        children[usage.parent_product_id].append(usage)
+    occurrences = []
+    def visit(product_id, path):
+        if products[product_id].definition_id:
+            occurrences.append((tuple(path), products[product_id]))
+        for usage in children[product_id]:
+            visit(usage.child_product_id, path+[usage.id])
+    visit(src.root_product_id, [])
+    plan = []
+    for path, leaf in occurrences:
+        chain = [src.root_product_id]+[usages[u].child_product_id for u in path]
+        whole = [((0,), leaf.style_id)] if leaf.style_id else []
+        whole += [((3, i+1, 0), usages[u].style_id) for i, u in enumerate(path) if usages[u].style_id in coloured]
+        whole += [((3, len(r.usage_ids), 1), r.style_id) for r in rows
+                  if not r.face_id and r.style_id in coloured and tuple(path[:len(r.usage_ids)]) == tuple(r.usage_ids)
+                  and len(r.usage_ids) <= len(path)]
+        whole += [((2, -k), products[p].style_id) for k, p in enumerate(chain[:-1]) if products[p].style_id in coloured]
+        rank, instance = max(whole, default=((-1,), 0), key=lambda c: c[0])
+        definition = next(d for d in src.definitions if d.id == leaf.definition_id)
+        signature = {}
+        for face_id in definition.face_ids:
+            face = next(f for f in src.faces if f.id == face_id)
+            named = [((4,), r.style_id) for r in rows
+                     if r.face_id == face_id and r.style_id in coloured and tuple(r.usage_ids) == tuple(path)]
+            named += [((1,), face.style_id)] if face.style_id in coloured else []
+            best = max(named+[(rank, None)], key=lambda c: c[0])
+            signature[face_id] = index[best[1]] if best[1] is not None else INHERIT
+        plan.append((definition.id, index[instance]+1 if instance else 1, signature))
+    return plan
+
 
 def styled_source():
     src = box_source()
@@ -30,11 +91,70 @@ def styled_source():
         faces=(replace(src.faces[0],style_id=40),*src.faces[1:]))
 
 
+def styled_mixed_source():
+    """Nested occurrences that need two colour variants of one definition.
+
+    710 root->box: usage style 20 (explicit). 712 root->sub carries no style; under it
+    713 sub->box has an occurrence-style row 30 on path (712, 713), and 715 sub->box
+    takes the sub-assembly node style 60. 714 root->box takes the part style 10, keeps
+    face style 40 and has face 2's occurrence override 50.
+    """
+    from brepgpu.imported_source import OccurrenceStyle
+    src = box_source()
+    def style(identifier,rgb):
+        return Style(identifier,(),(*rgb,1.),True)
+    def move(x):
+        return (1.,0.,0.,x,0.,1.,0.,0.,0.,0.,1.,0.)
+    second = src.faces[1].id
+    return replace(src,source_sha256='d5'*32,
+        products=(Product(100,'assembly','assembly'),Product(101,'box','box',200,10),
+                  Product(102,'sub','sub',0,60)),
+        definitions=(replace(src.definitions[0],product_id=101),),
+        usages=(Usage(710,100,101,'explicit',move(0.),20),
+                Usage(712,100,102,'sub',move(4.)),
+                Usage(713,102,101,'row',move(0.)),
+                Usage(715,102,101,'node',(0.,-1.,0.,3.,1.,0.,0.,0.,0.,0.,1.,.5)),
+                Usage(714,100,101,'part',move(8.))),
+        styles=(style(10,(.1,.2,.8)),style(20,(.8,.2,.1)),style(30,(.8,.7,.1)),style(40,(.1,.8,.3)),
+                style(50,(.9,.1,.9)),style(60,(.3,.3,.3))),
+        faces=(replace(src.faces[0],style_id=40),*src.faces[1:]),
+        occurrence_styles=(OccurrenceStyle(30,0,(712,713)),OccurrenceStyle(50,second,(714,))))
+
+
+def styled_plain_source():
+    """B2 review S4: a definition without face styles placed with (710, style 20) and
+    without (711) an occurrence style needs one display definition, not two."""
+    src = styled_source()
+    return replace(src,source_sha256='d6'*32,faces=tuple(replace(f,style_id=0) for f in src.faces),
+        usages=(replace(src.usages[0],style_id=20),replace(src.usages[1],style_id=0)))
+
+
+def styled_material_source():
+    """B2 review S3: a material-only (colourless) sub-assembly style 70 must not beat
+    the part style 10 nor its face style 40, and as face 1's own style it cannot beat
+    the part style either (round 3: the oracle's precedence is derived independently)."""
+    src = styled_source()
+    material = Style(70,(),(0.,0.,0.,1.),False,'steel','kg/m3',7800.,True)
+    return replace(src,source_sha256='d7'*32,
+        faces=(src.faces[0],replace(src.faces[1],style_id=70),*src.faces[2:]),
+        products=(Product(100,'assembly','assembly'),Product(101,'box','box',200,10),
+                  Product(102,'sub','sub',0,70)),
+        usages=(Usage(712,100,102,'sub',(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.)),
+                Usage(713,102,101,'inner',(1.,0.,0.,2.,0.,1.,0.,0.,0.,0.,1.,0.))),
+        styles=(*src.styles,material))
+
+
 def source_case(family):
+    if family == 'styled_plain':
+        return styled_plain_source(),'plane'
+    if family == 'styled_material':
+        return styled_material_source(),'plane'
     if family == 'box':
         return box_source(),'plane'
     if family == 'styled':
         return styled_source(),'plane'
+    if family == 'styled_mixed':
+        return styled_mixed_source(),'plane'
     if family == 'cylinder':
         return cylinder_source(),'cylinder'
     if family == 'c0':
@@ -161,8 +281,18 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
                  check_geometry=True):
     scene = read_scene(scene_path or output/'actual.bgscene')
     definitions = (sorted(d.id for d in src.definitions) if expected_definitions is None
-                   else sorted(expected_definitions))
-    assert [d[0] for d in scene['definitions']] == definitions
+                   else sorted(set(expected_definitions)))
+    # One display definition per distinct per-face material signature of its
+    # occurrences (a colour variant copies the geometry), in first-use order.
+    plan = [row for row in occurrence_plan(src) if row[0] in definitions]
+    variants = []
+    for definition in definitions:
+        seen = []
+        for owner,_,signature in plan:
+            if owner == definition and signature not in seen:
+                seen.append(signature)
+        variants.extend((definition|(k << 56),signature) for k,signature in enumerate(seen or [None]))
+    assert [d[0] for d in scene['definitions']] == [d for d,_ in variants]
     vertices,carriers = scene['vertices'],scene['carriers']
     jets = None
     if debug_outputs:
@@ -173,7 +303,8 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
     normal_expected = {}
     crease = defaultdict(set)
     used = set()
-    for definition,first_vertex,vertex_count,first_triangle,triangle_count in scene['definitions']:
+    for (identity,first_vertex,vertex_count,first_triangle,triangle_count),(_,signature) in zip(scene['definitions'],variants):
+        definition = identity & ((1 << 56)-1)  # variant k > 0 tags the top byte
         source_definition = next(d for d in src.definitions if d.id == definition)
         actual_faces = [f for f in src.faces if f.id in source_definition.face_ids]
         face_triangles = defaultdict(list)
@@ -247,17 +378,28 @@ def check_output(src,kind,family,output,*,scene_path=None,face_paths=None,
                         assert struct.pack('<3d',*jets[global_id][12:15]) == struct.pack('<3d',*display['xyz'])
                         assert jets[global_id][-1] & 2
                     normal_expected[global_id] = expected
-                style = face.style_id
-                assert row[3] == (next(i for i,s in enumerate(src.styles) if s.id == style)+1 if style else 2**32-1)
+                assert signature is not None and row[3] == signature[face.id], (face.id,row[3])
     assert used == set(range(len(vertices)))
     assert set(physical_to_source) == set(range(1,len(physical_to_source)+1))
     if family == 'c0':
         assert any(len(roots) == 2 for roots in crease.values()), 'C0 sides collapsed to canonical point root'
-    assert scene['materials'] == [(0.7,0.7,0.7,0.5)]+[(*s.rgba[:3],.5) for s in src.styles]
+    assert scene['materials'] == [(0.7,0.7,0.7,0.5)]+[(*(s.rgba[:3] if s.has_color else (.7,.7,.7)),.5) for s in src.styles]
     if expected_instances is None:
-        expected_matrices = [u.transform for u in src.usages] if family == 'styled' else [(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.)]
-        assert [tuple(i['matrix']) for i in scene['instances']] == expected_matrices
-        assert [i['material'] for i in scene['instances']] == ([3,4] if family == 'styled' else [1])
+        expected_matrices = ([u.transform for u in src.usages] if family in ('styled','styled_plain')
+                             else [(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.)] if family not in ('styled_mixed','styled_material') else None)
+        if expected_matrices is not None:
+            assert [tuple(i['matrix']) for i in scene['instances']] == expected_matrices
+        assert [i['material'] for i in scene['instances']] == [material for _,material,_ in plan]
+        assert [variants[i['definition']][1] for i in scene['instances']] == [s for _,_,s in plan]
+        if family == 'styled':
+            assert [i['material'] for i in scene['instances']] == [3,4]
+        if family == 'styled_mixed':
+            assert [i['material'] for i in scene['instances']] == [3,4,7,2] and len(variants) == 2
+        if family == 'styled_plain':
+            assert [i['material'] for i in scene['instances']] == [3,2] and len(variants) == 1
+        if family == 'styled_material':
+            assert [i['material'] for i in scene['instances']] == [2] and 4 in variants[0][1].values()
+            assert variants[0][1][src.faces[1].id] == INHERIT  # material-only face style 70
     else:
         assert len(scene['instances']) == len(expected_instances)
         for actual,expected in zip(scene['instances'],expected_instances):
@@ -308,7 +450,7 @@ def run(options,root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable',type=Path,required=True)
-    parser.add_argument('--family',choices=('box','cylinder','weighted','c0','styled','north','cone'),required=True)
+    parser.add_argument('--family',choices=('box','cylinder','weighted','c0','styled','styled_mixed','styled_plain','styled_material','north','cone'),required=True)
     parser.add_argument('--workspace',type=Path)
     parser.add_argument('--module',type=Path)
     parser.add_argument('--device',type=int,choices=(0,1),default=0)

@@ -15,7 +15,9 @@ SourceData::SourceData(std::shared_ptr<RunResource> owner)
       definitions(resource.get()), usages(resource.get()), vertices(resource.get()),
       edges(resource.get()), coedges(resource.get()), loops(resource.get()), faces(resource.get()),
       carriers(resource.get()), curves(resource.get()), styles(resource.get()),
-      diagnostics(resource.get()), strings(resource.get()), scalars(resource.get()),
+      diagnostics(resource.get()), diagnostic_values(resource.get()),
+      occurrence_styles(resource.get()), usage_ids(resource.get()),
+      strings(resource.get()), scalars(resource.get()),
       multiplicities(resource.get()), source_ids(resource.get()), parameter_maps(resource.get()),
       face_ids(resource.get()), edge_ids(resource.get()), vertex_ids(resource.get()),
       coedge_ids(resource.get()), loop_ids(resource.get()), surface_spans(resource.get()),
@@ -178,9 +180,9 @@ public:
     return result;
   }
 };
-constexpr std::array<std::string_view, 13> tags{
+constexpr std::array<std::string_view, 14> tags{
     "META____", "PRODUCTS", "SOLIDS__", "USAGES__", "VERTICES", "EDGES___", "COEDGES_",
-    "LOOPS___", "FACES___", "CARRIERS", "CURVES__", "STYLES__", "DIAGS___"};
+    "LOOPS___", "FACES___", "CARRIERS", "CURVES__", "STYLES__", "DIAGS___", "OCCSTYLE"};
 bool equal_bytes(std::span<const std::byte> bytes, std::string_view expected) {
   return bytes.size() == expected.size() &&
          std::equal(bytes.begin(), bytes.end(), expected.begin(), [](std::byte a, char b) {
@@ -209,6 +211,7 @@ void decode_row(std::size_t section, Reader &r, SourceData &d) {
     v.faces = r.ids(d.face_ids);
     v.edges = r.ids(d.edge_ids);
     v.vertices = r.ids(d.vertex_ids);
+    v.status = r.u32();
     d.definitions.push_back(v);
     break;
   }
@@ -278,6 +281,8 @@ void decode_row(std::size_t section, Reader &r, SourceData &d) {
     v.outer = r.boolean();
     r.zero();
     v.coedges = r.ids(d.coedge_ids);
+    v.vertex = r.id<VertexTag>();
+    v.status = r.u32();
     d.loops.push_back(v);
     break;
   }
@@ -291,6 +296,7 @@ void decode_row(std::size_t section, Reader &r, SourceData &d) {
     v.shell = r.u32();
     v.tolerance = r.f64();
     v.loops = r.ids(d.loop_ids);
+    v.status = r.u32();
     d.faces.push_back(v);
     break;
   }
@@ -371,7 +377,25 @@ void decode_row(std::size_t section, Reader &r, SourceData &d) {
     v.stage = r.string(d.strings);
     v.source_ids = r.vector(d.source_ids, 8, [&r] { return r.integer(); });
     v.message = r.string(d.strings);
+    v.values = r.vector(d.diagnostic_values, 20, [&] {
+      DiagnosticValue value{};
+      value.name = r.string(d.strings);
+      value.kind = r.u32();
+      r.zero();
+      value.value = r.f64();
+      require(value.name.count != 0 && value.kind >= 1 && value.kind <= 8,
+              "invalid source diagnostic value");
+      return value;
+    });
     d.diagnostics.push_back(v);
+    break;
+  }
+  case 13: {
+    OccurrenceStyle v{};
+    v.style = r.id<StyleTag>();
+    v.face = r.id<FaceTag>();
+    v.path = r.ids(d.usage_ids);
+    d.occurrence_styles.push_back(v);
     break;
   }
   default:
@@ -584,6 +608,12 @@ void validate(SourceData &d, Work &work) {
   }
   for (std::size_t i = 0; i < d.loops.size(); ++i) {
     const auto &v = d.loops[i];
+    if (v.vertex) {
+      // A vertex loop: one point vertex, no uses. Inventory is checked below.
+      static_cast<void>(d.vertex_index.find(v.vertex));
+      require(loop_owners[i] == 1 && v.coedges.count == 0, "invalid source vertex loop");
+      continue;
+    }
     require(loop_owners[i] == 1 && v.coedges.count != 0, "invalid source loop ownership");
     VertexId previous{}, first{};
     for (auto id : slice(d.coedge_ids, v.coedges)) {
@@ -653,21 +683,91 @@ void validate(SourceData &d, Work &work) {
         require(marked_vertices[d.vertex_index.find(id).value] == stamp,
                 "definition edge endpoint missing from vertex inventory");
     for (auto f : d.definition_faces.at(static_cast<uint32_t>(i)))
-      for (auto l : slice(d.loop_ids, d.faces[f].loops))
-        for (auto c : slice(d.coedge_ids, d.loops[d.loop_index.find(l).value].coedges)) {
+      for (auto l : slice(d.loop_ids, d.faces[f].loops)) {
+        const auto &loop = d.loops[d.loop_index.find(l).value];
+        if (loop.vertex)
+          require(marked_vertices[d.vertex_index.find(loop.vertex).value] == stamp,
+                  "definition vertex loop missing from vertex inventory");
+        for (auto c : slice(d.coedge_ids, loop.coedges)) {
           work.charge(1);
           require(marked_edges[d.edge_index.find(d.coedges[d.coedge_index.find(c).value].edge_id)
                                    .value] == stamp,
                   "definition face edge missing from edge inventory");
         }
+      }
   }
   for (const auto &v : d.styles) {
     for (auto c : v.rgba)
       require(c >= 0 && c <= 1, "invalid source RGBA");
     require(!v.has_density || v.density >= 0, "negative source material density");
   }
-  for (const auto &v : d.diagnostics)
+  for (const auto &v : d.diagnostics) {
     require(v.severity < 2, "source adapter error diagnostic");
+    const auto values = slice(d.diagnostic_values, v.values);
+    for (std::size_t i = 0; i < values.size(); ++i)
+      for (std::size_t j = 0; j < i; ++j) {
+        work.charge(1);
+        require(d.text(values[i].name) != d.text(values[j].name),
+                "duplicate source diagnostic field name");
+      }
+  }
+  // Source status (D-partial-output): a refused loop refuses its face, a face
+  // is refused only through a refused loop, a definition is incomplete exactly
+  // when a face of it is refused, and every refused loop has its
+  // source_face_refused record naming (face, loop).
+  for (const auto &v : d.loops)
+    if (v.status != source_status_admitted && v.status != source_status_refused)
+      invalid("source loop " + std::to_string(v.id.value) + ": unknown status " +
+              std::to_string(v.status));
+  std::pmr::vector<uint8_t> recorded(d.loops.size(), 0, d.resource.get());
+  for (const auto &v : d.diagnostics) {
+    work.charge(1);
+    if (d.text(v.stage) != "source_face_refused")
+      continue;
+    const auto ids = slice(d.source_ids, v.source_ids);
+    require(ids.size() >= 2, "source_face_refused record names no face and loop");
+    const auto face = d.face_index.find(FaceId{ids[0]}).value;
+    const auto loop = d.loop_index.find(LoopId{ids[1]}).value;
+    if (d.loops[loop].face_id != d.faces[face].id || d.loops[loop].status != source_status_refused)
+      invalid("source_face_refused record names loop " + std::to_string(ids[1]) +
+              " that is not a refused loop of face " + std::to_string(ids[0]));
+    recorded[loop] = 1;
+  }
+  for (std::size_t i = 0; i < d.loops.size(); ++i) {
+    const auto &v = d.loops[i];
+    if (v.status == source_status_refused && !recorded[i])
+      invalid("refused loop " + std::to_string(v.id.value) + " of face " +
+              std::to_string(v.face_id.value) + " has no source_face_refused record");
+  }
+  for (const auto &v : d.faces) {
+    if (v.status != source_status_admitted && v.status != source_status_refused)
+      invalid("source face " + std::to_string(v.id.value) + ": unknown status " +
+              std::to_string(v.status));
+    LoopId refused{};
+    for (auto id : slice(d.loop_ids, v.loops)) {
+      work.charge(1);
+      if (d.loops[d.loop_index.find(id).value].status == source_status_refused)
+        refused = id;
+    }
+    if (refused && v.status != source_status_refused)
+      invalid("source face " + std::to_string(v.id.value) + " is admitted but holds refused loop " +
+              std::to_string(refused.value));
+    if (!refused && v.status == source_status_refused)
+      invalid("source face " + std::to_string(v.id.value) + " is refused without a refused loop");
+  }
+  for (const auto &v : d.definitions) {
+    if (v.status != definition_status_complete && v.status != definition_status_incomplete)
+      invalid("source definition " + std::to_string(v.id.value) + ": unknown status " +
+              std::to_string(v.status));
+    bool refused = false;
+    for (auto id : slice(d.face_ids, v.faces)) {
+      work.charge(1);
+      refused = refused || d.faces[d.face_index.find(id).value].status == source_status_refused;
+    }
+    if (refused != (v.status == definition_status_incomplete))
+      invalid("source definition " + std::to_string(v.id.value) +
+              " status differs from its faces: it is incomplete exactly when a face is refused");
+  }
   std::pmr::vector<std::pair<uint32_t, uint32_t>> graph_pairs(d.resource.get());
   std::pmr::vector<uint32_t> indegree(d.products.size(), 0, d.resource.get());
   for (std::size_t i = 0; i < d.usages.size(); ++i) {
@@ -707,6 +807,50 @@ void validate(SourceData &d, Work &work) {
     }
   }
   require(queue.size() == d.products.size(), "cyclic source product usage graph");
+  // Each occurrence style names a path of usages connected from the root, and a
+  // face, if any, on the definition that path reaches; one row per (path, face).
+  for (std::size_t i = 0; i < d.occurrence_styles.size(); ++i) {
+    const auto &v = d.occurrence_styles[i];
+    static_cast<void>(d.style_index.find(v.style));
+    require(v.path.count != 0, "empty occurrence style path");
+    auto parent = d.root_product_id;
+    for (auto id : slice(d.usage_ids, v.path)) {
+      work.charge(1);
+      const auto &usage = d.usages[d.usage_index.find(id).value];
+      require(usage.parent_product_id == parent,
+              "occurrence style path is not connected from the root");
+      parent = usage.child_product_id;
+    }
+    if (v.face) {
+      const auto definition = d.products[d.product_index.find(parent).value].definition_id;
+      require(definition && d.faces[d.face_index.find(v.face).value].definition_id == definition,
+              "occurrence style face is not on its occurrence");
+    }
+  }
+  // One row per (path, face): sort, then compare neighbours (n log n work).
+  std::pmr::vector<uint32_t> order(d.resource.get());
+  for (uint32_t i = 0; i < d.occurrence_styles.size(); ++i)
+    order.push_back(i);
+  auto key = [&](uint32_t i) {
+    const auto &v = d.occurrence_styles[i];
+    return std::pair{v.face.value, slice(d.usage_ids, v.path)};
+  };
+  std::sort(order.begin(), order.end(), [&](uint32_t a, uint32_t b) {
+    const auto x = key(a), y = key(b);
+    work.charge(1 + std::min(x.second.size(), y.second.size()));
+    if (x.first != y.first)
+      return x.first < y.first;
+    return std::lexicographical_compare(
+        x.second.begin(), x.second.end(), y.second.begin(), y.second.end(),
+        [](UsageId p, UsageId q) { return p.value < q.value; });
+  });
+  for (std::size_t i = 1; i < order.size(); ++i) {
+    const auto x = key(order[i - 1]), y = key(order[i]);
+    work.charge(1 + x.second.size());
+    require(!(x.first == y.first &&
+              std::equal(x.second.begin(), x.second.end(), y.second.begin(), y.second.end())),
+            "duplicate occurrence style");
+  }
 }
 } // namespace
 
@@ -735,7 +879,9 @@ SourceStore read_source(std::span<const std::byte> bytes,
     throw Error(ErrorCode::resource_exhausted, "source binary exceeds wire limit");
   Work work(limits);
   Reader r(bytes, work);
-  require(equal_bytes(r.take(8), "BGSRC001") && r.u32() == 1, "unsupported source magic/version");
+  require(equal_bytes(r.take(8), "BGSRC001"), "unsupported source magic");
+  require(r.u32() == 2, "unsupported source version: this reader reads BGSRC001 version 2 "
+                        "(vertex loops, typed diagnostics, occurrence styles, face and definition status)");
   r.zero();
   auto data = std::allocate_shared<SourceData>(RunAllocator<SourceData>(resource), resource);
   const auto digest = r.take(32);

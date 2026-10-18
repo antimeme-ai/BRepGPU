@@ -35,8 +35,8 @@ void row(Bytes &out, const Bytes &value) {
   append(out, value);
 }
 Bytes fixture(bool curve = false, bool bad_weight = false, bool cycle = false) {
-  std::array<Bytes, 13> payloads;
-  std::array<uint64_t, 13> counts{};
+  std::array<Bytes, 14> payloads;
+  std::array<uint64_t, 14> counts{};
   Bytes value;
   text(value, "native source fixture");
   row(payloads[0], value);
@@ -81,20 +81,20 @@ Bytes fixture(bool curve = false, bool bad_weight = false, bool cycle = false) {
     row(payloads[10], value);
     counts[10] = 1;
   }
-  constexpr std::array<std::string_view, 13> tags{
+  constexpr std::array<std::string_view, 14> tags{
       "META____", "PRODUCTS", "SOLIDS__", "USAGES__", "VERTICES", "EDGES___", "COEDGES_",
-      "LOOPS___", "FACES___", "CARRIERS", "CURVES__", "STYLES__", "DIAGS___"};
+      "LOOPS___", "FACES___", "CARRIERS", "CURVES__", "STYLES__", "DIAGS___", "OCCSTYLE"};
   Bytes out;
   for (char c : std::string_view("BGSRC001"))
     out.push_back(static_cast<std::byte>(c));
-  word(out, 1, Width::u32);
+  word(out, 2, Width::u32);
   word(out, 0, Width::u32);
   for (unsigned i = 0; i < 32; ++i)
     out.push_back(static_cast<std::byte>(i));
   number(out, 25.4);
   number(out, .001);
   word(out, 101);
-  word(out, 13, Width::u32);
+  word(out, 14, Width::u32);
   word(out, 0, Width::u32);
   uint64_t size = 88;
   for (const auto &p : payloads)

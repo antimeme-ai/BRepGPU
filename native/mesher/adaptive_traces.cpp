@@ -706,6 +706,7 @@ TraceSourceWork prepare_use_trace(const TraceFaceRequest &request, JobContext &c
     b.charge(1);
     return a.first < c.first;
   });
+  require_edge_loops(s, face);
   for (uint64_t li = 0; li < face.loops.count; ++li) {
     b.charge(1);
     const auto loop_slot = s.loop_index.find(s.loop_ids[face.loops.first + li]);
