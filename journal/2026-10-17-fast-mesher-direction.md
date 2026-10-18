@@ -551,3 +551,20 @@ decisions (ABC download term first, as the priority-1 corpus source).
   for M4-G1, since G1 studies the same code. Dispositions: .37.11 (old-mesher
   test failing on unmodified code) closed as retired, its family carried to
   M8; .37.14 (mesh a void-bearing source end to end) moved to M8.
+- M4-G1 returned (papers/2026-10-17-occt-ingress-translation-edits.md): an
+  OCCT 8.0.1 probe over 915 STEP files, raw entity against translated shape.
+  57 translation-layer edits tabled with corpus frequency and disposition.
+  98.7% of non-planar coedges carry no file pcurve; where file pcurves exist,
+  OCCT reparameterises, replaces or drops about a quarter of them, all against
+  a declared master. Two M1 claims corrected: with processing off OCCT does not
+  recompute missing pcurves, and it merged no vertex records. Authority rule:
+  the raw entity is authoritative, OCCT is only an evaluator where it agrees
+  within the context's uncertainty. Steel-man: NVIDIA's strongest legitimate
+  input is OCCT's default read, not our no-processing export (144,160 curved
+  faces without pcurves under ours, 0 under the default read); the harness
+  lane was told to make the ingress arm explicit. B1's CTO question settled:
+  OCCT inverts scale and reads mirrors as rotations, at corpus frequency zero.
+  Ingress cost: the OCCT parse is 71% of the bridge (9.4 MB/s), about 32× a
+  lexing lower bound, so M5 should keep the bridge with raw overrides and bring
+  an owned reader forward. One defect filed under B2, three M8 items, three
+  operator questions.

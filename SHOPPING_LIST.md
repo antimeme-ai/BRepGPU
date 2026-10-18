@@ -240,3 +240,8 @@ Highest value first:
   Augonnet et al., StarPU performance models (HPPC 2009, HAL inria-00421333;
   bot check); Kalibera and Jones, "Rigorous benchmarking in reasonable time"
   (ISMM 2013; link returned HTML).
+- **G1 ingress bridge:** ISO 10303-42 normative text, specifically quasi-uniform
+  and uniform knot values (1,579 corpus entities depend on them),
+  `degenerate_toroidal_surface` evaluation and the CTO clauses; the usd-brep Git
+  LFS STEP/IGES/JT fixtures (our snapshot holds pointers only); OCCT Mantis
+  #25415 (line shift) and #26376 (negative torus radius).
