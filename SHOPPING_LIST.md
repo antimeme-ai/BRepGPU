@@ -195,3 +195,9 @@ Highest value first:
   (1997/98); Laug and Borouchaki, "Surface meshing with metric gradation
   control" (2012); Ruppert 1995 (cited, unread); Chiang, Li and Burley, "Taming
   the shadow terminator" (2019); Karis et al., Nanite (2021).
+- **G16 source identity:** CAx-IF PID test-round STEP files (R55J
+  `pdi_0-e5-242.stp`, R57J/R58J split-hole and feature cases) and the
+  cross-domain TEST7/TEST8 STEP+QIF packages (members only; the corpus has no
+  file with UUIDs); the CAx-IF list of UUID-referenceable AP242 Ed.4 entities
+  (members only); ISO 10303-21:2016; QIF 3.0 (registration not accepted); the
+  `EXT_structural_metadata` spec.

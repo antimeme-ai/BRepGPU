@@ -398,3 +398,12 @@ decisions (ABC download term first, as the priority-1 corpus source).
   recorded NVIDIA time is a chord-only run although design §9.6 says default
   angles. Operator question filed at priority 1; the owned mesher must carry
   whichever term the steel-man arm uses.
+- M4-G16 returned (papers/2026-10-17-source-identity-passthrough.md): the
+  reader's Part 21 `#N` keys and the mesher's node classification already
+  give Shephard classification; the paper lists the missing fields (revision,
+  UUIDs, names, shape_aspect groupings), deterministic v5 UUIDs only, and
+  carriage per format (STL by face-grouped ranges in the internal schema; 3MF
+  one triangle set per face; glTF `_FACEID` plus a per-face table). Identity as
+  range tables stays off the hot path (36.7 KB against 2.19 MB for the watch).
+  Found that the draft can emit two mesh edges on one vertex pair and needs a
+  sample-count floor (noted on the M5 bead). Two operator questions filed.
