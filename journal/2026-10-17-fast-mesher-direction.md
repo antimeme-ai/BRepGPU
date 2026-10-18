@@ -546,3 +546,8 @@ decisions (ABC download term first, as the priority-1 corpus source).
   and the affected suites green; native mesher 127/129 with the two failures
   pre-existing; the read-only corpus ingress run over 500 files gives zero new
   refusals. Beads brepgpu-12s.1 and .1.1–.1.4 closed.
+- B2 brief written (docs/fast-mesher-campaign/briefs/B2-lane-defects.md):
+  four units. B2-display, B2-harness and B2-oracles launched; B2-ingress waits
+  for M4-G1, since G1 studies the same code. Dispositions: .37.11 (old-mesher
+  test failing on unmodified code) closed as retired, its family carried to
+  M8; .37.14 (mesh a void-bearing source end to end) moved to M8.
