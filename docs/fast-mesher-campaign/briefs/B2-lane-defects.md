@@ -142,3 +142,30 @@ the evidence.
 **Return.** For each defect, a few lines: the cause, the fix, the test, and
 before and after. Then the suite counts, and any further defects found, each
 with file and line.
+
+## Follow-on unit B2-reader (added 2026-10-18)
+
+The first four units found further defects in `native/step_source` and
+`native/reference_source`. That code is also where B2-ingress worked, so this unit
+runs after B2-ingress lands. The same rules apply: study, plan, red, fix, green,
+self-review, and then an independent review.
+
+| Bead | Defect | Expected fix |
+|---|---|---|
+| `.37.20` | The reader composes item-defined placements as item_1⁻¹∘item_2 (OCCT `STEPControl_ActorRead.cxx:2488`). The standard and PDM Usage Guide r4.3 Example 14 require item_2∘item_1⁻¹. It also admits misread operator mirrors and an omitted `axis3` as rigid. | Read placements raw in the adapter, following the oracle's Part 42 transcription (`python/brepgpu/imported_oracles.py`). Refuse mirrors and scale while admission is rigid-only. |
+| `.37.21` | The oracle's `representation_links` joins placing relations, so it merges parent and child. | Apply the skip that `_representation_products` uses. |
+| `.37.19` | No exporter performs NVIDIA's strongest ingress, OCCT's default STEP read. | A `shape-processing=default` mode in `native/reference_source`, with its face map and admission built under FixShape. |
+| `.37.22` | The reference exporter refuses `BREP_WITH_VOIDS` sources. | Carry voids as B1 did. |
+| `.37.23` | The reference exporter has no occurrence styles, and its vertex-loop faces fail BRepCheck. | Write occurrence styles. Handle vertex loops. |
+| `.37.25` | The reference XDE exporter refuses solids placed through `MAPPED_ITEM`. | Admit them. |
+
+The correctness constraint is G1's authority rule: the raw entity is
+authoritative, and OCCT serves only as an evaluator.
+
+The steel-man constraint is that each NVIDIA ingress arm must stay what it claims
+to be. B2-harness's byte check applies only to a `translation-only` exporter with
+no `raw-entity-corrections=`. Any raw correction this unit adds to the exporter
+must be declared through that token.
+
+Re-run the read-only 500-file corpus ingress check before and after, and report
+every change in the accepted and refused sets, by reason.
