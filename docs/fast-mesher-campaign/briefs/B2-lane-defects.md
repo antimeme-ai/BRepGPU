@@ -299,3 +299,49 @@ inconsistency refuses the face by name (reason 7).
   writes the corrected side and declares `S1` or `S2`. The exporter decides this
   by its own ray-parity verdict, not by the adapter's code. The merged run checks
   that both implementations correct the same faces.
+
+### B2-reader-export review round 1 decisions (2026-10-18)
+
+The independent review of the export lane returned "not ready". Every finding is
+fixed in this unit. The dispatcher's rulings follow.
+
+- **Corrections in the translation-only arm (S1 and S2).**
+  - The arm's NVIDIA input for a definition whose `.brep` our exporter corrected
+    is our corrected `.brep`, declared. NVIDIA then gets the same correct input
+    the owned mesher gets.
+  - Every other definition keeps the minimal ingress's raw translation, and the
+    byte check applies to it.
+  - So the byte check is per definition. It exempts only definitions whose
+    `.brep` bytes we changed.
+  - P1 and P2 change usages, not `.brep` bytes, so they never exempt a
+    definition. NVIDIA must receive the raw-corrected placements wherever it
+    reads placements; the lane verifies where that is.
+- **The repair is verified on the result.**
+  - The exporter's S1 or S2 choice may not come from counting faces.
+  - Whatever the exporter writes must pass two checks on the exported solid
+    before it is published: BRepCheck must be valid, and every shell's signed
+    volume must have the correct sign.
+  - A repair that fails either check refuses the definition by name.
+  - This is the same lesson as the adapter's review: never write a correction you
+    have not verified.
+- **Ray parity.**
+  - Opposite parity is required on the two sides of the face, with generic
+    directions and offsets scaled to the piece.
+  - It must agree with OCCT's `BRepClass3d_SolidClassifier`.
+  - `--face-sides` uses the same rule over all pieces. A disagreement between the
+    two methods is undecidable.
+  - The verdicts on `M8X25 Pan Head Screw.step` and `umbilical_mount_bottom.step`
+    are re-derived. The "one case where FixShape turned a correct face" recorded
+    above stands only if the re-derivation confirms it.
+- **The default-read arm requires byte identity.** NVIDIA's default-read input
+  must be byte-identical to our default export, which it is on OM10 (107 of 107).
+  Otherwise the run refuses as harness (exit 3). A count of faces is not enough.
+- **The exporter has the adapter's guards.** It calls
+  `refuse_unbounded_transfer` before every transfer, and it refuses unpublished
+  solid-bearing mapped items as the adapter does. The oracle stops skipping
+  mapped representations that reach a solid through related shape
+  representation relationships.
+- **One placement-agreement predicate.**
+  - The adapter moves its agreement rule into `native/step_placements.hpp`. That
+    rule includes the resolution bound on translations and its rotation bound.
+  - The exporter calls it, so the two arms decide agreement identically.
