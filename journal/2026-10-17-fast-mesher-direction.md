@@ -512,3 +512,28 @@ decisions (ABC download term first, as the priority-1 corpus source).
   rings plus recorded spatial and collapse regions; four global couplings
   forbidden. Four corrections to the draft and M2 noted on the M5 bead. G7's
   placement question answered both ways; no new operator questions.
+- B1 returned its first pass (all four defects red then green on the fleet;
+  report transcribed to results/b1-ingress-defects-2026-10-17/REPORT.md
+  because the lane's harness could not write it). An independent adversarial
+  review found it not ready: the measured parameter map was published under
+  the kind consumers read as exact (blocker; dispatcher decision: a new kind
+  that every consumer refuses until it charges the residual), the residual is
+  sampled rather than bounded, a `.T.` void was accepted, the unit resolver
+  refused legal input, and no mesher ran on the void fixture. Sent back to the
+  lane for rework. Default applied for bead brepgpu-12s.66: refuse a missing
+  plane-angle unit only for solids with angle-bearing geometry. Four further
+  B1 findings filed under B2.
+- M4-G8 returned (papers/2026-10-17-heterogeneous-placement-measurement.md):
+  per-socket work stealing with HeteroPrio GPU allocation and per-device cost
+  models, CPU-only fallback; split threshold τ = 0.1·W/(P−1). The GPU is a
+  hypothesis to test, not a gain to assume: per-face offload buys nothing,
+  analytic surfaces never pay over PCIe, and B-spline evaluation breaks even
+  near 10³ items per batch. Measurement protocol: at least 10 fresh processes,
+  median with rank CI, interleaved order, numactl pinning, a quiet-host gate,
+  NVIDIA at its strongest arm. Quiet-pass microbenchmarks recorded (memory 25
+  GB/s triad per socket, 126 ns local latency, P100 4.1–4.6 TFLOP/s, launch
+  7.3–7.8 µs, smallest offload round trip 16–18 µs; GPU0's PCIe link runs x8).
+  Defect filed under B2 at priority 1: the NVIDIA harness balances workers by
+  face count and nothing is pinned, so published NVIDIA times are not at their
+  strongest and owned watch times ran under AutoNUMA migration. Two operator
+  questions filed; the governor question gained measured clocks.

@@ -235,3 +235,8 @@ Highest value first:
   extrusion and parabola.
 - **G12 edit invalidation:** Wu–Sarma 2004 (CAD 36(9), closed access); Wu–Sarma
   2001 (abstract only read).
+- **G8 placement and measurement:** Topcuoglu et al., HEFT (IEEE TPDS 2002);
+  Beaumont et al., HeteroPrio proofs (IPDPS 2017, HAL hal-01386174; bot check);
+  Augonnet et al., StarPU performance models (HPPC 2009, HAL inria-00421333;
+  bot check); Kalibera and Jones, "Rigorous benchmarking in reasonable time"
+  (ISMM 2013; link returned HTML).
