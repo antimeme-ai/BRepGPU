@@ -490,3 +490,15 @@ decisions (ABC download term first, as the priority-1 corpus source).
   recomputing them is the normal path. More OCCT translation edits found for
   G1. One operator question (tessellated-only parts); ABC now matters for
   offset and extrusion frequency too.
+- M4-G6 returned (papers/2026-10-17-units-parameter-semantics.md): OCCT
+  already converts every length, angle and admitted pcurve per context, so
+  lifting the mm-only refusal needs only the three raw reads fixed (unit
+  names, vertex coordinates, uncertainty), not a conversion map. A unit and
+  parameter map per surface and curve kind marks where OCCT gets it wrong
+  (revolution, extrusion and offset pcurves; parabola trims). Census over 488
+  B-rep files: 343 mm, 136 inch, 9 cm; today's gate refuses 151, including 6
+  millimetre files named 'MILLIMETRE'; 41 files write the degree so that full
+  circles fail OCCT's closure tolerance. Critical for B1, sent to the running
+  lane: no angle is read raw, so applying the declared angle factor would
+  convert twice. Three further unit defects filed under B2; four operator
+  questions filed.

@@ -228,3 +228,8 @@ Highest value first:
   Book* ch. 7–8; Farouki 1986, Patrikalakis–Prakash 1988, Maekawa 1999,
   Piegl–Tiller 1999 (offsets); Parasolid and ACIS documentation on offset and
   swept surfaces, degree limits and sheets.
+- **G6 units:** ISO 10303-41 and ISO 10303-43 normative texts; OCCT Mantis
+  0029803 page and test file (tracker did not resolve). Sections wanted from
+  items already listed: IGES 5.3 global-section fields 13–15 and 19 and the
+  analytic-surface parameterisations; ISO 10303-42 parameterisations of cone,
+  extrusion and parabola.
