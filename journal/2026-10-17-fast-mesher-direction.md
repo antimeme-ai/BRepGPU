@@ -467,3 +467,14 @@ decisions (ABC download term first, as the priority-1 corpus source).
   under B2 (per-occurrence colours dropped silently, including the watch's 9
   and the Voron Trident's 463; innermost-wins precedence); the mirrored-normal
   issue noted on the M8 placements bead. Three operator questions filed.
+- M4-G4 returned (papers/2026-10-17-thin-feature-embedding.md): a
+  half-clearance lemma gives the draft's 2ε rule as a special case, once
+  measured on the repaired target with each face's true localization bound;
+  the draft had no rule for faces sharing an edge, which is where meshing at ε
+  self-intersects. Exact rational tests on the fleet: on extruded crescent
+  knife edges the draft's cylinder slab rule crosses in 59 of 2,016 thick
+  configurations and in most thin ones; the proposed shared-edge tilt rule
+  crosses in 0 of 5,400, at no more than 7 extra vertices per cross-section;
+  tightening only one face made it worse. No construction-time triangle-pair
+  test is needed; curved knife edges remain a proof sketch. Two operator
+  questions filed.

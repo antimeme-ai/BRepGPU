@@ -218,3 +218,6 @@ Highest value first:
   3D Systems STL specification primary text (read only through Burns'
   reproduction); CAx-IF styled-assembly test-round screenshots (only if colour
   conflicts appear).
+- **G4 thin features:** Li et al. 2026 (JCDE; Cloudflare 403, read only through
+  a summarising fetch, proofs unverified); Amenta–Choi–Dey–Leekha, IJCGA 2002
+  (the SoCG 2000 version was read); Wang et al., IEEE TIM 2022 (abstract only).
