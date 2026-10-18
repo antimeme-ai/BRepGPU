@@ -643,3 +643,33 @@ decisions (ABC download term first, as the priority-1 corpus source).
   ingress refusal, never NVIDIA's failure. Corpus 230→232 accepted with no
   accepted→refused moves; OM10 unchanged apart from its 9 occurrence styles now
   read. Seven follow-on defects filed; six go to B2-reader, one to M8.
+
+## 2026-10-18: B2-reader round 1 returned
+
+Both B2-reader lanes fixed their beads.
+
+**Adapter lane.** Raw placements, mapped-item cycles and solid-bearing mapped
+items refused by name, the file's own nets for periodic carriers, and the
+carrier hint as a union over every face. The corpus is unchanged at 232/268, and
+OM10's tables are unchanged apart from the label.
+
+**Export lane.** A default-read exporter, voids, occurrence styles, vertex
+loops, mapped-item solids, and the oracle's link skip. The corpus went from 329
+to 330, and OM10 has 107 of 107 solids valid under the default read.
+
+**New defects, filed and assigned under the bug policy.**
+- `.37.30`: closed B-spline edge curves. Already fixed.
+- `.37.31`: carrier hints clipped to the natural domain.
+- `.37.32`: the depth-8 transfer-path bound.
+- `.37.33`: the exporter's usages take OCCT's placement.
+- `.37.34`: the oracle cannot check mapped-item placements.
+- `.37.35`: default-read orientation flags.
+
+`.25.11`, owned admission of mapped-item solids, moves to M8.
+
+**Dispatcher decisions** are in the brief, under "B2-reader round 2". In short:
+- The exporter reads raw placements. Where OCCT disagrees, it writes the raw
+  value as a declared correction instead of refusing.
+- The conflicting oracle test expects the adapter's refusal.
+- After round 2, the merged state is built and tested in one lane directory
+  before the reviews.

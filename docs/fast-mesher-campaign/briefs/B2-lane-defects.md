@@ -191,3 +191,56 @@ parallel lanes, divided by file ownership:
     `python/brepgpu/imported_oracles.py`.
   - Reads the shared headers but does not edit them. A needed header change goes
     to the dispatcher, who passes it to B2-reader-adapter.
+
+### B2-reader round 2 (2026-10-18)
+
+Both B2-reader lanes returned with their beads fixed. Between them they found
+defects that belong to B2 under the bug policy. They also raised four
+coordination questions, which the dispatcher settled as follows.
+
+**Dispatcher decisions.**
+- **Placements in the reference exporter.**
+  - Usages placed by `NEXT_ASSEMBLY_USAGE_OCCURRENCE` and mapped items both read
+    raw placements through `native/step_placements.hpp`, the header the adapter
+    landed. Under G1's authority rule the raw value is authoritative.
+  - Where OCCT agrees within the adapter's tolerance, the exporter writes OCCT's
+    value and stays `raw-entity-corrections=none`.
+  - Where OCCT disagrees, the exporter writes the raw value, adds a record, and
+    declares `raw-entity-corrections=P1` or `P2` (and so on), using the adapter's
+    letters.
+  - The NVIDIA arm then stays correct, and it says what was corrected. The
+    translation-only byte check already applies only when the arm declares no
+    corrections.
+  - For mapped items, disagreement with OCCT is therefore no longer a refusal.
+- **Mapped-item solids.**
+  - The owned adapter keeps refusing them by name (`.37.26`). Admitting them is
+    M8 work (`.25.11`).
+  - When it is admitted, the occurrence uses the exporter's graph shape: the
+    product is keyed by the mapped representation's label, the usage by the
+    mapped item's label, and the names come from the holder product.
+- **The conflicting test.**
+  - With `.37.20`, the adapter refuses `IDENTITY_RELATION` by name.
+  - The oracle test for `.37.21` therefore asserts two things on that file: the
+    adapter's named refusal, and the oracle's own named placement refusal,
+    reached without an adapter source. It must never report "correspondence
+    differs".
+- **Old version-1 reference sources** refuse by name and must be re-exported.
+  That is correct behaviour, not a defect.
+
+**Round-2 beads.**
+
+| Lane | Bead | Work |
+|---|---|---|
+| adapter | `.37.30` | Closed B-spline edge curves. Already fixed in round 1; this records it. |
+| adapter | `.37.31` | Carrier hints clipped to the natural domain while the projected pcurves leave it (`native/source_uv`). |
+| adapter | `.37.32` | The depth-8 bound in `transfer_path` lets a deep holder escape the unit gate and the `.37.26` check. |
+| export | `.37.33` | The exporter's usages take OCCT's located transform. Read them raw, as decided above. |
+| export | `.37.34` | The oracle refuses non-identity representation maps, so mapped-item solids cannot be oracle-checked (`imported_oracles.py:753`). |
+| export | `.37.35` | Orientation flags under the default read: for each face whose flag differs, decide whether the material side changed. Refuse the face if it did; otherwise record it as an exact flag-and-surface reversal. |
+
+**Integration.** Both lanes edit one checkout, and the two lanes' hunks in
+`tests/test_step_ingress.py` and `tests/test_placement_oracles.py` do not
+overlap. After round 2, the export lane builds the union of both lanes' files
+in a fresh lane directory, `lanes/B2-reader-merged/`. There it runs every suite,
+the 500-file corpus through both the adapter and the exporter, and OM10. The
+independent reviews then read that merged state.
