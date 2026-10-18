@@ -483,3 +483,7 @@
 {"actor":"Patrick Beam","comment":"Added label: fast-mesher","created_at":"2026-10-18T01:40:47Z","event_type":"label_added","id":483,"issue_id":"brepgpu-12s.25.9","new_value":null,"old_value":null}
 {"actor":"Patrick Beam","comment":"Added label: m8","created_at":"2026-10-18T01:40:47Z","event_type":"label_added","id":484,"issue_id":"brepgpu-12s.25.9","new_value":null,"old_value":null}
 {"actor":"Patrick Beam","comment":"Added label: steel-man","created_at":"2026-10-18T01:40:47Z","event_type":"label_added","id":485,"issue_id":"brepgpu-12s.25.9","new_value":null,"old_value":null}
+{"actor":"Patrick Beam","comment":null,"created_at":"2026-10-18T02:05:57Z","event_type":"created","id":486,"issue_id":"brepgpu-12s.37.25","new_value":"","old_value":""}
+{"actor":"Patrick Beam","comment":"Added label: fast-mesher","created_at":"2026-10-18T02:05:57Z","event_type":"label_added","id":487,"issue_id":"brepgpu-12s.37.25","new_value":null,"old_value":null}
+{"actor":"Patrick Beam","comment":"Added label: b2","created_at":"2026-10-18T02:05:57Z","event_type":"label_added","id":488,"issue_id":"brepgpu-12s.37.25","new_value":null,"old_value":null}
+{"actor":"Patrick Beam","comment":"Added label: ingress","created_at":"2026-10-18T02:05:57Z","event_type":"label_added","id":489,"issue_id":"brepgpu-12s.37.25","new_value":null,"old_value":null}

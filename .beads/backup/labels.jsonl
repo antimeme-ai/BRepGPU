@@ -131,6 +131,9 @@
 {"issue_id":"brepgpu-12s.37.24","label":"b2"}
 {"issue_id":"brepgpu-12s.37.24","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.24","label":"old-regime"}
+{"issue_id":"brepgpu-12s.37.25","label":"b2"}
+{"issue_id":"brepgpu-12s.37.25","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.37.25","label":"ingress"}
 {"issue_id":"brepgpu-12s.37.3","label":"b2"}
 {"issue_id":"brepgpu-12s.37.3","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.4","label":"b2"}
