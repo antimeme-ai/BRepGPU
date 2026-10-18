@@ -6,9 +6,8 @@ their findings for the planner's single fix pass. Line numbers refer to the plan
 files as the planner left them (uncommitted at review time, committed with this
 file).
 
-**State (2026-10-19):** reviewers 1 and 2 returned; reviewer 3 (fleet,
-measurement and the arena) is appended below when it returns. The fix pass has
-not started: the operator called a break before it.
+**State (2026-10-19):** all three reviewers returned (36 plan findings, 28 bead
+findings). The fix pass has not started: the operator called a break before it.
 
 ## Decision taken during the tribunal
 
@@ -17,6 +16,15 @@ not started: the operator called a break before it.
   configuration not yet measured. NVIDIA has no GPU path, so a CPU-only win is
   the stronger claim. The GPU-on configuration is its own declared
   configuration once F8 has run per lane. P24 and P25 gate MS3.
+
+- **T3.3, builds during measurement windows** [call; operator delegated]: every
+  timed run takes a per-lane exclusive lock; while it is held, builds and tests
+  run only on CPUs outside that lane, or wait. The other lane's state is a
+  recorded column.
+- **T3.8, F7 FP32** [call; operator delegated]: F7 is a general arm, as design
+  §21.4 states (Metal has no double), not device-only. A recentred FP32 CPU
+  evaluation path is built with P24, so all four (F7, F8) combinations of the
+  fraction exist.
 
 ## Dispositions
 
@@ -170,3 +178,75 @@ are filed by the coordinator.
 - T2.b12 V1 SkippedFace.reason is a string_view while the store hands it a bgsrc::Reason.
 - T2.b13 I6's identity(const EntityTable&) can't see the §5.7 header strings, which live in ParseResult.header.
 - T2.b14 I7 cites benchmark_om10_nvidia.py lines "before B3's changes land"; B3 is editing those now; re-anchor in I7's unit plan.
+
+## Reviewer 3: fleet, measurement and the arena
+
+### Plan findings
+
+**T3.1 The first arena (I9) cannot run the 2^(8−2) fraction it promises (M7-plan.md:229, 1187-1190, 1485, 232-233, 241-242).** class: plan (= T1.1)
+- Wrong: F2 (P30) and F5 (P31) start only after I9; F7 (P24) and F8 (P25) are not I9 dependencies.
+- Evidence: design §23.2 L2840-2846 generates F7 = F1·F2·F3·F4, F8 = F1·F2·F5·F6; all eight flags must switch in every one of the 64 runs; a fraction over six flags is a different design with a different resolution.
+- Fix: I9 delivers the runner plus a declared sub-design over flags whose both levels exist, labelled "admitted set at T", stating its own resolution; the full fraction runs only after P24, P25, P30, P31; §9 rows and I9 done criterion say so.
+
+**T3.2 MS3 does not carry the decided GPU gating (M7-plan.md:1547-1552, 1433, 86-89).** class: plan
+- Wrong: the decision (CPU-only first headline; GPU units gate MS3) is not in the plan text; MS3 lists neither P24 nor P25 nor the per-lane F8 arena; requires oracles 1–10 and 14–17, omitting oracle 12 (FI-1, FI-2 across backends) and oracle 11 under GPU fixed placement.
+- Evidence: V9 done criterion "12 once P24 lands" (L1403); nothing requires it before MS3.
+- Fix: add P24, P25, the per-lane F8 run, oracle 12, and oracle 11 under GPU placement on each GPU to MS3 and the §7.2 path; call 7 states the GPU units gate MS3.
+
+**T3.3 Nothing keeps the fleet's measurement lanes free while three units build and test on the same host (M7-plan.md:78-85, 1464-1478).** class: plan (operator part decided above)
+- Wrong: wave 1 runs I1's timed runs on both nodes, P1 and V1 censuses on node 1, and three agents' builds and tests at once; no lane reservation; other lane's state not recorded.
+- Evidence: scripts/measurement_lane.py:46-52, 311-317 quiet rule host-wide (aggregate /proc/stat minus our tree, 150% limit): a concurrent single-threaded run on the other socket passes as quiet; a unit's build marks the run loaded. scripts/check_native_face_domain.py:120 builds --parallel 4, unpinned. Design §22.4 items 2–4 and §2 require a per-lane gate with other-lane state as a recorded blocking factor. The §9 "run early" tasks (P11 Task 1 L1477, I8 Task 1 L1478) have no one to run them; wave 2 is {P4, P2, I2} under the cap.
+- Fix: fleet lane discipline [call]: per-lane exclusive lock taken by every timed run, blocking builds/tests or confining them to CPUs outside a held lane; other-lane-state column; coordinator named as executor of the early runs, and how they count against the cap stated.
+
+**T3.4 The ingress gate MS2 relies on is measured before its protocol exists (M7-plan.md:1105-1108, 1453, 1542, 1473 vs 1478; plans/I1-step-parse.md:91-99).** class: plan
+- Wrong: I1 sets the budget from n = 3 medians under the old host-wide gate before the idle noise floor is measured; I5 declared done ("gate holds on both lanes") before I8's protocol exists; "cold" runs check no filesystem type.
+- Evidence: design §22.4 item 1 (≥ 10 fresh processes for headline numbers), item 4 (per-lane gate with measured threshold); §22.3 refuses STEP or .brep on tmpfs for cold runs; measurement_lane.py has no tmpfs check, no filesystem type, no per-lane gate.
+- Fix: I1's budget labelled provisional; the gate verdict for MS2 comes from MS2's own per-lane alternating series (owned ingress vs NVIDIA minimal ingress, ≥ 10 each, under I8's protocol); idle noise floor measured before I1 Task 1's timings, or I1's timings re-run after it.
+
+**T3.5 MS2 never requires the oracles to decide the owned watch output (M7-plan.md:1541-1546; cf. MS1 1538-1539).** class: plan
+- Wrong: V3's done criterion covers MS1's inputs and NVIDIA's watch output only (L1295-1296); V5, V6 cover only MS1 outputs; no unit requires a verdict on the owned watch mesh under the declared configuration in either profile.
+- Evidence: design §22.5 only publishable row is owned "valid, achieved"; §22.2 owned side measured by the same oracles; §24 not_evaluated never green.
+- Fix: MS2 requires, on the owned watch output in both profiles under the declared configuration, oracles 1–6, 10, 16, 17 to pass, and one output digest across every process of the series.
+
+**T3.6 The existing quiet settle makes planned run counts and the arena time box infeasible (plans/I1-step-parse.md:91-95, 325-327; M7-plan.md:1171-1190).** class: plan
+- Wrong: every measurement_lane.py run idles ≥ 120 s before timing.
+- Evidence: measurement_lane.py:883-885 sets 3 checks 60 s apart and up to 3 tries; settle() at :521-528 sleeps between checks. I1 Tasks 1 and 5 ≈ 11,000 runs (≈ 233 inputs × 2 lanes × n = 3 over 3 commands in Task 1 and 5 thread counts in Task 5) ≈ 370 h of idle settle. Lanes cannot overlap without marking each other loaded (T3.3). Design §23.6 boxes the first arena in hours; at ≤ 30 runs/h/lane, 128 runs per input ≈ 4 h.
+- Fix: I8 builds a continuous per-lane per-CPU monitor; §22.4's "minute before" becomes the tail of the series' own preceding run, counted as ours, not idle sleep; the arena uses it; I1 measures the watch and a seeded per-stratum sample at n = 3, the rest at n = 1.
+
+**T3.7 Nothing scheduled produces the store set and admitted list the wave-1 fleet runs read (plans/P1-source-view.md:448, 470-472; plans/V1-oracle-geometry.md:420-422; plans/I1-step-parse.md:325; M7-plan.md:59-63).** class: plan
+- Wrong: no task extracts the watch and corpus at --store-version 3 or writes the admitted list; I2, I3, P4 later change the adapter's v3 output, so stores go stale.
+- Evidence: P1 Task 2 tests v3 on void-block.step only; no plan names a producer for these stores.
+- Fix: coordinator fleet task after P1 Task 2: extract every file at v3; record admitted list, adapter binary digest, each store's digest; re-extract after each unit that changes the adapter lands; every census names the digest of the store set it read.
+
+**T3.8 F7's FP32 level has no CPU implementation, but the fraction runs FP32 with the GPU off (M7-plan.md:871-894, 373-381).** class: plan (operator part decided above)
+- Wrong: no unit builds CPU FP32 evaluation.
+- Evidence: in §23.2 F7 and F8 are separate generators (F7·F8 = F3F4F5F6), so all four (F7, F8) combinations appear 16 times each; §21.4 states FP32 as a general arm.
+- Fix: P4 or P24 builds a recentred FP32 CPU evaluation path (decided: with P24).
+
+**T3.9 The GPU measurements come before the GPU context row exists (M7-plan.md:232-233, 889-891, 911-913, 1155-1158).** class: plan
+- Wrong: GPU state required by §22.4 items 5 and 7, and the reporting tool refusing mixed link widths, arrive with I8; P24, P25 do not depend on I8.
+- Evidence: §22.4 items 5, 7 (SM clock, throttle reasons, PCIe gen/width sampled during the run; refusing tool); measurement_lane.py:448-460 captures only index, utilisation, memory used and SM clock, only before and after.
+- Fix: P24's and P25's fleet runs depend on I8's context row and reporting tool, or the GPU half of the context row moves into P24's first task.
+
+**T3.10 The "after MS1" measurements run on inputs MS1 cannot mesh (M7-plan.md:1484, 1413, 1432).** class: plan
+- Wrong: MS1 has no torus, revolution, B-spline faces (P15), no collapse (P17), no placements (P19), so the watch and most of the corpus cannot mesh at MS1; same for move_bound_exceeded and S2-reversal counts (§27 #27).
+- Evidence: MS1 after P1–P14 and P18 (L1535); §22.6 budget checked per report class, never on the watch alone.
+- Fix: split: after MS1, analytic-only report class; after P15, P16, P17, P19, every report class and the watch, before MS2's configuration is declared — the revision MS2 uses.
+
+**T3.11 Several design §27 open questions have no run, though plan §13 says they all do (M7-plan.md:1620-1622; 483, 559, 1483).** class: plan
+- Missing: #30 (G15 H5 gaps vs u_ctx); #31 (G15 H4 c_max; production-exports stratum used at MS3); #33 (G9 H4 face-over-solid count); #37 (G14 angle-term census, which MS2's Render arm relies on); #38 (G14 slicer and fTetWild measurements behind "no grading"); #39 (G5 H1, H2); #40 (offset census); #44 face budget 16× (refusals score as owned losses), cap repair 2, fuzz timeout 8×, Δκ floor 8×, m_α 10×.
+- Evidence: design L3204-3214, 3218; the plan has no G15, G14, G9 H4 or G5 H entries.
+- Fix: #37 → P5 or P14; #38 → P20 with V7; #39 → P4; #30 → P10 after I2; #31 → P28; #33 → P19; #40 → I4; #44 distributions → P11, P12, P14/P15, P16 and I11, before MS2.
+
+**T3.12 The I7, I8 and I9 unit blocks leave out protocol items the design requires (M7-plan.md:1130-1190).** class: plan
+- I8/I7 missing: cold rule (empty cache directory verified per row, page drop both sides, tmpfs refusal, filesystem type recorded, §22.3); warm rule; separate meshing-only stage-ratio run (§22.3); environment padding and seeded interleaving (§22.4 item 2); timer overhead below 5% (§22.4 item 6); NVIDIA ideal-overlap bound max(ingress, makespan) until streamed and dynamic-pull arms exist (§22.2); exclusion tables .56 and .61 (§22.5).
+- I9 missing: hours time box and primary response named before the first run (§23.6); every default and claim with and without the watch (§23.4); requests per input fixed before any result (0.005, 0.025 mm, 1e-3, 1e-4 of the diagonal; PMI-bearing inputs absolute only; §23.4); never two arena runs on one lane at once (§22.4 item 3).
+- Fix: list each item in its block.
+
+### Bead findings
+- T3.b1 plans/I1-step-parse.md:92 puts --phase-times before the input and output arguments; the adapter reads argv[1] input, argv[2] output, options from argv[3] (native/step_source/main.cpp:401, 408, 1274). (= T2.11)
+- T3.b2 plans/P1-source-view.md:471 and plans/V1-oracle-geometry.md:421 run censuses without --ingress-file, so page-cache state is not_managed and per-MB read times mix warm and cold; add --ingress-file or label warm.
+- T3.b3 scripts/measurement_lane.py:226-230 sets no CUDA_VISIBLE_DEVICES for a run given only --node, so a CPU-only run sees both GPUs; for the CPU-only declared configuration hide devices or record none was touched.
+- T3.b4 M7-plan.md:1476 the wave-2 NVIDIA watch run names no arm set; harness keeps one representative per arm per invocation (benchmark_om10_nvidia.py:671-673); state the §22.2 screen (every arm at n = 1, then best k = 3 at n ≥ 10, per lane) and the driver repeating invocations.
+- T3.b5 the stage-budget revision (M7-plan.md:1413) should state the declared configuration's worker count: MS2's CPU-only configuration has 12 workers (§20.1 item 2) while §22.6's target is figured for 11.
+- T3.b6 V9 block (M7-plan.md:1401-1403) should add O-bytes under fixed GPU placement on each GPU separately (§24.2), beside the GPU0-vs-GPU1 comparison.
