@@ -170,3 +170,24 @@ must be declared through that token.
 
 Re-run the read-only 500-file corpus ingress check before and after, and report
 every change in the accepted and refused sets, by reason.
+
+### B2-reader split (2026-10-18)
+
+B2-ingress landed and added beads `.37.27`–`.37.29`. B2-reader runs as two
+parallel lanes, divided by file ownership:
+
+- **B2-reader-adapter.**
+  - Beads: `.37.20` (raw placements), `.37.26` (extra mapped items), `.37.27`
+    (OCCT recursion: refuse by name before transfer), `.37.28` (periodic B-spline
+    carriers), `.37.29` (carrier UV hint over every face).
+  - Owns `native/step_source/`, `native/step_units.hpp`, `native/step_styles.hpp`,
+    `native/step_vertex_loops.hpp` and the source readers in `native/mesher/` and
+    `python/brepgpu/imported_source.py`.
+- **B2-reader-export.**
+  - Beads: `.37.19` (default-read exporter), `.37.22` (voids), `.37.23` (occurrence
+    styles in the reference format), `.37.25` (mapped-item solids), `.37.21`
+    (oracle `representation_links`).
+  - Owns `native/reference_source/`, the reference-format readers in Python, and
+    `python/brepgpu/imported_oracles.py`.
+  - Reads the shared headers but does not edit them. A needed header change goes
+    to the dispatcher, who passes it to B2-reader-adapter.
