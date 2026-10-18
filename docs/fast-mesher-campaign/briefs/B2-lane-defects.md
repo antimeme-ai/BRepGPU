@@ -345,3 +345,26 @@ fixed in this unit. The dispatcher's rulings follow.
   - The adapter moves its agreement rule into `native/step_placements.hpp`. That
     rule includes the resolution bound on translations and its rotation bound.
   - The exporter calls it, so the two arms decide agreement identically.
+
+### B2-reader-export review round 2 decisions (2026-10-18)
+
+- **Verification of the published bytes.**
+  - Verification reads back the published `.brep` and checks it.
+  - A pcurve-completed copy may only add pcurves that are missing. It never
+    shifts or re-pairs a pcurve that is already there.
+  - The S1 repair of a seam face must keep each seam use on its own pcurve.
+- **Undecidable faces.**
+  - In both modes, a face whose side is undecidable refuses its definition as
+    ingress (exit 4, ours). Translation-only no longer keeps the raw use.
+  - Seam faces without pcurves are classified on a completed copy, so they are
+    decided rather than undecidable.
+- **Physical admission and the legacy matched mode.**
+  - Physical admission now requires each shell's mesh volume to have the right
+    sign. The rule is the same for both arms.
+  - The legacy matched mode gains the face-orientation comparison with the
+    adapter, which the native match already has.
+- **The translation-only extent** is `shape_extent::shape_bound`.
+- **The corrected NVIDIA input.** Before the correction is applied, our
+  uncorrected `.brep` for that definition must be byte-identical to the minimal
+  ingress's translation. So the only bytes that differ from NVIDIA's own
+  translation are the declared correction.
