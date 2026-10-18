@@ -380,3 +380,12 @@ decisions (ABC download term first, as the priority-1 corpus source).
 - B2 (brepgpu-12s.37) opened to fix defects the M4 lanes report, before M4
   closes. papers/pdfs/ is now ignored as a directory (lanes store .ps.gz and
   .exp files there, which *.pdf did not cover).
+- M4-G10 returned (papers/2026-10-17-small-feature-collapse.md): none of the
+  four draft collapse rules keeps every triangle within ε as written; each has
+  a counterexample family (checked by arithmetic on the fleet) and a cheap
+  sound version. Cluster-level tests on the curve, triangles at a merged vertex
+  sized to ε − d_f, boundary-only faces still given the density test, merged
+  vertex at the smallest enclosing ball centre, six validity checks that
+  revert to faithful meshing rather than refuse. Three design-draft errata
+  noted on the M5 bead (β must split into a repair threshold and a collapse
+  radius). Two operator questions filed.

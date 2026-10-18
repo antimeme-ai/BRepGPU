@@ -188,3 +188,6 @@ Highest value first:
   2023 (*Coatings*, 403); Liu et al. 2024 (isogeometric gear contact); the KAIST
   matched-mesh record (host did not resolve). Not found: PhysX 5's minimum GPU
   compute capability, which decides whether its SDF collision runs on a P100.
+- **G10 small-feature collapse:** Dey, Shephard and Georges 1997
+  (*Engineering with Computers* 13(3), dimension checks); Sheffer, Blacker and
+  Bercovier 1997 (clustering, ASME AMD-Vol. 220). Both paywalled.
