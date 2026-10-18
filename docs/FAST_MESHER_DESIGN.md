@@ -2743,9 +2743,9 @@ ingress (§4.1, §20.1).
 A check of NVIDIA's output returns `pass` (valid, and achieving where the arm
 claims it), `fail` (a completed check found a fault in NVIDIA's mesh) or
 `not_evaluated` (our check could not decide: our source query, our preparation or
-our qualifier failed; the harness exits 5). Today's harness scores the last as
-NVIDIA's FAIL (`scripts/qualify_om10_nvidia.py:196–202`,
-`scripts/benchmark_om10_nvidia.py:490, 505–506`), against the rule.
+our qualifier failed; the harness exits 5). The harness returns these three
+outcomes since B3 (`results/b3-harness-scoring-2026-10-19/`); before it, it
+scored the last as NVIDIA's FAIL.
 
 | Owned | NVIDIA (best arm) | Score |
 |---|---|---|

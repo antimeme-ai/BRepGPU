@@ -827,3 +827,39 @@ shape: "7 reviewers -> 1 fix -> review without re-engaging the subagents".
   (`.25.17`–`.25.19`).
 - **M7** (`briefs/M7-implementation-plan.md`, bead `.23`): one planner writes
   the master plan and the first wave's unit plans.
+
+## 2026-10-19: M7 plan written; tribunal under way; break before the fix pass
+
+- **Plan.** The planner wrote `docs/fast-mesher-campaign/M7-plan.md`: 51
+  units (P producer, I ingress/measurement/arena, V oracles), three queues
+  under the three-agent cap, milestones MS1 (first oracle-checked corpus
+  mesh), MS2 (watch headline) and MS3 (first corpus-stratum claim), a bead map
+  (`.25.8` and `.25.34` deferred with reasons), design gaps G-1 to G-8 and code
+  defects D-1 (CUDA version not pinned) and D-2 (whole-input copy before
+  hashing). First-wave unit plans: `plans/P1-source-view.md`,
+  `plans/V1-oracle-geometry.md`, `plans/I1-step-parse.md`.
+- **Tribunal** (`briefs/M7-plan-tribunal.md`). Reviewers 1 (strategy) and 2
+  (sequencing, interfaces, executability) returned 12 plan findings each;
+  reviewer 3 (fleet, measurement, arena) is still running. Findings are in
+  `docs/fast-mesher-campaign/M7-findings.md`. The heaviest: the first arena
+  cannot run before four flags' second levels exist; several oracles are
+  ordered before the output they need; the named execution skill breaks the
+  three-agent cap; six first-wave steps fail against the real code.
+- **Decision:** call 7 stands (CPU-only first headline, labelled; GPU units
+  gate MS3) [operator delegated].
+- **B3.** The lane fixed `.25.16`–`.25.19` (197 tests green on the fleet; report
+  saved at `results/b3-harness-scoring-2026-10-19/REPORT.md`, uncommitted with
+  the code until review). It is fixing two further defects of the same rule:
+  our caller's own exceptions scored as NVIDIA FAIL, and a redundant `numactl`
+  wrapper on the ingress launch. The old mesher refusing the authored fixtures
+  is filed as `.25.35`. B3 still owes its one independent review.
+- **Break.** The operator called a break before the fix pass: "we're going to
+  take a break before the single fix pass--please ensure all the notes etc. are
+  preserved though". To resume:
+  1. append reviewer 3's findings to `M7-findings.md`;
+  2. land B3: save its follow-up section into the report, run one independent
+     review, fix, commit code and report, close `.25.16`–`.25.19`;
+  3. run the planner's single fix pass on `M7-plan.md` and `plans/` against
+     `M7-findings.md`;
+  4. coordinator check, file bead findings and D-1, create unit beads, pass G3
+     on the delegation, start wave 1 (P1, V1, I1).
