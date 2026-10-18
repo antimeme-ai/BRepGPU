@@ -91,7 +91,7 @@ all finite admission/ticket/overlap cases, successful restriction and destroy
 with outstanding actual sample work, and every callback lease returned to the
 native resource baseline. Strict Release target and actual-source tidy exited0.
 Logs are `context/adaptive-device-protocol-{configure,build,0,1,tidy}.log` in
-`~/BRepGPU/cached-adaptive-mesher`. The first scan fixture used an exactly affine
+`<root>/cached-adaptive-mesher` on the fleet host. The first scan fixture used an exactly affine
 plane with deliberately failing cached data; the module correctly returned its
 selected all-affine unresolved action rather than a split. The fixture now uses
 the actual CELL cylinder's active curved direction for mixed marks, preserving

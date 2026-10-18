@@ -1,6 +1,6 @@
 # Original canonical point cost
 
-One bounded native client measured 1024 dyadic parameters per curve on fleetbox,
+One bounded native client measured 1024 dyadic parameters per curve on the fleet host,
 CPU 2, with one reused GeometryContext per family. Source load and exact
 preparation took 1.517 ms separately. The 60 second deadline did not censor a
 family. Actual original-source points use the existing nearest-original

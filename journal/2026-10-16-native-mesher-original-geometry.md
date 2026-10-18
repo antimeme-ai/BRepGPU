@@ -15,8 +15,8 @@ cubic mixed monomials, exact restrictions and invalid original inputs.
 
 Genuine RED on the isolated fleet checkout:
 
-    scp tests/native_mesher_geometry.cpp fleetbox:BRepGPU/native-mesher/tests/native_mesher_geometry.cpp
-    ssh fleetbox 'cd ~/BRepGPU/native-mesher && taskset -c 2 /usr/bin/clang++-18 -std=c++20 -fsyntax-only tests/native_mesher_geometry.cpp'
+    scp tests/native_mesher_geometry.cpp <fleet>:<root>/native-mesher/tests/native_mesher_geometry.cpp
+    ssh <fleet> 'cd <root>/native-mesher && taskset -c 2 /usr/bin/clang++-18 -std=c++20 -fsyntax-only tests/native_mesher_geometry.cpp'
 
 Exit1: tests/native_mesher_geometry.cpp:1:10 fatal error,
 `../native/mesher/geometry.hpp` file not found. The required native API does not
@@ -432,7 +432,7 @@ a direct source parameter. Optional inverse-profile geometric failures retry
 originalUV once before output, preserving cumulative work. Resource/invalid
 source failures are not masked. Recovery/preparation ASan GREEN1.73s+5.90s.
 
-B/T actual RED command on fleetbox/native-mesher: clang++-18 -std=c++20 -O0
+B/T actual RED command on the fleet host (native-mesher): clang++-18 -std=c++20 -O0
 tests/native_mesher_domain_maps.cpp linked against owned ASan geometry/source/
 exact libraries with -fsanitize=address,undefined. After correcting the authored
 BoundaryKey enum initializer, ld reported undefined construct_domain_map and
