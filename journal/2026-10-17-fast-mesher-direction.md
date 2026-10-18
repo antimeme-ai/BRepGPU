@@ -859,8 +859,10 @@ shape: "7 reviewers -> 1 fix -> review without re-engaging the subagents".
   1. ~~append reviewer 3's findings to `M7-findings.md`~~ (done: 12 plan
      findings, 6 bead findings; T3.3 lane lock and T3.8 CPU FP32 decided on
      delegation);
-  2. land B3: save its follow-up section into the report, run one independent
-     review, fix, commit code and report, close `.25.16`–`.25.19`;
+  2. land B3: its follow-up is done (caller exceptions and the redundant
+     `numactl` fixed, 201 tests green; §10 of the report, uncommitted with the
+     code). Remaining: one independent review, fix, commit code and report,
+     close `.25.16`–`.25.19`;
   3. run the planner's single fix pass on `M7-plan.md` and `plans/` against
      `M7-findings.md`;
   4. coordinator check, file bead findings and D-1, create unit beads, pass G3
