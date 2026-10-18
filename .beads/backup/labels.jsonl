@@ -57,6 +57,8 @@
 {"issue_id":"brepgpu-12s.25.6","label":"m8"}
 {"issue_id":"brepgpu-12s.25.7","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.25.7","label":"m8"}
+{"issue_id":"brepgpu-12s.25.8","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.25.8","label":"m8"}
 {"issue_id":"brepgpu-12s.26","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.27","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.27","label":"operator"}
@@ -112,6 +114,9 @@
 {"issue_id":"brepgpu-12s.37.19","label":"steel-man"}
 {"issue_id":"brepgpu-12s.37.2","label":"b2"}
 {"issue_id":"brepgpu-12s.37.2","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.37.20","label":"b2"}
+{"issue_id":"brepgpu-12s.37.20","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.37.20","label":"ingress"}
 {"issue_id":"brepgpu-12s.37.3","label":"b2"}
 {"issue_id":"brepgpu-12s.37.3","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.37.4","label":"b2"}
@@ -240,6 +245,15 @@
 {"issue_id":"brepgpu-12s.71","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.71","label":"m4-question"}
 {"issue_id":"brepgpu-12s.71","label":"operator"}
+{"issue_id":"brepgpu-12s.72","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.72","label":"m4-question"}
+{"issue_id":"brepgpu-12s.72","label":"operator"}
+{"issue_id":"brepgpu-12s.73","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.73","label":"m4-question"}
+{"issue_id":"brepgpu-12s.73","label":"operator"}
+{"issue_id":"brepgpu-12s.74","label":"fast-mesher"}
+{"issue_id":"brepgpu-12s.74","label":"m4-question"}
+{"issue_id":"brepgpu-12s.74","label":"operator"}
 {"issue_id":"brepgpu-12s.8","label":"fast-mesher"}
 {"issue_id":"brepgpu-12s.8","label":"m4"}
 {"issue_id":"brepgpu-12s.9","label":"fast-mesher"}
