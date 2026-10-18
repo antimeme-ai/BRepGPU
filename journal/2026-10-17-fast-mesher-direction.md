@@ -353,3 +353,30 @@ decisions (ABC download term first, as the priority-1 corpus source).
   (docs/fast-mesher-campaign/briefs/B1-ingress-defects.md, M4-common.md,
   M4-G1.md to M4-G8.md). Wave 2 (G9–G11, G13–G18) launched immediately after,
   since its lanes barely use the fleet. G12 waits for G7.
+- M4-G11 returned (papers/2026-10-17-validation-records.md): check outcomes
+  pass/fail/not_evaluated with five reasons; face status refused /
+  indeterminate / valid_goal_unmet / valid; a deterministic roll-up to
+  definition, occurrence and run; exit codes 0/2/3/4 with 1 for tool failure;
+  native column-table records in the source snapshot container; profile
+  brepgpu-pdq-1 seeded from JAMA V5.1 and CAx-IF, with values JAMA leaves to
+  agreement seeded as no_threshold. Corrects the map: usd-brep has 191
+  requirements (228 is call sites), and only Parasolid separates "could not
+  evaluate" from "invalid". Two defects filed under B2 (brepgpu-12s.37); three
+  operator questions filed.
+- M4-G17 returned (papers/2026-10-17-contact-interfaces.md): sliding-contact
+  physics needs no matched meshes; it needs accuracy tied to clearance and
+  exact-surface normals. M5 reserves nine interfaces (per-face tolerance map,
+  source back-map, per-instance face variants, extra constraint curves,
+  one-sided tolerance, contact record, no merge, final meshes only, a
+  contact-fit report). It caught an error in the G15 brief (an inscribed chord
+  does not grow a boss); the brief and the running lane were corrected. Three
+  operator questions filed, including restating D-imprint.
+- M4-G18 returned (papers/2026-10-17-postprocessing-lod.md): in-core operations
+  are legal only if their new triangles pass the generator's own checks and
+  touch no chain or B-rep vertex; flips, collapses and relaxation are arena
+  flags, default off; LOD is re-tessellation at ε_k = 4^k·ε with nested dyadic
+  samples; decimation and remeshing stay downstream. Two operator questions
+  filed.
+- B2 (brepgpu-12s.37) opened to fix defects the M4 lanes report, before M4
+  closes. papers/pdfs/ is now ignored as a directory (lanes store .ps.gz and
+  .exp files there, which *.pdf did not cover).

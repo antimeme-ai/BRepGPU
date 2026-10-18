@@ -168,3 +168,23 @@ Highest value first:
 **Corrections to read.**
 - Petersson–Chand 2001 (held) has a font-encoded body; it needs OCR before its
   claims can be re-checked.
+
+## From M4 (gap lanes)
+
+- **G11 validation records:** the JAMA "ISO 10303-59 使用ガイド" (Part 59 usage
+  guide) cited by JAMA V5.1 §3; a standalone SASIG `qualitystamp.xsd` at its
+  current version; the JAMA/JAPIA importance table (Excel, V5.1 §8.2); NX
+  Check-Mate PDQ check documentation (licensee).
+- **G18 post-processing and LOD:** Frey–Borouchaki 1998 (geometric surface mesh
+  optimisation); Chhugani–Kumar 2001 (view-dependent tessellation);
+  Klein–Liebich–Straßer 1996 (mesh reduction with error control); Canann et al.
+  1998 (combined Laplacian and optimisation smoothing); the University of
+  Washington technical report with the proof of Hoppe 1993's collapse
+  conditions.
+- **G17 contact interfaces:** paywalled Puso–Laursen 2004 (mortar contact) and
+  2002 (Gregory-patch smoothing); Wriggers, *Computational Contact Mechanics*;
+  NIHS 20-02 (watch gear profiles); Reymondin, *The Theory of Horology*;
+  Roda-Buch et al. 2021 (escapement lubrication). Open but unread: Zhang et al.
+  2023 (*Coatings*, 403); Liu et al. 2024 (isogeometric gear contact); the KAIST
+  matched-mesh record (host did not resolve). Not found: PhysX 5's minimum GPU
+  compute capability, which decides whether its SDF collision runs on a P100.
