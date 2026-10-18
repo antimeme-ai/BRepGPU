@@ -8,6 +8,8 @@ rotation-z30-translated	rigid	0.86602540378443865	-0.5	0	13	0.5	0.86602540378443
 half-turn-z	rigid	-1	0	0	0	0	-1	0	0	0	0	1	0
 gram-error-inside	rigid	1.0000000004	0	0	0	0	1	0	0	0	0	1	0
 gram-error-outside	nonorthonormal	1.0000000006	0	0	0	0	1	0	0	0	0	1	0
+gram-offdiag-inside	rigid	1	5e-10	0	0	0	1	0	0	0	0	1	0
+gram-offdiag-outside	nonorthonormal	1	1.5e-9	0	0	0	1	0	0	0	0	1	0
 uniform-scale-2	nonorthonormal	2	0	0	0	0	2	0	0	0	0	2	0
 slight-uniform-scale	nonorthonormal	1.000001	0	0	0	0	1.000001	0	0	0	0	1.000001	0
 shear-xy	nonorthonormal	1	0.1	0	0	0	1	0	0	0	0	1	0

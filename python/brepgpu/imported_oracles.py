@@ -360,7 +360,7 @@ def original_records(path):
               'ADVANCED_FACE', 'FACE_OUTER_BOUND', 'FACE_BOUND', 'EDGE_LOOP',
               'ORIENTED_EDGE', 'EDGE_CURVE', 'NEXT_ASSEMBLY_USAGE_OCCURRENCE',
               'PRODUCT_DEFINITION_SHAPE', 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION',
-              'ITEM_DEFINED_TRANSFORMATION', 'SHAPE_REPRESENTATION',
+              'ITEM_DEFINED_TRANSFORMATION', 'CARTESIAN_TRANSFORMATION_OPERATOR_3D', 'SHAPE_REPRESENTATION',
               'ADVANCED_BREP_SHAPE_REPRESENTATION', 'SHAPE_DEFINITION_REPRESENTATION',
               'MANIFOLD_SOLID_BREP', 'MAPPED_ITEM', 'REPRESENTATION_MAP',
               'SHAPE_REPRESENTATION_RELATIONSHIP', 'UNCERTAINTY_MEASURE_WITH_UNIT',
@@ -406,6 +406,84 @@ def original_frame(records, reference):
     x = _unit(tuple(a-along*b for a, b in zip(x, z)))
     y = cross(z, x)
     return tuple(map(float, origin)) + x + y + z
+
+
+def _original_direction(records, reference):
+    """DIRECTION ratios as binary64 (WR1: not all zero), or None for $."""
+    if reference is None:
+        return None
+    ratios = tuple(map(float, _refer(records, reference, 'DIRECTION').args[1]))
+    require(len(ratios) == 3, 'original transformation operator direction is not 3D')
+    require(all(math.isfinite(c) for c in ratios) and any(c != 0. for c in ratios),
+            'original source direction degenerates')
+    return ratios
+
+
+def _dot3(a, b):
+    return sum(x*y for x, y in zip(a, b))
+
+
+def original_cartesian_operator(records, operator, inverse=False):
+    """Row-major 3x4 rep_1-to-rep_2 map of a cartesian_transformation_operator_3d.
+
+    ISO 10303-42 as carried by the AP242 MIM long form: scl = NVL(scale, 1)
+    with WR1 scl > 0; u = base_axis(3, axis1, axis2, axis3), with
+    first_proj_axis and second_proj_axis transcribed in their own operation
+    order; the map is P -> local_origin + scl*(u[1] Px + u[2] Py + u[3] Pz).
+    u[2] keeps the sense of axis2, so a mirroring operator has determinant
+    -scl**3 here. u is orthonormal by construction, so inverse=True returns
+    the rep_2-to-rep_1 map P -> u^T (P - local_origin) / scl. This deliberately does not follow OCCT 8.0.1
+    StepToGeom::MakeTransformation3d, which inverts the scale, rebuilds a
+    right-handed frame from axis1 and axis3 and defaults axis3 to axis1 x axis2.
+    """
+    require(type(operator) is _Call and operator.kind == 'CARTESIAN_TRANSFORMATION_OPERATOR_3D' and
+            len(operator.args) == 8, 'original cartesian transformation operator arity')
+    axis1, axis2, origin, scale, axis3 = operator.args[3:8]
+    axis1, axis2, axis3 = (_original_direction(records, a) for a in (axis1, axis2, axis3))
+    scl = 1. if scale is None else float(scale)
+    require(math.isfinite(scl) and scl > 0., 'original transformation operator scale violates WR1')
+    point = _refer(records, origin, 'CARTESIAN_POINT').args[1]
+    require(len(point) == 3, 'original transformation operator origin is not 3D')
+    point = tuple(map(float, point))
+    # base_axis(3, ...): d1 := NVL(normalise(axis3), (0,0,1)).
+    z = _unit(axis3) if axis3 is not None else (0., 0., 1.)
+    # first_proj_axis(d1, axis1); its own normalise(z_axis) of a unit d1 is
+    # omitted. An axis1 parallel to d1, or within rounding of it, has no
+    # defined projection and refuses. The projection is applied twice: one
+    # pass leaves x off orthogonal to z by about eps/sin(angle), a second pass
+    # removes that residue, so u stays orthonormal to rounding.
+    if axis1 is None:
+        v = (1., 0., 0.) if z not in ((1., 0., 0.), (-1., 0., 0.)) else (0., 1., 0.)
+    else:
+        v = _unit(axis1)
+        sine = cross(v, z)
+        require(math.sqrt(_dot3(sine, sine)) > 8*2.**-52,
+                'original transformation operator axis1 is parallel to axis3')
+    for _ in range(2):
+        along = _dot3(v, z)
+        v = tuple(a-along*b for a, b in zip(v, z))
+    x = _unit(v)
+    # second_proj_axis(d1, d2, axis2) removes from arg (default (0,1,0)) its
+    # z and x components and normalises. EXPRESS dot_product and
+    # vector_difference work on normalised directions, so the standard's
+    # intermediate vectors differ from these by a positive scale only, which
+    # the final normalise removes. With x and z orthonormal the result equals
+    # sign(arg . (z x x)) (z x x) in exact arithmetic; that form keeps u
+    # orthonormal to rounding (classical Gram-Schmidt does not when arg is
+    # near the x-z plane), so u^T is its inverse. An arg in that plane, or
+    # within rounding of it, has no defined sense and refuses.
+    v = axis2 if axis2 is not None else (0., 1., 0.)
+    w = _unit(cross(z, x))
+    along = _dot3(v, w)
+    require(abs(along) > 8*2.**-52*math.sqrt(_dot3(v, v)),
+            'original transformation operator axis2 lies in the axis1-axis3 plane')
+    y = w if along > 0 else tuple(-c for c in w)
+    u = (x, y, z)
+    if inverse:
+        return tuple(value for i in range(3) for value in
+                     (u[i][0]/scl, u[i][1]/scl, u[i][2]/scl, -_dot3(u[i], point)/scl))
+    return tuple(value for i in range(3) for value in
+                 (scl*u[0][i], scl*u[1][i], scl*u[2][i], point[i]))
 
 
 def _near(actual, expected, tolerance, description):
@@ -764,22 +842,134 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
                 original_spatial_curves=len(physical_curves), max_original_placement_error=placement_error)
 
 
+def _representation_products(records):
+    """Product definitions that each shape representation represents.
+
+    A representation represents the definition of every
+    shape_definition_representation that uses it, and of every representation
+    joined to it by a plain (untransformed) shape_representation_relationship.
+    A relationship that is the representation_relation of a
+    context_dependent_shape_representation places a child in its parent and
+    does not join one product's representations, so it is skipped. Only
+    shape definitions of a product_definition count: one attached to a
+    relationship's (for example a NAUO's) product_definition_shape names no
+    product.
+    """
+    placing = {row.args[0].id for row in records.values()
+               if type(row) is _Call and row.kind == 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION'
+               and type(row.args[0]) is _Ref}
+    direct, links = defaultdict(set), defaultdict(set)
+    for id, row in records.items():
+        if type(row) is not _Call or id in placing:
+            continue
+        if row.kind == 'SHAPE_DEFINITION_REPRESENTATION' and all(type(a) is _Ref for a in row.args[:2]):
+            shape = records.get(row.args[0].id)
+            if type(shape) is _Call and shape.kind == 'PRODUCT_DEFINITION_SHAPE' and type(shape.args[2]) is _Ref:
+                definition = records.get(shape.args[2].id)
+                if type(definition) is _Call and definition.kind == 'PRODUCT_DEFINITION':
+                    direct[row.args[1].id].add(shape.args[2].id)
+        elif row.kind == 'SHAPE_REPRESENTATION_RELATIONSHIP' and all(type(a) is _Ref for a in row.args[2:4]):
+            a, b = row.args[2].id, row.args[3].id
+            links[a].add(b)
+            links[b].add(a)
+    def products(rep):
+        seen, stack, found = {rep}, [rep], set()
+        while stack:
+            current = stack.pop()
+            found |= direct[current]
+            for neighbor in links[current] - seen:
+                seen.add(neighbor)
+                stack.append(neighbor)
+        return found
+    return products
+
+
+def _original_relation_reversed(records, products, rep1, rep2, usage_id):
+    """True when rep_1 is the parent's representation and rep_2 the child's.
+
+    The transformation maps rep_1 into rep_2 and the NAUO names the parent
+    (relating) and child (related) definitions; the representations' own
+    products decide which way the usage reads, as OCCT 8.0.1
+    STEPConstruct_Assembly::CheckSRRReversesNAUO does with direct SDRs. A
+    reading needs at least one side with products, and every side with
+    products must hold its expected definition: forward is rep_1 the child's
+    and rep_2 the parent's, backward the reverse. Exactly one reading must
+    hold. No evidence, evidence both ways, or a side holding an unrelated
+    product refuses; OCCT falls through to forward in those cases, which
+    places the child in coordinates that are not its parent's.
+    """
+    usage = records.get(usage_id)
+    require(type(usage) is _Call and usage.kind == 'NEXT_ASSEMBLY_USAGE_OCCURRENCE' and
+            len(usage.args) >= 5 and all(type(a) is _Ref for a in usage.args[3:5]),
+            'original placed product relationship is not a NAUO')
+    parent, child = usage.args[3].id, usage.args[4].id
+    first, second = products(rep1), products(rep2)
+    def reads(on_first, on_second):
+        return bool(first or second) and (not first or on_first in first) and (not second or on_second in second)
+    forward, backward = reads(child, parent), reads(parent, child)
+    require(forward != backward, 'original representation relation does not orient its usage')
+    return backward
+
+
+def _original_relation_items(records, rep):
+    shape = _shape_representation(records.get(rep))
+    require(shape is not None, 'original related shape representation missing')
+    return {item.id for item in shape[1] if type(item) is _Ref}
+
+
 def _original_usage_transforms(records):
+    """Child-to-parent 3x4 map of every usage placed by a transformed relation."""
     transforms = {}
+    products = _representation_products(records)
     for row in records.values():
         if type(row) is not _Call or row.kind != 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION':
             continue
-        relation = records[row.args[0].id]
+        relation = records.get(row.args[0].id) if type(row.args[0]) is _Ref else None
+        # A placing relation without a transformation (simple or complex) has
+        # no source that defines its placement; OCCT reads the identity, and
+        # agreeing with that reading would not be independent.
+        untransformed = type(relation) is _Call and relation.kind == 'SHAPE_REPRESENTATION_RELATIONSHIP'
+        require(not untransformed, 'original placing relation carries no transformation')
         require(type(relation) is tuple, 'original transformed representation relation missing')
         parts = {part.kind: part for part in relation}
         transformation = parts.get('REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION')
-        require(transformation is not None, 'original representation transformation missing')
-        item = _refer(records, transformation.args[0], 'ITEM_DEFINED_TRANSFORMATION').args
+        require(transformation is not None, 'original placing relation carries no transformation')
+        reps = parts.get('REPRESENTATION_RELATIONSHIP')
+        require(reps is not None and len(reps.args) == 4 and all(type(a) is _Ref for a in reps.args[2:4]),
+                'original representation relation representations missing')
+        rep1, rep2 = reps.args[2].id, reps.args[3].id
+        operator = transformation.args[0]
+        operator = records.get(operator.id) if type(operator) is _Ref else None
+        # transformation = SELECT(functionally_defined_transformation,
+        # item_defined_transformation, set_item_defined_transformation); only
+        # the two kinds below are read, every other value refuses here.
+        require(type(operator) is _Call and
+                operator.kind in ('ITEM_DEFINED_TRANSFORMATION', 'CARTESIAN_TRANSFORMATION_OPERATOR_3D'),
+                'unsupported original representation transformation operator')
         product_shape = _refer(records, row.args[1], 'PRODUCT_DEFINITION_SHAPE').args
         usage_id = product_shape[2].id
         require(usage_id not in transforms, 'ambiguous original usage placement')
-        a, b = original_frame(records, item[2]), original_frame(records, item[3])
-        # ITEM_DEFINED_TRANSFORMATION maps frame1 to frame2: B * inverse(A).
+        reversed_ = _original_relation_reversed(records, products, rep1, rep2, usage_id)
+        if operator.kind == 'CARTESIAN_TRANSFORMATION_OPERATOR_3D':
+            # The operator maps rep_1 into rep_2; a reversed relation reads
+            # child-to-parent through its inverse.
+            transforms[usage_id] = original_cartesian_operator(records, operator, inverse=reversed_)
+            continue
+        item = operator.args
+        require(all(type(a) is _Ref for a in item[2:4]), 'original item-defined transformation frames missing')
+        first, second = item[2], item[3]
+        # WR2: transform_item_1 belongs to rep_1, transform_item_2 to rep_2. A
+        # pair placed the other way round is swapped, as OCCT's
+        # ComputeTransformation does; a pair in neither order refuses.
+        items1, items2 = _original_relation_items(records, rep1), _original_relation_items(records, rep2)
+        if not (first.id in items1 and second.id in items2):
+            require(first.id in items2 and second.id in items1,
+                    'original item-defined transformation frames do not belong to its representations')
+            first, second = second, first
+        if reversed_:
+            first, second = second, first
+        a, b = original_frame(records, first), original_frame(records, second)
+        # The child-side frame A maps onto the parent-side frame B: B * inverse(A).
         rotation = tuple(sum(b[3+3*k+i] * a[3+3*k+j] for k in range(3))
                          for i in range(3) for j in range(3))
         matrix = tuple(value for i in range(3) for value in

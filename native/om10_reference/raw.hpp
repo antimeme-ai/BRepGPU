@@ -1,7 +1,9 @@
 #ifndef BG_OM10_REFERENCE_RAW_HPP
 #define BG_OM10_REFERENCE_RAW_HPP
 #include "../om10/scene.hpp"
+#include "../rigid_placement.hpp"
 #include <map>
+#include <set>
 namespace bgref {
 using namespace bgom10;
 
@@ -90,7 +92,7 @@ struct RawScene {
     for(const auto &i:instances){
       require(i.id!=UINT64_MAX && iids.insert(i.id).second,"raw_decode: duplicate/reserved occurrence ID");
       require(i.definition<definitions.size() && i.reserved==0,"raw_decode: occurrence definition/reserved");
-      require(orthogonal(i.matrix,i.matrix+4,i.matrix+8,true),"raw_decode: nonproper/nonrigid matrix");
+      require(brepgpu::rigid_placement_status(i.matrix)==brepgpu::PlacementStatus::rigid,"raw_decode: nonproper/nonrigid matrix");
       const auto &d=definitions[i.definition];
       require(checked_add(vertex_refs.size(),d.vertex_count)<=UINT32_MAX &&
               checked_add(primitive_refs.size(),d.triangle_count)<=UINT32_MAX,"raw_decode: placed slot overflow");

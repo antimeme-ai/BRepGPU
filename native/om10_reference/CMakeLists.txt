@@ -11,3 +11,13 @@ if(BREPGPU_OM10_REFERENCE_SANITIZERS)
   target_compile_options(brepgpu-om10-reference-display PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
   target_link_options(brepgpu-om10-reference-display PRIVATE -fsanitize=address,undefined)
 endif()
+include(CTest)
+if(BUILD_TESTING)
+  add_executable(brepgpu-reference-placement-admission ../../tests/native_reference_placement_admission.cpp)
+  target_include_directories(brepgpu-reference-placement-admission PRIVATE ../../include)
+  target_compile_features(brepgpu-reference-placement-admission PRIVATE cxx_std_17)
+  target_compile_options(brepgpu-reference-placement-admission PRIVATE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off)
+  add_test(NAME reference_placement_admission COMMAND brepgpu-reference-placement-admission
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/fixtures/rigid-placements.tsv"
+    "${CMAKE_CURRENT_BINARY_DIR}/placement-probe.bgrefmesh")
+endif()

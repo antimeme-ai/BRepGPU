@@ -591,3 +591,15 @@ decisions (ABC download term first, as the priority-1 corpus source).
   Sent back with the should-fix list and a privacy fix (no other users'
   process names in context rows). B2-display returned (bins canonical on both
   P100s, never output-visible) and is extending the fix to the CPU display.
+- B2-oracles landed (results/b2-oracles-2026-10-17/REPORT.md) after two
+  reviews: the oracle reads cartesian transformation operators per Part 42 and
+  catches OCCT's mirror, omitted-axis3 and scale misreads; three stricter
+  placement rules folded into the one predicate with exact bounds written in
+  its header; relation orientation decided from the NAUO with named refusals
+  for every unorientable case; the reference display builds again. OM10
+  passes the oracle before and after; the corpus does not reach placement
+  code. The lane confirmed from the PDM guide's worked example that the reader
+  composes item-defined placements in the wrong order whenever the first
+  frame is not the identity (bead .37.20, follow-on). The shared oracle file
+  was landed as the lane's HEAD-plus-own-functions copy, leaving B2-ingress's
+  hunks unstaged.

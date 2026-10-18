@@ -7,9 +7,10 @@ by their original entity ID. A full usage path identifies a placed occurrence.
 from dataclasses import dataclass
 import math
 
+from .imported_source import rigid_placement_status
+
 
 IDENTITY = (1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0.)
-_RIGID_TOLERANCE = 1.e-10
 
 
 def _source_id(value, description):
@@ -29,19 +30,18 @@ def _finite_tuple(values, size, description):
 
 
 def rigid_transform(values, description='placement'):
-    """Copy and validate a proper rigid 3x4 source map without changing its bits."""
+    """Copy and validate a proper rigid 3x4 source map without changing its bits.
+
+    The one placement rule (imported_source.rigid_placement_status, the
+    mirror of native/rigid_placement.hpp) applies to every usage and to every
+    composed occurrence, as the display checks composed world matrices.
+    Consumers apply the matrix as given; the rule only admits the rigid class.
+    """
     result = _finite_tuple(values, 12, description)
-    rows = tuple(result[4*i:4*i+3] for i in range(3))
-    for i in range(3):
-        for j in range(3):
-            expected = 1. if i == j else 0.
-            if abs(sum(a*b for a, b in zip(rows[i], rows[j])) - expected) > _RIGID_TOLERANCE:
-                raise ValueError(f'{description}: rotation is not orthonormal')
-    a, b, c = rows
-    determinant = (a[0]*(b[1]*c[2]-b[2]*c[1])
-                   - a[1]*(b[0]*c[2]-b[2]*c[0])
-                   + a[2]*(b[0]*c[1]-b[1]*c[0]))
-    if abs(determinant-1.) > _RIGID_TOLERANCE:
+    status = rigid_placement_status(result)
+    if status == 'nonorthonormal':
+        raise ValueError(f'{description}: rotation is not orthonormal')
+    if status != 'rigid':
         raise ValueError(f'{description}: placement must have a proper rotation')
     return result
 

@@ -175,11 +175,9 @@ inline void validate_scene_records(const SceneView &scene, bool source_profile,
     require(i.definition < definitions.size() &&
                 (source_profile ? i.reserved <= materials.size() : i.reserved == 0),
             "decode: instance definition/reserved");
-    // Source-profile instances follow the source readers' placement rule; the
-    // legacy profile keeps its stricter rigid check.
-    require(source_profile ? brepgpu::rigid_placement_status(i.matrix) ==
-                                 brepgpu::PlacementStatus::rigid
-                           : orthogonal(i.matrix, i.matrix + 4, i.matrix + 8, true),
+    // Both profiles follow the source readers' one placement rule; the
+    // matrix is applied as given, the rule only admits the rigid class.
+    require(brepgpu::rigid_placement_status(i.matrix) == brepgpu::PlacementStatus::rigid,
             "decode: nonrigid instance matrix");
   }
   for (const auto &c : carriers) {

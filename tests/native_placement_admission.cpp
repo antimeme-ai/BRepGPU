@@ -1,7 +1,10 @@
 // One placement admission rule: every corpus matrix must be admitted or
 // refused identically by the native source reader and the CPU display's
-// source-profile scene factory. tests/test_step_ingress.py checks the Python
-// reader against the same expected column.
+// source-profile and legacy-profile scene factories.
+// tests/test_step_ingress.py checks the Python reader,
+// tests/test_placement_oracles.py the Python assembly, and
+// tests/native_reference_placement_admission.cpp the raw reference display
+// against the same expected column.
 #include "../native/om10/types.hpp"
 #include "source.hpp"
 #include <array>
@@ -111,8 +114,9 @@ std::string reader_status(const Matrix &matrix) {
 }
 // One planar triangle placed once; only the instance matrix varies. A refusal
 // counts only when it is the display's placement rule ("nonrigid instance
-// matrix"); any other failure is reported as such.
-std::string display_status(const Matrix &matrix) {
+// matrix"); any other failure is reported as such. The source profile stores
+// XYZ with cofactor normals; the legacy profile has plain vertex flags.
+std::string display_status(const Matrix &matrix, bool source_profile) {
   using namespace bgom10;
   Carrier carrier{};
   carrier.id = 1;
@@ -130,7 +134,7 @@ std::string display_status(const Matrix &matrix) {
   for (uint32_t i = 0; i < 3; ++i) {
     vertices[i].xyz[0] = vertices[i].uv[0] = xy[i][0];
     vertices[i].xyz[1] = vertices[i].uv[1] = xy[i][1];
-    vertices[i].flags = STORED_XYZ | COFACTOR_NORMAL;
+    vertices[i].flags = source_profile ? STORED_XYZ | COFACTOR_NORMAL : 0U;
     vertices[i].physical = i + 1;
   }
   Triangle triangle{{0, 1, 2}, 0, 1};
@@ -142,8 +146,8 @@ std::string display_status(const Matrix &matrix) {
   Error error{};
   Times times{};
   void *token = nullptr;
-  const auto *api = cpu_api_v2();
-  require(api && api->version == 2, "source-profile display API");
+  const auto *api = source_profile ? cpu_api_v2() : cpu_api();
+  require(api && api->version == (source_profile ? 2U : 1U), "display API version");
   const bool admitted = api->create(&scene, 1, 0, &token, &error, &times);
   require(admitted == (token != nullptr), "display admission and session token disagree");
   if (token)
@@ -180,10 +184,12 @@ int main(int argc, char **argv) {
       }
       require(!std::getline(fields, item, '\t'), "placement corpus trailing field");
       const auto reader = reader_status(matrix);
-      const auto display = display_status(matrix);
-      const bool agree = reader == expected && display == (expected == "rigid" ? "admitted" : "refused");
-      std::cout << name << '\t' << expected << "\treader=" << reader << "\tdisplay=" << display << '\t'
-                << (agree ? "AGREE" : "DISAGREE") << '\n';
+      const auto display = display_status(matrix, true);
+      const auto legacy = display_status(matrix, false);
+      const std::string wanted = expected == "rigid" ? "admitted" : "refused";
+      const bool agree = reader == expected && display == wanted && legacy == wanted;
+      std::cout << name << '\t' << expected << "\treader=" << reader << "\tdisplay=" << display
+                << "\tlegacy=" << legacy << '\t' << (agree ? "AGREE" : "DISAGREE") << '\n';
       ++rows;
       mismatches += agree ? 0 : 1;
     }

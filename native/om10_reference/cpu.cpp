@@ -1,4 +1,5 @@
 // Reference-only raw display orchestration; shared math stays in om10/math.hpp.
+#include "../om10/math.hpp"
 #include "raw.hpp"
 #include <algorithm>
 #include <atomic>
