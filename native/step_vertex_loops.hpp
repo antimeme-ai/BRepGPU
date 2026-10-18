@@ -62,6 +62,9 @@ enum class Reason : std::uint32_t {
   not_closed = 4,          // a sole bound on a surface that is not closed
   off_surface = 5,         // the pole is not on the surface
   not_singular = 6,        // the pole is not a singular point of the surface
+  // B2 .37.36, not a vertex-loop reason: the face's same_sense contradicts its
+  // own outer bound and the closed shell's edge uses do not decide its side.
+  orientation_undecided = 7,
 };
 inline const char *name(Reason r) {
   switch (r) {
@@ -72,12 +75,14 @@ inline const char *name(Reason r) {
   case Reason::not_closed: return "sole_bound_not_closed";
   case Reason::off_surface: return "pole_off_surface";
   case Reason::not_singular: return "pole_not_singular";
+  case Reason::orientation_undecided: return "orientation_undecided";
   }
   return "unknown";
 }
 inline constexpr Reason reasons[] = {Reason::dropped,      Reason::translation_differs,
                                      Reason::not_evaluable, Reason::not_closed,
-                                     Reason::off_surface,   Reason::not_singular};
+                                     Reason::off_surface,   Reason::not_singular,
+                                     Reason::orientation_undecided};
 
 // TranslateFace.cxx:614-649, on the surface OCCT built.
 inline Rule rule(const Handle(Geom_Surface) &built, int bounds) {

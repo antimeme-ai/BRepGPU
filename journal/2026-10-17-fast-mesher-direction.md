@@ -673,3 +673,42 @@ to 330, and OM10 has 107 of 107 solids valid under the default read.
 - The conflicting oracle test expects the adapter's refusal.
 - After round 2, the merged state is built and tested in one lane directory
   before the reviews.
+
+## 2026-10-19: B2-reader landed; B2 and M4 complete
+
+Both B2-reader lanes landed after one final merged run of their union. The run
+used a fresh fleet tree with every source touched, so everything rebuilt. The
+dispatcher checked by checksum that the fleet tree matches the commit.
+
+**Suites.** All green. The only red is the retired cylinder-seam pair, `.37.11`,
+which fails identically on HEAD.
+
+**Corpus.**
+- Adapter: 232/268, the same split as HEAD.
+- Exporter, translation-only: 327/173.
+- Exporter, default read (new): 327/173.
+
+**OM10.**
+- 6 inward raw faces are corrected, identically by the adapter and both exporter
+  modes.
+- 0 raw placements.
+- NVIDIA input is byte-identical on 106 of 107 definitions; the 107th is the
+  declared correction.
+
+**Reports.** `results/b2-reader-adapter-2026-10-18/` and
+`results/b2-reader-export-2026-10-18/`.
+
+**Finding.** NVIDIA meshes the correct `void-block.step` wrongly in all 8 arm
+configurations: three void faces are wound against the material, and its own
+report flags the output as non-manifold.
+
+**Review.** The adapter ran eight independent review rounds and the exporter
+four. The operator stopped further rounds: "no more reviewers and readers and
+shit, this spirals out of control quickly." The rounds had moved to contrived
+fixtures that never changed the corpus or OM10 results.
+- Standing rule from now on: one independent review per unit, fix its findings,
+  then land.
+- Remaining edge cases go to the M8 beads that own the code (`.25.11`–`.25.13`).
+
+**Closed.** B2 (`.37`) is closed, and with it M4. Next: the operator's M4
+decision sheet, then M5.

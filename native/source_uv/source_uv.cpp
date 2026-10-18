@@ -27,6 +27,10 @@
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_WireData.hxx>
 #include <NCollection_Array1.hxx>
+#include <Bnd_Box2d.hxx>
+#include <BndLib_Add2dCurve.hxx>
+#include <Geom2dAdaptor_Curve.hxx>
+#include <Geom2d_BezierCurve.hxx>
 
 
 #include <gp_Cone.hxx>
@@ -196,6 +200,47 @@ Handle(Geom2d_Curve) conic_source_chart(const SourceUVFace& face,const SourceUVU
  for(double t:samples(original,a,b)){auto p=original->Value(t);auto raw=guide->Value(t),uv=spline_probe({selected,a,b},surface,selected->Value(t),where);require(finite(raw),where+": nonfinite original guide probe");double raw_residual=p.Distance(surface->Value(raw.X(),raw.Y())),residual=p.Distance(surface->Value(uv.X(),uv.Y()));require(std::isfinite(raw_residual)&&std::isfinite(residual)&&residual<=options.source_residual_mm,where+": selected original-t correspondence exceeds source grade");record.max_guide_extension_residual_mm=std::max(record.max_guide_extension_residual_mm,raw_residual);record.max_selected_residual_mm=std::max(record.max_selected_residual_mm,residual);}
  output.chart_approximations.push_back(record);return selected;
 }
+// B2 .37.31. A B-spline surface is defined on its knot rectangle only: a UV
+// point outside it is no point of the carrier but the end span's polynomial
+// extended. A projected UV curve is a fit through in-domain projections and can
+// overshoot the rectangle between them (or OCCT's 2D line can sit past a side).
+// Such a curve is not a curve on the carrier, and every consumer of a B-spline
+// carrier works on the knot rectangle, so the curve is corrected, never the
+// carrier's hint widened. Every coefficient of the curve on its interval is
+// moved into the rectangle (the curve then lies in it by the convex hull
+// property; one function of the coefficient value, so curves meeting at a
+// joint still meet). The guarantee is the sampled original-t correspondence
+// of the corrected curve, which must stay within the source residual (at the
+// samples, not between them). The derivative-metric term is a charge to the
+// chord allocation, as a conic chart's is, and not a bound: the metric is taken
+// over the knot rectangle while the original curve's escaped points lie off it,
+// on the end spans' polynomial extension (review 9b). A curve whose own sampled
+// residual already exceeds the source residual is left as it is, so the C/S
+// residual check names that cause, as before (review 5). Escapes within the
+// recovery grade are left to the finite probe, as before.
+Handle(Geom2d_Curve) domain_source_chart_impl(const SourceUVFace& face,const SourceUVUse& use,
+ const Handle(Geom_Curve)& original,const Handle(Geom_Surface)& surface,
+ const Handle(Geom2d_Curve)& guide,double a,double b,
+ const SourceUVOptions& options,PreparedSourceUV& output){
+ auto tensor=Handle(Geom_BSplineSurface)::DownCast(surface);if(tensor.IsNull())return guide;
+ // A curve whose own sampled residual fails is left for the C/S residual check.
+ for(double t:samples(original,a,b)){auto uv=guide->Value(t);if(!finite(uv))return guide;if(!(original->Value(t).Distance(surface->Value(uv.X(),uv.Y()))<=options.source_residual_mm))return guide;}
+ // Only the forms editable() takes; any other projected form is left as it was.
+ auto spline=Handle(Geom2d_BSplineCurve)::DownCast(guide);if(spline.IsNull()?Handle(Geom2d_Line)::DownCast(guide).IsNull():(spline->IsRational()||spline->IsPeriodic())){require_natural_domain(guide,a,b,surface,face.id,use.id);return guide;}
+ double bounds[4];surface->Bounds(bounds[0],bounds[1],bounds[2],bounds[3]);
+ auto where=context(face)+" coedge "+std::to_string(use.id)+" natural domain";
+ auto selected=editable({guide,a,b});bool escaped=false;
+ for(int i=1;i<=selected->NbPoles();++i)for(int axis=0;axis<2;++axis){double x=selected->Pole(i).Coord(axis+1),lo=bounds[2*axis],hi=bounds[2*axis+1],epsilon=grade(std::max(std::abs(lo),std::abs(hi)));require(std::isfinite(x),where+": nonfinite coefficient");if(x<lo-epsilon||x>hi+epsilon)escaped=true;}
+ if(!escaped)return guide;
+ require(!tensor->IsUPeriodic()&&!tensor->IsVPeriodic()&&!tensor->IsUClosed()&&!tensor->IsVClosed(),where+": unsupported closed or periodic carrier");
+ require(std::count_if(edge_loop(face).uses.begin(),edge_loop(face).uses.end(),[&](const SourceUVUse& u){return u.edge.IsSame(use.edge);})==1,where+": unsupported repeated source use");
+ SourceUVDomainClamp record;record.face_id=face.id;record.coedge_id=use.id;
+ for(int i=1;i<=selected->NbPoles();++i){auto p=selected->Pole(i);for(int axis=0;axis<2;++axis){double x=p.Coord(axis+1),y=std::min(std::max(x,bounds[2*axis]),bounds[2*axis+1]);(axis?record.max_v_move:record.max_u_move)=std::max(axis?record.max_v_move:record.max_u_move,std::abs(y-x));p.SetCoord(axis+1,y);}selected->SetPole(i,p);}
+ auto metric=derivative_metric(surface);record.uv_metric_mm=std::nextafter(metric[0]*record.max_u_move+metric[1]*record.max_v_move,INFINITY);
+ require(std::isfinite(record.uv_metric_mm)&&record.uv_metric_mm<=options.tolerance_mm/8,where+": complete domain correction exceeds chord allocation");
+ for(double t:samples(original,a,b)){auto uv=selected->Value(t);require(finite(uv),where+": nonfinite correction probe");double residual=original->Value(t).Distance(surface->Value(uv.X(),uv.Y()));require(std::isfinite(residual)&&residual<=options.source_residual_mm,where+": corrected original-t correspondence exceeds source grade");record.max_residual_mm=std::max(record.max_residual_mm,residual);}
+ output.domain_clamps.push_back(record);return selected;
+}
 void replace_branch(const SourceUVUse& use,const TopoDS_Face& face,const Handle(Geom2d_Curve)& value,double a,double b){
  BRep_Builder builder;if(!BRep_Tool::IsClosed(use.edge,face)){attach(use.edge,face,value,a,b);return;}
  auto other=pcurve(TopoDS::Edge(use.edge.Reversed()),face);require(!other.curve.IsNull(),"query edit lost other seam branch");bool second=(use.edge.Orientation()==TopAbs_REVERSED)!=(face.Orientation()==TopAbs_REVERSED);
@@ -237,6 +282,19 @@ void query_domain(SourceUVFace& face,const SourceUVOptions& options,SourceUVStat
 }
 }
 
+double require_natural_domain(const Handle(Geom2d_Curve)& curve,double a,double b,const Handle(Geom_Surface)& surface,SourceID face_id,SourceID coedge_id){
+ auto tensor=Handle(Geom_BSplineSurface)::DownCast(surface);if(tensor.IsNull()||curve.IsNull())return 0;
+ double bounds[4];surface->Bounds(bounds[0],bounds[1],bounds[2],bounds[3]);Bnd_Box2d box;BndLib_Add2dCurve::Add(curve,a,b,0.,box);require(!box.IsVoid(),"face "+std::to_string(face_id)+" coedge "+std::to_string(coedge_id)+": empty UV curve box");
+ double lo[2],hi[2];box.Get(lo[0],lo[1],hi[0],hi[1]);double escape=0;bool beyond=false;
+ for(int axis=0;axis<2;++axis){double e=std::max(bounds[2*axis]-lo[axis],hi[axis]-bounds[2*axis+1]);escape=std::max(escape,e);if(e>grade(std::max(std::abs(bounds[2*axis]),std::abs(bounds[2*axis+1]))))beyond=true;}
+ if(!beyond)return std::max(escape,0.);
+ Handle(Geom2d_Curve) basis=curve;bool trimmed=false;while(auto t=Handle(Geom2d_TrimmedCurve)::DownCast(basis)){basis=t->BasisCurve();trimmed=true;}
+ Geom2dAdaptor_Curve adaptor(basis);std::uint32_t kind=0;bool rational=false,periodic=basis->IsPeriodic();const char* name="curve of another form";
+ switch(adaptor.GetType()){case GeomAbs_Line:kind=1;name="line";break;case GeomAbs_Circle:kind=2;name="circle";break;case GeomAbs_Ellipse:kind=3;name="ellipse";break;
+  case GeomAbs_BezierCurve:kind=4;rational=adaptor.Bezier()->IsRational();name="Bezier curve";break;case GeomAbs_BSplineCurve:kind=5;rational=adaptor.BSpline()->IsRational();periodic=adaptor.BSpline()->IsPeriodic();name="B-spline curve";break;default:break;}
+ std::ostringstream message;message<<std::setprecision(17)<<"source UV: face "<<face_id<<" coedge "<<coedge_id<<" natural domain: projected "<<(rational?"rational ":"")<<(periodic?"periodic ":"")<<(trimmed?"trimmed ":"")<<name<<" leaves the B-spline carrier's knot rectangle by "<<escape<<" and is not a form the domain correction takes; refused";
+ throw SourceUVDomainEscape(message.str(),face_id,coedge_id,kind,rational,periodic,trimmed,escape);
+}
 PreparedSourceUV prepare_source_uv(const TopoDS_Shape& original,const std::vector<SourceUVFace>& bindings,const SourceUVOptions& options){
  require(std::isfinite(options.projection_precision_mm)&&options.projection_precision_mm>0&&std::isfinite(options.source_residual_mm)&&options.source_residual_mm>0&&std::isfinite(options.tolerance_mm)&&options.tolerance_mm>0,"invalid source conversion grades");auto begin=Clock::now();for(const auto& f:bindings)require_source_uv_uses(f);BRepBuilderAPI_Copy copier(original,true,false);PreparedSourceUV output;output.raw_shape=copier.Shape();auto faces=mapped_faces(bindings,copier);
  auto remember=[&](const TopoDS_Shape& s){if(!output.copies.IsBound(s))output.copies.Bind(s,copier.ModifiedShape(s));};remember(original);for(const auto& f:bindings){remember(f.face);for(const auto& w:f.unexplained)remember(w);for(const auto& l:f.loops){if(!l.wire.IsNull())remember(l.wire);if(!l.pole.IsNull())remember(l.pole);for(const auto& u:l.uses){remember(u.edge);remember(u.start);remember(u.end);}}}
@@ -250,7 +308,7 @@ PreparedSourceUV prepare_source_uv(const TopoDS_Shape& original,const std::vecto
   // placement; a face bounded by vertex loops alone has nothing to project.
   const auto edge_loops=std::count_if(f.loops.begin(),f.loops.end(),[](const SourceUVLoop& l){return !l.pole_id;});if(!edge_loops)continue;
   require(edge_loops==1,context(f)+": unsupported nonplanar multiple-wire conversion");auto bs=Handle(Geom_BSplineSurface)::DownCast(surface);require(bs.IsNull()||(!bs->IsUClosed()&&!bs->IsVClosed()&&!bs->IsUPeriodic()&&!bs->IsVPeriodic()),context(f)+": unsupported closed/periodic spline chart");Handle(ShapeAnalysis_Surface) analysis=new ShapeAnalysis_Surface(surface);Handle(ShapeConstruct_ProjectCurveOnSurface) projector=new ShapeConstruct_ProjectCurveOnSurface;projector->Init(analysis,options.projection_precision_mm);projector->AdjustOverDegenMode()=1;
-  auto& l=edge_loop(f);NCollection_IndexedMap<TopoDS_Shape,TopTools_ShapeMapHasher> projected;for(auto& u:l.uses){++output.stats.original_uses;if(projected.Contains(u.edge))continue;projected.Add(u.edge);bool seam=std::count_if(l.uses.begin(),l.uses.end(),[&](const SourceUVUse& b){return u.edge.IsSame(b.edge);})==2;auto pc=pcurve(u.edge,f.face);if(pc.curve.IsNull()){double a,b;auto c=world_curve(u.edge,a,b);require(!c.IsNull()&&std::isfinite(a)&&std::isfinite(b)&&a<b,context(f)+": original curve/range missing");Handle(Geom2d_Curve) result;bool okay=projector->Perform(c,a,b,result,BRep_Tool::Tolerance(TopExp::FirstVertex(u.edge)),BRep_Tool::Tolerance(TopExp::LastVertex(u.edge)));require(okay&&!projector->Status(ShapeExtend_FAIL)&&!result.IsNull(),context(f)+" coedge "+std::to_string(u.id)+": projection failed");result=conic_source_chart(f,u,c,surface,result,a,b,seam,options,output);attach(u.edge,f.face,result,a,b);++output.stats.projected_edges;}
+  auto& l=edge_loop(f);NCollection_IndexedMap<TopoDS_Shape,TopTools_ShapeMapHasher> projected;for(auto& u:l.uses){++output.stats.original_uses;if(projected.Contains(u.edge))continue;projected.Add(u.edge);bool seam=std::count_if(l.uses.begin(),l.uses.end(),[&](const SourceUVUse& b){return u.edge.IsSame(b.edge);})==2;auto pc=pcurve(u.edge,f.face);if(pc.curve.IsNull()){double a,b;auto c=world_curve(u.edge,a,b);require(!c.IsNull()&&std::isfinite(a)&&std::isfinite(b)&&a<b,context(f)+": original curve/range missing");Handle(Geom2d_Curve) result;bool okay=projector->Perform(c,a,b,result,BRep_Tool::Tolerance(TopExp::FirstVertex(u.edge)),BRep_Tool::Tolerance(TopExp::LastVertex(u.edge)));require(okay&&!projector->Status(ShapeExtend_FAIL)&&!result.IsNull(),context(f)+" coedge "+std::to_string(u.id)+": projection failed");result=conic_source_chart(f,u,c,surface,result,a,b,seam,options,output);if(!seam)result=domain_source_chart_impl(f,u,c,surface,result,a,b,options,output);else require_natural_domain(result,a,b,surface,f.id,u.id);attach(u.edge,f.face,result,a,b);++output.stats.projected_edges;}
    if(seam&&!BRep_Tool::IsClosed(u.edge,f.face)){ShapeAnalysis_Edge edge_analysis;require(edge_analysis.HasPCurve(u.edge,f.face)&&!pcurve(u.edge,f.face).curve.IsNull(),context(f)+": seam single-pcurve readback missing");ShapeFix_Edge fix;fix.FixAddPCurve(u.edge,f.face,true,analysis,options.projection_precision_mm);require(!fix.Status(ShapeExtend_FAIL)&&BRep_Tool::IsClosed(u.edge,f.face),context(f)+": seam pair failed");++output.stats.seam_pairs;}
    states.at(state_index.FindIndex(u.edge)-1).check(context(f));
   }
@@ -264,7 +322,7 @@ PreparedSourceUV prepare_source_uv(const TopoDS_Shape& original,const std::vecto
  for(const auto& f:faces)check_correspondence(f,options,output.stats.max_residual_mm,false);
  output.stats.projection_seconds=std::chrono::duration<double>(Clock::now()-begin).count();
  // Query-only source-linked endpoint/column/pole construction follows below.
- if(options.prepare_query){auto query_begin=Clock::now();BRepBuilderAPI_Copy query_copier(output.raw_shape,true,false);output.query_shape=query_copier.Shape();for(decltype(output.copies)::Iterator it(output.copies);it.More();it.Next())output.query_copies.Bind(it.Key(),query_copier.ModifiedShape(it.Value()));auto queries=mapped_faces(faces,query_copier);std::vector<EdgeState> query_states;NCollection_IndexedMap<TopoDS_Shape,TopTools_ShapeMapHasher> recorded;std::vector<FaceState> query_face_states;for(const auto& f:queries){query_face_states.emplace_back(f.face);for(const auto& l:f.loops)for(const auto& u:l.uses)if(!recorded.Contains(u.edge)){recorded.Add(u.edge);query_states.emplace_back(u.edge);}}QueryBudget budget{options,output.stats,{}};for(const auto& record:output.chart_approximations){budget.cumulative[record.coedge_id]=record.uv_metric_mm;output.stats.max_query_uv_metric_mm=std::max(output.stats.max_query_uv_metric_mm,record.uv_metric_mm);}for(auto& f:queries){const char* stage="source columns";try{auto providers=query_columns(f,options,output.stats,budget);stage="finite joints";finite_spline_joints(f,providers,options,output.stats,budget);stage="natural domain";query_domain(f,options,output.stats,budget);stage="analytic pole topology";query_poles(f,output,options,budget);stage="actual original use quotient";require_source_uv_uses(f,output.connectors);stage="final correspondence";check_correspondence(f,options,output.stats.max_query_residual_mm,true);}catch(const Standard_Failure& e){fail(context(f)+" query "+stage+": "+e.ExceptionType()+" "+e.what());}}for(const auto& state:query_states)state.check("query final physical source");for(const auto& state:query_face_states)state.check("query final physical source");output.stats.query_seconds=std::chrono::duration<double>(Clock::now()-query_begin).count();}
+ if(options.prepare_query){auto query_begin=Clock::now();BRepBuilderAPI_Copy query_copier(output.raw_shape,true,false);output.query_shape=query_copier.Shape();for(decltype(output.copies)::Iterator it(output.copies);it.More();it.Next())output.query_copies.Bind(it.Key(),query_copier.ModifiedShape(it.Value()));auto queries=mapped_faces(faces,query_copier);std::vector<EdgeState> query_states;NCollection_IndexedMap<TopoDS_Shape,TopTools_ShapeMapHasher> recorded;std::vector<FaceState> query_face_states;for(const auto& f:queries){query_face_states.emplace_back(f.face);for(const auto& l:f.loops)for(const auto& u:l.uses)if(!recorded.Contains(u.edge)){recorded.Add(u.edge);query_states.emplace_back(u.edge);}}QueryBudget budget{options,output.stats,{}};for(const auto& record:output.chart_approximations){budget.cumulative[record.coedge_id]=record.uv_metric_mm;output.stats.max_query_uv_metric_mm=std::max(output.stats.max_query_uv_metric_mm,record.uv_metric_mm);}for(const auto& record:output.domain_clamps){SourceUVFace face;face.id=record.face_id;SourceUVUse use;use.id=record.coedge_id;budget.charge(face,use,record.uv_metric_mm);}for(auto& f:queries){const char* stage="source columns";try{auto providers=query_columns(f,options,output.stats,budget);stage="finite joints";finite_spline_joints(f,providers,options,output.stats,budget);stage="natural domain";query_domain(f,options,output.stats,budget);stage="analytic pole topology";query_poles(f,output,options,budget);stage="actual original use quotient";require_source_uv_uses(f,output.connectors);stage="final correspondence";check_correspondence(f,options,output.stats.max_query_residual_mm,true);}catch(const Standard_Failure& e){fail(context(f)+" query "+stage+": "+e.ExceptionType()+" "+e.what());}}for(const auto& state:query_states)state.check("query final physical source");for(const auto& state:query_face_states)state.check("query final physical source");output.stats.query_seconds=std::chrono::duration<double>(Clock::now()-query_begin).count();}
  return output;
 }
 // Measured edge-t to pcurve-s correspondence for a use whose edge is not

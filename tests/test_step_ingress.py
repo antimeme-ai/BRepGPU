@@ -860,7 +860,9 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
                   "#45 = CARTESIAN_POINT('',(1.,1.,0.));\n")
 
     def refusals(self, source):
-        return {d.source_ids: d.message for d in source.diagnostics if d.stage == 'source_face_refused'}
+        """The vertex-loop refusals (reason 7, a shell's orientation, is the shell's)."""
+        return {d.source_ids: d.message for d in source.diagnostics if d.stage == 'source_face_refused'
+                and {v.name: v.value for v in d.values}.get('reason') != 7.}
 
     def accepted(self, text):
         with tempfile.TemporaryDirectory() as directory:
@@ -929,24 +931,29 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
         return appended(substituted(cone, self.BASE, "#17 = ADVANCED_FACE('',(#18,#42),#26,.T.);"), self.PLANE_LOOP)
 
     def reasons(self, source):
+        """Vertex-loop reasons only; reason 7 (the shell's orientation) is asserted where it matters."""
         return {d.source_ids: {v.name: v.value for v in d.values}.get('reason')
-                for d in source.diagnostics if d.stage == 'source_face_refused'}
+                for d in source.diagnostics if d.stage == 'source_face_refused'
+                and {v.name: v.value for v in d.values}.get('reason') != 7.}
 
     def test_refused_face_is_structural_in_every_reader(self):
         """R1: a refused face is a status in FACES___, LOOPS___ and SOLIDS__, not only a record."""
         from brepgpu.imported_source import FACE_REFUSED, FACE_ADMITTED, DEFINITION_INCOMPLETE
         with tempfile.TemporaryDirectory() as directory:
             run, _, target, source = self.source(directory, self.lone_plane_loop())
-            self.assertEqual({f.id: f.status for f in source.faces}, {17: FACE_REFUSED, 30: FACE_ADMITTED})
-            self.assertEqual({l.id: l.status for l in source.loops}, {19: 0, 43: 1, 32: 0, 39: 0})
+            # Face 30 is refused with it through its edge loop 32 (reason 7): with face 17
+            # refused, the shell's side is not verified (review round 2, finding 1).
+            self.assertEqual({f.id: f.status for f in source.faces}, {17: FACE_REFUSED, 30: FACE_REFUSED})
+            self.assertEqual({l.id: l.status for l in source.loops}, {19: 0, 43: 1, 32: 1, 39: 0})
             self.assertEqual([(d.id, d.status) for d in source.definitions], [(15, DEFINITION_INCOMPLETE)])
-            self.assertIn('refused_faces\t1\n', run.stdout)
+            self.assertIn('refused_faces\t2\n', run.stdout)
             self.assertIn('incomplete_definitions\t1\n', run.stdout)
             self.assertIn('face_refusal\tdropped_by_occt\t1\n', run.stdout)
+            self.assertIn('face_refusal\torientation_undecided\t1\n', run.stdout)
             inspected, counts = inspect_counts(target)
             self.assertEqual(inspected.returncode, 0, inspected.stderr)
             self.assertEqual((counts.get('refused_faces'), counts.get('refused_loops'), counts.get('incomplete_definitions')),
-                             ('1', '1', '1'))
+                             ('2', '2', '1'))
             _, _, admitted, clean = self.source(directory, None)
             self.assertEqual({f.status for f in clean.faces} | {d.status for d in clean.definitions}, {0})
 
@@ -1026,7 +1033,8 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
                 source = self.accepted(text)
                 self.assertEqual(self.reasons(source), {(30, 39, 40): 3.})
                 self.assertIn('not evaluable', self.refusals(source)[(30, 39, 40)])
-                self.assertEqual({f.id: f.status for f in source.faces}, {17: 0, 30: 1})
+                # The shell's other face is refused with it (reason 7): its side is unverified.
+                self.assertEqual({f.id: f.status for f in source.faces}, {17: 1, 30: 1})
         # A pole on the base circle collapses the face's UV hint to that iso-line; with no
         # usable uncertainty it grows by one representable step, not a defaulted threshold.
         source = self.accepted(substituted(absent, "#39 = VERTEX_LOOP('',#40);", "#39 = VERTEX_LOOP('',#22);"))
@@ -1114,7 +1122,9 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
         arc generatrix is an open band; it is refused (reason 4). The whole circle is closed.
         The adapter's carrier table has no surface of revolution (it refuses the file at the
         carrier, a separate limit), so the shared rule is read through the reference
-        exporter's records."""
+        exporter's records. Since review round 2 the exporter refuses the open band's
+        definition first (its face sides cannot be checked: the shell is open), so
+        its record is not reached there."""
         def refused(text):
             with tempfile.TemporaryDirectory() as directory:
                 step = Path(directory)/'revolution.step'
@@ -1124,7 +1134,17 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
                 self.assertEqual(run.returncode, 0, run.stderr)
                 return [(r[2], r[3].split(':')[0]) for r in (l.split('\t') for l in (out/'records.tsv').read_text().splitlines())
                         if r[0] == 'source_face_refused']
-        self.assertEqual(refused(self.revolution(True)), [('30 39 40', 'sole_bound_not_closed')])
+        # Exporter path, review round 2 (unchecked face sides refuse): the trimmed
+        # arc's band is one face whose sole bound closes nothing, so its shell is
+        # open and bounds no material; the reference export refuses it by name
+        # before any face record. The closed circle's torus exports with none.
+        with tempfile.TemporaryDirectory() as directory:
+            step = Path(directory)/'band.step'
+            step.write_text(self.revolution(True))
+            run = subprocess.run((str(reference_exporter()), str(step), str(Path(directory)/'export')),
+                                 capture_output=True, text=True)
+            self.assertEqual(run.returncode, 1, run.stderr)
+            self.assertIn("definition #15: a shell of OCCT's translation is not closed, so it bounds no material", run.stderr)
         self.assertEqual(refused(self.revolution(False)), [])
 
     def test_face_view_is_a_valid_source(self):
@@ -1135,7 +1155,8 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
         from diagnose_imported_face import face_view
         from brepgpu.imported_source import validate_source, DEFINITION_INCOMPLETE, DEFINITION_COMPLETE
         source = self.accepted(self.lone_plane_loop())
-        for face, status in ((17, DEFINITION_INCOMPLETE), (30, DEFINITION_COMPLETE)):
+        # Both faces' views are incomplete: face 30 is refused with its shell (reason 7).
+        for face, status in ((17, DEFINITION_INCOMPLETE), (30, DEFINITION_INCOMPLETE)):
             with self.subTest(face=face):
                 view = face_view(source, face)
                 validate_source(view)
@@ -1152,7 +1173,7 @@ class VertexLoopTests(unittest.TestCase, _Adapter):
         """Third review nit: a refused face without a refused loop is a named refusal, not
         StopIteration."""
         from brepgpu.imported_source import require_edge_loops
-        source = self.accepted(self.lone_plane_loop())
+        source = self.accepted((FIXTURES/'apex-cone.step').read_text())
         bad = dataclasses.replace(source.face(30), status=1)
         with self.assertRaisesRegex(ValueError, 'face 30: refused at the source without a refused loop'):
             require_edge_loops(source, bad)
@@ -1429,12 +1450,27 @@ class ColourTests(unittest.TestCase, _Adapter):
         self.assertEqual(rows[((860,), 0)], 796)
         self.assertNotIn(((502,), 0), rows)
         self.assertEqual([ids for stage, ids in notes if stage == 'source_style_collapsed'], [(799, 798, 40)])
-        source = self.read(styled_mapped(plain=False))
-        self.assertNotIn(((502,), 0), self.rows(source))
-        self.assertEqual(sorted(self.notes(source, 'source_style_collapsed')), [(796, 795, 394), (799, 798, 40)])
-        self.assertIn((394, 630, 796), self.notes(source, 'source_style_conflict'))
-        self.assertEqual({p.id: p.style_id for p in source.products}[389], 630)
-        self.assertEqual({p.id: p.style_id for p in source.products}[35], 799)
+        # Without the plain usage the two mapped items place solids that no usage
+        # publishes, so the adapter refuses the file by name (bead .37.26,
+        # tests/test_step_reader_raw.py); the resolver's collapse is read on the model.
+        rows, notes, _ = self.resolve(styled_mapped(plain=False))
+        self.assertNotIn(((502,), 0), rows)
+        self.assertEqual(sorted(ids for stage, ids in notes if stage == 'source_style_collapsed'),
+                         [(796, 795, 394), (799, 798, 40)])
+        # Review finding 10: the conflict and the product styles, from the resolver on the
+        # model (tests/step_styles_fixture.cpp asks it for every product's style).
+        self.assertIn(('source_style_conflict', (394, 630, 796)), notes)
+        products = self.product_styles(styled_mapped(plain=False))
+        self.assertEqual((products[389], products[35]), (630, 799))
+
+    def product_styles(self, text):
+        """Every product's style as the shared resolver gives it, on the model alone."""
+        with tempfile.TemporaryDirectory() as directory:
+            step = Path(directory)/'styles.step'
+            step.write_text(text)
+            run = subprocess.run((str(styles_fixture()), str(step)), capture_output=True, text=True)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        return {int(l.split('\t')[1]): int(l.split('\t')[2]) for l in run.stdout.splitlines() if l.startswith('product\t')}
 
     def test_occurrence_paths_are_counted_at_any_depth(self):
         """Review R4: paths are counted in one pass over the usage graph, saturating at two;
@@ -1470,9 +1506,10 @@ class ColourTests(unittest.TestCase, _Adapter):
             reference = subprocess.run((str(reference_exporter()), str(step), str(out)), capture_output=True, text=True)
             self.assertEqual(reference.returncode, 0, reference.stderr)
             exported = load_reference_source(out/'source.bgocct')
-            # Review S7: the reference format carries neither diagnostics nor occurrence
-            # styles (bead .37.23); the exporter says so on stdout.
-            self.assertIn('reference_occurrence_styles_not_carried\t2\n', reference.stdout)
+            # Review S7: the reference format carries no diagnostics (they are records);
+            # since bead .37.23 it carries the occurrence styles, row for row.
+            self.assertIn('reference_occurrence_styles\t2\n', reference.stdout)
+            self.assertEqual(exported.occurrence_styles, owned.occurrence_styles)
             self.assertIn('reference_style_note\tsource_style_conflict\t395\t640\t650\t', reference.stdout)
             self.assertEqual((exported.products, exported.usages, exported.styles),
                              (owned.products, owned.usages, owned.styles))

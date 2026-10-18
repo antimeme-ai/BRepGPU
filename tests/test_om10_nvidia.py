@@ -332,6 +332,10 @@ class ReferenceMeshTests(unittest.TestCase):
             views=tuple(View(4,4,1,float(i),(1.,0.,0.,0.,1.,0.,0.,0.,1.),
                             (0.,0.,0.),(0.,0.),1.) for i in range(2))
             (matched/'views.bgview').write_bytes(pack_views(views))
+            # The adapter's source of the same STEP, for the legacy face comparison.
+            subprocess.run([str(root/'build/om10-step-source/brepgpu-step-source'),
+                str(root/'tests/fixtures/reference-source.step'),str(matched/'source.bgsource')],check=True,
+                stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             with self.assertRaisesRegex(ValueError,'source SHA'):
                 matched_inputs(matched,assembly,'0'*64,.005)
             with self.assertRaisesRegex(ValueError,'chord height'):

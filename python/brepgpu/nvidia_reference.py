@@ -24,6 +24,19 @@ class ReferenceDefinitionMesh:
     vertex_bytes: bytes
 
 
+class ReferenceMeshContent(ValueError):
+    """A fault in the mesh NVIDIA produced, as our wrapper copied it into the .bgrefmesh
+    (a nonfinite or zero point or normal, an index outside NVIDIA's vertices, a collapsed
+    triangle, a vertex NVIDIA emitted unused): NVIDIA's outcome. Every other decode
+    error (the container's header, sizes, ranges, our physical keys and placeholder
+    material) is our producer wrapper's fault, ours (review round 4)."""
+
+
+def content(value, message):
+    if not value:
+        raise ReferenceMeshContent(message)
+
+
 def load_definition(path, *, expected_id=None):
     data = Path(path).read_bytes()
     require(len(data) >= 64, 'reference mesh header truncated')
@@ -41,18 +54,18 @@ def load_definition(path, *, expected_id=None):
     points, normals, keys, physical = [], [], [], {}
     for row in struct.iter_unpack('<6dQ', vertex_bytes):
         p, n, key = row[:3], row[3:6], row[6]
-        require(all(map(math.isfinite, (*p, *n))) and 0 < math.hypot(*n) < math.inf,
+        content(all(map(math.isfinite, (*p, *n))) and 0 < math.hypot(*n) < math.inf,
                 'reference point/normal is nonfinite or zero')
         require(key not in physical or physical[key] == p, 'reference physical key changed coordinates')
         physical[key] = p
         points.append(p); normals.append(n); keys.append(key)
     triangles, faces, used = [], [], set()
     for a, b, c, material, face in struct.iter_unpack('<4IQ', data[104+56*nv:-32]):
-        require(len({a,b,c}) == 3 and max(a,b,c) < nv and material == 0,
-                'reference triangle index/material invalid')
-        require(len({keys[a],keys[b],keys[c]}) == 3, 'reference physical triangle collapsed')
+        require(material == 0, 'reference triangle material invalid')
+        content(len({a,b,c}) == 3 and max(a,b,c) < nv, 'reference triangle index invalid')
+        content(len({keys[a],keys[b],keys[c]}) == 3, 'reference physical triangle collapsed')
         triangles.append((a,b,c)); faces.append(face); used.update((a,b,c))
-    require(used == set(range(nv)), 'reference normal corners unused')
+    content(used == set(range(nv)), 'reference normal corners unused')
     material = struct.unpack_from('<4d', data, len(data)-32)
     require(all(map(math.isfinite, material)) and all(0 <= x <= 1 for x in material[:3]) and
             0 < material[3] <= 1, 'reference placeholder material invalid')
@@ -111,9 +124,11 @@ def qualify_physical_definition(mesh, source, definition):
     vertices=dict(zip(mesh.physical_keys,mesh.points))
     triangles=tuple(tuple(mesh.physical_keys[i] for i in t) for t in mesh.triangles)
     stats=qualify_physical_solid(vertices,triangles)
-    euler=(len(definition.vertex_ids)-len(definition.edge_ids)+
-           sum(2-len(source.face(id).loop_ids) for id in definition.face_ids))
-    require(stats['euler']==euler,'reference physical shell differs from original Euler characteristic')
+    from .imported_oracles import face_euler
+    euler=len(definition.vertex_ids)-len(definition.edge_ids)+sum(face_euler(source,id) for id in definition.face_ids)
+    from .imported_oracles import AdmissionVerdict
+    if stats['euler']!=euler:
+        raise AdmissionVerdict('reference physical shell differs from original Euler characteristic')
     return stats
 
 
@@ -208,6 +223,9 @@ def load_native_model_match(directory, query, tolerance, *, source_sha256=None, 
                 and source.styles == reference_source.styles and
                 source.root_product_id == reference_source.root_product_id,
                 'fresh reference and native original graph/styles differ')
+        require(sorted(source.occurrence_styles, key=lambda o: (o.usage_ids, o.face_id)) ==
+                sorted(reference_source.occurrence_styles, key=lambda o: (o.usage_ids, o.face_id)),
+                'fresh reference and native original occurrence styles differ')
         require({(d.id,d.product_id,tuple(sorted(d.face_ids))) for d in source.definitions} ==
                 {(d.id,d.product_id,tuple(sorted(d.face_ids))) for d in reference_source.definitions},
                 'fresh reference and native original definition/face inventory differs')

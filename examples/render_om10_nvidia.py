@@ -47,6 +47,10 @@ INGRESS_ARMS={
 # without ShapeProcess, with G1's translation-layer edits named); older ones
 # declared none, which is accepted and recorded as such.
 EXPORTER_DECLARATIONS={'occt-no-shape-process':('translation-only','none'),'occt-default-read':('default',)}
+# The mode our XDE exporter runs in for each arm (brepgpu-reference-source
+# --shape-processing): the same OCCT read as the arm's minimal ingress, so its
+# face map, placements and styles describe the input NVIDIA receives.
+EXPORTER_MODES={'occt-no-shape-process':'translation-only','occt-default-read':'default'}
 
 
 def exporter_declaration(arm,declared,exporter):
@@ -98,8 +102,11 @@ PHYSICAL_COLUMNS=('definition_id','status','vertices','edges','triangles','euler
 
 def incomplete_source(matched,source_hash):
     """The native source's definitions that are incomplete at the source (a face refused,
-    D-partial-output), read before NVIDIA's ingress; () without a native source. Ours."""
-    if not (Path(matched)/'model.tsv').is_file():return (),None
+    D-partial-output), read before NVIDIA's ingress; () without a native source. Ours.
+    The legacy matched mode carries the adapter's source too (its face comparison), so
+    it is read there as well: a definition the adapter leaves incomplete never reaches
+    NVIDIA in either mode, and no NVIDIA outcome on it is scored."""
+    if not ((Path(matched)/'model.tsv').is_file() or (Path(matched)/'source.bgsource').is_file()):return (),None
     from brepgpu.imported_source import load_source,DEFINITION_COMPLETE
     try:source=load_source(Path(matched)/'source.bgsource')
     except (ValueError,OSError) as error:raise HarnessRefusal(f'matched input admission: {error}') from error
@@ -107,9 +114,27 @@ def incomplete_source(matched,source_hash):
     return tuple(d.id for d in source.definitions if d.status!=DEFINITION_COMPLETE),source
 
 
+def decode_reference_mesh(path,definition_id):
+    """Our wrapper's .bgrefmesh of NVIDIA's mesh (review round 4): (mesh, None) when it
+    decodes; (None, message) when the fault is in the mesh NVIDIA produced
+    (ReferenceMeshContent: NVIDIA's outcome, a FAIL row); any other decode error is in our
+    producer wrapper's container (OursFailure, exit 5), never scored against NVIDIA."""
+    from brepgpu.nvidia_reference import ReferenceMeshContent
+    try:
+        return load_definition(path,expected_id=definition_id),None
+    except ReferenceMeshContent as error:
+        return None,f'NVIDIA mesh content: {error}'
+    except Exception as error:
+        raise OursFailure(f'our producer wrapper\'s mesh of definition {definition_id} does not decode '
+                          f'({type(error).__name__}: {error}); not an NVIDIA outcome') from error
+
+
 def physical_row(mesh,native_match,definition_id):
     """One physical.tsv row: our admission of NVIDIA's mesh. A definition incomplete at the
-    source is NOT_EVALUATED (ours), never FAIL against NVIDIA."""
+    source is NOT_EVALUATED (ours), never FAIL against NVIDIA. Only an admission verdict on
+    NVIDIA's mesh (AdmissionVerdict) is a FAIL; any other exception is an error in our
+    admission code, ours (exit 5; review round 3 ruling), never scored against NVIDIA."""
+    from brepgpu.imported_oracles import AdmissionVerdict
     try:
         if native_match is not None:
             stats=qualify_physical_definition(mesh,native_match.source,native_match.source.definition(definition_id))
@@ -120,8 +145,11 @@ def physical_row(mesh,native_match,definition_id):
         return (definition_id,'PASS',stats['vertices'],stats['edges'],stats['triangles'],stats['euler'],'')
     except IncompleteSourceDefinition as error:
         return (definition_id,'NOT_EVALUATED',0,0,0,0,f'{error}; ours, not an NVIDIA outcome')
-    except Exception as error:
+    except AdmissionVerdict as error:
         return (definition_id,'FAIL',0,0,0,0,str(error))
+    except Exception as error:
+        raise OursFailure(f'our physical admission of definition {definition_id} failed in our code '
+                          f'({type(error).__name__}: {error}); not an NVIDIA outcome') from error
 
 
 def digest(path):
@@ -158,7 +186,24 @@ def matched_view_path(path,query=0):
     return path/f'query-{query}/views.bgview' if (path/'model.tsv').is_file() else path/'views.bgview'
 
 
-def matched_inputs(path,assembly,source_sha256,chord_height,query=0):
+def legacy_face_comparison(path,reference_source,source_sha256):
+    """The legacy matched mode's face comparison with the STEP source adapter (review
+    round 2 ruling: the one the native match has, load_native_model_match): the matched
+    directory's adapter source (source.bgsource, read from the same STEP) and our fresh
+    reference must give every face the same carrier, side and style."""
+    from brepgpu.imported_source import load_source
+    native=Path(path)/'source.bgsource'
+    require(native.is_file(),'legacy matched inputs lack the adapter source (source.bgsource) for the face comparison')
+    source=load_source(native)
+    require(source.source_sha256==source_sha256,'legacy matched adapter source digest differs from the STEP')
+    expected={f.id:f for f in reference_source.faces}
+    require(len(expected)==len(source.faces) and
+            all(f.id in expected and (f.carrier_id,f.orientation,f.style_id)==
+                (expected[f.id].carrier_id,expected[f.id].orientation,expected[f.id].style_id) for f in source.faces),
+            'fresh reference original face metadata differs from the adapter source')
+
+
+def matched_inputs(path,assembly,source_sha256,chord_height,query=0,reference_source=None):
     """Actual shared authored inputs; never recompute cameras from foreign bounds."""
     if (path/'model.tsv').is_file():
         match=load_native_model_match(path,query,chord_height,source_sha256=source_sha256)
@@ -170,6 +215,7 @@ def matched_inputs(path,assembly,source_sha256,chord_height,query=0):
     metadata={row['field']:row['value'] for row in read_tsv(path/'metadata.tsv')}
     require(metadata.get('source_sha256')==source_sha256,
             'matched original source SHA differs from fresh reference source')
+    if reference_source is not None:legacy_face_comparison(path,reference_source,source_sha256)
     require(float(metadata['tolerance_mm'])==chord_height,
             'requested reference chord height differs from owned mesh target')
     data,views=matched_views(path/'views.bgview')
@@ -496,19 +542,40 @@ def geometry_diff(tool,pairs,path):
               'face_edge_uses_nvidia/ours','with_pcurve_nvidia/ours','max_vertex_coordinate_difference'),rows)
 
 
+def corrected_definitions(xde_directory):
+    """Definitions whose .brep our translation-only export corrected (face sides S1, S2;
+    source/records.tsv reference_face_orientation_raw rows, ids 'definition face')."""
+    path=Path(xde_directory)/'records.tsv'
+    if not path.is_file():return set()
+    rows=[line.split('\t') for line in path.read_text().splitlines()[1:]]
+    return {int(r[2].split()[0]) for r in rows if len(r)>2 and r[0]=='reference_face_orientation_raw'}
+
+
 def check_nvidia_input(directory,arm,source,xde_directory,tool):
     """Judge the minimal NVIDIA ingress output; refuse it as ingress (exit 4), never as NVIDIA.
 
     Its reported shape-processing must be the arm's (no operations for the
     translation-only arm, some for the default read); its solids must be
     exactly the source definitions, each one identity-located, forward-
-    oriented SOLID, as our XDE export enforces; and for the translation-only
-    arm, while our exporter declares translation-only (or the older none) and
-    no raw-entity corrections, every file must be byte-identical to our XDE
-    export of the same definition (both readers then run the same OCCT
-    translation; the OCCT libraries of both are pinned). On a difference a
-    geometry diff is written before refusing. Returns (identical count, whether
-    the byte check applied and why)."""
+    oriented SOLID, as our XDE export enforces.
+
+    Translation-only arm (dispatcher ruling, B2-reader-export review round 1):
+    a definition whose .brep our export corrected (S1, S2) is NVIDIA's input as
+    our corrected file, declared, once our uncorrected translation of it (our
+    export's uncorrected/) is byte-identical to the minimal ingress's, else the
+    harness refuses (exit 3; review round 2); every other definition's minimal-ingress
+    file must be byte-identical to our XDE export of it (both readers run the
+    same OCCT translation; the OCCT libraries of both are pinned). Placement
+    corrections (P1, P2) change usages, not .brep bytes, so they exempt no
+    definition. On a difference a geometry diff is written before refusing
+    (exit 4).
+
+    Default-read arm: both reads must report the same OCCT operations, and
+    every file must be byte-identical to our default export; otherwise the
+    harness refuses (exit 3): the face map would not describe NVIDIA's input.
+
+    Returns (identical count, how the byte check applied, the definitions whose
+    NVIDIA input is our corrected file)."""
     policy={r['field']:r['value'] for r in read_tsv(directory/'policy.tsv')}
     wanted=INGRESS_ARMS[arm]
     if policy.get('shape_processing')!=wanted:
@@ -527,16 +594,36 @@ def check_nvidia_input(directory,arm,source,xde_directory,tool):
     pairs=[(d.id,directory/files[d.id]['filename'],xde_directory/d.filename) for d in source.definitions]
     differing=[(i,a,b) for i,a,b in pairs if a.read_bytes()!=b.read_bytes()]
     identical=len(pairs)-len(differing)
-    declared,corrections=exporter_shape_processing(source),exporter_raw_corrections(source)
+    declared=exporter_shape_processing(source)
     if wanted!='none':
-        return identical,f'not applied: arm {arm} reads with shape processing'
-    if declared not in ('translation-only','none') or corrections!='none':
-        return identical,f'not applied: exporter declares shape-processing={declared}, raw-entity-corrections={corrections}'
-    if differing:
-        geometry_diff(tool,differing,directory/'nvidia-input-diff.tsv')
-        raise IngressRefusal(f'translation-only NVIDIA input differs from our XDE export for {len(differing)} '
-                             'definitions; see nvidia-input/nvidia-input-diff.tsv')
-    return identical,"applied"
+        ours=[t.strip().partition('=')[2] for t in source.adapter_revision.split(';')
+              if t.strip().startswith('shape-process-operations=')]
+        refuse(ours==[policy.get('operation_bits')],
+               f'minimal ingress ran shape-process operations {policy.get("operation_bits")}, our XDE export {ours}')
+        if differing:
+            geometry_diff(tool,differing,directory/'nvidia-input-diff.tsv')
+        refuse(not differing,f'default-read NVIDIA input differs from our default export for {len(differing)} '
+                             'definitions (see nvidia-input/nvidia-input-diff.tsv): our face map would not describe it')
+        return identical,'applied: default read, every definition byte-identical',set()
+    refuse(declared in ('translation-only','none'),f'translation-only arm with an exporter declaring {declared}')
+    corrected=corrected_definitions(xde_directory)&{d.id for d in source.definitions}
+    # Review round 2 ruling: before a correction is applied, our uncorrected
+    # translation of that definition (written beside our export) must be
+    # byte-identical to the minimal ingress's, so the only bytes that differ
+    # from NVIDIA's own translation are the declared correction.
+    filenames={d.id:d.filename for d in source.definitions}
+    for i in sorted(corrected):
+        ours=Path(xde_directory)/'uncorrected'/filenames[i]
+        refuse(ours.is_file() and ours.read_bytes()==(directory/files[i]['filename']).read_bytes(),
+               f'our uncorrected translation of corrected definition {i} differs from the minimal ingress\'s '
+               '(or is missing): the correction would not be the only difference from NVIDIA\'s input')
+    unexplained=[(i,a,b) for i,a,b in differing if i not in corrected]
+    if unexplained:
+        geometry_diff(tool,unexplained,directory/'nvidia-input-diff.tsv')
+        raise IngressRefusal(f'translation-only NVIDIA input differs from our XDE export for {len(unexplained)} '
+                             'definitions we did not correct; see nvidia-input/nvidia-input-diff.tsv')
+    return identical,(f'applied per definition; corrected definitions {sorted(corrected)} take our .brep' if corrected
+                      else 'applied'),corrected
 
 
 def pin_paths_for(args,prepared_policy,probe):
@@ -664,7 +751,8 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
     residency['before_ours_xde_export']=prepare_ingress_cache(args.step,(args.exporter,))
     with recorder.timing('ours_xde_export'):
         start=time.perf_counter()
-        result=run(bound((args.exporter,args.step,args.output/'source'),caller_lane),args.output/'source-export.log',base_env)
+        result=run(bound((args.exporter,'--shape-processing',EXPORTER_MODES[args.ingress_arm],args.step,args.output/'source'),
+                         caller_lane),args.output/'source-export.log',base_env)
         xde_wall=time.perf_counter()-start
         times.append(('ours_xde_manifest_export_process_wall',xde_wall,'ours_xde_export'))
     if result.returncode:raise IngressRefusal('our XDE source export failed; see source-export.log')
@@ -705,10 +793,15 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
            'source bytes changed during fresh original transfer')
     declared=exporter_shape_processing(source)
     declaration=exporter_declaration(args.ingress_arm,declared,args.exporter)
-    identical,byte_check=check_nvidia_input(args.output/'nvidia-input',args.ingress_arm,source,args.output/'source',
+    identical,byte_check,corrected=check_nvidia_input(args.output/'nvidia-input',args.ingress_arm,source,args.output/'source',
                                             args.nvidia_ingress)
     nvidia_inputs={int(r['definition_id']):args.output/'nvidia-input'/r['filename']
                    for r in read_tsv(args.output/'nvidia-input/definitions.tsv')}
+    # A definition our translation-only export corrected (S1, S2) reaches NVIDIA
+    # as our corrected .brep, declared in metadata; placements never reach
+    # NVIDIA (it meshes each definition alone; our display places them from
+    # the reference or native source, whose usages are read raw).
+    for id in corrected:nvidia_inputs[id]=args.output/'source'/source.definition(id).filename
     if not args.allow_fixture:
         refuse((len(source.definitions),len(source.faces),len(assembly.occurrences))==(107,9162,166),
                'reference must consume complete original107/9162/166 movement')
@@ -728,7 +821,8 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
             tsv(args.output/'explosion.tsv',('occurrence_id','world_offset_x_mm','world_offset_y_mm','world_offset_z_mm'),
                 ((o.id,*offset) for o,offset in zip(assembly.occurrences,offsets)))
         else:
-            request,views,offsets=matched_inputs(args.matched,assembly,source_hash,args.chord_height)
+            request,views,offsets=matched_inputs(args.matched,assembly,source_hash,args.chord_height,
+                                                 reference_source=source)
             for name in ('bom.tsv','explosion.tsv'):
                 shutil.copyfile(args.matched/name,args.output/name)
     except InterruptedError:raise
@@ -747,7 +841,8 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
          ('source_definitions',len(source.definitions)),
          ('source_faces',len(source.faces)),('occurrences',len(assembly.occurrences)),
          ('input_admission','complete_native_model_inventory' if native_match else 'legacy_matched_inputs'),
-         ('exporter_shape_processing',declared),
+         ('exporter_shape_processing',declared),('exporter_raw_entity_corrections',exporter_raw_corrections(source)),
+         ('nvidia_input_ours_corrected',','.join(map(str,sorted(corrected))) or 'none'),
          ('scope','fresh reference preparation; producer completion not yet established')))
     weights=None;calibration_sha256='';calibration_source='none'
     if args.calibration is not None:
@@ -778,7 +873,11 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
                         '--heal',str(args.heal),'--chord-height',str(args.chord_height),
                         '--curve-angle',str(curve_angle),'--surface-angle',str(surface_angle)]
                     for d in group:
-                        command.extend(('--definition',str(d.id),str(nvidia_inputs[d.id].resolve()),str(len(d.faces))))
+                        # The faces of NVIDIA's input .brep: the original faces under
+                        # translation-only, what OCCT's processing made of them under
+                        # the default read (check_nvidia_input holds the two equal).
+                        command.extend(('--definition',str(d.id),str(nvidia_inputs[d.id].resolve()),
+                                        str(d.translated_face_count)))
                 else:
                     command=[str(args.producer),'--heal',str(args.heal),'--chord-height',str(args.chord_height),
                              '--output-directory',str(args.output/f'worker-{i:02d}')]
@@ -841,11 +940,13 @@ def reference_run(args,recorder,topology,caller_lane,prepared_policy,curve_angle
         # Our physical-shell admission of NVIDIA's output: its own scope,
         # outside NVIDIA's time, run for every preparation.
         start=time.perf_counter()
-        meshes=tuple(load_definition(locations[d.id],expected_id=d.id) for d in source.definitions)
+        decoded=[(d.id,*decode_reference_mesh(locations[d.id],d.id)) for d in source.definitions]
         decode=time.perf_counter()-start
         start=time.perf_counter();physical=[]
         kind='shell_and_original_source_euler' if native_match is not None else 'shell_only'
-        for mesh in meshes:physical.append(physical_row(mesh,native_match,mesh.id))
+        for id,mesh,fault in decoded:
+            physical.append((id,'FAIL',0,0,0,0,fault) if fault else physical_row(mesh,native_match,id))
+        meshes=tuple(mesh for _,mesh,_ in decoded)
         admission=time.perf_counter()-start
         times.append(('all_definition_physical_shell_source_euler_admission',admission,'admission'))
     tsv(args.output/'physical.tsv',PHYSICAL_COLUMNS,physical)
@@ -931,6 +1032,10 @@ def finish_reference(args,recorder,caller_lane,base_env,env,run,source,assembly,
         ('nvidia_input','minimal STEPControl_Reader ingress; per definition, files byte-identical to our XDE export: '
                         f'{identical}/{len(source.definitions)}'),
         ('nvidia_input_identical_to_xde',identical),('nvidia_input_byte_check',byte_check),
+        # The completed run's metadata keeps what the input judgement found.
+        ('exporter_raw_entity_corrections',exporter_raw_corrections(source)),
+        ('nvidia_input_ours_corrected',','.join(map(str,sorted(corrected_definitions(args.output/'source')&
+                                                              {d.id for d in source.definitions}))) or 'none'),
         ('occt_libraries_shared_by_both_readers',int(shared_libraries(args.exporter)==shared_libraries(args.nvidia_ingress))),('lane_node',args.lane_node),
         ('caller_cpus',format_cpus(caller_lane.cpus)),('caller_memory_policy',process_binding()[1]),
         ('caller_reexecuted',int(reexecuted())),
@@ -983,7 +1088,8 @@ def parser():
     p.add_argument('--matched-query',type=int,default=0);p.add_argument('--display-threads',type=int,default=24);p.add_argument('--workers',type=int,default=24);p.add_argument('--chord-height',type=float,default=.005)
     p.add_argument('--package',type=Path,default=ROOT/'quarantine/nvidia-usd-brep-1.0.0-linux')
     p.add_argument('--exporter',type=Path,default=ROOT/'build/om10-reference-source/brepgpu-reference-source',
-                   help='our XDE exporter: products, placements and face map for display and admission (our cost)')
+                   help='our XDE exporter: products, placements and face map for display and admission (our cost); '
+                        'run with --shape-processing set by the ingress arm')
     p.add_argument('--nvidia-ingress',type=Path,default=ROOT/'build/nvidia-ingress/brepgpu-nvidia-ingress',
                    help='minimal STEP->.brep ingress whose files NVIDIA consumes (NVIDIA ingress cost)')
     p.add_argument('--producer',type=Path,default=ROOT/'build/om10-nvidia/brepgpu-om10-nvidia')

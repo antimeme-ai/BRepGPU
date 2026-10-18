@@ -19,7 +19,7 @@ target_compile_features(brepgpu-reference-source-fixture PRIVATE cxx_std_17)
 target_include_directories(brepgpu-reference-source-fixture PRIVATE ${OpenCASCADE_INCLUDE_DIR})
 target_link_directories(brepgpu-reference-source-fixture PRIVATE ${OpenCASCADE_LIBRARY_DIR})
 target_link_libraries(brepgpu-reference-source-fixture PRIVATE TKDESTEP TKXCAF TKCAF TKLCAF
-  TKCDF TKXSBase TKPrim TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel)
+  TKCDF TKXSBase TKBO TKPrim TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel)
 if(UNIX AND NOT APPLE)
   target_link_options(brepgpu-reference-source-fixture PRIVATE -Wl,--disable-new-dtags)
 endif()

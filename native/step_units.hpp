@@ -366,17 +366,20 @@ public:
     return out;
   }
   // Breadth-first over relationship/mapped-item links, each representation
-  // once, depth <= 8. Returns the representations on the path from start to
-  // the first SDR-used one (start included), or nothing when none is reached.
+  // once. The visited set alone bounds the search: every representation is
+  // queued at most once, so the work is linear in the representations and
+  // links reached, and no nesting depth is assumed (B2 .37.32: the old bound
+  // of 8 let a deeper holder escape the unit gate and the mapped-item check).
+  // Returns the representations on the path from start to the first SDR-used
+  // one (start included), or nothing when none is reached.
   std::vector<Handle(StepRepr_Representation)>
   transfer_path(const Handle(StepRepr_Representation) &start) const {
     std::map<const Standard_Transient *, std::size_t> seen{{start.get(), 0}};
     struct Node {
       Handle(StepRepr_Representation) rep;
-      int depth;
       std::size_t parent;
     };
-    std::vector<Node> queue{{start, 0, 0}};
+    std::vector<Node> queue{{start, 0}};
     for (std::size_t i = 0; i < queue.size(); ++i) {
       const auto rep = queue[i].rep;
       if (sdr_used(rep)) {
@@ -388,11 +391,9 @@ public:
         }
         return path;
       }
-      if (queue[i].depth >= 8)
-        continue;
       for (const auto &caller : callers(rep))
         if (seen.emplace(caller.get(), queue.size()).second)
-          queue.push_back({caller, queue[i].depth + 1, i});
+          queue.push_back({caller, i});
     }
     return {};
   }

@@ -8,9 +8,17 @@ import unittest
 from test_om10_native import NativeDirectTests, plane_scene, views, scalar_pixels
 
 
-def source_plane(*, vertex_flags=33):
+# Instance matrices, row-major 3x4. Admission is rigid-only (D-placements; the one
+# rule brepgpu::rigid_placement_status since B1): a shear refuses by name.
+SHEAR=(1.,0.,0.,0.,0.,1.,0.,0.,.25,0.,1.,1.)
+UNIT=(1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,1.)
+# A turn about y with cos .8 and sin .6 (orthonormal to rounding, so rigid): it
+# carries the plane normal (0,0,1) to its third column, (.6,0,.8).
+TURN=(.8,0.,.6,0.,0.,1.,0.,0.,-.6,0.,.8,1.)
+
+
+def source_plane(*, vertex_flags=33, matrix=UNIT):
     points=((0.,0.,.125),(2.,0.,.25),(0.,-2.,.5))
-    matrix=(1.,0.,0.,0.,0.,1.,0.,0.,.25,0.,1.,1.)
     instances=((7,matrix,(0.,0.,0.)),)
     data=bytearray(plane_scene(points=points,instances=instances))
     struct.pack_into('<I',data,12,1)
@@ -35,8 +43,26 @@ class NativeSourceDisplayTests(unittest.TestCase):
                 row=struct.unpack_from('<15dII',(out/'source-jets.bin').read_bytes(),16)
                 self.assertEqual(row[9:12],(0.,0.,1.))
 
-    def test_stored_xyz_and_actual_affine_cofactor(self):
-        scene,points,instances=source_plane()
+    def test_sheared_instance_refuses_by_name(self):
+        """bead .37.37: the display decoder admits rigid instances only, by the readers'
+        one rule; the shear that this file's cofactor test used refuses by name."""
+        import subprocess
+        scene,_,_=source_plane(matrix=SHEAR)
+        with tempfile.TemporaryDirectory() as directory:
+            directory=Path(directory)
+            (directory/'scene.bgmesh').write_bytes(scene)
+            (directory/'views.bgview').write_bytes(views(raster=False))
+            executable=Path(os.environ.get('BREPGPU_OM10_NATIVE','build/om10-release/brepgpu-om10-native')).resolve()
+            process=subprocess.run((str(executable),'--scene',str(directory/'scene.bgmesh'),'--views',
+                                    str(directory/'views.bgview'),'--output-directory',str(directory/'output'),
+                                    '--backend','cpu','--threads','1','--dump-source-jets'),capture_output=True,text=True)
+            self.assertNotEqual(process.returncode,0)
+            self.assertIn('decode: nonrigid instance matrix',process.stderr)
+
+    def test_stored_xyz_and_rigid_instance_normal(self):
+        """Stored coordinates are kept exactly, and the projected normal is the plane
+        normal carried by the rigid instance: (.6,0,.8) for TURN."""
+        scene,points,instances=source_plane(matrix=TURN)
         with tempfile.TemporaryDirectory() as directory:
             out=self.run_native(directory,raster=True,scene_bytes=scene,
                                 view_bytes=views(raster=True,flags=6))
@@ -46,7 +72,7 @@ class NativeSourceDisplayTests(unittest.TestCase):
                 self.assertEqual(values[12:15],point)
                 self.assertEqual(values[16]&2,2)
             projected=(out/'frame-000000.projected').read_bytes()
-            expected=(-.25/math.sqrt(1.0625),0.,1/math.sqrt(1.0625))
+            expected=(.6,0.,.8)
             for i in range(3):
                 row=struct.unpack_from('<3Q2q7d',projected,16+i*96)
                 for actual,want in zip(row[-3:],expected):
@@ -104,9 +130,11 @@ class NativeSourceDisplayTests(unittest.TestCase):
         runner=NativeFailureTests()
         for flags in (1,32,33|8,33|16,33|4,33|64):
             with self.subTest(flags=flags),tempfile.TemporaryDirectory() as directory:
+                # A rigid instance, so the refusal is the flags' own (with the old
+                # sheared fixture every case refused on the matrix instead, bead .37.37).
                 scene,_,_=source_plane(vertex_flags=flags)
                 result,out=runner.invoke(directory,scene)
-                runner.assert_failed(result,out,'decode:')
+                runner.assert_failed(result,out,'decode: vertex carrier/flags')
 
 
 if __name__=='__main__':unittest.main()

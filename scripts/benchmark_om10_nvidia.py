@@ -39,7 +39,7 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'examples')]
 from render_om10_nvidia import (HARNESS_REFUSED,INGRESS_REFUSED,OURS_FAILED,INGRESS_ARMS,HarnessRefusal,digest,
-                                exporter_declaration,exporter_shape_processing,read_tsv,refuse,require,tsv,matched_view_path)
+                                exporter_declaration,exporter_shape_processing,EXPORTER_MODES,read_tsv,refuse,require,tsv,matched_view_path)
 from brepgpu.nvidia_reference import load_native_model_match
 from qualify_om10_nvidia import qualified_owned_inputs
 from measurement_lane import (CONTEXT_COLUMNS,Recorder,bound,delivered_clock,lane_cpus,load_class,measure_quietly,
@@ -229,6 +229,7 @@ def preflight(args,arms,preparations,worker_arms,placements,source_hash):
         refuse(arm in INGRESS_ARMS and path,f'--exporter takes ARM=PATH with ARM in {",".join(INGRESS_ARMS)}')
         exporters[arm]=Path(path)
     exporters.setdefault('occt-no-shape-process',ROOT/'build/om10-reference-source/brepgpu-reference-source')
+    exporters.setdefault('occt-default-read',ROOT/'build/om10-reference-source/brepgpu-reference-source')
     needed=[('producer',args.producer),('display',args.display),('package library',args.package/'lib'),
             ('minimal NVIDIA ingress',args.nvidia_ingress)]
     if args.admission=='finite':needed.append(('distance query',args.query))
@@ -241,7 +242,8 @@ def preflight(args,arms,preparations,worker_arms,placements,source_hash):
         refuse(INGRESS_ARMS[arm] is not None,f'{arm} gives NVIDIA our ingress work and awaits an operator decision')
         refuse(arm in exporters and exporters[arm].is_file(),f'ingress arm {arm} has no built exporter; pass --exporter {arm}=PATH')
         with tempfile.TemporaryDirectory(dir=args.output) as directory:
-            result=subprocess.run(bound((exporters[arm],FIXTURE,Path(directory)/'source'),lane),capture_output=True)
+            result=subprocess.run(bound((exporters[arm],'--shape-processing',EXPORTER_MODES[arm],FIXTURE,
+                                         Path(directory)/'source'),lane),capture_output=True)
             refuse(result.returncode==0,f'exporter for {arm} fails on the authored fixture')
             declared=exporter_shape_processing(load_reference_source(Path(directory)/'source/source.bgocct'))
             result=subprocess.run(bound((args.nvidia_ingress,'--shape-processing',INGRESS_ARMS[arm],FIXTURE,
@@ -535,7 +537,8 @@ if __name__=='__main__':
                         'strongest ingress), occt-no-shape-process (today\'s arm), owned-projected-pcurves '
                         '(labelled; awaits an operator decision, refused)')
     p.add_argument('--exporter',action='append',default=[],metavar='ARM=PATH',
-                   help='our XDE exporter for an ingress arm; occt-no-shape-process defaults to build/om10-reference-source')
+                   help='our XDE exporter for an ingress arm, run with --shape-processing set by the arm; both runnable '
+                        'arms default to build/om10-reference-source')
     p.add_argument('--nvidia-ingress',type=Path,default=ROOT/'build/nvidia-ingress/brepgpu-nvidia-ingress')
     p.add_argument('--preparation-arms',default='none,periodic-plane')
     p.add_argument('--worker-arms',default='12,24',help='NVIDIA worker counts, each its own arm (G8 §7.11)')

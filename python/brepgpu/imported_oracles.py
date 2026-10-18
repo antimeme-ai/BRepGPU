@@ -17,9 +17,14 @@ import struct
 from .interchange_oracles import _basis, _bernstein, _quotient
 
 
+class AdmissionVerdict(AssertionError):
+    """A verdict of an independent check on the data it reads (never an error in the
+    check's own code): physical admission scores it against the mesh's producer."""
+
+
 def require(condition, message):
     if not condition:
-        raise AssertionError(message)
+        raise AdmissionVerdict(message)
 
 
 def exact(value):
@@ -401,7 +406,10 @@ def original_frame(records, reference):
     axis = _refer(records, reference, 'AXIS2_PLACEMENT_3D').args
     origin = _refer(records, axis[1], 'CARTESIAN_POINT').args[1]
     z = _unit(_refer(records, axis[2], 'DIRECTION').args[1]) if axis[2] is not None else (0., 0., 1.)
-    x = _unit(_refer(records, axis[3], 'DIRECTION').args[1]) if axis[3] is not None else (1., 0., 0.)
+    # ISO 10303-42 first_proj_axis: without a ref_direction, (1,0,0) unless the
+    # axis is +-(1,0,0), then (0,1,0).
+    x = (_unit(_refer(records, axis[3], 'DIRECTION').args[1]) if axis[3] is not None else
+         (0., 1., 0.) if tuple(map(float, z)) in ((1., 0., 0.), (-1., 0., 0.)) else (1., 0., 0.))
     along = sum(a*b for a, b in zip(x, z))
     x = _unit(tuple(a-along*b for a, b in zip(x, z)))
     y = cross(z, x)
@@ -619,16 +627,17 @@ class _RepresentationGraph:
                     self.callers[mapping.args[1].id].extend(item_holders.get(id, ()))
 
     def transferred(self, rep_id):
-        """Breadth-first, each representation once, depth <= 8 (as the adapter)."""
-        seen, queue = {rep_id}, [(rep_id, 0)]
-        for rep, depth in queue:
+        """Breadth-first, each representation once and at any depth, as the adapter's
+        transfer_path (native/step_units.hpp; bead .37.32): the visited set alone bounds
+        the search, so no nesting depth is assumed."""
+        seen, queue = {rep_id}, [rep_id]
+        for rep in queue:
             if rep in self.used:
                 return True
-            if depth < 8:
-                for caller in self.callers.get(rep, ()):
-                    if caller not in seen:
-                        seen.add(caller)
-                        queue.append((caller, depth+1))
+            for caller in self.callers.get(rep, ()):
+                if caller not in seen:
+                    seen.add(caller)
+                    queue.append(caller)
         return False
 
     def plane_angle(self, rep_id):
@@ -684,6 +693,32 @@ class _RepresentationGraph:
         return next(iter(found))[1]
 
 
+def original_face_sides(original_path, face_ids):
+    """{face: 'into_material' | 'outward' | 'undecidable: ...'} for the raw use of each face.
+
+    Runs the reference exporter's --face-sides mode (native/reference_source;
+    orientation_verdict.hpp raw_use_side): ray parity on OCCT's default read of
+    the file against the raw surface, which shares no code with the STEP source
+    adapter's orientation classifier. The executable is BREPGPU_REFERENCE_SOURCE
+    or the repository build; without it the check refuses by name.
+    """
+    import os
+    import subprocess
+    executable = Path(os.environ.get('BREPGPU_REFERENCE_SOURCE',
+                                     Path(__file__).resolve().parents[2]/'build/om10-reference-source/brepgpu-reference-source'))
+    require(executable.is_file(), f'independent face-side check unavailable: {executable} is not built')
+    completed = subprocess.run((str(executable), '--face-sides', str(original_path), *map(str, face_ids)),
+                               capture_output=True, text=True)
+    require(completed.returncode == 0, 'independent face-side check failed: '+completed.stderr.strip()[-200:])
+    sides = {}
+    for line in completed.stdout.splitlines():
+        stage, face, side = line.split('\t', 2)
+        if stage == 'face_side':
+            sides[int(face)] = side
+    require(set(sides) == set(face_ids), 'independent face-side check did not answer every face')
+    return sides
+
+
 def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-32):
     """Compare every actual source carrier/vertex with original STEP values.
 
@@ -724,9 +759,14 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
             'original governing B-rep uncertainty differs from owned source')
     product_ids = {row.id for row in source.products}
     product_solids = {}
+    # Plain relationships join one product's representations; a placing
+    # relation (a context_dependent_shape_representation's) places a child in
+    # its parent and joins nothing, as in _representation_products (bead .37.21).
+    placing = _placing_relations(records)
+    mapped_occurrences = original_mapped_occurrences(records)
     representation_links = defaultdict(set)
-    for record in records.values():
-        if type(record) is _Call and record.kind == 'SHAPE_REPRESENTATION_RELATIONSHIP':
+    for id, record in records.items():
+        if type(record) is _Call and record.kind == 'SHAPE_REPRESENTATION_RELATIONSHIP' and id not in placing:
             a, b = record.args[2].id, record.args[3].id
             representation_links[a].add(b)
             representation_links[b].add(a)
@@ -743,9 +783,13 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
             if record.kind in ('MANIFOLD_SOLID_BREP', 'BREP_WITH_VOIDS'):
                 result.add(item.id)
             elif record.kind == 'MAPPED_ITEM':
+                # A solid placed through a mapped item of a product's own
+                # representation is an occurrence (original_mapped_occurrences;
+                # bead .37.34), not the holder's own solid: it is not followed.
+                if item.id in mapped_occurrences:
+                    continue
                 mapping = _refer(records, record.args[1], 'REPRESENTATION_MAP').args
-                # The supplied source has one same-frame map. A nonidentity map
-                # needs explicit geometry-placement support instead of guessing.
+                # Any other mapped item is followed only as a same-frame map.
                 require(mapping[0] == record.args[2], 'unhandled nonidentity original representation map')
                 result.update(representation_solids(mapping[1].id, active+(id,)))
         for neighbor in representation_links[id] - set(active):
@@ -826,13 +870,27 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
                 require(face_ref.id not in face_shells, 'original face in two shells')
                 face_shells[face_ref.id] = (ordinal, forward)
     require(set(face_shells) == {face.id for face in source.faces}, 'original shell face inventory differs')
+    # A written side other than the raw use (same_sense composed with the shell)
+    # is accepted only where the source records the correction
+    # (source_face_orientation_raw, bead .37.36) and an independent check
+    # confirms that the raw use's outward normal points into the material
+    # (original_face_sides: ray parity, no code shared with the adapter).
+    recorded = {d.source_ids[1] for d in source.diagnostics
+                if d.stage == 'source_face_orientation_raw' and len(d.source_ids) >= 2}
+    corrected = []
     for face in source.faces:
         raw = records[face.id]
         ordinal, forward = face_shells[face.id]
+        raw_orientation = 1 if (raw.args[3] == '.T.') == forward else -1
         require(raw.kind == 'ADVANCED_FACE' and face.carrier_id == raw.args[2].id and
-                face.orientation == (1 if (raw.args[3] == '.T.') == forward else -1) and
+                face.orientation in (raw_orientation, -raw_orientation) and
+                (face.orientation == raw_orientation or face.id in recorded) and
                 face.shell == ordinal,
                 'original face carrier/orientation/shell differs')
+        if face.orientation == raw_orientation:
+            require(face.id not in recorded, f'original face #{face.id} has an orientation record but is written as its raw use')
+        else:
+            corrected.append(face.id)
         loops = tuple(_refer(records, ref).args[1].id for ref in raw.args[1])
         require(set(face.loop_ids) == set(loops), 'original face bounds differ')
         for ref in raw.args[1]:
@@ -855,6 +913,12 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
                 oe = records[id]
                 expected_sense = 1 if (oe.args[4] == '.T.') == bound_forward else -1
                 require(source.coedge(id).sense == expected_sense, 'original oriented-edge/bound traversal sense differs')
+    require(recorded <= set(face_shells), 'original face orientation record names no face of the source')
+    if corrected:
+        sides = original_face_sides(original_path, corrected)
+        unconfirmed = sorted(f for f in corrected if sides.get(f) != 'into_material')
+        require(not unconfirmed, 'original face side correction not confirmed by the independent check (the raw '
+                                 f'use is not shown to point into the material): faces {unconfirmed[:8]}')
     for edge in source.edges:
         raw = records[edge.id]
         require(raw.kind == 'EDGE_CURVE' and edge.vertex_ids == (raw.args[1].id, raw.args[2].id),
@@ -909,6 +973,13 @@ def qualify_original_geometry(source, original_path, coordinate_tolerance=2.**-3
                 original_spatial_curves=len(physical_curves), max_original_placement_error=placement_error)
 
 
+def _placing_relations(records):
+    """IDs of the representation relations that context_dependent_shape_representations place by."""
+    return {row.args[0].id for row in records.values()
+            if type(row) is _Call and row.kind == 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION'
+            and type(row.args[0]) is _Ref}
+
+
 def _representation_products(records):
     """Product definitions that each shape representation represents.
 
@@ -922,9 +993,7 @@ def _representation_products(records):
     relationship's (for example a NAUO's) product_definition_shape names no
     product.
     """
-    placing = {row.args[0].id for row in records.values()
-               if type(row) is _Call and row.kind == 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION'
-               and type(row.args[0]) is _Ref}
+    placing = _placing_relations(records)
     direct, links = defaultdict(set), defaultdict(set)
     for id, row in records.items():
         if type(row) is not _Call or id in placing:
@@ -1035,14 +1104,177 @@ def _original_usage_transforms(records):
             first, second = second, first
         if reversed_:
             first, second = second, first
-        a, b = original_frame(records, first), original_frame(records, second)
-        # The child-side frame A maps onto the parent-side frame B: B * inverse(A).
-        rotation = tuple(sum(b[3+3*k+i] * a[3+3*k+j] for k in range(3))
-                         for i in range(3) for j in range(3))
-        matrix = tuple(value for i in range(3) for value in
-                       (*rotation[3*i:3*i+3], b[i] - sum(rotation[3*i+j]*a[j] for j in range(3))))
-        transforms[usage_id] = matrix
+        transforms[usage_id] = _frames_matrix(records, first, second)
     return transforms
+
+
+def _frames_matrix(records, first, second):
+    """The child-side axis2_placement_3d A mapped onto the parent-side B: B * inverse(A)."""
+    a, b = original_frame(records, first), original_frame(records, second)
+    rotation = tuple(sum(b[3+3*k+i] * a[3+3*k+j] for k in range(3))
+                     for i in range(3) for j in range(3))
+    return tuple(value for i in range(3) for value in
+                 (*rotation[3*i:3*i+3], b[i] - sum(rotation[3*i+j]*a[j] for j in range(3))))
+
+
+_SOLID_KINDS = ('MANIFOLD_SOLID_BREP', 'BREP_WITH_VOIDS')
+_SHAPE_REPRESENTATION_KINDS = ('SHAPE_REPRESENTATION', 'ADVANCED_BREP_SHAPE_REPRESENTATION')
+
+
+def original_mapped_occurrences(records):
+    """Solids placed through a MAPPED_ITEM in a product's own shape representation.
+
+    Read from the STEP text, separately from the reference exporter
+    (native/reference_source), as the occurrence it publishes (dispatcher
+    decision, B2-reader round 2): the holder product is an assembly node, the
+    mapped representation a part keyed by its own label owning its one solid,
+    and the mapped item a usage keyed by its label. The placement maps the
+    mapped representation's frame onto the holder's: mapping_target composed
+    with the inverse of the representation_map's mapping_origin (ISO 10303-43;
+    the PDM Usage Guide's C = B A^-1 for the same pair of frames).
+
+    Returns {mapped item: (holder product, mapped representation, solid,
+    matrix)}. A mapped item whose representation holds no solid is no
+    occurrence. Refused by name: a mapped representation that a product owns
+    (bead .37.26), nested mapped items, several solids, and a placement other
+    than an axis2_placement_3d pair (a cartesian operator target is not read).
+    """
+    sdr_used, product_reps = set(), defaultdict(list)
+    for row in records.values():
+        if type(row) is _Call and row.kind == 'SHAPE_DEFINITION_REPRESENTATION' and all(type(a) is _Ref for a in row.args[:2]):
+            sdr_used.add(row.args[1].id)
+            shape = records.get(row.args[0].id)
+            if type(shape) is _Call and shape.kind == 'PRODUCT_DEFINITION_SHAPE' and type(shape.args[2]) is _Ref:
+                definition = records.get(shape.args[2].id)
+                if type(definition) is _Call and definition.kind == 'PRODUCT_DEFINITION':
+                    product_reps[shape.args[2].id].append(row.args[1].id)
+    placing = _placing_relations(records)
+    links = defaultdict(set)
+    for id, row in records.items():
+        if type(row) is _Call and row.kind == 'SHAPE_REPRESENTATION_RELATIONSHIP' and id not in placing \
+                and all(type(a) is _Ref for a in row.args[2:4]):
+            links[row.args[2].id].add(row.args[3].id)
+            links[row.args[3].id].add(row.args[2].id)
+    def reaches(start):
+        seen, stack = {start}, [start]
+        while stack:
+            current = stack.pop()
+            rep = records.get(current)
+            if type(rep) is _Call and rep.kind in _SHAPE_REPRESENTATION_KINDS and any(
+                    type(i) is _Ref and type(records.get(i.id)) is _Call and records[i.id].kind in _SOLID_KINDS
+                    for i in rep.args[1]):
+                return True
+            for neighbor in links[current] - seen:
+                seen.add(neighbor)
+                stack.append(neighbor)
+        return False
+    out = {}
+    for product, reps in product_reps.items():
+        for rep_id in reps:
+            rep = records.get(rep_id)
+            if type(rep) is not _Call or rep.kind not in _SHAPE_REPRESENTATION_KINDS:
+                continue
+            for item in rep.args[1]:
+                record = records.get(item.id) if type(item) is _Ref else None
+                if type(record) is not _Call or record.kind != 'MAPPED_ITEM':
+                    continue
+                where = f'original mapped item #{item.id} of product #{product}'
+                mapping = _refer(records, record.args[1], 'REPRESENTATION_MAP').args
+                mapped = mapping[1].id
+                mapped_rep = records.get(mapped)
+                require(type(mapped_rep) is _Call and mapped_rep.kind in _SHAPE_REPRESENTATION_KINDS,
+                        where+': mapped representation missing')
+                held = [i.id for i in mapped_rep.args[1] if type(records.get(i.id)) is _Call and records[i.id].kind in _SOLID_KINDS]
+                nested = [i.id for i in mapped_rep.args[1] if type(records.get(i.id)) is _Call and records[i.id].kind == 'MAPPED_ITEM']
+                if not held and not nested:
+                    # OCCT transfers the representations related to a mapped one
+                    # with it (TransferRelatedSRR), so a solid reached that way
+                    # is placed too; it is no occurrence this reading publishes.
+                    require(not reaches(mapped), where+' maps a representation that reaches a solid through related '
+                                                        'shape_representation_relationships, which is not read')
+                    continue
+                require(mapped not in sdr_used, where+' maps the representation of a product (bead .37.26)')
+                require(not nested, where+': nested mapped items are not read')
+                require(len(held) == 1, where+': its mapped representation holds several solids')
+                origin, target = records.get(mapping[0].id), records.get(record.args[2].id)
+                require(type(origin) is _Call and origin.kind == 'AXIS2_PLACEMENT_3D' and
+                        type(target) is _Call and target.kind == 'AXIS2_PLACEMENT_3D',
+                        where+': only an axis2_placement_3d origin and target are read')
+                out[item.id] = (product, mapped, held[0], _frames_matrix(records, mapping[0], record.args[2]))
+    return out
+
+
+def qualify_original_reference(source, original_path, coordinate_tolerance=2.**-32):
+    """The reference exporter's product, solid and usage graph against the STEP text.
+
+    For a reference source (python/brepgpu/reference_source.py): every product
+    is a PRODUCT_DEFINITION with its part name and reference, or a mapped
+    representation of original_mapped_occurrences named as its holder; every
+    usage is a NAUO placed as _original_usage_transforms reads it, or a mapped
+    occurrence placed as original_mapped_occurrences reads it; each product's
+    solid is the one its shape representation holds, not following its mapped
+    occurrences. Returns the largest placement entry error.
+    """
+    records = original_records(original_path)
+    mapped = original_mapped_occurrences(records)
+    occurrence_reps = {m[1]: m for m in mapped.values()}
+    names = {}
+    for product in source.products:
+        raw = records.get(product.id)
+        if type(raw) is _Call and raw.kind == 'PRODUCT_DEFINITION':
+            formation = _refer(records, raw.args[2], 'PRODUCT_DEFINITION_FORMATION')
+            item = _refer(records, formation.args[2], 'PRODUCT').args
+            names[product.id] = (item[2] or item[1], item[0])
+    for product in source.products:
+        if product.id in names:
+            require((product.name, product.reference) == names[product.id], 'original product part name/reference differs')
+        else:
+            require(product.id in occurrence_reps, f'reference product #{product.id} is neither a product definition nor a mapped occurrence')
+            require((product.name, product.reference) == names.get(occurrence_reps[product.id][0]),
+                    'mapped occurrence product names differ from its holder')
+            require(product.definition_id == occurrence_reps[product.id][2], 'mapped occurrence solid differs')
+    representations = defaultdict(list)
+    for row in records.values():
+        if type(row) is _Call and row.kind == 'SHAPE_DEFINITION_REPRESENTATION':
+            pds = _refer(records, row.args[0], 'PRODUCT_DEFINITION_SHAPE').args
+            if type(pds[2]) is _Ref and pds[2].id in names:
+                representations[pds[2].id].append(row.args[1].id)
+    placing = _placing_relations(records)
+    links = defaultdict(set)
+    for id, row in records.items():
+        if type(row) is _Call and row.kind == 'SHAPE_REPRESENTATION_RELATIONSHIP' and id not in placing:
+            links[row.args[2].id].add(row.args[3].id)
+            links[row.args[3].id].add(row.args[2].id)
+    def solids(rep, seen):
+        found = set()
+        row = records.get(rep)
+        if type(row) is _Call and row.kind in _SHAPE_REPRESENTATION_KINDS:
+            for item in row.args[1]:
+                record = records.get(item.id) if type(item) is _Ref else None
+                if type(record) is _Call and record.kind in _SOLID_KINDS:
+                    found.add(item.id)
+        for neighbor in links[rep] - seen:
+            found |= solids(neighbor, seen | {neighbor})
+        return found
+    for product in source.products:
+        if product.id in names:
+            held = set().union(*(solids(rep, {rep}) for rep in representations[product.id])) if representations[product.id] else set()
+            require(len(held) <= 1, 'original product has ambiguous solid definitions')
+            require(product.definition_id == next(iter(held), 0), 'original product to solid representation correspondence differs')
+    transforms = _original_usage_transforms(records)
+    require({u.id for u in source.usages} == set(transforms) | set(mapped), 'complete original usage and mapped occurrence inventory differs')
+    maximum = 0.
+    for usage in source.usages:
+        if usage.id in mapped:
+            holder, rep, _, matrix = mapped[usage.id]
+            require((usage.parent_product_id, usage.child_product_id) == (holder, rep), 'original mapped occurrence parent/child differs')
+        else:
+            raw = records[usage.id]
+            require((usage.parent_product_id, usage.child_product_id) == (raw.args[3].id, raw.args[4].id),
+                    'original parent/child product reference differs')
+            matrix = transforms[usage.id]
+        maximum = max(maximum, _near(usage.transform, matrix, coordinate_tolerance, 'original usage placement differs'))
+    return maximum
 
 
 def qualify_original_placements(source, records_or_path, coordinate_tolerance=2.**-32):
@@ -1220,8 +1452,108 @@ def qualify_domain(boundary_loops, triangles):
     return count
 
 
+def face_euler(source, face_id):
+    """The Euler characteristic of one face's open region from its own topology
+    (review round 4): chi = 2 - 2g - b - p over the face's closed region, with b its edge
+    loops (boundary circles), p its vertex loops (points removed: each loop's vertex is
+    counted with the definition's vertices) and g its genus: 1 for a face on a torus
+    (carrier kind 5) whose edges include no seam, so it is the whole torus wrapped both
+    ways (a natural torus, chi 0), else 0 (a band of two loops gives 0, a natural
+    sphere 2). The disc formula 2 - loops is the g = 0 case."""
+    face = source.face(face_id)
+    loops = [source.loop(id) for id in face.loop_ids]
+    edge_loops = sum(1 for loop in loops if loop.coedge_ids)
+    vertex_loops = len(loops) - edge_loops
+    edges = [source.coedge(id).edge_id for loop in loops for id in loop.coedge_ids]
+    seam = len(edges) != len(set(edges))
+    genus = 1 if source.carrier(face.carrier_id).kind == 5 and not seam else 0
+    return 2 - 2*genus - edge_loops - vertex_loops
+
+
+def _orient3d(a, b, c, d):
+    """Sign of det[b-a, c-a, d-a], exact (rational) arithmetic."""
+    bx, by, bz = b[0]-a[0], b[1]-a[1], b[2]-a[2]
+    cx, cy, cz = c[0]-a[0], c[1]-a[1], c[2]-a[2]
+    dx, dy, dz = d[0]-a[0], d[1]-a[1], d[2]-a[2]
+    det = bx*(cy*dz-cz*dy) - by*(cx*dz-cz*dx) + bz*(cx*dy-cy*dx)
+    return (det > 0) - (det < 0)
+
+
+def _segment_meets_triangle(p, q, a, b, c):
+    """Whether the closed segment pq meets the closed triangle abc (exact)."""
+    sp, sq = _orient3d(a, b, c, p), _orient3d(a, b, c, q)
+    if sp == sq != 0:
+        return False
+    if sp == sq == 0:
+        # Coplanar: project out the dominant normal axis and test in the plane.
+        n = cross(tuple(b[k]-a[k] for k in range(3)), tuple(c[k]-a[k] for k in range(3)))
+        drop = max(range(3), key=lambda k: abs(n[k]))
+        keep = [k for k in range(3) if k != drop]
+        P, Q, A, B, C = (tuple(x[k] for k in keep) for x in (p, q, a, b, c))
+        def turn2(o, u, v):
+            d = (u[0]-o[0])*(v[1]-o[1]) - (u[1]-o[1])*(v[0]-o[0])
+            return (d > 0) - (d < 0)
+        def on(o, u, v):
+            return turn2(o, u, v) == 0 and all(min(o[k], u[k]) <= v[k] <= max(o[k], u[k]) for k in range(2))
+        def cross2(o, u, v, w):
+            x, y, z, t = turn2(o, u, v), turn2(o, u, w), turn2(v, w, o), turn2(v, w, u)
+            return (x*y < 0 and z*t < 0) or on(o, u, v) or on(o, u, w) or on(v, w, o) or on(v, w, u)
+        def inside2(point):
+            s1, s2, s3 = turn2(A, B, point), turn2(B, C, point), turn2(C, A, point)
+            return (s1 >= 0 and s2 >= 0 and s3 >= 0) or (s1 <= 0 and s2 <= 0 and s3 <= 0)
+        return (inside2(P) or inside2(Q) or cross2(P, Q, A, B) or cross2(P, Q, B, C) or cross2(P, Q, C, A))
+    s1, s2, s3 = _orient3d(p, q, a, b), _orient3d(p, q, b, c), _orient3d(p, q, c, a)
+    return (s1 >= 0 and s2 >= 0 and s3 >= 0) or (s1 <= 0 and s2 <= 0 and s3 <= 0)
+
+
+def _triangles_meet(t, u):
+    return (any(_segment_meets_triangle(t[i], t[(i+1) % 3], *u) for i in range(3)) or
+            any(_segment_meets_triangle(u[i], u[(i+1) % 3], *t) for i in range(3)))
+
+
+def _require_disjoint_shells(vertices, triangles, owner):
+    """Every two triangles of different shells are disjoint: candidates share a cell of
+    a uniform grid over their bounding boxes; each candidate pair is tested exactly."""
+    boxes = []
+    for triangle in triangles:
+        ps = [tuple(map(float, vertices[key])) for key in triangle]
+        boxes.append((tuple(min(p[k] for p in ps) for k in range(3)), tuple(max(p[k] for p in ps) for k in range(3))))
+    lo = tuple(min(b[0][k] for b in boxes) for k in range(3))
+    hi = tuple(max(b[1][k] for b in boxes) for k in range(3))
+    span = max(hi[k]-lo[k] for k in range(3)) or 1.
+    cells = max(1, min(256, round(len(triangles) ** (1/3))))
+    size = span / cells * (1 + 1e-9)
+    grid = defaultdict(list)
+    for index, (a, b) in enumerate(boxes):
+        r = [range(int((a[k]-lo[k])/size), int((b[k]-lo[k])/size)+1) for k in range(3)]
+        for i in r[0]:
+            for j in r[1]:
+                for k in r[2]:
+                    grid[i, j, k].append(index)
+    seen = set()
+    exact_points = {}
+    def point(key):
+        if key not in exact_points:
+            exact_points[key] = tuple(map(exact, vertices[key]))
+        return exact_points[key]
+    for members in grid.values():
+        for x in range(len(members)):
+            for y in range(x+1, len(members)):
+                i, j = members[x], members[y]
+                if owner[i] == owner[j] or (i, j) in seen:
+                    continue
+                seen.add((i, j))
+                a, b = boxes[i], boxes[j]
+                if any(a[1][k] < b[0][k] or b[1][k] < a[0][k] for k in range(3)):
+                    continue
+                require(not _triangles_meet(tuple(point(key) for key in triangles[i]),
+                                            tuple(point(key) for key in triangles[j])),
+                        f'physical shells {owner[i]} and {owner[j]} intersect')
+
+
 def qualify_physical_solid(vertices, triangles):
-    """Closed orientable physical shell and vertex links, without product CSR."""
+    """Closed orientable physical shells and vertex links, without product CSR: an outer
+    shell enclosing a positive volume and any voids, negative and inside it."""
     incidence, links = defaultdict(list), defaultdict(list)
     for index, triangle in enumerate(triangles):
         require(len(triangle) == 3 and len(set(triangle)) == 3, 'physical triangle identity collapse')
@@ -1256,15 +1588,81 @@ def qualify_physical_solid(vertices, triangles):
             seen.add(cursor)
             cursor = nexts[cursor]
         require(cursor == start and len(seen) == len(nexts), 'physical vertex has pinched link cycles')
-    seen, pending = set(), [0]
-    while pending:
-        index = pending.pop()
-        if index not in seen:
-            seen.add(index)
-            pending.extend(neighbors[index] - seen)
-    require(len(seen) == len(triangles), 'physical source solid shell is disconnected')
+    # Review round 3 ruling, both arms and our owned meshes alike: the mesh is
+    # split into its edge-connected shells, each closed and edge-consistent
+    # (every edge used twice, once each way, checked above), and each shell's
+    # signed volume has the sign its role requires: the outer shell (largest
+    # by magnitude) positive, every other one a void, negative and inside the
+    # outer shell by point containment. Euler is taken over all shells.
+    shells, owner = [], {}
+    for start in range(len(triangles)):
+        if start in owner:
+            continue
+        members, pending = [], [start]
+        owner[start] = len(shells)
+        while pending:
+            index = pending.pop()
+            members.append(index)
+            for other in neighbors[index]:
+                if other not in owner:
+                    owner[other] = len(shells)
+                    pending.append(other)
+        shells.append(members)
+    points = {key: tuple(map(float, vertices[key])) for key in vertices}
+
+    def volume(members):
+        return math.fsum(
+            a[0]*(b[1]*c[2]-b[2]*c[1]) - a[1]*(b[0]*c[2]-b[2]*c[0]) + a[2]*(b[0]*c[1]-b[1]*c[0])
+            for a, b, c in (tuple(points[key] for key in triangles[i]) for i in members))/6
+    volumes = [volume(members) for members in shells]
+    require(all(math.isfinite(v) for v in volumes), 'physical shell mesh volume is not finite')
+    outer = max(range(len(shells)), key=lambda k: abs(volumes[k]))
+    require(volumes[outer] > 0,
+            f'physical outer shell mesh volume {volumes[outer]:.6g} is not positive: the shell is inside out')
+
+    def inside(point, members):
+        # Ray parity against the outer shell's triangles, along three generic
+        # directions; a strict majority decides (a ray grazing an edge counts twice).
+        odd = 0
+        for direction in ((0.5773502691896258, 0.4472135954999579, 0.6831300510639732),
+                          (-0.3713906763541037, 0.7427813527082074, 0.5570860145311556),
+                          (0.2672612419124244, -0.5345224838248488, 0.8017837257372732)):
+            crossings = 0
+            for i in members:
+                a, b, c = (points[key] for key in triangles[i])
+                e1 = tuple(b[k]-a[k] for k in range(3)); e2 = tuple(c[k]-a[k] for k in range(3))
+                h = cross(direction, e2); det = sum(e1[k]*h[k] for k in range(3))
+                if det == 0:
+                    continue
+                t0 = tuple(point[k]-a[k] for k in range(3))
+                u = sum(t0[k]*h[k] for k in range(3))/det
+                q = cross(t0, e1)
+                v = sum(direction[k]*q[k] for k in range(3))/det
+                t = sum(e2[k]*q[k] for k in range(3))/det
+                if 0 <= u <= 1 and 0 <= v and u+v <= 1 and t > 0:
+                    crossings += 1
+            odd += crossings % 2
+        return odd >= 2
+    for k, members in enumerate(shells):
+        if k != outer:
+            require(volumes[k] < 0,
+                    f'physical void shell mesh volume {volumes[k]:.6g} is not negative: the void is inside out')
+    if len(shells) > 1:
+        # Review round 4 ruling: shells are pairwise disjoint (an exact
+        # triangle-triangle test on candidate pairs from a uniform grid), so one
+        # vertex decides each containment: every void inside the outer shell,
+        # and no void inside another void.
+        _require_disjoint_shells(vertices, triangles, owner)
+        for k, members in enumerate(shells):
+            if k == outer:
+                continue
+            probe = points[triangles[members[0]][0]]
+            require(inside(probe, shells[outer]), 'physical void shell is not inside the outer shell')
+            for j, others in enumerate(shells):
+                if j not in (k, outer):
+                    require(not inside(probe, others), 'physical void shell lies inside another void shell')
     return dict(vertices=len(vertices), edges=len(incidence), triangles=len(triangles),
-                euler=len(vertices)-len(incidence)+len(triangles))
+                euler=len(vertices)-len(incidence)+len(triangles), shells=len(shells))
 
 
 def _on_segment(a, b, p):
@@ -2042,7 +2440,7 @@ def qualify_mesh(mesh, *, original_path=None, coordinate_tolerance=2.**-32):
         physical = {key: row.xyz for (owner, key), row in vertices.items() if owner == definition.id}
         stats = qualify_physical_solid(physical, physical_by_definition[definition.id])
         source_euler = (len(definition.vertex_ids)-len(definition.edge_ids)+
-                        sum(2-len(source.face(id).loop_ids) for id in definition.face_ids))
+                        sum(face_euler(source, id) for id in definition.face_ids))
         require(stats['euler'] == source_euler, 'physical mesh changed original solid Euler characteristic')
         solid_stats.append(stats)
     return dict(source_counts, mesh_vertices=len(vertices), uv_triangles=len(mesh.triangles),

@@ -141,14 +141,98 @@ it as `complete_seconds`.
   fixtures; all 107 OM10 definitions on the fleet).
 - **Ingress judgement.** The caller refuses NVIDIA input as ingress (exit 4)
   unless the minimal ingress reports the arm's shape-processing (no
-  operations for translation-only, some for the default read), exactly the
-  source's definitions as identity-located forward solids, and, for the
-  translation-only arm while our exporter declares `translation-only` (or the
-  older `none`) and no `raw-entity-corrections=`, files byte-identical to our
-  XDE export. Both readers' OCCT libraries are pinned. On a difference
+  operations for translation-only, some for the default read) and exactly the
+  source's definitions as identity-located forward solids. Both readers' OCCT
+  libraries are pinned. On a byte difference
   `nvidia-input/nvidia-input-diff.tsv` lists face, edge and vertex counts,
-  pcurve presence and the largest vertex move before the refusal. An exporter
-  that adds raw-entity corrections must declare them with that token.
+  pcurve presence and the largest vertex move before the refusal.
+  Our XDE exporter runs in the arm's mode (`brepgpu-reference-source
+  --shape-processing translation-only|default`).
+  - **Translation-only arm.** The byte check is per definition. A definition
+    whose `.brep` our export corrected (face sides `S1`, `S2`, each with a
+    `reference_face_orientation_raw` record) reaches NVIDIA as our corrected
+    file, declared in `metadata.tsv` (`nvidia_input_ours_corrected`), once our
+    uncorrected translation of it (`source/uncorrected/`) is byte-identical to
+    the minimal ingress's file, so the declared correction is the only
+    difference from NVIDIA's own translation; otherwise the harness refuses
+    (exit 3). Every
+    other definition's minimal-ingress file must be byte-identical to our
+    export of it, or the arm refuses (exit 4). Placement corrections (`P1`,
+    `P2`) change usages, not `.brep` bytes, and exempt no definition; NVIDIA
+    meshes each definition alone and never reads a placement, and our display
+    places them from the reference or native source, whose usages are read
+    raw (`native/step_placements.hpp`). OCCT's located value is written only
+    where the adapter's one predicate (`step_placements::agree`) accepts it:
+    2^-32 relative, translation within the placing contexts' uncertainty, and
+    no point of the child's extent moved by more than it. The extent bounds
+    each solid by `native/shape_extent.hpp` (faces by their carriers and 3D
+    edges; OCCT's box spans an unbounded carrier where pcurves are missing and
+    misses a cone's apex). The same bound's diagonal decides whether a
+    declared uncertainty is usable (G6 UR-7), as in the adapter. OM10 writes
+    no raw placement in either mode.
+  - **Default-read arm.** In default mode the exporter supplies no flags or fix
+    parameters, so OCCT's own default processing runs, and it declares
+    `shape-processing=default` with the operations OCCT ran
+    (`shape-process-operations=`). Its face map binds each original face to
+    the faces that processing made of it. NVIDIA's default-read input must be
+    byte-identical to our default export for every definition, and both reads
+    must report the same operations; otherwise the harness refuses (exit 3),
+    because the face map would not describe NVIDIA's input.
+  - **Face sides, both modes.** A face whose orientation flag the default read
+    changed is decided from geometry over all of OCCT's pieces of it: ray
+    parity from probes on both sides of each piece, confirmed by OCCT's solid
+    classifier. A face whose raw use points into the material is written with
+    its outward side: `S1` when its outer bound runs against it, `S2` when its
+    whole shell is inside out. Each seam use of a corrected face stays on its
+    own pcurve: the seam's pairing is the one under which the face's wires
+    close in the parameter plane, as OCCT's default read pairs the repaired
+    face. Every such definition is verified on its published bytes, read
+    back: BRepCheck valid and every shell's signed volume of the right sign,
+    on a copy that only adds missing pcurves (projected, an added one moved by
+    whole periods to meet its neighbour, an added seam paired, and placed in
+    the period, so its wire closes); a pcurve that is there is never moved or
+    re-paired. On the copy only, an edge that carries an added pcurve takes
+    that pcurve's measured deviation as its tolerance where it is larger;
+    every other edge keeps OCCT's tolerance. The deviation is capped at the
+    definition's usable declared uncertainty (else the adapter's source
+    residual grade); above it verification fails by name, so an edge off its
+    surface refuses rather than being covered. The cap covers the
+    translation-only arm by design: the default read's processed solid carries
+    OCCT's own pcurves and tolerances (its FixShape raised them), so the copy
+    adds nothing there and that arm's claim is OCCT's default read. `source/verification.tsv`
+    lists each verified definition with the largest tolerance raised, the
+    largest added-pcurve deviation and the cap. The
+    translation-only export writes the correction into its own `.brep` and
+    declares the letter. A face whose side is not decidable, including one
+    whose evaluation OCCT cannot complete, refuses the export in both modes,
+    which the caller reports as ingress (exit 4, ours). A face the default
+    read turned against its shell refuses default mode; translation-only
+    writes its raw use, which is decided outward.
+  The prepared worker expects each input's translated face count.
+- **Physical admission.** NVIDIA's mesh of each definition, and ours, is split
+  into its edge-connected shells, each closed and edge-consistent; the outer
+  shell (largest by magnitude) must enclose a positive volume, every other one
+  is a void, negative; shells are pairwise disjoint (exact triangle-triangle
+  tests on candidates from a grid), every void lies inside the outer shell
+  and none inside another void (one vertex each, by ray parity). Euler is
+  taken over all shells and compared with the source's, each face counted
+  from its own topology (chi = 2 - 2g - b - p: a natural torus 0, a band 0, a
+  natural sphere 2). A fault in the mesh NVIDIA produced (as our wrapper
+  copied it) is NVIDIA's FAIL; a fault in our wrapper's `.bgrefmesh`
+  container is ours (exit 5). An inside-out mesh fails, on both arms
+  alike. Only such a verdict on NVIDIA's mesh is an NVIDIA FAIL; an error in
+  our admission code is ours (exit 5). NVIDIA's own mesh of the correct
+  `void-block.step` fails: six directed edges are used twice the same way
+  (three void faces wound against the material) and its volume is 840
+  against 936, in both ingress arms, with both shells forward, and both heal
+  settings; NVIDIA's own report says input manifold 1, output manifold 0,
+  12 lamina edges. The legacy matched mode compares
+  every face's carrier, side and style with the STEP source adapter's source
+  of the same file (`source.bgsource` in the matched directory), as the
+  native match does; without one it refuses the matched inputs (exit 3). In
+  both modes a definition the adapter leaves incomplete (a face refused)
+  refuses before NVIDIA's ingress as ours (exit 4; every physical row not
+  evaluated), so no NVIDIA outcome on it is scored.
 - **Page cache.** One policy for NVIDIA and owned ingress
   (`measurement_lane.prepare_ingress_cache`; `measurement_lane.py run
   --ingress-file`): immediately before each ingress the STEP file's pages are

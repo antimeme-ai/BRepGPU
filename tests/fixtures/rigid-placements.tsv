@@ -16,5 +16,6 @@ shear-xy	nonorthonormal	1	0.1	0	0	0	1	0	0	0	0	1	0
 mirror-z	improper	1	0	0	0	0	1	0	0	0	0	-1	0
 swap-xy	improper	0	1	0	0	1	0	0	0	0	0	1	0
 # The adapter output for tests/fixtures/source-uv.step with occurrence #386 placed
-# by CARTESIAN_TRANSFORMATION_OPERATOR_3D scale 2. (OCCT 8.0.1 reads it as 0.5.)
-step-cto-scale	nonorthonormal	0.5	-0	0	-0	0	0.5	0	0	-0	0	0.5	-0
+# by CARTESIAN_TRANSFORMATION_OPERATOR_3D scale 2, read raw per ISO 10303-42
+# (P -> 2P; OCCT 8.0.1 reads it as 0.5, bead brepgpu-12s.37.20).
+step-cto-scale	nonorthonormal	2	0	0	0	0	2	0	0	0	0	2	0

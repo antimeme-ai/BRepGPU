@@ -27,6 +27,7 @@ from measurement_lane import (CONTEXT_COLUMNS, Lane, Recorder, bound, lane_cpus,
 REPORT = ('import os,sys\n'
           'policy=open("/proc/self/numa_maps").readline().split()[1]\n'
           'print(",".join(map(str,sorted(os.sched_getaffinity(0)))),policy)\n')
+ADAPTER = Path(os.environ.get('BREPGPU_STEP_SOURCE', ROOT/'build/om10-step-source/brepgpu-step-source')).resolve()
 EXPORTER = Path(os.environ.get('BREPGPU_REFERENCE_SOURCE',
                                ROOT/'build/om10-reference-source/brepgpu-reference-source'))
 PRODUCER = Path(os.environ.get('BREPGPU_OM10_NVIDIA', ROOT/'build/om10-nvidia/brepgpu-om10-nvidia'))
@@ -49,13 +50,12 @@ def write(path, header, body):
         writer.writerows(body)
 
 
-def matched_fixture(root):
-    """Matched inputs for the authored two-definition reference fixture."""
+def matched_fixture(root, step=ROOT/'tests/fixtures/reference-source.step'):
+    """Matched inputs for an authored reference fixture (by default the two-definition one)."""
     from brepgpu.reference_source import load_reference_source
     from brepgpu.imported_assembly import assemble
     from om10_scene import View, pack_views
     from render_om10_nvidia import tsv, digest
-    step = ROOT/'tests/fixtures/reference-source.step'
     subprocess.run((str(EXPORTER), str(step), str(root/'control')), check=True, capture_output=True)
     assembly = assemble(load_reference_source(root/'control/source.bgocct'))
     matched = root/'matched'
@@ -70,6 +70,10 @@ def matched_fixture(root):
     (matched/'views.bgview').write_bytes(pack_views(tuple(
         View(4, 4, 1, float(i), (1., 0., 0., 0., 1., 0., 0., 0., 1.), (0., 0., 0.), (0., 0.), 1.)
         for i in range(2))))
+    # The adapter's source of the same STEP: the legacy matched mode compares
+    # every face with it (review round 2 ruling). A file the adapter refuses
+    # has none, and the caller then refuses the matched inputs by name.
+    subprocess.run((str(ADAPTER), str(step), str(matched/'source.bgsource')), capture_output=True)
     return step, matched
 
 
@@ -718,8 +722,13 @@ class NvidiaCallerLane(unittest.TestCase):
             self.assertLessEqual(process_start+span+process_exit, reaped-launch+1e-6)
             self.assertGreaterEqual(min(process_start, process_exit), 0)
 
-    def test_byte_check_applies_only_to_uncorrected_translation_only_exports(self):
-        from render_om10_nvidia import IngressRefusal, check_nvidia_input
+    def test_byte_check_is_per_definition_and_placements_exempt_nothing(self):
+        """B2-reader-export review round 1 (dispatcher ruling): the translation-only byte
+        check is per definition. A definition our export corrected (a
+        reference_face_orientation_raw record) takes our corrected .brep; every other
+        definition must be byte-identical; a declared placement correction (P1, P2)
+        exempts nothing."""
+        from render_om10_nvidia import HarnessRefusal, IngressRefusal, check_nvidia_input
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             (root/'nvidia').mkdir()
@@ -727,19 +736,36 @@ class NvidiaCallerLane(unittest.TestCase):
             write(root/'nvidia/policy.tsv', ('field', 'value'),
                   (('shape_processing', 'none'), ('flags_supplied', 1), ('operations', 0)))
             write(root/'nvidia/definitions.tsv', ('definition_id', 'filename', 'shape_type', 'identity_location',
-                                                  'orientation'), ((1, 'definition-1.brep', 'solid', 1, 'forward'),))
-            (root/'nvidia/definition-1.brep').write_bytes(b'nvidia')
+                                                  'orientation'), ((1, 'definition-1.brep', 'solid', 1, 'forward'),
+                                                                   (2, 'definition-2.brep', 'solid', 1, 'forward')))
+            for i in (1, 2):
+                (root/f'nvidia/definition-{i}.brep').write_bytes(b'nvidia')
+                (root/f'xde/definition-{i}.brep').write_bytes(b'nvidia')
+            definitions = (SimpleNamespace(id=1, filename='definition-1.brep'), SimpleNamespace(id=2, filename='definition-2.brep'))
+            placed = SimpleNamespace(definitions=definitions,
+                                     adapter_revision='v; shape-processing=translation-only; raw-entity-corrections=P1,P2')
+            self.assertEqual(check_nvidia_input(root/'nvidia', 'occt-no-shape-process', placed, root/'xde', INGRESS),
+                             (2, 'applied', set()))
             (root/'xde/definition-1.brep').write_bytes(b'ours')
-            definitions = (SimpleNamespace(id=1, filename='definition-1.brep'),)
-            corrected = SimpleNamespace(definitions=definitions,
-                adapter_revision='v; shape-processing=translation-only; raw-entity-corrections=E3')
-            self.assertEqual(check_nvidia_input(root/'nvidia', 'occt-no-shape-process', corrected, root/'xde', INGRESS),
-                             (0, 'not applied: exporter declares shape-processing=translation-only, '
-                                 'raw-entity-corrections=E3'))
-            plain = SimpleNamespace(definitions=definitions, adapter_revision='v; shape-processing=translation-only')
-            with self.assertRaisesRegex(IngressRefusal, 'differs from our XDE export'):
-                check_nvidia_input(root/'nvidia', 'occt-no-shape-process', plain, root/'xde', INGRESS)
+            with self.assertRaisesRegex(IngressRefusal, 'differs from our XDE export for 1 definitions we did not correct'):
+                check_nvidia_input(root/'nvidia', 'occt-no-shape-process', placed, root/'xde', INGRESS)
             self.assertTrue((root/'nvidia/nvidia-input-diff.tsv').is_file())
+            (root/'xde/records.tsv').write_text('stage\tseverity\tids\tmessage\n'
+                                                'reference_face_orientation_raw\t1\t1 17\tcorrected\n')
+            # Review round 2: our uncorrected translation of a corrected definition
+            # must be the ingress's bytes; missing or different is a harness refusal.
+            with self.assertRaisesRegex(HarnessRefusal, 'uncorrected translation of corrected definition 1 differs'):
+                check_nvidia_input(root/'nvidia', 'occt-no-shape-process', placed, root/'xde', INGRESS)
+            (root/'xde/uncorrected').mkdir()
+            (root/'xde/uncorrected/definition-1.brep').write_bytes(b'nvidiA')
+            with self.assertRaisesRegex(HarnessRefusal, 'uncorrected translation of corrected definition 1 differs'):
+                check_nvidia_input(root/'nvidia', 'occt-no-shape-process', placed, root/'xde', INGRESS)
+            (root/'xde/uncorrected/definition-1.brep').write_bytes(b'nvidia')
+            self.assertEqual(check_nvidia_input(root/'nvidia', 'occt-no-shape-process', placed, root/'xde', INGRESS),
+                             (1, 'applied per definition; corrected definitions [1] take our .brep', {1}))
+            (root/'xde/definition-2.brep').write_bytes(b'other')
+            with self.assertRaisesRegex(IngressRefusal, 'for 1 definitions we did not correct'):
+                check_nvidia_input(root/'nvidia', 'occt-no-shape-process', placed, root/'xde', INGRESS)
 
     def converter_environment(self):
         previous = os.environ.get('OMNISOLID_PLUGIN_PATH')
@@ -846,22 +872,133 @@ out.write('main_end_monotonic=%r\\n' % time.monotonic());out.flush()
             with self.assertRaisesRegex(ConverterServiceFailure, 'cannot be framed'):
                 ConverterService(self.fake_server(root, 'chatty'), root).convert(root/'tab\there.brep', root/'x.usdc')
 
-    def test_mapped_item_solid_is_read_in_its_own_frame_and_our_refusal_is_ours(self):
+    def test_mapped_item_solid_is_read_in_its_own_frame_and_placed_by_our_export(self):
+        """bead .37.25: NVIDIA's input is the solid in its own frame; our XDE export, which
+        refused it before, now places it through the mapped item (usage #901 at (0,5,0)).
+        The STEP source adapter refuses the file (it does not read mapped items, .37.26),
+        so there is no adapter source to compare faces with, and the caller refuses the
+        legacy matched inputs by name (exit 3; review round 2 ruling) after our export
+        and NVIDIA's ingress, on both runnable arms."""
+        step = ROOT/'tests/fixtures/mapped-item-solid.step'
+        for arm, policy in (('occt-no-shape-process', 'none'), ('occt-default-read', 'default')):
+            with self.subTest(arm=arm), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                self.assertIn('MAPPED_ITEM', step.read_text())
+                subprocess.run((str(INGRESS), '--shape-processing', policy, str(step), str(root/'minimal')),
+                               check=True, capture_output=True)
+                only, = rows(root/'minimal/definitions.tsv')
+                self.assertEqual((only['shape_type'], only['identity_location'], only['orientation']), ('solid', '1', 'forward'))
+                _, matched = matched_fixture(root, step)
+                bom, = rows(matched/'bom.tsv')
+                self.assertEqual((bom['source_usage_path'], bom['product_id'], bom['solid_id'], bom['matrix_7']),
+                                 ('901', '10', '15', '5.0'))
+                result = subprocess.run((sys.executable, '-B', str(ROOT/'examples/render_om10_nvidia.py'),
+                    '--step', str(step), '--matched', str(matched), '--output', str(root/'out'), '--heal', '0',
+                    '--workers', '1', '--allow-fixture', '--ingress-arm', arm, '--exporter', str(EXPORTER),
+                    '--nvidia-ingress', str(INGRESS), '--producer', str(self.stand_in(root)), '--package', str(PACKAGE)),
+                    capture_output=True, text=True)
+                self.assertFalse((matched/'source.bgsource').exists())
+                self.assertEqual(result.returncode, 3, result.stderr)
+                self.assertIn('legacy matched inputs lack the adapter source', result.stderr)
+                usage, = [u for u in __import__('brepgpu.reference_source', fromlist=['x']).load_reference_source(
+                    root/'out/source/source.bgocct').usages if u.id == 901]
+                self.assertEqual(usage.transform[7], 5.)
+
+    def test_default_read_arm_runs_on_our_default_export(self):
+        """bead .37.19: the occt-default-read arm runs. Our exporter reads in OCCT's default
+        mode and declares it, and its face map describes NVIDIA's default-read input."""
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            step = ROOT/'tests/fixtures/mapped-item-solid.step'
-            self.assertIn('MAPPED_ITEM', step.read_text())
-            subprocess.run((str(INGRESS), '--shape-processing', 'none', str(step), str(root/'minimal')),
+            output = root/'out'
+            result = self.caller(root, output, self.stand_in(root), ('--ingress-arm', 'occt-default-read'))
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn('NVIDIA strict worker failure', result.stderr)
+            metadata = {r['field']: r['value'] for r in rows(output/'metadata.tsv')}
+            self.assertEqual((metadata['ingress_arm'], metadata['exporter_shape_processing']),
+                             ('occt-default-read', 'default'))
+            self.assertIn('shape_process_before_transfer\t0\t0', (output/'source-export.log').read_text())
+            policy = {r['field']: r['value'] for r in rows(output/'nvidia-input/policy.tsv')}
+            self.assertEqual(policy['shape_processing'], 'default')
+            for worker in (0, 1):
+                *_, paths = (output/f'worker-{worker:02d}/binding').read_text().split('\t')
+                self.assertTrue(all(Path(p).parent == output/'nvidia-input' for p in paths.split(',')), paths)
+
+    def test_default_read_input_judgement(self):
+        """bead .37.19, B2-reader-export review round 1: on the default-read arm both reads
+        must run the same OCCT operations and every NVIDIA input file must be byte-identical
+        to our default export; otherwise the harness refuses (our face map would not
+        describe NVIDIA's input)."""
+        from types import SimpleNamespace
+        from brepgpu.reference_source import load_reference_source
+        from render_om10_nvidia import HarnessRefusal, check_nvidia_input
+        step = ROOT/'tests/fixtures/reference-source.step'
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            subprocess.run((str(EXPORTER), '--shape-processing', 'default', str(step), str(root/'xde')),
                            check=True, capture_output=True)
-            only, = rows(root/'minimal/definitions.tsv')
-            self.assertEqual((only['shape_type'], only['identity_location'], only['orientation']), ('solid', '1', 'forward'))
-            # Our XDE exporter refuses the mapped placement; the caller labels that ours (exit 4).
+            subprocess.run((str(INGRESS), '--shape-processing', 'default', str(step), str(root/'nvidia')),
+                           check=True, capture_output=True)
+            source = load_reference_source(root/'xde/source.bgocct')
+            self.assertEqual(check_nvidia_input(root/'nvidia', 'occt-default-read', source, root/'xde', INGRESS),
+                             (2, 'applied: default read, every definition byte-identical', set()))
+            # Other bytes with the same faces (the translation-only read of the box) refuse.
+            subprocess.run((str(EXPORTER), str(step), str(root/'translation')), check=True, capture_output=True)
+            (root/'nvidia/definition-41.brep').write_bytes((root/'translation/definition-41.brep').read_bytes())
+            with self.assertRaisesRegex(HarnessRefusal, 'differs from our default export for 1 definitions'):
+                check_nvidia_input(root/'nvidia', 'occt-default-read', source, root/'xde', INGRESS)
+            self.assertTrue((root/'nvidia/nvidia-input-diff.tsv').is_file())
+            # Another set of operations than the minimal ingress ran refuses.
+            bits = SimpleNamespace(definitions=source.definitions,
+                                   adapter_revision='v; shape-processing=default; shape-process-operations=000000000000000001')
+            with self.assertRaisesRegex(HarnessRefusal, 'shape-process operations'):
+                check_nvidia_input(root/'nvidia', 'occt-default-read', bits, root/'xde', INGRESS)
+
+    def test_corrected_definition_reaches_nvidia_as_our_corrected_brep(self):
+        """B2-reader-export review round 1: on the translation-only arm, a definition our
+        export corrected (the adapter's S1 block, face #57) is NVIDIA's input as our corrected
+        .brep; the caller runs on through NVIDIA's batch (the stand-in producer's failure)."""
+        sys.path.insert(0, str(ROOT/'tests'))
+        from test_step_reader_raw import flipped_block
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            step = root/'s1.step'
+            step.write_text(flipped_block(same_sense=(57,)))
+            _, matched = matched_fixture(root, step)
+            output = root/'out'
             result = subprocess.run((sys.executable, '-B', str(ROOT/'examples/render_om10_nvidia.py'),
-                '--step', str(step), '--matched', str(root/'unused'), '--output', str(root/'out'), '--heal', '0',
+                '--step', str(step), '--matched', str(matched), '--output', str(output), '--heal', '0',
                 '--workers', '1', '--allow-fixture', '--exporter', str(EXPORTER), '--nvidia-ingress', str(INGRESS),
                 '--producer', str(self.stand_in(root)), '--package', str(PACKAGE)), capture_output=True, text=True)
-            self.assertEqual(result.returncode, 4, result.stderr)
-            self.assertIn('our XDE source export failed', result.stderr)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            *_, paths = (output/'worker-00/binding').read_text().split('\t')
+            self.assertEqual([Path(p) for p in paths.split(',')], [output/'source/definition-15.brep'])
+            metadata = {r['field']: r['value'] for r in rows(output/'metadata.tsv')}
+            self.assertEqual(metadata['nvidia_input_ours_corrected'], '15')
+            self.assertEqual(metadata['exporter_raw_entity_corrections'], 'S1')
+
+    def test_corrected_input_requires_our_uncorrected_bytes_to_be_the_ingress_bytes(self):
+        """Review round 2, item 5: before NVIDIA is handed our corrected .brep, our
+        uncorrected translation of that definition must be byte-identical to the minimal
+        ingress's; one byte added to the ingress's file of the corrected definition is a
+        harness refusal (exit 3)."""
+        sys.path.insert(0, str(ROOT/'tests'))
+        from test_step_reader_raw import flipped_block
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            step = root/'s1.step'
+            step.write_text(flipped_block(same_sense=(57,)))
+            _, matched = matched_fixture(root, step)
+            for mutation, code in (('none', 1), ('bytes', 3)):
+                with self.subTest(mutation=mutation):
+                    output = root/f'out-{mutation}'
+                    result = subprocess.run((sys.executable, '-B', str(ROOT/'examples/render_om10_nvidia.py'),
+                        '--step', str(step), '--matched', str(matched), '--output', str(output), '--heal', '0',
+                        '--workers', '1', '--allow-fixture', '--exporter', str(EXPORTER),
+                        '--nvidia-ingress', str(self.ingress_wrapper(root, mutation)),
+                        '--producer', str(self.stand_in(root)), '--package', str(PACKAGE)), capture_output=True, text=True)
+                    self.assertEqual(result.returncode, code, result.stderr[-400:])
+                    if code == 3:
+                        self.assertIn('our uncorrected translation of corrected definition 15 differs', result.stderr)
 
     def ingress_wrapper(self, root, mutation):
         """The real minimal ingress, then one authored corruption of its output."""
@@ -913,7 +1050,13 @@ csv.writer(open(out/'definitions.tsv','w'),delimiter='\\t',lineterminator='\\n')
     def test_refusals_and_our_ingress_failure_are_never_nvidia_failures(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            result = self.caller(root, root/'default', self.stand_in(root), ('--ingress-arm', 'occt-default-read'))
+            # An exporter that ignores the arm's mode and reads translation-only cannot
+            # serve the default-read arm: a harness refusal, never an NVIDIA outcome.
+            ignoring = root/'mode-ignoring-exporter'
+            ignoring.write_text(f'#!{sys.executable}\nimport os,sys\nos.execv({str(EXPORTER)!r},[{str(EXPORTER)!r},*sys.argv[3:]])\n')
+            ignoring.chmod(0o700)
+            result = self.caller(root, root/'default', self.stand_in(root),
+                                 ('--ingress-arm', 'occt-default-read', '--exporter', str(ignoring)))
             self.assertEqual(result.returncode, 3, result.stderr)
             self.assertIn('harness refused', result.stderr)
             self.assertRegex(result.stderr, 'declares shape-processing=(translation-only|none)')
@@ -975,6 +1118,39 @@ csv.writer(open(out/'definitions.tsv','w'),delimiter='\\t',lineterminator='\\n')
             from render_om10_nvidia import physical_row
             row = physical_row(None, SimpleNamespace(source=source), 15)
             self.assertEqual(row[:2], (15, 'NOT_EVALUATED'))
+
+    def test_incomplete_definition_in_legacy_mode_is_our_ingress_refusal(self):
+        """Coordinator check after review round 2: the cylinder part of reference-source.step
+        with its lateral face's bound flipped. The adapter refuses its faces (definition 395
+        incomplete at the source), while the translation-only export writes OCCT's own
+        translation. In the legacy matched mode (no model.tsv) the caller now reads the
+        adapter's source as the native match does: it refuses before NVIDIA's ingress
+        (exit 4, ours), 395 is not evaluated, and the benchmark maps the exit to
+        ingress_refused, outside the speed ratio and the NVIDIA-failure count. Before, the
+        definition reached NVIDIA and its outcome was scored."""
+        import re
+        from benchmark_om10_nvidia import classify_exit
+        from brepgpu.imported_source import load_source
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            step = root/'bound.step'
+            step.write_text(re.sub(r"(#398 = FACE_BOUND\('',#\d+,)(\.[TF]\.)",
+                                   lambda m: m.group(1)+('.F.' if m.group(2) == '.T.' else '.T.'),
+                                   (ROOT/'tests/fixtures/reference-source.step').read_text()))
+            _, matched = matched_fixture(root, step)
+            self.assertFalse((matched/'model.tsv').exists())
+            source = load_source(matched/'source.bgsource')
+            self.assertEqual({x.id: x.status != 0 for x in source.definitions}, {41: False, 395: True})
+            result = subprocess.run((sys.executable, '-B', str(ROOT/'examples/render_om10_nvidia.py'),
+                '--step', str(step), '--matched', str(matched), '--output', str(root/'out'), '--heal', '0',
+                '--workers', '1', '--allow-fixture', '--exporter', str(EXPORTER), '--nvidia-ingress', str(INGRESS),
+                '--producer', str(self.stand_in(root)), '--package', str(PACKAGE)), capture_output=True, text=True)
+            self.assertEqual(result.returncode, 4, result.stderr)
+            self.assertIn('incomplete at the source', result.stderr)
+            self.assertFalse((root/'out/nvidia-input').exists())
+            physical = {r['definition_id']: r['status'] for r in rows(root/'out/physical.tsv')}
+            self.assertEqual(physical, {'41': 'NOT_EVALUATED', '395': 'NOT_EVALUATED'})
+            self.assertEqual(classify_exit(result.returncode), ('INGRESS_REFUSED', 'ingress_refused'))
 
     @unittest.skipUnless(PRODUCER.is_file() and PACKAGE.is_dir(), 'needs the built NVIDIA producer and package')
     def test_measured_cpu_calibrates_and_scopes_split_owners(self):
@@ -1178,17 +1354,36 @@ class NvidiaDriver(unittest.TestCase):
             self.assertEqual({(r['status'], r['scope']) for r in rows(root/'run/reference-outcomes.tsv')},
                              {('INGRESS_REFUSED', 'ingress_refused')})
 
+    def test_default_read_arm_runs_through_the_driver(self):
+        """bead .37.19: with no --exporter for it, the default-read arm runs our exporter in
+        default mode and completes on the authored fixture (it refused before)."""
+        node = max(read_topology())
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            result = self.driver(root, root/'run', '--ingress-arms', 'occt-default-read', '--preparation-arms', 'none',
+                                 '--worker-arms', '1', '--placement-arms', 'pinned', '--lane-node', str(node))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            arms = rows(root/'run/arm-outcomes.tsv')
+            self.assertTrue(arms)
+            self.assertEqual({a['ingress_arm'] for a in arms}, {'occt-default-read'})
+            self.assertFalse({a['status'] for a in arms} & {'INGRESS_REFUSED', 'HARNESS_REFUSED', 'OURS_FAILED', 'FAIL'})
+
     def test_preflight_refuses_harness_problems_before_any_arm(self):
         node = max(read_topology())
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            result = self.driver(root, root/'arm', '--ingress-arms', 'occt-default-read', '--preparation-arms', 'none',
+            result = self.driver(root, root/'arm', '--ingress-arms', 'occt-default-read', '--exporter',
+                                 f'occt-default-read={root/"missing"}', '--preparation-arms', 'none',
                                  '--worker-arms', '1', '--placement-arms', 'pinned', '--lane-node', str(node))
             self.assertEqual(result.returncode, 3, result.stderr)
             self.assertIn('no built exporter', result.stderr)
             self.assertFalse(list((root/'arm').glob('*-prepare')))
+            # An exporter that ignores the arm's mode reads translation-only: refused before any arm.
+            ignoring = root/'mode-ignoring-exporter'
+            ignoring.write_text(f'#!{sys.executable}\nimport os,sys\nos.execv({str(EXPORTER)!r},[{str(EXPORTER)!r},*sys.argv[3:]])\n')
+            ignoring.chmod(0o700)
             result = self.driver(root, root/'declared', '--ingress-arms', 'occt-default-read', '--exporter',
-                                 f'occt-default-read={EXPORTER}', '--preparation-arms', 'none', '--worker-arms', '1',
+                                 f'occt-default-read={ignoring}', '--preparation-arms', 'none', '--worker-arms', '1',
                                  '--placement-arms', 'pinned', '--lane-node', str(node))
             self.assertEqual(result.returncode, 3, result.stderr)
             self.assertRegex(result.stderr, 'declares shape-processing=(translation-only|none)')

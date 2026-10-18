@@ -6,7 +6,7 @@ target_include_directories(brepgpu-step-source PRIVATE ../source_uv ..)
 target_compile_features(brepgpu-step-source PRIVATE cxx_std_17)
 target_include_directories(brepgpu-step-source PRIVATE ${OpenCASCADE_INCLUDE_DIR})
 target_link_directories(brepgpu-step-source PRIVATE ${OpenCASCADE_LIBRARY_DIR})
-target_link_libraries(brepgpu-step-source PRIVATE TKDESTEP TKXCAF TKCAF TKLCAF
+target_link_libraries(brepgpu-step-source PRIVATE TKBO TKDESTEP TKXCAF TKCAF TKLCAF
   TKCDF TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d
   TKG2d TKMath TKernel)
 target_compile_options(brepgpu-step-source PRIVATE -Wall -Wextra -Wpedantic)
@@ -47,4 +47,14 @@ target_link_libraries(brepgpu-step-styles-fixture PRIVATE TKDESTEP TKXCAF TKCAF 
 set_target_properties(brepgpu-step-styles-fixture PROPERTIES BUILD_RPATH "${OpenCASCADE_LIBRARY_DIR}")
 if(UNIX AND NOT APPLE)
  target_link_options(brepgpu-step-styles-fixture PRIVATE -Wl,--disable-new-dtags)
+endif()
+
+add_executable(brepgpu-face-regions-fixture EXCLUDE_FROM_ALL ../../tests/face_regions_fixture.cpp)
+target_compile_features(brepgpu-face-regions-fixture PRIVATE cxx_std_17)
+target_include_directories(brepgpu-face-regions-fixture PRIVATE . .. ${OpenCASCADE_INCLUDE_DIR})
+target_link_directories(brepgpu-face-regions-fixture PRIVATE ${OpenCASCADE_LIBRARY_DIR})
+target_link_libraries(brepgpu-face-regions-fixture PRIVATE TKBO TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel)
+set_target_properties(brepgpu-face-regions-fixture PROPERTIES BUILD_RPATH "${OpenCASCADE_LIBRARY_DIR}")
+if(UNIX AND NOT APPLE)
+ target_link_options(brepgpu-face-regions-fixture PRIVATE -Wl,--disable-new-dtags)
 endif()

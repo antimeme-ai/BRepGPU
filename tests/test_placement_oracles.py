@@ -16,7 +16,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from tests.test_step_ingress import FIXTURES, _Adapter, placement_corpus, substituted
+from tests.test_step_ingress import FIXTURES, _Adapter, inspect_counts, placement_corpus, substituted
 
 
 IDT = "#384 = ITEM_DEFINED_TRANSFORMATION('','',#11,#19);"
@@ -25,6 +25,19 @@ TINY = 1.110223024625e-16  # the x-ratio of frame #19's ref_direction
 # Frame #19: origin (4,-3,2), axis (0,0,1), ref_direction (TINY,1,0), so the
 # IDT(#11 identity, #19) map is [x y z | origin] with y = z x x = (-1,TINY,0).
 TWIN_MATRIX = (TINY, -1., 0., 4., 1., TINY, 0., -3., 0., 0., 1., 2.)
+
+
+def raw_records(source):
+    """Usage -> operator code (1 item-defined, 2 cartesian) of each source_placement_raw record."""
+    return {d.source_ids[0]: {v.name: v.value for v in d.values}['operator']
+            for d in source.diagnostics if d.stage == 'source_placement_raw'}
+
+
+def occt_fields(source, usage):
+    """OCCT's located placement of one usage, as its source_placement_raw record keeps it."""
+    record, = [d for d in source.diagnostics if d.stage == 'source_placement_raw' and d.source_ids[0] == usage]
+    values = {v.name: v.value for v in record.values}
+    return tuple(values[f'occt_m{i}{j}'] for i in range(3) for j in range(4))
 
 
 def operator(axis1, axis2, origin, scale, axis3, extra=''):
@@ -97,20 +110,69 @@ class CartesianOperatorOracleTests(unittest.TestCase, _Adapter):
                     self.assertLessEqual(result['max_original_placement_error'], 2.**-32)
                     composed = qualify_original_assembly(source, step, assemble(source))
                     self.assertLessEqual(composed['max_original_composed_placement_error'], 2.**-32)
+                    # OCCT reads these right: its value is written, with no record.
+                    self.assertEqual(raw_records(source), {})
 
-    def test_operators_the_adapter_misreads_are_refused_by_the_oracle(self):
+    def test_adapter_reads_operators_raw(self):
+        """bead .37.20: the adapter reads each operator per Part 42, not as OCCT misreads it.
+
+        The omitted axis3 gives the standard's rotation, which passes the oracle;
+        OCCT's 45 degree turn is recorded. The mirror is written with determinant
+        -1, recorded against OCCT's rotation, and every reader refuses it by the
+        one rigid rule (admission stays rigid-only until M8).
+        """
         from brepgpu.imported_oracles import qualify_original_geometry
-        from brepgpu.imported_source import rigid_placement_status
+        from brepgpu.imported_source import load_source, rigid_placement_status
         with tempfile.TemporaryDirectory() as directory:
-            for name in ('mirror', 'omitted-axis3'):
+            source, step = self.extracted('omitted-axis3', directory)
+            usage = next(u for u in source.usages if u.id == ROTATED_BOX)
+            for a, b in zip(usage.transform, CASES['omitted-axis3'][1]):
+                self.assertLessEqual(abs(a-b), 2.**-52, usage.transform)
+            self.assertLessEqual(qualify_original_geometry(source, step)['max_original_placement_error'], 2.**-32)
+            self.assertEqual(raw_records(source), {ROTATED_BOX: 2.})
+            s = math.sqrt(.5)  # OCCT: axis3 = axis1 x axis2, a quarter turn of y towards z
+            for a, b in zip(occt_fields(source, ROTATED_BOX), (1., 0., 0., 4., 0., s, -s, -3., 0., s, s, 2.)):
+                self.assertLessEqual(abs(a-b), 2.**-50)
+            run, step, target = self.extract(self.text('mirror'), directory, 'mirror')
+            self.assertEqual(run.returncode, 0, run.stderr)
+            source = self.read_unvalidated(target)
+            usage = next(u for u in source.usages if u.id == ROTATED_BOX)
+            for a, b in zip(usage.transform, CASES['mirror'][1]):
+                self.assertLessEqual(abs(a-b), 2.**-52, usage.transform)
+            self.assertEqual(rigid_placement_status(usage.transform), 'improper')
+            self.assertEqual(raw_records(source), {ROTATED_BOX: 2.})
+            for a, b in zip(occt_fields(source, ROTATED_BOX), TWIN_MATRIX):
+                self.assertLessEqual(abs(a-b), 2.**-50)
+            with self.assertRaisesRegex(ValueError, f'usage {ROTATED_BOX}: reflected placement'):
+                load_source(target)
+            inspected, _ = inspect_counts(target)
+            self.assertNotEqual(inspected.returncode, 0)
+            self.assertIn('reflected/singular source placement', inspected.stderr)
+
+    def test_placement_inventory_and_operators_refuse_by_name(self):
+        """bead .37.20: a usage placed by none, by two relations, by frames outside
+        its representations or by another operator refuses by name; OCCT reads
+        each (identity, one of the two, as given, identity)."""
+        cases = {
+            'no placing relation': (("#376 = CONTEXT_DEPENDENT_SHAPE_REPRESENTATION(#377,#379);", ""),),
+            'two placing relations': ((IDT, IDT + "\n#990 = CONTEXT_DEPENDENT_SHAPE_REPRESENTATION(#377,#385);"),),
+            'frame in neither representation': ((IDT, "#384 = ITEM_DEFINED_TRANSFORMATION('','',#11,#600);"
+                                                      "\n#600 = AXIS2_PLACEMENT_3D('',#20,#21,#22);"),),
+            'two-dimensional operator': ((IDT, "#384 = CARTESIAN_TRANSFORMATION_OPERATOR_2D('','','',$,$,#600,$);"
+                                               "\n#600 = CARTESIAN_POINT('',(0.,0.));"),),
+            'scale zero': ((IDT, operator('$', '$', '#12', '0.', '$')),),
+        }
+        messages = {'no placing relation': 'usage 380 has no context_dependent_shape_representation placing it',
+                    'two placing relations': 'usage 386: more than one context_dependent_shape_representation',
+                    'frame in neither representation': 'frames do not belong to its representations',
+                    'two-dimensional operator': 'usage 386: unsupported representation transformation operator',
+                    'scale zero': 'scale violates WR1'}
+        with tempfile.TemporaryDirectory() as directory:
+            for name, edits in cases.items():
                 with self.subTest(name):
-                    # The adapter (through OCCT) emits a proper rotation, so the
-                    # readers admit it; only the raw reading can refuse it.
-                    source, step = self.extracted(name, directory)
-                    usage = next(u for u in source.usages if u.id == ROTATED_BOX)
-                    self.assertEqual(rigid_placement_status(usage.transform), 'rigid')
-                    with self.assertRaisesRegex(AssertionError, 'original two-frame usage placement differs'):
-                        qualify_original_geometry(source, step)
+                    run, _, _ = self.extract(edited(*edits), directory, 'refused')
+                    self.assertEqual(run.returncode, 1, run.stderr)
+                    self.assertIn(messages[name], run.stderr)
 
     def test_invalid_operators_refuse_by_name(self):
         from brepgpu.imported_oracles import _original_usage_transforms, original_records
@@ -252,6 +314,7 @@ class RelationOrientationTests(unittest.TestCase, _Adapter):
                     self.assertLessEqual(result['max_original_placement_error'], 2.**-32)
                     composed = qualify_original_assembly(source, step, assemble(source))
                     self.assertLessEqual(composed['max_original_composed_placement_error'], 2.**-32)
+                    self.assertEqual(raw_records(source), {})
 
     def test_spec_examples_and_inverse_read_exactly(self):
         from brepgpu.imported_oracles import _original_usage_transforms, original_records
@@ -312,15 +375,40 @@ class RelationOrientationTests(unittest.TestCase, _Adapter):
                         _original_usage_transforms(records)
 
     def test_untransformed_placing_relation_refuses_end_to_end(self):
-        from brepgpu.imported_assembly import assemble
-        from brepgpu.imported_oracles import qualify_original_assembly
-        from brepgpu.imported_source import load_source
+        """bead .37.20: the adapter reads placements raw, so it refuses what no
+        source states, as the oracle does (OCCT reads the identity)."""
         with tempfile.TemporaryDirectory() as directory:
             run, step, target = self.extract(edited(*IDENTITY_RELATION), directory, 'untransformed')
-            self.assertEqual(run.returncode, 0, run.stderr)
-            source = load_source(target)
+            self.assertEqual(run.returncode, 1, run.stderr)
+            self.assertIn('usage 380: placing relation 377 carries no transformation', run.stderr)
+
+    def test_untransformed_placing_relation_joins_no_representations_in_geometry(self):
+        """bead .37.21: qualify_original_geometry links representations only through plain
+        relationships that place nothing, as _representation_products does. With .37.20 the
+        adapter refuses this file by name, so the oracle is reached on its own: the records'
+        placement refuses by name, and the geometry check, given the source of the unedited
+        fixture (the same entities; the edit only drops #377's transformation), reaches the
+        same named refusal. Before the fix the placing relation #377 joined the box's
+        representation to the assembly's, which then held the box's solid, and the check
+        said 'product to solid representation correspondence differs'."""
+        from brepgpu.imported_oracles import _original_usage_transforms, original_records, qualify_original_geometry
+        from brepgpu.imported_source import load_source
+        with tempfile.TemporaryDirectory() as directory:
+            run, step, _ = self.extract(edited(*IDENTITY_RELATION), directory, 'untransformed')
+            self.assertEqual(run.returncode, 1, run.stderr)
+            self.assertIn('usage 380: placing relation 377 carries no transformation', run.stderr)
             with self.assertRaisesRegex(AssertionError, UNTRANSFORMED):
-                qualify_original_assembly(source, step, assemble(source))
+                _original_usage_transforms(original_records(step))
+            run, _, target = self.extract(edited(), directory, 'twin')
+            self.assertEqual(run.returncode, 0, run.stderr)
+            # The twin's tables, stamped with the edited file's digest (the oracle
+            # first checks that the source was read from these bytes).
+            import dataclasses, hashlib
+            twin = dataclasses.replace(load_source(target), source_sha256=hashlib.sha256(step.read_bytes()).hexdigest())
+            with self.assertRaises(AssertionError) as raised:
+                qualify_original_geometry(twin, step)
+            self.assertIn(UNTRANSFORMED, str(raised.exception))
+            self.assertNotIn('correspondence differs', str(raised.exception))
 
     def test_occurrence_shape_definition_names_no_product(self):
         """An SDR on the NAUO's product_definition_shape adds no product.
@@ -366,13 +454,14 @@ class RelationOrientationTests(unittest.TestCase, _Adapter):
             result = qualify_original_geometry(load_source(target), step)
             self.assertLessEqual(result['max_original_placement_error'], 2.**-32)
 
-    def test_adapter_misreads_a_rotated_transform_item_1(self):
-        """Reader defect (M8): OCCT 8.0.1 places by item_1^-1 o item_2.
+    def test_adapter_reads_a_rotated_transform_item_1_as_the_guide(self):
+        """bead .37.20: OCCT 8.0.1 places by item_1^-1 o item_2; the adapter reads raw.
 
         STEPControl_ActorRead.cxx:2488 calls SetTransformation(item_2 frame,
         item_1 frame), which gp_Trsf.cxx:172-194 builds as To^-1 o From. The
         guide's C = B A^-1 equals that only when item_1 is the identity frame.
-        The oracle reads the guide's value and refuses the adapter's by name.
+        The adapter writes the guide's value, which the oracle accepts, and keeps
+        OCCT's in the usage's record.
         """
         from brepgpu.imported_oracles import qualify_original_geometry
         from brepgpu.imported_source import load_source
@@ -389,20 +478,43 @@ class RelationOrientationTests(unittest.TestCase, _Adapter):
             self.assertEqual(run.returncode, 0, run.stderr)
             source = load_source(target)
             usage = next(u for u in source.usages if u.id == ROTATED_BOX)
-            for a, b_ in zip(usage.transform, occt):
+            for a, b_ in zip(usage.transform, PDM_MATRIX):
                 self.assertLessEqual(abs(a-b_), 1e-6, usage.transform)
-            with self.assertRaisesRegex(AssertionError, 'original two-frame usage placement differs'):
-                qualify_original_geometry(source, step)
+            self.assertLessEqual(qualify_original_geometry(source, step)['max_original_placement_error'], 2.**-32)
+            self.assertEqual(raw_records(source), {ROTATED_BOX: 1.})
+            for a, b_ in zip(occt_fields(source, ROTATED_BOX), occt):
+                self.assertLessEqual(abs(a-b_), 1e-6)
 
-    def test_unrelated_product_side_refuses_end_to_end(self):
-        """rep_2 is another product's representation: OCCT reads it forward."""
+    def test_the_oracle_rejects_occts_misread_placements(self):
+        """Review finding 3: the independent oracle still rejects a wrong placement. The
+        adapter's own source, with usage #386's placement replaced by the value OCCT
+        read (kept in its source_placement_raw record), fails the oracle by name: for the
+        rotated transform_item_1 (A^-1 B) and for the operator with axis3 omitted."""
+        import dataclasses
         from brepgpu.imported_oracles import qualify_original_geometry
         from brepgpu.imported_source import load_source
+        cases = {'item-defined': edited(*PDM_ITEMS),
+                 'omitted-axis3': substituted((FIXTURES/'source-uv.step').read_text(), IDT, CASES['omitted-axis3'][0])}
+        with tempfile.TemporaryDirectory() as directory:
+            for name, text in cases.items():
+                with self.subTest(name):
+                    run, step, target = self.extract(text, directory, name)
+                    self.assertEqual(run.returncode, 0, run.stderr)
+                    source = load_source(target)
+                    qualify_original_geometry(source, step)
+                    occt = occt_fields(source, ROTATED_BOX)
+                    tampered = dataclasses.replace(source, usages=tuple(
+                        dataclasses.replace(u, transform=occt) if u.id == ROTATED_BOX else u for u in source.usages))
+                    with self.assertRaisesRegex(AssertionError, 'original two-frame usage placement differs'):
+                        qualify_original_geometry(tampered, step)
+
+    def test_unrelated_product_side_refuses_end_to_end(self):
+        """rep_2 is another product's representation: OCCT reads it forward; the
+        adapter, reading raw, refuses as the oracle does (bead .37.20)."""
         with tempfile.TemporaryDirectory() as directory:
             run, step, target = self.extract(edited(*UNRELATED), directory, 'unrelated')
-            self.assertEqual(run.returncode, 0, run.stderr)
-            with self.assertRaisesRegex(AssertionError, 'original representation relation does not orient its usage'):
-                qualify_original_geometry(load_source(target), step)
+            self.assertEqual(run.returncode, 1, run.stderr)
+            self.assertIn('usage 386: representation relation 383 does not orient its usage', run.stderr)
 
     def test_unorientable_relations_refuse_by_name(self):
         from brepgpu.imported_oracles import _original_usage_transforms, original_records

@@ -1,7 +1,15 @@
 """Owned immutable BGOCC001 metadata for the isolated original-source export.
 
-The manifest carries source identity, styles and the fresh occurrence graph.
-Geometry remains in the unmeshed BinTools V4 files, never in this module.
+The manifest carries source identity, styles, per-occurrence styles and the
+fresh occurrence graph. Geometry remains in the unmeshed BinTools V4 files,
+never in this module.
+
+Format version 2 (owned reference source v5): every shell of a solid (outer
+first, then BREP_WITH_VOIDS voids; a face's orientation is its use in the
+solid, same_sense composed with its shell's), the translated faces of each
+original face as storage indices (one under translation-only; the faces OCCT's
+processing made of it under the default read), each definition's translated
+face count, and the OCCSTYLE table. Version 1 is refused by name.
 """
 from dataclasses import dataclass
 import math
@@ -9,10 +17,11 @@ from pathlib import Path
 import struct
 from types import MappingProxyType
 
-from .imported_source import Product, Usage, Style
+from .imported_source import Product, Usage, Style, OccurrenceStyle
 from .imported_assembly import assemble, rigid_transform
 
-_TAGS = (b'META____', b'PRODUCTS', b'DEFS____', b'USAGES__', b'STYLES__', b'FACE_STY')
+_TAGS = (b'META____', b'PRODUCTS', b'DEFS____', b'USAGES__', b'STYLES__', b'FACE_STY', b'OCCSTYLE')
+FORMAT_VERSION = 2
 _PHASES = ('read_step', 'transfer_step', 'collect_source_graph', 'write_reference_brep')
 
 
@@ -20,9 +29,23 @@ _PHASES = ('read_step', 'transfer_step', 'collect_source_graph', 'write_referenc
 class ReferenceFace:
     id: int
     carrier_id: int
-    serialized_storage_index: int
+    # BinTools storage indices of the translated faces this original face
+    # became in its definition's .brep: one under translation-only, one or more
+    # under OCCT's default read (FixShape may split a face).
+    serialized_storage_indices: tuple
+    # Use in the solid: same_sense composed with the shell's orientation.
     orientation: int
     style_id: int = 0
+    # 0 the outer shell, k the k-th BREP_WITH_VOIDS void.
+    shell: int = 0
+
+    @property
+    def serialized_storage_index(self):
+        """The one translated face of a face that the read did not split."""
+        if len(self.serialized_storage_indices) != 1:
+            raise ValueError(f'original face #{self.id} is {len(self.serialized_storage_indices)} translated faces; '
+                             'no single storage index')
+        return self.serialized_storage_indices[0]
 
 
 @dataclass(frozen=True)
@@ -31,6 +54,9 @@ class ReferenceDefinition:
     product_id: int
     filename: str
     faces: tuple
+    # Faces in the exported .brep: the original face count under
+    # translation-only, what OCCT's processing made of them under the default read.
+    translated_face_count: int = 0
 
     @property
     def face_ids(self):
@@ -49,6 +75,7 @@ class ReferenceSource:
     usages: tuple
     styles: tuple
     phase_seconds: object
+    occurrence_styles: tuple = ()
 
     def __post_init__(self):
         def immutable(value):
@@ -58,12 +85,12 @@ class ReferenceSource:
                 for item in value:
                     immutable(item)
                 return
-            if type(value) in (Product, Usage, Style, ReferenceDefinition, ReferenceFace):
+            if type(value) in (Product, Usage, Style, ReferenceDefinition, ReferenceFace, OccurrenceStyle):
                 for field in value.__dataclass_fields__:
                     immutable(getattr(value, field))
                 return
             raise TypeError('reference source requires owned immutable values')
-        for field in ('products', 'definitions', 'usages', 'styles'):
+        for field in ('products', 'definitions', 'usages', 'styles', 'occurrence_styles'):
             immutable(getattr(self, field))
         phases = dict(self.phase_seconds)
         immutable(tuple(phases.items()))
@@ -171,19 +198,30 @@ def _validate(source, directory):
             raise ValueError('reference filename escapes source directory')
         if not path.is_file() or not 0 < path.stat().st_size <= 256*1024*1024:
             raise ValueError('missing or oversized reference BRep')
-        indices = set()
+        indices, shells = set(), set()
         if not definition.faces:
             raise ValueError('reference definition has no original faces')
         for face in definition.faces:
             _positive(face.id, 'original face ID')
             _positive(face.carrier_id, 'original carrier ID')
-            _positive(face.serialized_storage_index, 'serialized face index')
-            if face.id in face_ids or face.serialized_storage_index in indices:
+            if not face.serialized_storage_indices:
+                raise ValueError(f'original face #{face.id} has no translated face')
+            for index in face.serialized_storage_indices:
+                _positive(index, 'serialized face index')
+                if index in indices:
+                    raise ValueError('duplicate reference face or storage index')
+                indices.add(index)
+            if face.id in face_ids:
                 raise ValueError('duplicate reference face or storage index')
             if face.orientation not in (-1, 1):
                 raise ValueError('invalid original face orientation')
             face_ids.add(face.id)
-            indices.add(face.serialized_storage_index)
+            shells.add(face.shell)
+        # Shell ordinals run from 0 without gaps (0 the outer shell).
+        if shells != set(range(len(shells))):
+            raise ValueError(f'reference definition #{definition.id} shell ordinals have a gap')
+        if definition.translated_face_count != len(indices):
+            raise ValueError(f'reference definition #{definition.id} translated face count differs from its face map')
     for usage in source.usages:
         rigid_transform(usage.transform, f'reference usage #{usage.id}')
     # Existing owned graph mechanism rejects duplicate IDs, dangling products,
@@ -192,6 +230,30 @@ def _validate(source, directory):
     reachable = {o.product_id for o in assembly.occurrences} | {g.product_id for g in assembly.groups}
     if reachable != {p.id for p in source.products}:
         raise ValueError('reference graph contains unreachable products')
+    # Occurrence styles, under the STEP source reader's rules
+    # (imported_source.validate_source): a known style, a usage path connected
+    # from the root, a face on that occurrence's definition, one row per key.
+    products, usages = {p.id: p for p in source.products}, {u.id: u for u in source.usages}
+    face_definitions = {f.id: d.id for d in source.definitions for f in d.faces}
+    keys = set()
+    for row in source.occurrence_styles:
+        if row.style_id not in style_ids:
+            raise ValueError('unresolved reference occurrence style')
+        if not row.usage_ids:
+            raise ValueError('reference occurrence style path is empty')
+        parent = source.root_product_id
+        for usage_id in row.usage_ids:
+            usage = usages.get(usage_id)
+            if usage is None or usage.parent_product_id != parent:
+                raise ValueError(f'reference occurrence style path {row.usage_ids} is not connected from the root')
+            parent = usage.child_product_id
+        if row.face_id:
+            definition = products[parent].definition_id
+            if not definition or face_definitions.get(row.face_id) != definition:
+                raise ValueError(f'reference occurrence style face {row.face_id} is not on its occurrence')
+        if (row.usage_ids, row.face_id) in keys:
+            raise ValueError('duplicate reference occurrence style')
+        keys.add((row.usage_ids, row.face_id))
     return source
 
 
@@ -199,8 +261,12 @@ def load_reference_source(path):
     """Read a complete source.bgocct and its strictly local original BRep files."""
     path = Path(path)
     r = _Reader(path.read_bytes())
-    if bytes(r.take(8)) != b'BGOCC001' or r.scalar('I') != 1:
+    if bytes(r.take(8)) != b'BGOCC001':
         raise ValueError('unsupported reference source format')
+    version = r.scalar('I')
+    if version != FORMAT_VERSION:
+        raise ValueError(f'unsupported reference source version {version}: this reader reads BGOCC001 version '
+                         f'{FORMAT_VERSION} (voids, split faces, occurrence styles); re-export the source')
     r.zero()
     digest = bytes(r.take(32)).hex()
     units, uncertainty = r.values('d', 2)
@@ -232,7 +298,7 @@ def load_reference_source(path):
     meta.zero()
     phases = MappingProxyType(dict(zip(_PHASES, meta.values('d', 4))))
     meta.end()
-    products, definitions, usages, styles, face_styles = [], [], [], [], {}
+    products, definitions, usages, styles, face_styles, occurrence_styles = [], [], [], [], {}, []
     for row in sections[b'PRODUCTS']:
         id, definition, style = row.values('Q', 3)
         products.append(Product(id, row.string(), row.string(), definition, style))
@@ -255,23 +321,28 @@ def load_reference_source(path):
             raise ValueError('duplicate reference face style row')
         face_styles[id] = style
         row.end()
+    for row in sections[b'OCCSTYLE']:
+        style, face = row.values('Q', 2)
+        occurrence_styles.append(OccurrenceStyle(style, face, row.values('Q', row.scalar('Q'))))
+        row.end()
     for row in sections[b'DEFS____']:
         id, product = row.values('Q', 2)
-        filename, count = row.string(), row.scalar('Q')
-        if count > (len(row.data)-row.pos)//32:
+        filename = row.string()
+        translated, count = row.values('Q', 2)
+        if count > (len(row.data)-row.pos)//40:
             raise ValueError('oversized reference face count')
         faces = []
         for _ in range(count):
-            fid, carrier, index = row.values('Q', 3)
-            orientation = row.scalar('i')
-            row.zero()
+            fid, carrier = row.values('Q', 2)
+            orientation, shell = row.scalar('i'), row.scalar('I')
+            indices = row.values('Q', row.scalar('Q'))
             if fid not in face_styles:
                 raise ValueError('missing reference face style row')
-            faces.append(ReferenceFace(fid, carrier, index, orientation, face_styles.pop(fid)))
+            faces.append(ReferenceFace(fid, carrier, indices, orientation, face_styles.pop(fid), shell))
         row.end()
-        definitions.append(ReferenceDefinition(id, product, filename, tuple(faces)))
+        definitions.append(ReferenceDefinition(id, product, filename, tuple(faces), translated))
     if face_styles:
         raise ValueError('orphan reference face style row')
     source = ReferenceSource(digest, units, uncertainty, root, revision,
-        tuple(products), tuple(definitions), tuple(usages), tuple(styles), phases)
+        tuple(products), tuple(definitions), tuple(usages), tuple(styles), phases, tuple(occurrence_styles))
     return _validate(source, path.parent)

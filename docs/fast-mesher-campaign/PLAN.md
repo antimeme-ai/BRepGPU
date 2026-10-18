@@ -128,6 +128,10 @@ beads from here (epic `brepgpu-12s`).
   after G7's paper.
 - Done when every triaged gap has a paper or an operator decision.
 
+Done 2026-10-19. All 18 papers are delivered. B1 and B2 (the defects M4 and B1
+found) have landed. The operator decisions raised are collected in
+`M4-decisions.md`.
+
 ### M5. Holistic design synthesis (designer; laptop)
 
 - Rewrite FAST_MESHER_DESIGN.md in one pass from the lifecycle map, M2, M4,

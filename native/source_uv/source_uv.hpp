@@ -11,6 +11,8 @@
 #include <Geom_Surface.hxx>
 #include <array>
 #include <cstdint>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace brepgpu {
@@ -51,12 +53,44 @@ struct SourceUVChartApproximation {
   // Guide residual may evaluate foreign extension outside the original domain.
   double max_guide_extension_residual_mm=0,max_selected_residual_mm=0;
 };
+// A projected UV curve on a B-spline carrier whose coefficient hull left the
+// carrier's natural knot rectangle by more than the recovery grade, with every
+// coefficient moved into it (B2 .37.31). du, dv: the largest coefficient move
+// per axis; uv_metric_mm: the derivative metric over the knot rectangle times
+// those moves, a charge to the chord allocation as chart approximations are,
+// not a bound on the change (the escaped points lie off the rectangle);
+// max_residual_mm: the guarantee, the corrected curve's sampled original-t
+// correspondence.
+struct SourceUVDomainClamp {
+  SourceID face_id=0,coedge_id=0;
+  double max_u_move=0,max_v_move=0,uv_metric_mm=0,max_residual_mm=0;
+};
+// B2 .37.31: a UV curve on a B-spline carrier that leaves the knot rectangle
+// beyond the recovery grade and that domain correction cannot take (rational,
+// periodic, trimmed or another form) refuses by name, carrying its form and
+// its largest escape as typed fields. kind is the curve table's code (1 line,
+// 2 circle, 3 ellipse, 4 Bezier, 5 B-spline, 0 other); escape is measured on
+// the curve's control points over its interval (BndLib's box: the control
+// hull for splines, the analytic box for conics), in carrier parameters.
+struct SourceUVDomainEscape:std::runtime_error {
+  SourceID face_id=0,coedge_id=0;
+  std::uint32_t kind=0;
+  bool rational=false,periodic=false,trimmed=false;
+  double escape=0;
+  SourceUVDomainEscape(const std::string& message,SourceID face,SourceID coedge,std::uint32_t form,bool is_rational,bool is_periodic,bool is_trimmed,double amount)
+    :std::runtime_error(message),face_id(face),coedge_id(coedge),kind(form),rational(is_rational),periodic(is_periodic),trimmed(is_trimmed),escape(amount){}
+};
+// Refuses (SourceUVDomainEscape) a UV curve on [a,b] whose control points leave
+// the B-spline surface's knot rectangle by more than the recovery grade; returns
+// the largest escape otherwise (0 inside). Any other surface returns 0.
+double require_natural_domain(const Handle(Geom2d_Curve)& curve,double a,double b,const Handle(Geom_Surface)& surface,SourceID face_id,SourceID coedge_id);
 struct PreparedSourceUV {
   TopoDS_Shape raw_shape,query_shape;
   NCollection_DataMap<TopoDS_Shape,TopoDS_Shape,TopTools_ShapeMapHasher> copies,query_copies;
   SourceUVStats stats;
   std::vector<SourceUVConnector> connectors;
   std::vector<SourceUVChartApproximation> chart_approximations;
+  std::vector<SourceUVDomainClamp> domain_clamps;
   TopoDS_Shape mapped(const TopoDS_Shape& original) const;
   TopoDS_Shape query_mapped(const TopoDS_Shape& original) const;
 };

@@ -118,6 +118,9 @@ def main(args):
     require(source.units_mm==original.units_mm==1.,'reference/qualified millimetre units differ')
     require(source.products==original.products and source.usages==original.usages and
             source.styles==original.styles,'fresh reference original graph/style metadata differs')
+    require(sorted(source.occurrence_styles,key=lambda o:(o.usage_ids,o.face_id))==
+            sorted(original.occurrence_styles,key=lambda o:(o.usage_ids,o.face_id)),
+            'fresh reference original occurrence styles differ')
     require(source.root_product_id==original.root_product_id,'fresh reference root differs')
     definitions={d.id:d for d in original.definitions}
     require({d.id for d in source.definitions}==set(definitions),'reference original definitions incomplete')
