@@ -444,3 +444,14 @@ decisions (ABC download term first, as the priority-1 corpus source).
   exporter (1e-6 to 0.127 mm for one part); the nominal-model flag appears in
   none. One ingress defect filed under B2 (uncertainty maximum across
   contexts); c_max (0.1 or 0.25) filed for the operator.
+- M4-G13 returned (papers/2026-10-17-shading-fidelity.md): a cap rule tied to
+  Khoury–Shewchuk (repair a cap only when its circumradius exceeds twice its
+  smallest enclosing radius and its flat-normal error exceeds the chord-limit
+  reference), exact per-face corner normals never averaged across faces, edge
+  classification measured per sample (STEP stores no regularity at all), and
+  float32 glTF normals by default. A fleet probe on seven exact surfaces
+  confirmed the bound in all 504 rows; interpolated exact normals are exact on
+  planes, cylinders and spheres. Renders were not run (no reflection-line
+  renderer exists yet). Corrects the healing paper and two design-draft
+  clauses (noted on the M5 bead). One new operator question; the renderer
+  question joins G14's.

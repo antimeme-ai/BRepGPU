@@ -211,3 +211,5 @@ Highest value first:
   normative text (sign convention for unequally disposed zones); ISO 286-1
   tables in a licensed form (fit classes). The NIST MTC TDP retry gains a use:
   its inspection data would test the warning threshold (H4).
+- **G13 shading:** Woo et al. 1996 and van Overveld–Wyvill 1997 (paywalled);
+  Conty Estevez et al. 2019 (open-access chapter, not fetched).
