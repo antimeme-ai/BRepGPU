@@ -201,3 +201,9 @@ Highest value first:
   file with UUIDs); the CAx-IF list of UUID-referenceable AP242 Ed.4 entities
   (members only); ISO 10303-21:2016; QIF 3.0 (registration not accepted); the
   `EXT_structural_metadata` spec.
+- **G2 face-edge feedback:** Boivin and Ollivier-Gooch 2002 (IJNME 55(10));
+  Cheng, Dey and Shewchuk, *Delaunay Mesh Generation* (CRC 2012); Cheng, Dey
+  and Ramos, piecewise smooth complexes (retry; the author page returned HTML);
+  Miller, Pav and Walkington, IMR 2003. Add two questions to the Parasolid PK
+  entry: the incremental-refinement round limit, and how "very close" inner
+  loops are defined.

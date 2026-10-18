@@ -407,3 +407,13 @@ decisions (ABC download term first, as the priority-1 corpus source).
   range tables stays off the hot path (36.7 KB against 2.19 MB for the watch).
   Found that the draft can emit two mesh edges on one vertex pair and needs a
   sample-count floor (noted on the M5 bead). Two operator questions filed.
+- M4-G2 returned (papers/2026-10-17-face-edge-feedback.md): every mature
+  mesher stops face-to-edge feedback on a round count (OCCT 5, Gmsh 10+3,
+  CGAL 29, NVIDIA 100). Ours needs none. Four segment predicates (UV flatness,
+  lens separation, corner cone, 3D band) are hereditary, so splitting at
+  dyadic midpoints until each segment passes is order-independent and gives
+  the same chain at any thread count; a Ruppert/Shewchuk packing argument over
+  Pav–Walkington local feature size bounds samples and depth from geometry.
+  M5 answer: settle and protect a sufficient chain; the coupled queue becomes
+  an arena arm. Requirement on M2's blend noted on the M5 bead. Cusps (α = 0)
+  are the lane's own derivation, to test on family F4. No operator questions.
